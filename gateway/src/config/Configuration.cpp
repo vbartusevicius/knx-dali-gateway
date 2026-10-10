@@ -7,8 +7,8 @@ namespace gateway::config {
 
 // Layout contract with knxprod/src/*.xml; a regenerated header that violates
 // these fails the build instead of silently shifting the parser.
-static_assert(CH_ParamBlockOffset == 3, "channel parameters start after the shared parameters");
-static_assert(CH_ParamBlockSize == 4, "channel parameter block must stay 4 bytes");
+static_assert(CH_ParamBlockOffset == 4, "channel parameters start after the shared parameters");
+static_assert(CH_ParamBlockSize == 5, "channel parameter block must stay 5 bytes");
 static_assert(CH_fSwitchOnMode == 0 && CH_fFixedLevel == 1 && CH_fGroup01 == 2,
               "channel parameter layout changed");
 static_assert(CH_fGroup16 == CH_fGroup01 + 1, "group mask must occupy two consecutive bytes");
@@ -16,11 +16,20 @@ static_assert(CH_fGroup01Mask == 0x01 && CH_fGroup16Mask == 0x80,
               "group mask byte order must be little-endian, bit g = DALI group g");
 static_assert(GR_ParamBlockOffset == CH_ParamBlockOffset + CH_ChannelCount * CH_ParamBlockSize,
               "group parameters follow the channel blocks");
-static_assert(GR_ParamBlockSize == 2, "group parameter block must stay 2 bytes");
+static_assert(GR_ParamBlockSize == 3, "group parameter block must stay 3 bytes");
 static_assert(GR_fSwitchOnMode == 0 && GR_fFixedLevel == 1, "group parameter layout changed");
+// CH_fColourControl/GR_fColourControl only steer ETS object visibility; the
+// firmware derives colour behaviour from the probed gear capabilities.
 static_assert(CH_BcSwitchOnMode == 1 && CH_BcFixedLevel == 2, "broadcast parameter layout changed");
-static_assert(MAIN_ParameterSize == GR_ParamBlockOffset + GR_ChannelCount * GR_ParamBlockSize,
-              "parameter memory must end after the group blocks");
+static_assert(IN_ParamBlockOffset == GR_ParamBlockOffset + GR_ChannelCount * GR_ParamBlockSize,
+              "input parameters must follow the group blocks");
+static_assert(IN_ChannelCount == input_count, "knxprod must define 32 input channels");
+static_assert(IN_ParamBlockSize == 6, "input parameter block must stay 6 bytes");
+static_assert(IN_fDeviceAddress == 0 && IN_fInstance == 1 && IN_fInputType == 2 &&
+                  IN_fFunction == 3 && IN_fScene == 4 && IN_fThreshold == 5,
+              "input parameter layout changed");
+static_assert(MAIN_ParameterSize == IN_ParamBlockOffset + IN_ChannelCount * IN_ParamBlockSize,
+              "parameter memory must end after the input blocks");
 
 namespace {
 
@@ -60,6 +69,28 @@ Configuration parse_configuration(const std::uint8_t* parameters, std::size_t si
         config.groups[group] = parse_switch_on(block[GR_fSwitchOnMode], block[GR_fFixedLevel]);
     }
     config.broadcast = parse_switch_on(parameters[CH_BcSwitchOnMode], parameters[CH_BcFixedLevel]);
+    for (unsigned index = 0; index < IN_ChannelCount; ++index) {
+        const auto block = parameters + IN_ParamBlockOffset + index * IN_ParamBlockSize;
+        auto& input = config.inputs[index];
+        if (block[IN_fDeviceAddress] <= 63) {
+            input.device = block[IN_fDeviceAddress];
+        }
+        if (block[IN_fInstance] <= 31) {
+            input.instance = block[IN_fInstance];
+        }
+        if (block[IN_fInputType] <= static_cast<std::uint8_t>(InputType::Light)) {
+            input.type = static_cast<InputType>(block[IN_fInputType]);
+        }
+        if (block[IN_fFunction] <= static_cast<std::uint8_t>(InputFunction::Scene)) {
+            input.function = static_cast<InputFunction>(block[IN_fFunction]);
+        }
+        if (block[IN_fScene] >= 1 && block[IN_fScene] <= 64) {
+            input.scene = block[IN_fScene];
+        }
+        if (block[IN_fThreshold] <= 100) {
+            input.threshold = block[IN_fThreshold];
+        }
+    }
     return config;
 }
 

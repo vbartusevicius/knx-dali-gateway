@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <ManufacturerData>
+    <Manufacturer>
+      <ApplicationPrograms>
+        <ApplicationProgram>
+          <Static>
+            <Parameters>
+              <Parameter Id="%AID%_P-%TT%%CC%001" Name="f%C%DeviceAddress" ParameterType="%AID%_PT-DaliChannel" Text="DALI device short address" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%002" Name="f%C%Instance" ParameterType="%AID%_PT-InstanceNumber" Text="Instance number" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%InputType" ParameterType="%AID%_PT-InputType" Text="Input type" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="2" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%004" Name="f%C%Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="3" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%005" Name="f%C%Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%006" Name="f%C%Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send threshold" SuffixText="%" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="5" BitOffset="0" />
+              </Parameter>
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_P-%TT%%CC%002" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_P-%TT%%CC%003" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_P-%TT%%CC%004" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_P-%TT%%CC%005" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_P-%TT%%CC%006" />
+            </ParameterRefs>
+            <ComObjectTable>
+              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"      Number="%K0%" Text="Input %C%: Switch/Occupancy" FunctionText="Switch/Occupancy" ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%Dimming"    Number="%K1%" Text="Input %C%: Dimming"         FunctionText="Dimming"         ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%Illuminance" Number="%K2%" Text="Input %C%: Illuminance"     FunctionText="Illuminance"     ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
+              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%Scene"      Number="%K3%" Text="Input %C%: Scene"           FunctionText="Scene"           ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
+            </ComObjectTable>
+            <ComObjectRefs>
+              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" />
+            </ComObjectRefs>
+          </Static>
+          <Dynamic>
+            <Channel Id="%AID%_CH-%TT%%CC%" Number="%PREFIX%" Name="Input %C%" Text="Input %C%">
+              <ParameterBlock Id="%AID%_PB-%TT%%CC%001" Name="Input%C%" Text="Input %C%">
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
+                <choose>
+                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 1">
+                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
+                    <choose>
+                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 4">
+                        <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
+                      </when>
+                    </choose>
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                    <choose>
+                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 3">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                      </when>
+                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 4">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
+                      </when>
+                    </choose>
+                  </when>
+                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 2">
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                  </when>
+                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 3">
+                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                  </when>
+                </choose>
+              </ParameterBlock>
+            </Channel>
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>

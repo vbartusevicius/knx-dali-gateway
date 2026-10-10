@@ -1,0 +1,3697 @@
+(export 
+  (version "D")
+  (design
+    (source "gen_circuits.py")
+    (date "10/10/2026 07:19 PM")
+    (tool "SKiDL (2.3.0)")
+    (sheet
+      (number 1)
+      (name "/")
+      (tstamps "/")
+      (title_block
+        (title)
+        (company)
+        (rev)
+        (date)
+        (source "../../gen_circuits.py")
+        (comment
+          (number "1")
+          (value ""))
+        (comment
+          (number "2")
+          (value ""))
+        (comment
+          (number "3")
+          (value ""))
+        (comment
+          (number "4")
+          (value ""))
+        (comment
+          (number "5")
+          (value ""))
+        (comment
+          (number "6")
+          (value ""))
+        (comment
+          (number "7")
+          (value ""))
+        (comment
+          (number "8")
+          (value ""))
+        (comment
+          (number "9")
+          (value "")))))
+  (components
+    (comp
+      (ref "#FLG1")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG10")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG11")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG12")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG13")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG14")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG15")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG16")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG2")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG3")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG4")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG5")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG6")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG7")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG8")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#FLG9")
+      (value "PWR_FLAG")
+      (description "Special symbol for telling ERC where power comes from")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Special symbol for telling ERC where power comes from")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:73"))
+      (libsource
+        (lib "power")
+        (part "PWR_FLAG"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#PWR1")
+      (value "GND")
+      (description "Power symbol creates a global label with name \"GND\" , ground")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Power symbol creates a global label with name \"GND\" , ground")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:66"))
+      (libsource
+        (lib "power")
+        (part "GND"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#PWR2")
+      (value "GNDA")
+      (description "Power symbol creates a global label with name \"GNDA\" , analog ground")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Power symbol creates a global label with name \"GNDA\" , analog ground")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:66"))
+      (libsource
+        (lib "power")
+        (part "GNDA"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "#PWR3")
+      (value "GNDD")
+      (description "Power symbol creates a global label with name \"GNDD\" , digital ground")
+      (footprint "")
+      (fields
+        (field
+          (name "Description") "Power symbol creates a global label with name \"GNDD\" , digital ground")
+        (field
+          (name "Footprint"))
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "power")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:66"))
+      (libsource
+        (lib "power")
+        (part "GNDD"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "40a90278-bf6f-5d3a-8363-bac3ca5d0094"))
+    (comp
+      (ref "C1")
+      (value "TBD")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 AC coupling cap TX0-CCP, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C10")
+      (value "100n")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C11")
+      (value "10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet Cin, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C12")
+      (value "100n")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet Cin, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C13")
+      (value "22u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet Cout, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C14")
+      (value "22u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet Cout, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C15")
+      (value "100n")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet Cout, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "C16")
+      (value "TBD 10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "aux_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "isolated DC-DC input cap, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "aux_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d8c31e4-1818-5cf5-98f1-80dd59b151f9"))
+    (comp
+      (ref "C17")
+      (value "TBD 10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc_iso")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "isolated DC-DC output cap, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc_iso")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ef3c697-40af-571f-932a-79d7cb888b71"))
+    (comp
+      (ref "C18")
+      (value "TBD 10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM2574 datasheet caps, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "C19")
+      (value "TBD 100u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM2574 datasheet caps, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "C2")
+      (value "TBD 1u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet typical application, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C3")
+      (value "TBD")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet typical application, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C4")
+      (value "TBD")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet typical application, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C5")
+      (value "TBD 10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet typical application, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C6")
+      (value "TBD 1u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet typical application, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "C7")
+      (value "TBD 33u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc1")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet DC-DC1 output, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc1")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "e3f1b0f2-935f-5f15-a2cd-fd330fa29cd5"))
+    (comp
+      (ref "C8")
+      (value "1000u 25V")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D12.5mm_P5.00mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "architecture.md storage rail, review")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D12.5mm_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "C9")
+      (value "100n")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "D1")
+      (value "SMBJ33A TBD")
+      (description "Bidirectional transient-voltage-suppression diode")
+      (footprint "Diode_SMD:D_SMB")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "knx_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD ~33V TVS")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "KNX bus surge protection, review")
+        (field
+          (name "Description") "Bidirectional transient-voltage-suppression diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SMB")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "knx_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_TVS"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "64826ea0-6990-5286-8829-eb53616003ed"))
+    (comp
+      (ref "D10")
+      (value "TBD 60V 1A")
+      (description "Schottky diode")
+      (footprint "Diode_SMD:D_SMA")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM2574 catch diode, review")
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SMA")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "D2")
+      (value "TBD 60V 1A")
+      (description "Schottky diode")
+      (footprint "Diode_SMD:D_SMA")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "knx_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "reverse polarity series diode, review")
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SMA")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "knx_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "64826ea0-6990-5286-8829-eb53616003ed"))
+    (comp
+      (ref "D3")
+      (value "TBD 60V 1A")
+      (description "Schottky diode")
+      (footprint "Diode_SMD:D_SOD-123")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc1")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DC-DC1 catch diode, review")
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SOD-123")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc1")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "e3f1b0f2-935f-5f15-a2cd-fd330fa29cd5"))
+    (comp
+      (ref "D4")
+      (value "TBD 60V 1A")
+      (description "Schottky diode")
+      (footprint "Diode_SMD:D_SOD-123")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DC-DC2 catch diode, review")
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SOD-123")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "D5")
+      (value "TBD 600V 1A bridge")
+      (description "Bridge Rectifier, 420V Vrms, 1.5A If, SMDIP-4")
+      (footprint "Diode_SMD:Diode_Bridge_Vishay_DFS")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_bridge")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD DF06S-class")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI rectifier, review")
+        (field
+          (name "Description") "Bridge Rectifier, 420V Vrms, 1.5A If, SMDIP-4")
+        (field
+          (name "Footprint") "Diode_SMD:Diode_Bridge_Vishay_DFS")
+        (field
+          (name "Datasheet") "https://www.onsemi.com/download/data-sheet/pdf/df10s-d.pdf")
+        (field
+          (name "SKiDL Tag") "dali_bridge")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Diode_Bridge")
+        (part "DF06S"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "863fa821-6c57-56f1-8a00-b20958669910"))
+    (comp
+      (ref "D6")
+      (value "TBD 12V")
+      (description "Zener diode")
+      (footprint "Diode_SMD:D_SOD-123")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "gate clamp, review")
+        (field
+          (name "Description") "Zener diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SOD-123")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Zener"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "D7")
+      (value "TBD 8V2")
+      (description "Zener diode")
+      (footprint "Diode_SMD:D_SOD-123")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_rx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "RX threshold vs DALI 9.5V high spec, review")
+        (field
+          (name "Description") "Zener diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SOD-123")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_rx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Zener"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "34989da2-5806-5794-b656-30c7d0af23bb"))
+    (comp
+      (ref "D8")
+      (value "TBD 60V 1A")
+      (description "Schottky diode")
+      (footprint "Diode_SMD:D_SMA")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "aux_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "aux reverse polarity, review")
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SMA")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "aux_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d8c31e4-1818-5cf5-98f1-80dd59b151f9"))
+    (comp
+      (ref "D9")
+      (value "TBD ~36V")
+      (description "Bidirectional transient-voltage-suppression diode")
+      (footprint "Diode_SMD:D_SMB")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "aux_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "aux surge, review")
+        (field
+          (name "Description") "Bidirectional transient-voltage-suppression diode")
+        (field
+          (name "Footprint") "Diode_SMD:D_SMB")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "aux_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "D_TVS"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d8c31e4-1818-5cf5-98f1-80dd59b151f9"))
+    (comp
+      (ref "F1")
+      (value "TBD 250mA")
+      (description "Resettable fuse, polymeric positive temperature coefficient")
+      (footprint "Fuse:Fuse_1812_4532Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "aux_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "aux input fuse, review")
+        (field
+          (name "Description") "Resettable fuse, polymeric positive temperature coefficient")
+        (field
+          (name "Footprint") "Fuse:Fuse_1812_4532Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "aux_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "Polyfuse"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d8c31e4-1818-5cf5-98f1-80dd59b151f9"))
+    (comp
+      (ref "J1")
+      (value "KNX bus terminal pins")
+      (description "Generic connector, single row, 01x02, script generated")
+      (footprint "Connector_PinHeader_1.00mm:PinHeader_1x02_P1.00mm_Vertical")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "knx_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD knx bus terminal pins")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "spec.yaml terminals.knx")
+        (field
+          (name "Description") "Generic connector, single row, 01x02, script generated")
+        (field
+          (name "Footprint") "Connector_PinHeader_1.00mm:PinHeader_1x02_P1.00mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "knx_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Connector")
+        (part "Conn_01x02_Pin"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "64826ea0-6990-5286-8829-eb53616003ed"))
+    (comp
+      (ref "J2")
+      (value "DALI")
+      (description "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_terminal")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD 5.0mm 2-pole")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "spec.yaml terminals.dali")
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_terminal")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x02"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "0ce3214d-0bb9-5f05-ad75-46151f845e06"))
+    (comp
+      (ref "J3")
+      (value "AUX")
+      (description "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "aux_in")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD 5.0mm 2-pole")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "spec.yaml terminals.aux_dc")
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "aux_in")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x02"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d8c31e4-1818-5cf5-98f1-80dd59b151f9"))
+    (comp
+      (ref "J4")
+      (value "JST-SH 1x10")
+      (description "Generic connector, single row, 01x10, script generated")
+      (footprint "Connector_JST:JST_SH_SM10B-SRSS-TB_1x10-1MP_P1.00mm_Horizontal")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "interconnect")
+        (field
+          (name "Manufacturer") "JST")
+        (field
+          (name "Manufacturer_Part_Number") "SM10B-SRSS-TB")
+        (field
+          (name "LCSC") "C160404")
+        (field
+          (name "Source") "spec.yaml boards.interconnect")
+        (field
+          (name "Description") "Generic connector, single row, 01x10, script generated")
+        (field
+          (name "Footprint") "Connector_JST:JST_SH_SM10B-SRSS-TB_1x10-1MP_P1.00mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "interconnect")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Connector")
+        (part "Conn_01x10_Pin"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4932a8f8-6fab-52ae-b4ae-dd10eb28fee3"))
+    (comp
+      (ref "L1")
+      (value "TBD 68uH")
+      (description "Inductor")
+      (footprint "Inductor_SMD:L_1210_3225Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc1")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet DC-DC1, review")
+        (field
+          (name "Description") "Inductor")
+        (field
+          (name "Footprint") "Inductor_SMD:L_1210_3225Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc1")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "L"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "e3f1b0f2-935f-5f15-a2cd-fd330fa29cd5"))
+    (comp
+      (ref "L2")
+      (value "TBD 68uH")
+      (description "Inductor")
+      (footprint "Inductor_SMD:L_1210_3225Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet DC-DC2, review")
+        (field
+          (name "Description") "Inductor")
+        (field
+          (name "Footprint") "Inductor_SMD:L_1210_3225Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "L"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "L3")
+      (value "TBD 4.7uH")
+      (description "Inductor")
+      (footprint "Inductor_SMD:L_1210_3225Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63203 datasheet L value, review")
+        (field
+          (name "Description") "Inductor")
+        (field
+          (name "Footprint") "Inductor_SMD:L_1210_3225Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "L"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "L4")
+      (value "TBD 330uH")
+      (description "Inductor")
+      (footprint "Inductor_SMD:L_1210_3225Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM2574 datasheet inductor, review")
+        (field
+          (name "Description") "Inductor")
+        (field
+          (name "Footprint") "Inductor_SMD:L_1210_3225Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "L"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "Q1")
+      (value "TBD >=60V >=0.5A NMOS")
+      (description "0.115A Id, 60V Vds, N-Channel MOSFET, SOT-23")
+      (footprint "Package_TO_SOT_SMD:SOT-23")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD e.g. BSS806N/IRLML0060")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI bus sink FET, review")
+        (field
+          (name "Description") "0.115A Id, 60V Vds, N-Channel MOSFET, SOT-23")
+        (field
+          (name "Footprint") "Package_TO_SOT_SMD:SOT-23")
+        (field
+          (name "Datasheet") "https://www.onsemi.com/pub/Collateral/NDS7002A-D.PDF")
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Transistor_FET")
+        (part "2N7002"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "Q2")
+      (value "TBD NPN")
+      (description "0.1A Ic, 45V Vce, NPN Transistor, SOT-23")
+      (footprint "Package_TO_SOT_SMD:SOT-23")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "current-limit clamp, review")
+        (field
+          (name "Description") "0.1A Ic, 45V Vce, NPN Transistor, SOT-23")
+        (field
+          (name "Footprint") "Package_TO_SOT_SMD:SOT-23")
+        (field
+          (name "Datasheet") "http://www.infineon.com/dgdl/Infineon-BC847SERIES_BC848SERIES_BC849SERIES_BC850SERIES-DS-v01_01-en.pdf?fileId=db3a304314dca389011541d4630a1657")
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Transistor_BJT")
+        (part "BC847"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "R1")
+      (value "TBD ~10k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "NCN5130 datasheet, fan-in 40 mA, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "R10")
+      (value "TBD 10k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_rx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI RX threshold current set, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_rx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "34989da2-5806-5794-b656-30c7d0af23bb"))
+    (comp
+      (ref "R11")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_rx")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_rx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "34989da2-5806-5794-b656-30c7d0af23bb"))
+    (comp
+      (ref "R12")
+      (value "TBD")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "~20.5V set divider, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "R13")
+      (value "TBD")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "~20.5V set divider, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "R14")
+      (value "5R 1W")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_2512_6332Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_limit")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "250mA limit, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_2512_6332Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_limit")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "f2ac3ebb-32db-5d66-9127-67f0d62b99b3"))
+    (comp
+      (ref "R2")
+      (value "TBD")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DC-DC2 ~12V feedback top, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "R3")
+      (value "TBD")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc2")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DC-DC2 ~12V feedback bottom, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dcdc2")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ac0f5ae-87fd-539c-96cd-30effe88d78f"))
+    (comp
+      (ref "R4")
+      (value "100k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "R5")
+      (value "1k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI TX opto LED resistor, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "R6")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "MCU-off defined state, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "R7")
+      (value "TBD 47k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI TX gate bias, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "R8")
+      (value "TBD 47k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0603_1608Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "gate pull-down, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0603_1608Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "R9")
+      (value "2R4 0.5W")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_1206_3216Metric")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "I_lim ~0.65V/2.4R ~ 270mA, review")
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_1206_3216Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "SW1")
+      (value "TBD slide SPDT")
+      (description "Switch, single pole double throw")
+      (footprint "Button_Switch_SMD:SW_SPDT_PCM12")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_switch")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD slide switch")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "spec.yaml dali_supply_switch")
+        (field
+          (name "Description") "Switch, single pole double throw")
+        (field
+          (name "Footprint") "Button_Switch_SMD:SW_SPDT_PCM12")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dali_switch")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Switch")
+        (part "SW_SPDT"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "2f19f773-28aa-50f3-8f7e-e2074c7208db"))
+    (comp
+      (ref "U1")
+      (value "NCN5130MNTWG")
+      (description "")
+      (footprint "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "ncn5130")
+        (field
+          (name "Manufacturer") "onsemi")
+        (field
+          (name "Manufacturer_Part_Number") "NCN5130MNTWG")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "onsemi NCN5130 datasheet, Table 1 pinout")
+        (field
+          (name "Description"))
+        (field
+          (name "Footprint") "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm")
+        (field
+          (name "Datasheet") "https://www.onsemi.com/products/interfaces/wired-transceivers-modems/ncn5130")
+        (field
+          (name "SKiDL Tag") "ncn5130")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "/work/hardware/circuits/lib/gateway.kicad_sym")
+        (part "NCN5130"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "29760b15-e86d-5825-94c9-952e0f06826a"))
+    (comp
+      (ref "U2")
+      (value "AP63203WU-7")
+      (description "2A, 1.1MHz Buck DC/DC Converter, fixed 5.0V output voltage, TSOT-23-6")
+      (footprint "Package_TO_SOT_SMD:TSOT-23-6")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "buck3v3")
+        (field
+          (name "Manufacturer") "Diodes Inc.")
+        (field
+          (name "Manufacturer_Part_Number") "AP63203WU-7")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "AP63200/03/05 datasheet typical application")
+        (field
+          (name "Description") "2A, 1.1MHz Buck DC/DC Converter, fixed 5.0V output voltage, TSOT-23-6")
+        (field
+          (name "Footprint") "Package_TO_SOT_SMD:TSOT-23-6")
+        (field
+          (name "Datasheet") "https://www.diodes.com/assets/Datasheets/AP63200-AP63201-AP63203-AP63205.pdf")
+        (field
+          (name "SKiDL Tag") "buck3v3")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Regulator_Switching")
+        (part "AP63205WU"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b200d303-e481-5558-8037-4e72d2891ecf"))
+    (comp
+      (ref "U3")
+      (value "TBD opto")
+      (description "DC Darlington Optocoupler, Vce 300V, CTR 1000%, SO-4")
+      (footprint "Package_SO:SOP-4_4.4x2.6mm_P1.27mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_tx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD LTV-352T-class")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI TX isolation, review")
+        (field
+          (name "Description") "DC Darlington Optocoupler, Vce 300V, CTR 1000%, SO-4")
+        (field
+          (name "Footprint") "Package_SO:SOP-4_4.4x2.6mm_P1.27mm")
+        (field
+          (name "Datasheet") "http://optoelectronics.liteon.com/upload/download/DS70-2001-002/S_110_LTV-352T%2020140520.pdf")
+        (field
+          (name "SKiDL Tag") "dali_tx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Isolator")
+        (part "LTV-352T"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "da9b627d-e0fb-5273-8f0e-1ed642e6fd54"))
+    (comp
+      (ref "U4")
+      (value "TBD opto")
+      (description "DC Darlington Optocoupler, Vce 300V, CTR 1000%, SO-4")
+      (footprint "Package_SO:SOP-4_4.4x2.6mm_P1.27mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_rx")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "DALI RX isolation, review")
+        (field
+          (name "Description") "DC Darlington Optocoupler, Vce 300V, CTR 1000%, SO-4")
+        (field
+          (name "Footprint") "Package_SO:SOP-4_4.4x2.6mm_P1.27mm")
+        (field
+          (name "Datasheet") "http://optoelectronics.liteon.com/upload/download/DS70-2001-002/S_110_LTV-352T%2020140520.pdf")
+        (field
+          (name "SKiDL Tag") "dali_rx")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Isolator")
+        (part "LTV-352T"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "34989da2-5806-5794-b656-30c7d0af23bb"))
+    (comp
+      (ref "U5")
+      (value "TDN5-2425WISM 24V->24V 5W iso")
+      (description "")
+      (footprint "Converter_DCDC:Converter_DCDC_TRACO_TDN_5-xxxxWISM_SMD")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dcdc_iso")
+        (field
+          (name "Manufacturer") "TRACO")
+        (field
+          (name "Manufacturer_Part_Number") "TDN 5-2425WISM")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "TRACO TDN 5 WI datasheet pinout, review")
+        (field
+          (name "Description"))
+        (field
+          (name "Footprint") "Converter_DCDC:Converter_DCDC_TRACO_TDN_5-xxxxWISM_SMD")
+        (field
+          (name "Datasheet") "TBD â isolated DC-DC module, >=4 W class, 24 Vin")
+        (field
+          (name "SKiDL Tag") "dcdc_iso")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "/work/hardware/circuits/lib/gateway.kicad_sym")
+        (part "DCDC_ISO_4P"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3ef3c697-40af-571f-932a-79d7cb888b71"))
+    (comp
+      (ref "U6")
+      (value "TBD LM2574HVM-ADJ")
+      (description "Adjustable Output Voltage, 0.5A SIMPLE SWITCHERÂ® Step-Down Voltage Regulator, High Voltage Input, SO-8")
+      (footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_buck")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD LM2574HVM-ADJ-class")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM2574HV datasheet typical buck, review")
+        (field
+          (name "Description") "Adjustable Output Voltage, 0.5A SIMPLE SWITCHERÂ® Step-Down Voltage Regulator, High Voltage Input, SO-8")
+        (field
+          (name "Footprint") "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
+        (field
+          (name "Datasheet") "https://www.ti.com/lit/ds/symlink/lm2574.pdf")
+        (field
+          (name "SKiDL Tag") "dali_buck")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Regulator_Switching")
+        (part "LM2574HVM-ADJ"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8516297c-1143-5be8-9835-cacce10f47a9"))
+    (comp
+      (ref "U7")
+      (value "TBD LM317")
+      (description "1.5A 35V Adjustable Linear Regulator, SOT-223")
+      (footprint "Package_TO_SOT_SMD:SOT-223-3_TabPin2")
+      (fields
+        (field
+          (name "Review") "draft — needs electrical review")
+        (field
+          (name "Place") "dali_limit")
+        (field
+          (name "Manufacturer") "TBD")
+        (field
+          (name "Manufacturer_Part_Number") "TBD LM317")
+        (field
+          (name "LCSC") "TBD")
+        (field
+          (name "Source") "LM317 datasheet current regulator, review")
+        (field
+          (name "Description") "1.5A 35V Adjustable Linear Regulator, SOT-223")
+        (field
+          (name "Footprint") "Package_TO_SOT_SMD:SOT-223-3_TabPin2")
+        (field
+          (name "Datasheet") "http://www.ti.com/lit/ds/symlink/lm317.pdf")
+        (field
+          (name "SKiDL Tag") "dali_limit")
+        (field
+          (name "SKiDL Line") "../circuits/common.py:40"))
+      (libsource
+        (lib "Regulator_Linear")
+        (part "LM317_SOT-223"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "f2ac3ebb-32db-5d66-9127-67f0d62b99b3")))
+  (nets
+    (net
+      (code 1)
+      (name "+12V_STORE")
+      (class "Default")
+      (node
+        (ref "#FLG7")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C11")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C12")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C8")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C9")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "12")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "13")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "U2")
+        (pin "3")
+        (pintype "POWER-IN")))
+    (net
+      (code 2)
+      (name "+3V3_MCU")
+      (class "Default")
+      (node
+        (ref "#FLG8")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C13")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C14")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C15")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R11")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "1")
+        (pintype "INPUT")))
+    (net
+      (code 3)
+      (name "+3V3_TRX")
+      (class "Default")
+      (node
+        (ref "#FLG6")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C7")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "19")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "U1")
+        (pin "20")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "29")
+        (pintype "OUTPUT"))
+      (node
+        (ref "U1")
+        (pin "30")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "40")
+        (pintype "POWER-IN")))
+    (net
+      (code 4)
+      (name "AUX_FUSED")
+      (class "Default")
+      (node
+        (ref "#FLG14")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D8")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "F1")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 5)
+      (name "AUX_P")
+      (class "Default")
+      (node
+        (ref "#FLG13")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C16")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D8")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D9")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "2")
+        (pintype "POWER-IN")))
+    (net
+      (code 6)
+      (name "CAV")
+      (class "Default")
+      (node
+        (ref "C2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "5")
+        (pintype "PASSIVE")))
+    (net
+      (code 7)
+      (name "CCP")
+      (class "Default")
+      (node
+        (ref "C1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "3")
+        (pintype "OUTPUT")))
+    (net
+      (code 8)
+      (name "CCP_B")
+      (class "Default")
+      (node
+        (ref "C1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "4")
+        (pintype "PASSIVE")))
+    (net
+      (code 9)
+      (name "CEQ1")
+      (class "Default")
+      (node
+        (ref "C3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "7")
+        (pintype "PASSIVE")))
+    (net
+      (code 10)
+      (name "CEQ2")
+      (class "Default")
+      (node
+        (ref "C4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "8")
+        (pintype "PASSIVE")))
+    (net
+      (code 11)
+      (name "DA1")
+      (class "Default")
+      (node
+        (ref "#FLG15")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D5")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "SW1")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 12)
+      (name "DA2")
+      (class "Default")
+      (node
+        (ref "#FLG16")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D5")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J2")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 13)
+      (name "DALI_20V")
+      (class "Default")
+      (node
+        (ref "#FLG11")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C19")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R12")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U7")
+        (pin "3")
+        (pintype "POWER-IN")))
+    (net
+      (code 14)
+      (name "DALI_FB6")
+      (class "Default")
+      (node
+        (ref "R12")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R13")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U6")
+        (pin "3")
+        (pintype "INPUT")))
+    (net
+      (code 15)
+      (name "DALI_GATE")
+      (class "Default")
+      (node
+        (ref "D6")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q1")
+        (pin "1")
+        (pintype "INPUT"))
+      (node
+        (ref "Q2")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R8")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "3")
+        (pintype "PASSIVE")))
+    (net
+      (code 16)
+      (name "DALI_ISO24V")
+      (class "Default")
+      (node
+        (ref "#FLG10")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "C17")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C18")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "6")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "U6")
+        (pin "10")
+        (pintype "POWER-IN")))
+    (net
+      (code 17)
+      (name "DALI_RX")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "7")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R11")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "4")
+        (pintype "PASSIVE")))
+    (net
+      (code 18)
+      (name "DALI_SENSE")
+      (class "Default")
+      (node
+        (ref "Q1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q2")
+        (pin "1")
+        (pintype "INPUT"))
+      (node
+        (ref "R9")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 19)
+      (name "DALI_SUPPLY_SW")
+      (class "Default")
+      (node
+        (ref "#FLG12")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "R14")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "SW1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U7")
+        (pin "1")
+        (pintype "INPUT")))
+    (net
+      (code 20)
+      (name "DALI_TX")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R6")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 21)
+      (name "DA_P")
+      (class "Default")
+      (node
+        (ref "#FLG9")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q1")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R10")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R7")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 22)
+      (name "GND")
+      (class "Default")
+      (node
+        (ref "#FLG1")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "#PWR1")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "C11")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C12")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C13")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C14")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C15")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C8")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C9")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "8")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "14")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "18")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "2")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "21")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "23")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "24")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "25")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "26")
+        (pintype "INPUT"))
+      (node
+        (ref "U1")
+        (pin "31")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "33")
+        (pintype "INPUT"))
+      (node
+        (ref "U2")
+        (pin "4")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "3")
+        (pintype "PASSIVE")))
+    (net
+      (code 23)
+      (name "GNDA")
+      (class "Default")
+      (node
+        (ref "#FLG2")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "#PWR2")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "C16")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D9")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "1")
+        (pintype "POWER-IN")))
+    (net
+      (code 24)
+      (name "GNDD")
+      (class "Default")
+      (node
+        (ref "#FLG3")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "#PWR3")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "C17")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C18")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C19")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D10")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R13")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R8")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R9")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "5")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "U6")
+        (pin "4")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U6")
+        (pin "5")
+        (pintype "INPUT"))
+      (node
+        (ref "U6")
+        (pin "6")
+        (pintype "POWER-IN")))
+    (net
+      (code 25)
+      (name "INT_SPARE1")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "9")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "36")
+        (pintype "OPEN-COLLECTOR")))
+    (net
+      (code 26)
+      (name "INT_SPARE2")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "10")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "37")
+        (pintype "OPEN-COLLECTOR")))
+    (net
+      (code 27)
+      (name "KNX_P")
+      (class "Default")
+      (node
+        (ref "#FLG4")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J1")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 28)
+      (name "KNX_P_PROT")
+      (class "Default")
+      (node
+        (ref "#FLG5")
+        (pin "1")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "D2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "6")
+        (pintype "POWER-IN")))
+    (net
+      (code 29)
+      (name "KNX_RXD")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "27")
+        (pintype "INPUT")))
+    (net
+      (code 30)
+      (name "KNX_TXD")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "28")
+        (pintype "OUTPUT")))
+    (net
+      (code 31)
+      (name "N$1")
+      (class "Default")
+      (node
+        (ref "R1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "38")
+        (pintype "INPUT")))
+    (net
+      (code 32)
+      (name "N$10")
+      (class "Default")
+      (node
+        (ref "D10")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U6")
+        (pin "12")
+        (pintype "OUTPUT")))
+    (net
+      (code 33)
+      (name "N$11")
+      (class "Default")
+      (node
+        (ref "R14")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U7")
+        (pin "2")
+        (pintype "POWER-OUT")))
+    (net
+      (code 34)
+      (name "N$2")
+      (class "Default")
+      (node
+        (ref "R4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "2")
+        (pintype "INPUT")))
+    (net
+      (code 35)
+      (name "N$3")
+      (class "Default")
+      (node
+        (ref "C10")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "6")
+        (pintype "PASSIVE")))
+    (net
+      (code 36)
+      (name "N$4")
+      (class "Default")
+      (node
+        (ref "C10")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "5")
+        (pintype "OUTPUT")))
+    (net
+      (code 37)
+      (name "N$5")
+      (class "Default")
+      (node
+        (ref "R5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 38)
+      (name "N$6")
+      (class "Default")
+      (node
+        (ref "R7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "4")
+        (pintype "PASSIVE")))
+    (net
+      (code 39)
+      (name "N$7")
+      (class "Default")
+      (node
+        (ref "D7")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R10")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 40)
+      (name "N$8")
+      (class "Default")
+      (node
+        (ref "D7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 41)
+      (name "N$9")
+      (class "Default")
+      (node
+        (ref "F1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J3")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 42)
+      (name "V20V")
+      (class "Default")
+      (node
+        (ref "C6")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "10")
+        (pintype "POWER-OUT")))
+    (net
+      (code 43)
+      (name "VDD2MV")
+      (class "Default")
+      (node
+        (ref "R2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "11")
+        (pintype "INPUT")))
+    (net
+      (code 44)
+      (name "VFILT")
+      (class "Default")
+      (node
+        (ref "C5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "16")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U1")
+        (pin "9")
+        (pintype "POWER-OUT")))
+    (net
+      (code 45)
+      (name "VSW1")
+      (class "Default")
+      (node
+        (ref "D3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "17")
+        (pintype "OUTPUT")))
+    (net
+      (code 46)
+      (name "VSW2")
+      (class "Default")
+      (node
+        (ref "D4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "L2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "15")
+        (pintype "OUTPUT")))))

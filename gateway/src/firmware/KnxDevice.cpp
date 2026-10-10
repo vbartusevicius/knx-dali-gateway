@@ -2,21 +2,23 @@
 
 #include <driver/gpio.h>
 #include <esp_log.h>
+#include <esp_task_wdt.h>
+#include <esp_timer.h>
 #include <led_strip.h>
 
-#include "config/Configuration.hpp"
-#include "knx/LightingObjects.hpp"
-#include "knx/ObjectMap.hpp"
-#include "knx/generated/KnxDaliGateway.h"
+#include "firmware/Application.hpp"
 
 namespace gateway::firmware {
 namespace {
 
 constexpr const char* log_tag = "knx";
-constexpr TickType_t debounce_ticks = pdMS_TO_TICKS(200);
+constexpr std::uint32_t led_blink_interval_ms = 100;
 
-// The facade's prog-LED callbacks are plain C function pointers, so the strip
-// handle lives at file scope.
+std::uint32_t now_ms() {
+    return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
+}
+
+// The LED driver handle lives at file scope; the strip is one pixel.
 led_strip_handle_t prog_led_strip = nullptr;
 
 void prog_led_on() {
@@ -35,9 +37,26 @@ void prog_led_off() {
 
 }
 
-KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusUpdate>& statuses,
-                     Queue<config::Configuration>& configuration) noexcept
-    : commands_(commands), statuses_(statuses), configuration_(configuration) {
+KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
+                     Queue<config::Configuration>& configuration,
+                     Queue<commissioning::Snapshot>& snapshots,
+                     Queue<commissioning::InputSnapshot>& input_snapshots) noexcept
+    : commands_(commands), statuses_(statuses), configuration_(configuration),
+      snapshots_(snapshots), input_snapshots_(input_snapshots),
+      hooks_{
+          [](void* ctx, const control::Command& command) {
+              return static_cast<KnxDevice*>(ctx)->commands_.try_push(command);
+          },
+          [](void* ctx) { return static_cast<KnxDevice*>(ctx)->statuses_.pop(0); },
+          [](void* ctx, const config::Configuration& config) {
+              return static_cast<KnxDevice*>(ctx)->configuration_.overwrite(config);
+          },
+          [](void* ctx) { return static_cast<KnxDevice*>(ctx)->drain_snapshots(); },
+          [](void* ctx) { return static_cast<KnxDevice*>(ctx)->drain_input_snapshots(); },
+          [](void*, const char* message) { ESP_LOGW(log_tag, "%s", message); },
+          this,
+      },
+      app_(knx_, hooks_) {
     led_strip_config_t strip_config = {};
     strip_config.strip_gpio_num = board::prog_led;
     strip_config.max_leds = 1;
@@ -55,120 +74,74 @@ KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusUpd
 void KnxDevice::run() {
     platform_.knxUartPins(static_cast<std::int8_t>(board::knx_rx), static_cast<std::int8_t>(board::knx_tx));
     platform_.knxUartBaudRate(board::knx_baud);
-    knx_.setProgLedOnCallback(&prog_led_on);
-    knx_.setProgLedOffCallback(&prog_led_off);
-    knx_.readMemory();
-    knx_.start();
+    app_.start();
 
     const gpio_config_t button = {
         .pin_bit_mask = 1ULL << board::prog_button,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_NEGEDGE,
+        .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&button);
-    const auto service_error = gpio_install_isr_service(0);
-    if (service_error == ESP_OK || service_error == ESP_ERR_INVALID_STATE) {
-        gpio_isr_handler_add(board::prog_button, &prog_button_isr, this);
-    } else {
-        ESP_LOGW(log_tag, "GPIO ISR service unavailable (%s)", esp_err_to_name(service_error));
-    }
-
+    esp_task_wdt_add(nullptr);
 
     for (;;) {
-        knx_.loop();
-        handle_button();
-        if (knx_.configured()) {
-            attach_objects();
-            publish_statuses();
-        }
+        esp_task_wdt_reset();
+        const auto now = now_ms();
+        app_.loop();
+        handle_button(now);
+        update_led(now);
         vTaskDelay(1);
     }
 }
 
-void KnxDevice::prog_button_isr(void* arg) {
-    static_cast<KnxDevice*>(arg)->note_button_edge();
+commissioning::Snapshot KnxDevice::drain_snapshots() {
+    while (const auto snapshot = snapshots_.pop(0)) {
+        latest_snapshot_ = *snapshot;
+    }
+    return latest_snapshot_;
 }
 
-void KnxDevice::note_button_edge() {
-    last_button_edge_ = xTaskGetTickCountFromISR();
-    button_pending_ = true;
+commissioning::InputSnapshot KnxDevice::drain_input_snapshots() {
+    while (const auto snapshot = input_snapshots_.pop(0)) {
+        latest_input_snapshot_ = *snapshot;
+    }
+    return latest_input_snapshot_;
 }
 
-void KnxDevice::handle_button() {
-    if (button_pending_ && xTaskGetTickCount() - last_button_edge_ >= debounce_ticks) {
-        button_pending_ = false;
+void KnxDevice::handle_button(std::uint32_t now) {
+    // BOOT button is active low with the pull-up enabled.
+    const auto gesture = prog_button_.sample(gpio_get_level(board::prog_button) == 0, now);
+    switch (gesture) {
+    case device::Gesture::ToggleProgMode:
         knx_.toggleProgMode();
+        break;
+    case device::Gesture::FactoryReset:
+        ESP_LOGW(log_tag, "prog button held: factory reset");
+        factory_reset();
+        break;
+    case device::Gesture::None:
+        break;
     }
 }
 
-void KnxDevice::attach_objects() {
-    if (objects_attached_) {
-        return;
-    }
-    objects_attached_ = true;
-    const auto count = knx_.bau().groupObjectTable().entryCount();
-    if (count < knx::object_count) {
-        ESP_LOGW(log_tag, "group object table has %u entries; objects above it are ignored",
-                 static_cast<unsigned>(count));
-    }
-    const auto last = count < knx::object_count ? count : knx::object_count;
-    for (std::uint16_t number = 1; number <= last; ++number) {
-        knx_.getGroupObject(number).callback([this](GroupObject& object) { on_group_object(object); });
-    }
-    const auto* parameters = knx_.paramData(0);
-    if (!configuration_.overwrite(config::parse_configuration(parameters, MAIN_ParameterSize))) {
-        ESP_LOGW(log_tag, "configuration queue unavailable; worker keeps the defaults");
-    }
-}
-
-void KnxDevice::on_group_object(GroupObject& object) {
-    const std::uint16_t number = object.asap();
-    const std::uint8_t raw = object.valueRef()[0];
-    const auto target = knx::object_target(number);
-    if (!target) {
-        return;
-    }
-    std::optional<control::Command> command;
-    switch (target->function) {
-    case knx::ObjectFunction::Switch:
-        command = knx::command_for_switch(number, (raw & 1) != 0);
-        break;
-    case knx::ObjectFunction::Brightness:
-        command = knx::command_for_scaling(number, raw);
-        break;
-    case knx::ObjectFunction::RelativeDimming:
-        command = knx::command_for_relative_dimming(number, raw);
-        break;
-    case knx::ObjectFunction::Scene:
-        command = knx::command_for_scene(number, raw);
-        break;
-    default:
-        break;
-    }
-    if (command && !commands_.try_push(*command)) {
-        ESP_LOGW(log_tag, "command queue full; dropped write on object %u", number);
-    }
-}
-
-void KnxDevice::publish_statuses() {
-    const auto object_count = knx_.bau().groupObjectTable().entryCount();
-    while (const auto update = statuses_.pop(0)) {
-        const auto status = knx::status_objects(*update);
-        if (!status) {
-            continue;
+void KnxDevice::update_led(std::uint32_t now) {
+    const auto pattern = prog_button_.led_pattern(knx_.progMode());
+    bool on;
+    if (pattern == device::LedPattern::FastBlink) {
+        if (static_cast<std::uint32_t>(now - last_blink_ms_) >= led_blink_interval_ms) {
+            last_blink_ms_ = now;
+            led_on_ = !led_on_;
         }
-        if (status->switch_object <= object_count) {
-            auto& switch_object = knx_.getGroupObject(status->switch_object);
-            switch_object.valueRef()[0] = status->on ? 1 : 0;
-            switch_object.objectWritten();
-        }
-        if (status->brightness_object <= object_count) {
-            auto& brightness_object = knx_.getGroupObject(status->brightness_object);
-            brightness_object.valueRef()[0] = status->scaling;
-            brightness_object.objectWritten();
-        }
+        on = led_on_;
+    } else {
+        on = pattern == device::LedPattern::On;
+        led_on_ = on;
+    }
+    if (on != led_written_) {
+        led_written_ = on;
+        on ? prog_led_on() : prog_led_off();
     }
 }
 

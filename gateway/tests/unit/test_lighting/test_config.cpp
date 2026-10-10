@@ -110,6 +110,62 @@ void test_invalid_enum_falls_back_to_last_level() {
     TEST_ASSERT_EQUAL_UINT8(gateway::knx::arc_from_scaling(128).value(), config.channels[1].fixed.value());
 }
 
+void test_default_input_channels_are_unused() {
+    const auto config = gateway::config::default_configuration();
+    for (const auto& input : config.inputs) {
+        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                          static_cast<int>(input.type));
+        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::Toggle),
+                          static_cast<int>(input.function));
+        TEST_ASSERT_EQUAL_UINT8(1, input.scene);
+        TEST_ASSERT_EQUAL_UINT8(0, input.threshold);
+    }
+}
+
+void test_parse_input_channel_block() {
+    auto buffer = parameters();
+    const auto offset = IN_ParamBlockOffset + 2 * IN_ParamBlockSize;
+    buffer[offset + IN_fDeviceAddress] = 5;
+    buffer[offset + IN_fInstance] = 1;
+    buffer[offset + IN_fInputType] = 1;   // push button
+    buffer[offset + IN_fFunction] = 3;    // toggle + dimming
+    buffer[offset + IN_fScene] = 20;
+    buffer[offset + IN_fThreshold] = 10;
+    const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
+    const auto& input = config.inputs[2];
+    TEST_ASSERT_EQUAL_UINT8(5, input.device);
+    TEST_ASSERT_EQUAL_UINT8(1, input.instance);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton),
+                      static_cast<int>(input.type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::ToggleDim),
+                      static_cast<int>(input.function));
+    TEST_ASSERT_EQUAL_UINT8(20, input.scene);
+    TEST_ASSERT_EQUAL_UINT8(10, input.threshold);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                      static_cast<int>(config.inputs[1].type));
+}
+
+void test_invalid_input_values_fall_back_to_defaults() {
+    auto buffer = parameters();
+    const auto offset = IN_ParamBlockOffset;
+    buffer[offset + IN_fDeviceAddress] = 64;
+    buffer[offset + IN_fInstance] = 32;
+    buffer[offset + IN_fInputType] = 4;
+    buffer[offset + IN_fFunction] = 5;
+    buffer[offset + IN_fScene] = 65;
+    buffer[offset + IN_fThreshold] = 101;
+    const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
+    const auto& input = config.inputs[0];
+    TEST_ASSERT_EQUAL_UINT8(0, input.device);
+    TEST_ASSERT_EQUAL_UINT8(0, input.instance);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                      static_cast<int>(input.type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::Toggle),
+                      static_cast<int>(input.function));
+    TEST_ASSERT_EQUAL_UINT8(1, input.scene);
+    TEST_ASSERT_EQUAL_UINT8(0, input.threshold);
+}
+
 void test_out_of_range_percent_falls_back_to_default_level() {
     auto buffer = parameters();
     const auto offset = CH_ParamBlockOffset + 2 * CH_ParamBlockSize;
@@ -131,5 +187,8 @@ void run_config_tests() {
     RUN_TEST(test_parse_group_mask_little_endian_two_bytes);
     RUN_TEST(test_parse_group_and_broadcast_blocks);
     RUN_TEST(test_invalid_enum_falls_back_to_last_level);
+    RUN_TEST(test_default_input_channels_are_unused);
+    RUN_TEST(test_parse_input_channel_block);
+    RUN_TEST(test_invalid_input_values_fall_back_to_defaults);
     RUN_TEST(test_out_of_range_percent_falls_back_to_default_level);
 }

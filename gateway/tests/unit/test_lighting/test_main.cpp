@@ -7,6 +7,7 @@
 #include <unity.h>
 
 #include "Fakes.hpp"
+#include "commissioning/Commissioning.hpp"
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
 #include "lighting/LightingService.hpp"
@@ -30,9 +31,21 @@ using gateway::testing::MemoryLevelStore;
 void setUp() {}
 void tearDown() {}
 void run_storage_adapter_tests();
-void run_dali_adapter_tests();
+void run_bus_tests();
+void run_bus_transport_tests();
+void run_gear_addressing_tests();
 void run_config_tests();
 void run_dimmer_tests();
+void run_retry_tests();
+void run_commissioning_tests();
+void run_prog_button_tests();
+void run_frame_tests();
+void run_colour_tests();
+void run_device_frame_tests();
+void run_device_addressing_tests();
+void run_device_inventory_tests();
+void run_event_decoder_tests();
+void run_input_mapper_tests();
 
 namespace {
 
@@ -515,38 +528,56 @@ void test_execute_dispatches_every_command() {
     MemoryLevelStore store;
     LightingService service{bus, store};
     gateway::lighting::RelativeDimmer dimmer;
+    gateway::lighting::RelativeDimmer colour_dimmer;
+    gateway::commissioning::Commissioning commissioning{bus, service};
+    gateway::inputs::InputMapper inputs;
     constexpr std::uint32_t now = 1'000;
 
-    auto result = gateway::control::execute(service, dimmer, now,
+    auto result = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
                                             gateway::control::SetLevel{channel_address(1), level(33)});
-    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.result.error));
     TEST_ASSERT_EQUAL_UINT8(33, bus.writes.back().level.value());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, dimmer, now,
-                                                               gateway::control::SwitchOn{channel_address(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                               gateway::control::SwitchOn{channel_address(1)}).result.error));
     TEST_ASSERT_EQUAL_UINT8(33, bus.writes.back().level.value());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, dimmer, now,
-                                                               gateway::control::SwitchOff{channel_address(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                               gateway::control::SwitchOff{channel_address(1)}).result.error));
     TEST_ASSERT_EQUAL_UINT8(0, bus.writes.back().level.value());
 
     const auto reads_before = bus.reads.size();
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, dimmer, now,
-                                                               gateway::control::Refresh{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                               gateway::control::Refresh{channel(1)}).result.error));
     TEST_ASSERT_EQUAL_UINT32(reads_before + 1, bus.reads.size());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, dimmer, now,
-                                                               gateway::control::Recover{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                               gateway::control::Recover{channel(1)}).result.error));
     TEST_ASSERT_EQUAL_UINT32(reads_before + 2, bus.reads.size());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, dimmer, now,
-                                                               gateway::control::ReconcileGroups{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                               gateway::control::ReconcileGroups{channel(1)}).result.error));
     TEST_ASSERT_EQUAL_UINT32(1, bus.group_reads.size());
+
+    // Commissioning commands reach the commissioning service.
+    const auto scanned = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, now,
+                                                   gateway::control::ScanBus{});
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(scanned.result.error));
+    TEST_ASSERT_EQUAL_UINT32(64, bus.presence_queries.size());
+
+    bus.commission_replies.push_back({TransportStatus::Ok, 2});
+    const auto assigned = gateway::control::execute(
+        service, dimmer, colour_dimmer, commissioning, inputs, now,
+        gateway::control::AssignAddresses{gateway::dali::CommissionMode::All});
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(assigned.result.error));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.commission_calls.size());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::CommissionMode::All),
+                      static_cast<int>(bus.commission_calls.front().mode));
 }
 
 void test_execute_routes_dim_commands_to_the_dimmer() {
@@ -555,10 +586,14 @@ void test_execute_routes_dim_commands_to_the_dimmer() {
     MemoryLevelStore store;
     LightingService service{bus, store};
     gateway::lighting::RelativeDimmer dimmer;
+    gateway::lighting::RelativeDimmer colour_dimmer;
+    gateway::commissioning::Commissioning commissioning{bus, service};
+    gateway::inputs::InputMapper inputs;
 
     const auto started = gateway::control::execute(
-        service, dimmer, 0, gateway::control::DimStart{channel_address(2), gateway::lighting::DimDirection::Up});
-    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(started.error));
+        service, dimmer, colour_dimmer, commissioning, inputs, 0,
+        gateway::control::DimStart{channel_address(2), gateway::lighting::DimDirection::Up});
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(started.result.error));
     TEST_ASSERT_TRUE(dimmer.running(channel_address(2)));
 
     std::vector<gateway::lighting::DimStep> steps;
@@ -571,16 +606,16 @@ void test_execute_routes_dim_commands_to_the_dimmer() {
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::OnAndStepUp),
                       static_cast<int>(bus.gear_commands.front().command));
 
-    const auto stopped = gateway::control::execute(service, dimmer, 0,
+    const auto stopped = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, 0,
                                                    gateway::control::DimStop{channel_address(2)});
     TEST_ASSERT_FALSE(dimmer.running(channel_address(2)));
     TEST_ASSERT_EQUAL_UINT32(1, bus.reads.size());  // finish_dimming refreshed the channel
-    TEST_ASSERT_TRUE(stopped.changed_channels.test(2));
+    TEST_ASSERT_TRUE(stopped.result.changed_channels.test(2));
 
-    const auto idle_stop = gateway::control::execute(service, dimmer, 0,
+    const auto idle_stop = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, 0,
                                                      gateway::control::DimStop{channel_address(2)});
     TEST_ASSERT_EQUAL_UINT32(1, bus.reads.size());  // no second readback when nothing ran
-    TEST_ASSERT_EQUAL_UINT32(0, idle_stop.changed_channels.count());
+    TEST_ASSERT_EQUAL_UINT32(0, idle_stop.result.changed_channels.count());
 }
 
 void test_dim_step_command_selection() {
@@ -673,8 +708,18 @@ void test_group_state_uses_lowest_numbered_answering_member() {
         gateway::dali::TransportStatus go_to_scene(gateway::dali::Address, Scene) override {
             return gateway::dali::TransportStatus::Ok;
         }
-        gateway::dali::TransportStatus store_scene(gateway::dali::Address, Scene) override {
+        gateway::dali::TransportStatus send_command(gateway::dali::Address, std::uint8_t,
+                                                  bool) override {
             return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::TransportStatus enable_device_type(std::uint8_t) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::ByteRead query(ShortAddress, std::uint8_t) override {
+            return {gateway::dali::TransportStatus::Timeout, std::nullopt};
         }
         gateway::dali::LevelRead read_level(ShortAddress address) override {
             return address.value() == 1
@@ -686,6 +731,22 @@ void test_group_state_uses_lowest_numbered_answering_member() {
         }
         gateway::dali::TransportStatus set_group_membership(ShortAddress, Group, bool) override {
             return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::GearPresence query_present(ShortAddress) override {
+            return {gateway::dali::TransportStatus::Timeout, false};
+        }
+        gateway::dali::GearStatusRead query_status(ShortAddress) override {
+            return {gateway::dali::TransportStatus::Timeout, std::nullopt};
+        }
+        gateway::dali::CommissionResult commission(gateway::dali::CommissionMode, ShortAddress,
+                                                   unsigned) override {
+            return {gateway::dali::TransportStatus::Unsupported, 0};
+        }
+        gateway::dali::TransportStatus identify(ShortAddress) override {
+            return gateway::dali::TransportStatus::Unsupported;
+        }
+        gateway::dali::TransportStatus clear_short_addresses() override {
+            return gateway::dali::TransportStatus::Unsupported;
         }
     } selective_bus;
     LightingService selective{selective_bus, store};
@@ -727,8 +788,17 @@ void test_store_scene_sends_store_sequence_without_state_change() {
     LightingService service{bus, store};
     const auto result = service.store_scene(*Scene::from(11));
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
-    TEST_ASSERT_EQUAL_UINT32(1, bus.scenes_stored.size());
-    TEST_ASSERT_EQUAL_UINT8(11, bus.scenes_stored.front().value());
+    // STORE ACTUAL LEVEL IN DTR0 (twice), EDT8 + COPY REPORT TO TEMPORARY so
+    // DT8 gear learns colour too, then STORE DTR AS SCENE 11 (twice).
+    TEST_ASSERT_EQUAL_UINT32(3, bus.command_writes.size());
+    TEST_ASSERT_EQUAL_UINT8(0x21, bus.command_writes[0].opcode);
+    TEST_ASSERT_TRUE(bus.command_writes[0].twice);
+    TEST_ASSERT_EQUAL_UINT8(0xEE, bus.command_writes[1].opcode);
+    TEST_ASSERT_FALSE(bus.command_writes[1].twice);
+    TEST_ASSERT_EQUAL_UINT8(0x40 + 11, bus.command_writes[2].opcode);
+    TEST_ASSERT_TRUE(bus.command_writes[2].twice);
+    TEST_ASSERT_EQUAL_UINT32(1, bus.device_type_enables.size());
+    TEST_ASSERT_EQUAL_UINT8(8, bus.device_type_enables[0]);
     TEST_ASSERT_EQUAL_UINT32(0, bus.reads.size());
     TEST_ASSERT_EQUAL_UINT32(0, result.changed_channels.count());
 }
@@ -744,6 +814,8 @@ void test_address_of_returns_each_command_address() {
         gateway::control::ReconcileGroups{target},
         gateway::control::DimStart{channel_address(12), gateway::lighting::DimDirection::Up},
         gateway::control::DimStop{channel_address(12)},
+        gateway::control::ReplaceDevice{target},
+        gateway::control::IdentifyDevice{target},
     };
     for (const auto& command : commands) {
         const auto resolved = gateway::control::address_of(command);
@@ -756,6 +828,11 @@ void test_address_of_returns_each_command_address() {
     TEST_ASSERT_TRUE(gateway::control::address_of(recall) == Address::broadcast());
     const auto store = gateway::control::Command{gateway::control::StoreScene{*Scene::from(0)}};
     TEST_ASSERT_TRUE(gateway::control::address_of(store) == Address::broadcast());
+    const auto scan = gateway::control::Command{gateway::control::ScanBus{}};
+    TEST_ASSERT_TRUE(gateway::control::address_of(scan) == Address::broadcast());
+    const auto assign = gateway::control::Command{
+        gateway::control::AssignAddresses{gateway::dali::CommissionMode::All}};
+    TEST_ASSERT_TRUE(gateway::control::address_of(assign) == Address::broadcast());
 }
 
 void test_refresh_never_replays_saved_commands() {
@@ -832,8 +909,20 @@ int main() {
     RUN_TEST(test_recall_scene_failure_does_not_refresh);
     RUN_TEST(test_store_scene_sends_store_sequence_without_state_change);
     run_dimmer_tests();
+    run_retry_tests();
+    run_commissioning_tests();
+    run_prog_button_tests();
+    run_frame_tests();
+    run_colour_tests();
     run_config_tests();
     run_storage_adapter_tests();
-    run_dali_adapter_tests();
+    run_bus_tests();
+    run_bus_transport_tests();
+    run_gear_addressing_tests();
+    run_device_frame_tests();
+    run_device_addressing_tests();
+    run_device_inventory_tests();
+    run_event_decoder_tests();
+    run_input_mapper_tests();
     return UNITY_END() == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -18,7 +18,11 @@
 
   <op:define prefix="GR" ModuleType="2"
     template="DaliGroup.templ.xml"
-    NumChannels="16" KoOffset="321" />
+    NumChannels="16" KoOffset="961" />
+
+  <op:define prefix="IN" ModuleType="3"
+    template="DaliInput.templ.xml"
+    NumChannels="32" KoOffset="1194" />
 
   <generate />
 </KNX>

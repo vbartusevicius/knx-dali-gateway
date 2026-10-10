@@ -1,0 +1,164 @@
+[
+ {
+  "ref": "J1",
+  "value": "JST-SH 1x10",
+  "footprint": "Connector_JST:JST_SH_SM10B-SRSS-TB_1x10-1MP_P1.00mm_Horizontal",
+  "place": "interconnect"
+ },
+ {
+  "ref": "J2",
+  "value": "USB-C",
+  "footprint": "Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7010ASV",
+  "place": "usbc"
+ },
+ {
+  "ref": "R1",
+  "value": "5.1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "usbc"
+ },
+ {
+  "ref": "R2",
+  "value": "5.1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "usbc"
+ },
+ {
+  "ref": "U1",
+  "value": "TBD USB ESD",
+  "footprint": "Package_TO_SOT_SMD:SOT-23-6",
+  "place": "usb_esd"
+ },
+ {
+  "ref": "U2",
+  "value": "TBD 3V3 LDO",
+  "footprint": "Package_TO_SOT_SMD:SOT-223-3_TabPin2",
+  "place": "usb_power"
+ },
+ {
+  "ref": "C1",
+  "value": "10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "usb_power"
+ },
+ {
+  "ref": "C2",
+  "value": "22u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "usb_power"
+ },
+ {
+  "ref": "D1",
+  "value": "TBD 20V 1A",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "usb_power"
+ },
+ {
+  "ref": "D2",
+  "value": "TBD 20V 1A",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "usb_power"
+ },
+ {
+  "ref": "U3",
+  "value": "ESP32-C6-WROOM-1-N8",
+  "footprint": "gateway_fp:ESP32-C6-WROOM-1",
+  "place": "mcu"
+ },
+ {
+  "ref": "R3",
+  "value": "10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "mcu"
+ },
+ {
+  "ref": "C3",
+  "value": "1u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "mcu"
+ },
+ {
+  "ref": "C4",
+  "value": "100n",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "mcu"
+ },
+ {
+  "ref": "C5",
+  "value": "10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "mcu"
+ },
+ {
+  "ref": "SW1",
+  "value": "RESET",
+  "footprint": "Button_Switch_SMD:SW_SPST_Omron_B3FS-100xP",
+  "place": "btn_reset"
+ },
+ {
+  "ref": "SW2",
+  "value": "PROG",
+  "footprint": "Button_Switch_SMD:SW_SPST_Omron_B3FS-100xP",
+  "place": "btn_prog"
+ },
+ {
+  "ref": "R4",
+  "value": "10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "btn_prog"
+ },
+ {
+  "ref": "D3",
+  "value": "red PROG",
+  "footprint": "LED_SMD:LED_0603_1608Metric",
+  "place": "led_prog"
+ },
+ {
+  "ref": "R5",
+  "value": "1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "led_prog"
+ },
+ {
+  "ref": "D4",
+  "value": "green KNX",
+  "footprint": "LED_SMD:LED_0603_1608Metric",
+  "place": "led_knx"
+ },
+ {
+  "ref": "R6",
+  "value": "1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "led_knx"
+ },
+ {
+  "ref": "D5",
+  "value": "yellow DALI",
+  "footprint": "LED_SMD:LED_0603_1608Metric",
+  "place": "led_dali"
+ },
+ {
+  "ref": "R7",
+  "value": "1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "led_dali"
+ },
+ {
+  "ref": "J3",
+  "value": "OLED",
+  "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
+  "place": "oled"
+ },
+ {
+  "ref": "R8",
+  "value": "4.7k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "oled"
+ },
+ {
+  "ref": "R9",
+  "value": "4.7k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "oled"
+ }
+]

@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 KNX-DALI gateway contributors
+# SPDX-License-Identifier: MIT
+#
+# Docker build context hygiene: build artifacts and local state stay out.
+**/.pio
+**/.venv
+**/__pycache__
+**/.git
+knxprod/output

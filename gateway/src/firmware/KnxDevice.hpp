@@ -1,43 +1,56 @@
 #pragma once
 
+#include <esp32_idf_platform.h>
+#include <knx/bau07B0.h>
 #include <knx_facade.h>
 
+#include "commissioning/Commissioning.hpp"
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
+#include "device/ProgButton.hpp"
 #include "firmware/Board.hpp"
 #include "firmware/Queue.hpp"
+#include "knxstack/KnxApplication.hpp"
 
 namespace gateway::firmware {
 
-// KNX TP device on the NCN5121 UART: maps bus writes on the channel group objects to
-// lighting commands and publishes channel status back onto the status objects.
+// ESP-IDF half of the KNX device: UART pins, WS2812 prog LED, prog-button
+// sampling and the task loop. Everything that talks to the thelsing stack
+// (object callbacks, statuses, function properties, parameters) lives in the
+// portable knxstack::KnxApplication.
 class KnxDevice final {
 public:
-    KnxDevice(Queue<control::Command>& commands, Queue<control::StatusUpdate>& statuses,
-              Queue<config::Configuration>& configuration) noexcept;
-    KnxDevice(const KnxDevice&) = delete;
-    KnxDevice& operator=(const KnxDevice&) = delete;
+    KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
+              Queue<config::Configuration>& configuration,
+              Queue<commissioning::Snapshot>& snapshots,
+              Queue<commissioning::InputSnapshot>& input_snapshots) noexcept;
 
-    [[noreturn]] void run();
+    void run();
 
 private:
-    static void prog_button_isr(void* arg);
+    void handle_button(std::uint32_t now_ms);
+    void update_led(std::uint32_t now_ms);
+    commissioning::Snapshot drain_snapshots();
+    commissioning::InputSnapshot drain_input_snapshots();
 
-    void note_button_edge();
-    void handle_button();
-    void attach_objects();
-    void on_group_object(GroupObject& object);
-    void publish_statuses();
+    using Facade = KnxFacade<Esp32IdfPlatform, Bau07B0>;
 
     Esp32IdfPlatform platform_{board::knx_uart};
     Bau07B0 bau_{platform_};
-    KnxFacade<Esp32IdfPlatform, Bau07B0> knx_{bau_};
+    Facade knx_{bau_};
     Queue<control::Command>& commands_;
-    Queue<control::StatusUpdate>& statuses_;
+    Queue<control::StatusEvent>& statuses_;
     Queue<config::Configuration>& configuration_;
-    volatile TickType_t last_button_edge_ = 0;
-    volatile bool button_pending_ = false;
-    bool objects_attached_ = false;
+    Queue<commissioning::Snapshot>& snapshots_;
+    Queue<commissioning::InputSnapshot>& input_snapshots_;
+    commissioning::Snapshot latest_snapshot_{};
+    commissioning::InputSnapshot latest_input_snapshot_{};
+    knxstack::KnxApplication<Facade>::Hooks hooks_{};
+    knxstack::KnxApplication<Facade> app_;
+    device::ProgButton prog_button_;
+    std::uint32_t last_blink_ms_ = 0;
+    bool led_on_ = false;
+    bool led_written_ = false;
 };
 
 }

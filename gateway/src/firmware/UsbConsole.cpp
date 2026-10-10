@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "firmware/Application.hpp"
+
 namespace gateway::firmware {
 namespace {
 
@@ -45,8 +47,11 @@ std::optional<dali::ShortAddress> address_argument(const char* text) {
 
 }
 
-UsbConsole::UsbConsole(Queue<control::Command>& commands, bool dali_configured, bool storage_available) noexcept
-    : commands_(commands), dali_configured_(dali_configured), storage_available_(storage_available) {}
+UsbConsole::UsbConsole(Queue<control::Command>& commands, Queue<commissioning::Snapshot>& snapshots,
+                       Queue<commissioning::InputSnapshot>& input_snapshots,
+                       bool dali_configured, bool storage_available) noexcept
+    : commands_(commands), snapshots_(snapshots), input_snapshots_(input_snapshots),
+      dali_configured_(dali_configured), storage_available_(storage_available) {}
 
 UsbConsole::~UsbConsole() {
     if (repl_) {
@@ -91,7 +96,15 @@ esp_err_t UsbConsole::start() {
         {"recover", "<a0..63>", recover_command},
         {"dim", "<a0..63|g0..15|b> up|down|stop", dim_command},
         {"scene", "<0..15>", scene_command},
-        {"store", "<0..15>", store_command}
+        {"store", "<0..15>", store_command},
+        {"scan", "", scan_command},
+        {"assign", "new|all", assign_command},
+        {"replace", "<a0..63>", replace_command},
+        {"identify", "<a0..63>", identify_command},
+        {"faults", "", faults_command},
+        {"reset-addresses", "confirm", reset_addresses_command},
+        {"inputs", "scan|assign new|assign all|list", inputs_command},
+        {"factory-reset", "confirm", factory_reset_command}
     };
     for (const auto& command : commands) {
         error = register_command(command.name, command.hint, command.handler);
@@ -233,6 +246,145 @@ int UsbConsole::store_command(void* context, int argc, char** argv) {
     }
     auto& console = *static_cast<UsbConsole*>(context);
     return console.submit(control::StoreScene{*scene});
+}
+
+int UsbConsole::scan_command(void* context, int argc, char**) {
+    if (argc != 1) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::ScanBus{});
+}
+
+int UsbConsole::assign_command(void* context, int argc, char** argv) {
+    if (argc != 2) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    if (std::strcmp(argv[1], "new") == 0) {
+        return console.submit(control::AssignAddresses{dali::CommissionMode::Unaddressed});
+    }
+    if (std::strcmp(argv[1], "all") == 0) {
+        return console.submit(control::AssignAddresses{dali::CommissionMode::All});
+    }
+    std::printf("Expected new or all.\n");
+    return 1;
+}
+
+int UsbConsole::replace_command(void* context, int argc, char** argv) {
+    if (argc != 2) {
+        return 1;
+    }
+    const auto address = address_argument(argv[1]);
+    if (!address) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::ReplaceDevice{*address});
+}
+
+int UsbConsole::identify_command(void* context, int argc, char** argv) {
+    if (argc != 2) {
+        return 1;
+    }
+    const auto address = address_argument(argv[1]);
+    if (!address) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::IdentifyDevice{*address});
+}
+
+int UsbConsole::faults_command(void* context, int argc, char**) {
+    if (argc != 1) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    std::optional<commissioning::Snapshot> snapshot;
+    while (const auto next = console.snapshots_.pop(0)) {
+        snapshot = *next;
+    }
+    if (!snapshot) {
+        std::printf("no commissioning snapshot yet\n");
+        return 0;
+    }
+    const auto print_bitmap = [](const char* name, const std::array<std::uint8_t, 8>& bitmap) {
+        std::printf("%s=", name);
+        for (const auto byte : bitmap) {
+            std::printf("%02x", byte);
+        }
+    };
+    print_bitmap("present", snapshot->present);
+    std::printf(" ");
+    print_bitmap("faulty", snapshot->faulty);
+    std::printf(" phase=%u progress=%u%% found=%u error=%u\n",
+                static_cast<unsigned>(snapshot->progress.phase),
+                static_cast<unsigned>(snapshot->progress.progress),
+                static_cast<unsigned>(snapshot->progress.found),
+                static_cast<unsigned>(snapshot->progress.last_error));
+    return 0;
+}
+
+int UsbConsole::reset_addresses_command(void* context, int argc, char** argv) {
+    if (argc != 2 || std::strcmp(argv[1], "confirm") != 0) {
+        std::printf("This wipes every DALI short address on the bus; type 'reset-addresses confirm'.\n");
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::ResetAddresses{});
+}
+
+int UsbConsole::inputs_command(void* context, int argc, char** argv) {
+    auto& console = *static_cast<UsbConsole*>(context);
+    if (argc == 2 && std::strcmp(argv[1], "scan") == 0) {
+        return console.submit(control::ScanInputDevices{});
+    }
+    if (argc == 3 && std::strcmp(argv[1], "assign") == 0) {
+        if (std::strcmp(argv[2], "new") == 0) {
+            return console.submit(
+                control::AssignInputDevices{dali::CommissionMode::Unaddressed});
+        }
+        if (std::strcmp(argv[2], "all") == 0) {
+            return console.submit(control::AssignInputDevices{dali::CommissionMode::All});
+        }
+    }
+    if (argc == 2 && std::strcmp(argv[1], "list") == 0) {
+        std::optional<commissioning::InputSnapshot> snapshot;
+        while (const auto next = console.input_snapshots_.pop(0)) {
+            snapshot = *next;
+        }
+        if (!snapshot) {
+            std::printf("no input-device snapshot yet\n");
+            return 0;
+        }
+        bool found = false;
+        for (unsigned index = 0; index < snapshot->summary.size(); ++index) {
+            if (!(snapshot->present[index / 8] & (1u << (index % 8)))) {
+                continue;
+            }
+            found = true;
+            const auto summary = snapshot->summary[index];
+            std::printf("device %2u: %u instance(s)%s%s%s\n", index,
+                        static_cast<unsigned>(summary & 0x1F),
+                        (summary & 0x20) ? " push-button" : "",
+                        (summary & 0x40) ? " occupancy" : "",
+                        (summary & 0x80) ? " light" : "");
+        }
+        if (!found) {
+            std::printf("no input devices found\n");
+        }
+        return 0;
+    }
+    std::printf("Expected 'inputs scan', 'inputs assign new|all' or 'inputs list'.\n");
+    return 1;
+}
+
+int UsbConsole::factory_reset_command(void*, int argc, char** argv) {
+    if (argc != 2 || std::strcmp(argv[1], "confirm") != 0) {
+        std::printf("This erases the KNX and lighting configuration; type 'factory-reset confirm'.\n");
+        return 1;
+    }
+    factory_reset();
 }
 
 }

@@ -1,5 +1,5 @@
 {
     "name": "sdk_fakes",
     "version": "0.0.1",
-    "description": "Host stand-ins for the ESP-IDF DALI and NVS APIs used by the native test builds"
+    "description": "Host stand-ins for the ESP-IDF NVS API used by the native test builds"
 }

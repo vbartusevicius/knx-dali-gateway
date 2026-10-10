@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: The knx-dali-gateway contributors
+# SPDX-License-Identifier: CERN-OHL-P-2.0
+#
+# Deterministic placement plan for the upper board. Coordinates are in
+# board-local millimetres (x right, y up, origin bottom-left); pcbnew
+# maps y -> -y.
+#
+# The board is parallel to the product front face: buttons/LEDs on the
+# front layer poke through the front cover. Small SMD passives go on the
+# back layer, which faces the ~38 mm air gap to the lower board. The
+# ESP32 module's antenna section points at the top edge with a
+# board-level copper keepout. Interconnect and the internal USB-C
+# service connector sit at the bottom edge.
+
+back_blocks: [usb_esd, usb_power, usbc, mcu, led_prog, led_knx, led_dali, oled]
+
+fixed:
+  J1:  { x: 27.9,  y: 7.0,  rot: 90 }    # interconnect, bottom right
+  J2:  { x: 8.0,   y: 4.0,  rot: 0 }     # USB-C, bottom edge (inside case)
+  U3:  { x: 15.0,  y: 22.5, rot: 0 }     # ESP32-C6-WROOM-1, antenna at top
+  SW2: { x: 5.5,   y: 39.2, rot: 0 }     # PROG button
+  SW1: { x: 17.0,  y: 39.2, rot: 0 }     # RESET button (recessed by case)
+  D3:  { x: 23.6,  y: 41.0, rot: 0 }     # LED PROG (red)
+  D4:  { x: 26.7,  y: 41.0, rot: 0 }     # LED KNX (green)
+  D5:  { x: 29.8,  y: 41.0, rot: 0 }     # LED DALI (yellow)
+  J3:  { x: 3.5,   y: 15.5, rot: 0 }     # OLED header (DNP rev A)
+
+blocks:
+  usb_esd:      { x: 13.5, y: 2.5,  w: 5.0,  h: 5.0 }   # USBLC6 next to USB-C
+  usb_power:    { x: 19.5, y: 1.5,  w: 11.0, h: 8.0 }   # LDO + OR diodes + caps
+  usbc:         { x: 14.0, y: 8.5,  w: 5.0,  h: 3.5 }   # CC resistors
+  mcu:          { x: 8.0,  y: 14.0, w: 16.0, h: 17.0 }  # EN RC + decoupling (back)
+  led_prog:     { x: 2.0,  y: 33.0, w: 4.0,  h: 3.5 }   # LED series R
+  led_knx:      { x: 7.0,  y: 33.0, w: 4.0,  h: 3.0 }
+  led_dali:     { x: 12.0, y: 33.0, w: 4.0,  h: 3.0 }
+  oled:         { x: 1.5,  y: 17.0, w: 4.5,  h: 5.0 }   # I2C pull-ups
+
+mounting_holes:
+  - { x: 2.5,  y: 22.0 }
+  - { x: 29.0, y: 25.0 }
+
+# no copper above the module's antenna section (footprints/pads allowed:
+# the keepout only restricts copper pour and tracks)
+antenna_keepout: { x0: 5.0, y0: 31.0, x1: 26.5, y1: 43.0 }
+
+zones:
+  - { net: GND, layer: F.Cu, region: { x0: 0, y0: 0, x1: 31.5, y1: 31 } }
+  - { net: GND, layer: B.Cu }

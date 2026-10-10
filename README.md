@@ -14,6 +14,8 @@ provisioning is done with ETS. No KNX or DALI certification is claimed or implie
 | repo tooling | README/AGENTS docs, .vscode, REUSE metadata      | CC-BY-4.0 / CC0-1.0 |
 
 Licences follow the REUSE specification (see `REUSE.toml`); per-file licence
-headers are intentionally omitted. See `gateway/THIRD_PARTY_NOTICES.md` for the
-third-party software inside the firmware. Engineering rules, requirements, and
-current limitations are documented in `AGENTS.md`.
+headers are intentionally omitted. Firmware links Espressif's binary-only radio
+libraries, as ESP32 KNX projects commonly do. See
+`gateway/THIRD_PARTY_NOTICES.md` for the third-party software inside the
+firmware. Engineering rules, requirements, and current limitations are
+documented in `AGENTS.md`.

@@ -1,0 +1,11 @@
+No footprint for GND/#PWR1 added at /work/hardware/circuits/common.py:66.
+No footprint for PWR_FLAG/#FLG1 added at /work/hardware/circuits/common.py:73.
+No footprint for PWR_FLAG/#FLG2 added at /work/hardware/circuits/common.py:73.
+No footprint for PWR_FLAG/#FLG3 added at /work/hardware/circuits/common.py:73.
+No footprint for PWR_FLAG/#FLG4 added at /work/hardware/circuits/common.py:73.
+No footprint for PWR_FLAG/#FLG5 added at /work/hardware/circuits/common.py:73.
+No footprint for PWR_FLAG/#FLG6 added at /work/hardware/circuits/common.py:73.
+Missing tag on  instantiated at /work/hardware/scripts/gen_circuits.py:44.
+6 warnings found while generating netlist.
+26 errors found while generating netlist.
+

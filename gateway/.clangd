@@ -15,3 +15,18 @@ CompileFlags:
     - -I.pio/libdeps/native/Unity/src
   Remove:
     - -DUNITY_INCLUDE_CONFIG_H
+---
+# The Linux integration lab builds only inside Docker; on the host we borrow
+# the native DB and add the lab env's defines and the knx lib include path.
+If:
+  PathMatch: src/lab/.*
+CompileFlags:
+  CompilationDatabase: .pio/build/native/clangd
+  Add:
+    - -Isrc
+    - -I.pio/libdeps/lab/knx/src
+    - -DMASK_VERSION=0x57B0
+    - -DKNX_NO_AUTOMATIC_GLOBAL_INSTANCE
+    - -DKNX_FLASH_SIZE=8192
+    - -DKNX_TUNNELING=4
+    - -D__linux__

@@ -1,0 +1,374 @@
+[
+ {
+  "ref": "J1",
+  "value": "KNX bus terminal pins",
+  "footprint": "Connector_PinHeader_1.00mm:PinHeader_1x02_P1.00mm_Vertical",
+  "place": "knx_in"
+ },
+ {
+  "ref": "D1",
+  "value": "SMBJ33A TBD",
+  "footprint": "Diode_SMD:D_SMB",
+  "place": "knx_in"
+ },
+ {
+  "ref": "D2",
+  "value": "TBD 60V 1A",
+  "footprint": "Diode_SMD:D_SMA",
+  "place": "knx_in"
+ },
+ {
+  "ref": "U1",
+  "value": "NCN5130MNTWG",
+  "footprint": "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "R1",
+  "value": "TBD ~10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C1",
+  "value": "TBD",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C2",
+  "value": "TBD 1u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C3",
+  "value": "TBD",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C4",
+  "value": "TBD",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C5",
+  "value": "TBD 10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "C6",
+  "value": "TBD 1u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "ncn5130"
+ },
+ {
+  "ref": "L1",
+  "value": "TBD 68uH",
+  "footprint": "Inductor_SMD:L_1210_3225Metric",
+  "place": "dcdc1"
+ },
+ {
+  "ref": "D3",
+  "value": "TBD 60V 1A",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "dcdc1"
+ },
+ {
+  "ref": "C7",
+  "value": "TBD 33u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "dcdc1"
+ },
+ {
+  "ref": "L2",
+  "value": "TBD 68uH",
+  "footprint": "Inductor_SMD:L_1210_3225Metric",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "D4",
+  "value": "TBD 60V 1A",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "R2",
+  "value": "TBD",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "R3",
+  "value": "TBD",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "C8",
+  "value": "1000u 25V",
+  "footprint": "Capacitor_THT:CP_Radial_D12.5mm_P5.00mm",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "C9",
+  "value": "100n",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "dcdc2"
+ },
+ {
+  "ref": "U2",
+  "value": "AP63203WU-7",
+  "footprint": "Package_TO_SOT_SMD:TSOT-23-6",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "R4",
+  "value": "100k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C10",
+  "value": "100n",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "L3",
+  "value": "TBD 4.7uH",
+  "footprint": "Inductor_SMD:L_1210_3225Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C11",
+  "value": "10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C12",
+  "value": "100n",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C13",
+  "value": "22u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C14",
+  "value": "22u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "C15",
+  "value": "100n",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "buck3v3"
+ },
+ {
+  "ref": "J2",
+  "value": "DALI",
+  "footprint": "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
+  "place": "dali_terminal"
+ },
+ {
+  "ref": "D5",
+  "value": "TBD 600V 1A bridge",
+  "footprint": "Diode_SMD:Diode_Bridge_Vishay_DFS",
+  "place": "dali_bridge"
+ },
+ {
+  "ref": "U3",
+  "value": "TBD opto",
+  "footprint": "Package_SO:SOP-4_4.4x2.6mm_P1.27mm",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "R5",
+  "value": "1k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "R6",
+  "value": "10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "R7",
+  "value": "TBD 47k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "D6",
+  "value": "TBD 12V",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "R8",
+  "value": "TBD 47k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "Q1",
+  "value": "TBD >=60V >=0.5A NMOS",
+  "footprint": "Package_TO_SOT_SMD:SOT-23",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "R9",
+  "value": "2R4 0.5W",
+  "footprint": "Resistor_SMD:R_1206_3216Metric",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "Q2",
+  "value": "TBD NPN",
+  "footprint": "Package_TO_SOT_SMD:SOT-23",
+  "place": "dali_tx"
+ },
+ {
+  "ref": "U4",
+  "value": "TBD opto",
+  "footprint": "Package_SO:SOP-4_4.4x2.6mm_P1.27mm",
+  "place": "dali_rx"
+ },
+ {
+  "ref": "R10",
+  "value": "TBD 10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_rx"
+ },
+ {
+  "ref": "D7",
+  "value": "TBD 8V2",
+  "footprint": "Diode_SMD:D_SOD-123",
+  "place": "dali_rx"
+ },
+ {
+  "ref": "R11",
+  "value": "10k",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_rx"
+ },
+ {
+  "ref": "J3",
+  "value": "AUX",
+  "footprint": "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
+  "place": "aux_in"
+ },
+ {
+  "ref": "F1",
+  "value": "TBD 250mA",
+  "footprint": "Fuse:Fuse_1812_4532Metric",
+  "place": "aux_in"
+ },
+ {
+  "ref": "D8",
+  "value": "TBD 60V 1A",
+  "footprint": "Diode_SMD:D_SMA",
+  "place": "aux_in"
+ },
+ {
+  "ref": "D9",
+  "value": "TBD ~36V",
+  "footprint": "Diode_SMD:D_SMB",
+  "place": "aux_in"
+ },
+ {
+  "ref": "C16",
+  "value": "TBD 10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "aux_in"
+ },
+ {
+  "ref": "U5",
+  "value": "TMR4-2425WI 24V->24V 4W iso",
+  "footprint": "Converter_DCDC:Converter_DCDC_TRACO_TMR4-xxxxWI_THT",
+  "place": "dcdc_iso"
+ },
+ {
+  "ref": "C17",
+  "value": "TBD 10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "dcdc_iso"
+ },
+ {
+  "ref": "U6",
+  "value": "TBD LM2574HVM-ADJ",
+  "footprint": "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "L4",
+  "value": "TBD 330uH",
+  "footprint": "Inductor_SMD:L_1210_3225Metric",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "D10",
+  "value": "TBD 60V 1A",
+  "footprint": "Diode_SMD:D_SMA",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "R12",
+  "value": "TBD",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "R13",
+  "value": "TBD",
+  "footprint": "Resistor_SMD:R_0603_1608Metric",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "C18",
+  "value": "TBD 10u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "C19",
+  "value": "TBD 100u",
+  "footprint": "Capacitor_SMD:C_0603_1608Metric",
+  "place": "dali_buck"
+ },
+ {
+  "ref": "U7",
+  "value": "TBD LM317",
+  "footprint": "Package_TO_SOT_SMD:SOT-223-3_TabPin2",
+  "place": "dali_limit"
+ },
+ {
+  "ref": "R14",
+  "value": "5R 1W",
+  "footprint": "Resistor_SMD:R_2512_6332Metric",
+  "place": "dali_limit"
+ },
+ {
+  "ref": "SW1",
+  "value": "TBD slide SPDT",
+  "footprint": "Button_Switch_SMD:SW_SPDT_PCM12",
+  "place": "dali_switch"
+ },
+ {
+  "ref": "J4",
+  "value": "JST-SH 1x10",
+  "footprint": "Connector_JST:JST_SH_SM10B-SRSS-TB_1x10-1MP_P1.00mm_Horizontal",
+  "place": "interconnect"
+ }
+]

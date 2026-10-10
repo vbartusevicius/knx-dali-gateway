@@ -1,5 +1,9 @@
 #include "lighting/LightingService.hpp"
 
+#include <algorithm>
+
+#include "dali/Scaling.hpp"
+
 namespace gateway::lighting {
 namespace {
 
@@ -7,10 +11,26 @@ storage::Slot slot(storage::SlotKind kind, dali::Address address) noexcept {
     return {kind, address};
 }
 
+// QUERY COLOUR VALUE selectors (IEC 62386-209 Table 11, matching
+// python-dali's QueryColourValueDTR).
+constexpr std::uint8_t sel_x_coordinate = 0;
+constexpr std::uint8_t sel_y_coordinate = 1;
+constexpr std::uint8_t sel_colour_temperature = 2;
+constexpr std::uint8_t sel_red_dimlevel = 9;
+constexpr std::uint8_t sel_green_dimlevel = 10;
+constexpr std::uint8_t sel_blue_dimlevel = 11;
+constexpr std::uint8_t sel_white_dimlevel = 12;
+
+constexpr std::uint8_t no_change = 0xFF;
+
+std::uint8_t scale_components(std::uint8_t value) noexcept {
+    return dali::channel_from_scaling(value);
+}
+
 }
 
 LightingService::LightingService(dali::Transport& transport, storage::LevelStore& store) noexcept
-    : transport_(transport), store_(store) {}
+    : transport_(transport), store_(store), colour_{transport} {}
 
 void LightingService::configure(const config::Configuration& configuration) noexcept {
     config_ = configuration;
@@ -60,6 +80,11 @@ ControlResult LightingService::refresh(dali::ShortAddress address) {
 ControlResult LightingService::recover(dali::ShortAddress address) {
     auto result = refresh(address);
     if (result.transport_status != dali::TransportStatus::Unsupported) {
+        // The gear kept its colour while we were off (none is persisted);
+        // read it back so statuses reflect the bus, not our memory.
+        const auto colour = refresh_colour(address);
+        result.changed_colour_channels |= colour.changed_colour_channels;
+        result.changed_colour_groups |= colour.changed_colour_groups;
         return result;
     }
 
@@ -106,10 +131,8 @@ ControlResult LightingService::reconcile_groups(dali::ShortAddress address) {
             failed, channel_states_[address.value()], {}, {}};
 }
 
-ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel target) {
-    const auto status = transport_.set_level(address, target);
-    ControlResult result{ControlError::None, status, {}, {}, {}};
-
+std::bitset<dali::ShortAddress::capacity> LightingService::affected_channels(
+    dali::Address address) const noexcept {
     std::bitset<dali::ShortAddress::capacity> affected;
     switch (address.kind()) {
         case dali::AddressKind::Short:
@@ -128,25 +151,41 @@ ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel
             affected.set();
             break;
     }
+    return affected;
+}
 
-    if (status != dali::TransportStatus::Ok) {
-        result.error = ControlError::TransportFailure;
-        result.state = state_of(address);
-        return result;
-    }
-
+void LightingService::record_level(dali::Address address, dali::ArcLevel target,
+                                   ControlResult& result) noexcept {
+    const auto affected = affected_channels(address);
     for (std::size_t channel = 0; channel < channel_states_.size(); ++channel) {
         if (affected.test(channel)) {
             channel_states_[channel] = {target, StateSource::Commanded};
+            // RGB/RGBW and xyY statuses report colour x brightness: the
+            // brightness half just changed, so the report did too.
+            if (channel_colours_[channel].kind == ColourKind::Rgb ||
+                channel_colours_[channel].kind == ColourKind::Rgbw ||
+                channel_colours_[channel].kind == ColourKind::XyY) {
+                result.changed_colour_channels.set(channel);
+            }
         }
     }
     if (const auto group = address.as_group()) {
         group_states_[group->value()] = {target, StateSource::Commanded};
         result.changed_groups.set(group->value());
+        if (group_colours_[group->value()].kind == ColourKind::Rgb ||
+            group_colours_[group->value()].kind == ColourKind::Rgbw ||
+            group_colours_[group->value()].kind == ColourKind::XyY) {
+            result.changed_colour_groups.set(group->value());
+        }
     }
     if (address.kind() == dali::AddressKind::Broadcast) {
-        for (auto& group_state : group_states_) {
-            group_state = {target, StateSource::Commanded};
+        for (std::size_t group = 0; group < group_states_.size(); ++group) {
+            group_states_[group] = {target, StateSource::Commanded};
+            if (group_colours_[group].kind == ColourKind::Rgb ||
+                group_colours_[group].kind == ColourKind::Rgbw ||
+                group_colours_[group].kind == ColourKind::XyY) {
+                result.changed_colour_groups.set(group);
+            }
         }
         result.changed_groups.set();
     }
@@ -154,6 +193,19 @@ ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel
 
     persist(address, target, result);
     remember_if_active(address, target);
+}
+
+ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel target) {
+    const auto status = transport_.set_level(address, target);
+    ControlResult result{ControlError::None, status, {}, {}, {}};
+
+    if (status != dali::TransportStatus::Ok) {
+        result.error = ControlError::TransportFailure;
+        result.state = state_of(address);
+        return result;
+    }
+
+    record_level(address, target, result);
 
     result.state = address.kind() == dali::AddressKind::Broadcast ? State{target, StateSource::Commanded}
                                                                 : state_of(address);
@@ -200,6 +252,12 @@ ControlResult LightingService::finish_dimming(dali::Address address) {
         if (readback.transport_status == dali::TransportStatus::Ok && readback.state.level) {
             answered.set(channel);
             result.changed_channels.set(channel);
+            // Brightness moved under a colour state: colour x brightness
+            // changed even though the colour components did not.
+            const auto kind = channel_colours_[channel].kind;
+            if (kind == ColourKind::Rgb || kind == ColourKind::Rgbw || kind == ColourKind::XyY) {
+                result.changed_colour_channels.set(channel);
+            }
         } else if (result.transport_status == dali::TransportStatus::Ok) {
             result.error = ControlError::TransportFailure;
             result.transport_status = readback.transport_status;
@@ -214,6 +272,10 @@ ControlResult LightingService::finish_dimming(dali::Address address) {
             if (answered.test(channel) && (config_.group_masks[channel] >> group & 1U) != 0) {
                 group_states_[group] = channel_states_[channel];
                 result.changed_groups.set(group);
+                const auto kind = group_colours_[group].kind;
+                if (kind == ColourKind::Rgb || kind == ColourKind::Rgbw || kind == ColourKind::XyY) {
+                    result.changed_colour_groups.set(group);
+                }
                 break;
             }
         }
@@ -228,11 +290,23 @@ ControlResult LightingService::recall_scene(dali::Scene scene) {
     if (status != dali::TransportStatus::Ok) {
         return {ControlError::TransportFailure, status, {}, {}, {}};
     }
-    return finish_dimming(dali::Address::broadcast());
+    auto result = finish_dimming(dali::Address::broadcast());
+    // A scene also recalls colour on DT8 gear; read it back where probed.
+    for (std::size_t channel = 0; channel < capabilities_.size(); ++channel) {
+        if (!capabilities_[channel]) {
+            continue;
+        }
+        const auto colour = refresh_colour(*dali::ShortAddress::from(channel));
+        result.changed_colour_channels |= colour.changed_colour_channels;
+    }
+    return result;
 }
 
 ControlResult LightingService::store_scene(dali::Scene scene) {
-    const auto status = transport_.store_scene(dali::Address::broadcast(), scene);
+    // The ColourControl sequence copies the reported colour into the
+    // temporary registers before STORE DTR AS SCENE, so DT8 gear learns the
+    // colour with the level; non-DT8 gear ignores the extended frames.
+    const auto status = colour_.store_scene(dali::Address::broadcast(), scene);
     return {status == dali::TransportStatus::Ok ? ControlError::None : ControlError::TransportFailure,
             status, {}, {}, {}};
 }
@@ -324,6 +398,454 @@ State LightingService::state(dali::ShortAddress address) const noexcept {
 
 State LightingService::state(dali::Group group) const noexcept {
     return group_states_[group.value()];
+}
+
+void LightingService::set_capabilities(dali::ShortAddress address,
+                                       dali::ColourCapabilities value) noexcept {
+    capabilities_[address.value()] = value;
+}
+
+std::optional<dali::ColourCapabilities> LightingService::capabilities(
+    dali::ShortAddress address) const noexcept {
+    return capabilities_[address.value()];
+}
+
+ColourState LightingService::colour_state(dali::ShortAddress address) const noexcept {
+    return channel_colours_[address.value()];
+}
+
+ColourState LightingService::colour_state(dali::Group group) const noexcept {
+    return group_colours_[group.value()];
+}
+
+bool LightingService::colour_supported(dali::Address address, ColourKind kind) const noexcept {
+    const auto channel = address.as_short();
+    if (!channel) {
+        return true;
+    }
+    const auto& caps = capabilities_[channel->value()];
+    if (!caps) {
+        return true;
+    }
+    switch (kind) {
+        case ColourKind::Temperature:
+            return caps->tc_capable;
+        case ColourKind::Rgb:
+            return caps->rgbwaf_channels >= 3;
+        case ColourKind::Rgbw:
+            return caps->rgbwaf_channels >= 4;
+        case ColourKind::XyY:
+            return caps->xy_capable;
+        case ColourKind::None:
+            break;
+    }
+    return false;
+}
+
+void LightingService::apply_colour_state(dali::Address address, const ColourState& colour,
+                                         ControlResult& result) noexcept {
+    const auto affected = affected_channels(address);
+    for (std::size_t channel = 0; channel < channel_colours_.size(); ++channel) {
+        if (affected.test(channel)) {
+            channel_colours_[channel] = colour;
+            result.changed_colour_channels.set(channel);
+        }
+    }
+    if (const auto group = address.as_group()) {
+        group_colours_[group->value()] = colour;
+        result.changed_colour_groups.set(group->value());
+    }
+    if (address.kind() == dali::AddressKind::Broadcast) {
+        for (auto& group_colour : group_colours_) {
+            group_colour = colour;
+        }
+        result.changed_colour_groups.set();
+    }
+}
+
+ControlResult LightingService::set_colour_temperature(dali::Address address,
+                                                      std::uint16_t kelvin) {
+    const auto mirek = dali::mirek_from_kelvin(kelvin);
+    if (!mirek) {
+        return {ControlError::InvalidValue, dali::TransportStatus::Ok, state_of(address), {}, {}};
+    }
+    if (!colour_supported(address, ColourKind::Temperature)) {
+        return {ControlError::Unsupported, dali::TransportStatus::Unsupported, state_of(address), {},
+                {}};
+    }
+    const auto status = colour_.set_colour_temperature(address, *mirek);
+    ControlResult result{ControlError::None, status, {}, {}, {}};
+    if (status != dali::TransportStatus::Ok) {
+        result.error = ControlError::TransportFailure;
+        result.state = state_of(address);
+        return result;
+    }
+    ColourState colour{ColourKind::Temperature, StateSource::Commanded};
+    colour.temperature_kelvin = kelvin;
+    apply_colour_state(address, colour, result);
+    result.state = state_of(address);
+    if (const auto channel = address.as_short();
+        channel && capabilities_[channel->value()]) {
+        const auto readback = refresh_colour(*channel);
+        result.changed_colour_channels |= readback.changed_colour_channels;
+        if (result.error == ControlError::None && readback.error != ControlError::None) {
+            result.error = readback.error;
+            result.transport_status = readback.transport_status;
+        }
+    }
+    return result;
+}
+
+ControlResult LightingService::set_rgb(dali::Address address, std::uint8_t red, std::uint8_t green,
+                                       std::uint8_t blue) {
+    return apply_rgbwaf(address, red, green, blue, 0, no_change, no_change, 0b1110,
+                        ColourKind::Rgb);
+}
+
+ControlResult LightingService::set_rgbw(dali::Address address, std::uint8_t red, std::uint8_t green,
+                                        std::uint8_t blue, std::uint8_t white,
+                                        std::uint8_t validity) {
+    return apply_rgbwaf(address, red, green, blue, white, no_change, no_change,
+                        validity & 0b1111, ColourKind::Rgbw);
+}
+
+ControlResult LightingService::apply_rgbwaf(dali::Address address, std::uint8_t red,
+                                            std::uint8_t green, std::uint8_t blue,
+                                            std::uint8_t white, std::uint8_t amber,
+                                            std::uint8_t freecolour, std::uint8_t validity,
+                                            ColourKind kind) {
+    if (!colour_supported(address, kind)) {
+        return {ControlError::Unsupported, dali::TransportStatus::Unsupported, state_of(address), {},
+                {}};
+    }
+    ControlResult result{ControlError::None, dali::TransportStatus::Ok, {}, {}, {}};
+
+    const bool r_valid = (validity & 0b1000) != 0;
+    const bool g_valid = (validity & 0b0100) != 0;
+    const bool b_valid = (validity & 0b0010) != 0;
+    const bool w_valid = (validity & 0b0001) != 0;
+    const std::uint8_t brightness =
+        std::max({r_valid ? red : std::uint8_t{0}, g_valid ? green : std::uint8_t{0},
+                  b_valid ? blue : std::uint8_t{0}, w_valid ? white : std::uint8_t{0}});
+
+    const auto dali_channel = [](bool valid, std::uint8_t knx_value) {
+        return valid ? scale_components(knx_value) : no_change;
+    };
+    const auto status = colour_.set_rgbwaf(
+        address, dali_channel(r_valid, red), dali_channel(g_valid, green),
+        dali_channel(b_valid, blue), dali_channel(w_valid, white), amber, freecolour);
+    if (status != dali::TransportStatus::Ok) {
+        result.error = ControlError::TransportFailure;
+        result.transport_status = status;
+        result.state = state_of(address);
+        return result;
+    }
+    // The colour command does not touch the actual level: drive the arc to
+    // the brightest valid component so the lamp honours the KNX brightness.
+    const auto level = dali::arc_from_scaling(brightness);
+    const auto level_status = transport_.set_level(address, level);
+    if (level_status != dali::TransportStatus::Ok) {
+        result.error = ControlError::TransportFailure;
+        result.transport_status = level_status;
+        result.state = state_of(address);
+        return result;
+    }
+    record_level(address, level, result);
+
+    ColourState colour{kind, StateSource::Commanded};
+    colour.r = r_valid ? red : std::uint8_t{0};
+    colour.g = g_valid ? green : std::uint8_t{0};
+    colour.b = b_valid ? blue : std::uint8_t{0};
+    colour.w = w_valid ? white : std::uint8_t{0};
+    colour.rgbw_validity = validity;
+    colour.colour_scaling = brightness;
+    apply_colour_state(address, colour, result);
+    result.state = state_of(address);
+
+    if (const auto channel = address.as_short();
+        channel && capabilities_[channel->value()]) {
+        const auto readback = refresh_colour(*channel);
+        result.changed_colour_channels |= readback.changed_colour_channels;
+        if (result.error == ControlError::None && readback.error != ControlError::None) {
+            result.error = readback.error;
+            result.transport_status = readback.transport_status;
+        }
+    }
+    return result;
+}
+
+ControlResult LightingService::set_xy(dali::Address address, std::uint16_t x, std::uint16_t y,
+                                      bool xy_valid, std::uint8_t brightness,
+                                      bool brightness_valid) {
+    if (!colour_supported(address, ColourKind::XyY)) {
+        return {ControlError::Unsupported, dali::TransportStatus::Unsupported, state_of(address), {},
+                {}};
+    }
+    ControlResult result{ControlError::None, dali::TransportStatus::Ok, {}, {}, {}};
+    if (xy_valid) {
+        const auto status = colour_.set_xy(address, *dali::XyCoordinate::from(x),
+                                           *dali::XyCoordinate::from(y));
+        if (status != dali::TransportStatus::Ok) {
+            result.error = ControlError::TransportFailure;
+            result.transport_status = status;
+            result.state = state_of(address);
+            return result;
+        }
+        ColourState colour{ColourKind::XyY, StateSource::Commanded};
+        colour.x = x;
+        colour.y = y;
+        apply_colour_state(address, colour, result);
+    }
+    if (brightness_valid) {
+        const auto level = dali::arc_from_scaling(brightness);
+        const auto status = transport_.set_level(address, level);
+        if (status != dali::TransportStatus::Ok) {
+            result.error = ControlError::TransportFailure;
+            result.transport_status = status;
+            result.state = state_of(address);
+            return result;
+        }
+        record_level(address, level, result);
+    }
+    result.state = state_of(address);
+    if (const auto channel = address.as_short();
+        channel && capabilities_[channel->value()] && xy_valid) {
+        const auto readback = refresh_colour(*channel);
+        result.changed_colour_channels |= readback.changed_colour_channels;
+        if (result.error == ControlError::None && readback.error != ControlError::None) {
+            result.error = readback.error;
+            result.transport_status = readback.transport_status;
+        }
+    }
+    return result;
+}
+
+ControlResult LightingService::colour_temperature_step(dali::Address address,
+                                                       DimDirection direction) {
+    if (!colour_supported(address, ColourKind::Temperature)) {
+        return {ControlError::Unsupported, dali::TransportStatus::Unsupported, state_of(address), {},
+                {}};
+    }
+    // DPT 3.007 "increase" means a higher Kelvin value, i.e. a cooler white;
+    // DALI steps in mirek so increase maps to COLOUR TEMPERATURE STEP COOLER.
+    const auto status = colour_.step_colour_temperature(
+        address, direction == DimDirection::Up ? dali::ColourStep::Cooler
+                                               : dali::ColourStep::Warmer);
+    return {status == dali::TransportStatus::Ok ? ControlError::None : ControlError::TransportFailure,
+            status, state_of(address), {}, {}};
+}
+
+ControlResult LightingService::finish_colour_temperature(dali::Address address) {
+    ControlResult result{ControlError::None, dali::TransportStatus::Ok, {}, {}, {}};
+    const auto affected = affected_channels(address);
+
+    for (std::size_t channel = 0; channel < channel_colours_.size(); ++channel) {
+        if (!affected.test(channel) || !capabilities_[channel]) {
+            continue;
+        }
+        const auto refreshed =
+            refresh_colour(*dali::ShortAddress::from(static_cast<std::uint8_t>(channel)));
+        result.changed_colour_channels |= refreshed.changed_colour_channels;
+        if (result.error == ControlError::None && refreshed.error != ControlError::None) {
+            result.error = refreshed.error;
+            result.transport_status = refreshed.transport_status;
+        }
+    }
+
+    const auto derive_group = [&](std::size_t group) {
+        for (std::size_t channel = 0; channel < channel_colours_.size(); ++channel) {
+            if (result.changed_colour_channels.test(channel) &&
+                (config_.group_masks[channel] >> group & 1U) != 0) {
+                group_colours_[group] = channel_colours_[channel];
+                result.changed_colour_groups.set(group);
+                break;
+            }
+        }
+    };
+    if (const auto group = address.as_group()) {
+        derive_group(group->value());
+    }
+    if (address.kind() == dali::AddressKind::Broadcast) {
+        for (std::size_t group = 0; group < group_colours_.size(); ++group) {
+            derive_group(group);
+        }
+    }
+    result.state = state_of(address);
+    return result;
+}
+
+ControlResult LightingService::refresh_capabilities(dali::ShortAddress address) {
+    const auto read = colour_.query_colour_type_features(address);
+    if (read.status != dali::TransportStatus::Ok || !read.value) {
+        // No answer means the gear does not implement device type 8; record
+        // "no capability" rather than leaving the slot unknown.
+        capabilities_[address.value()] = dali::ColourCapabilities{};
+        const auto error = read.status == dali::TransportStatus::Timeout ||
+                                   read.status == dali::TransportStatus::Collision
+                               ? ControlError::None
+                               : ControlError::TransportFailure;
+        return {error, read.status, {}, {}, {}};
+    }
+    capabilities_[address.value()] = *read.value;
+    return {ControlError::None, read.status, {}, {}, {}};
+}
+
+ControlResult LightingService::refresh_colour(dali::ShortAddress address) {
+    ControlResult result{ControlError::None, dali::TransportStatus::Ok, {}, {}, {}};
+    const auto caps = capabilities_[address.value()];
+    if (!caps || (!caps->tc_capable && !caps->xy_capable && caps->rgbwaf_channels == 0)) {
+        return result;
+    }
+
+    auto kind = channel_colours_[address.value()].kind;
+    const auto status_read = colour_.query_colour_status(address);
+    if (status_read.status == dali::TransportStatus::Ok && status_read.value) {
+        if (status_read.value->tc_active && caps->tc_capable) {
+            kind = ColourKind::Temperature;
+        } else if (status_read.value->rgbwaf_active && caps->rgbwaf_channels >= 4) {
+            kind = ColourKind::Rgbw;
+        } else if (status_read.value->rgbwaf_active && caps->rgbwaf_channels >= 3) {
+            kind = ColourKind::Rgb;
+        } else if (status_read.value->xy_active && caps->xy_capable) {
+            kind = ColourKind::XyY;
+        }
+    }
+    if (kind == ColourKind::None) {
+        if (caps->tc_capable) {
+            kind = ColourKind::Temperature;
+        } else if (caps->rgbwaf_channels >= 4) {
+            kind = ColourKind::Rgbw;
+        } else if (caps->rgbwaf_channels >= 3) {
+            kind = ColourKind::Rgb;
+        } else if (caps->xy_capable) {
+            kind = ColourKind::XyY;
+        } else {
+            return result;
+        }
+    }
+
+    ColourState colour{kind, StateSource::Readback};
+    switch (kind) {
+        case ColourKind::Temperature: {
+            const auto read = colour_.query_colour_value(address, sel_colour_temperature);
+            if (read.status != dali::TransportStatus::Ok || !read.msb || !read.lsb) {
+                result.error = ControlError::TransportFailure;
+                result.transport_status = read.status;
+                return result;
+            }
+            const auto mirek =
+                dali::Mirek::from(static_cast<std::uint16_t>(*read.msb << 8U | *read.lsb));
+            colour.temperature_kelvin =
+                mirek ? static_cast<std::uint16_t>(dali::kelvin_from_mirek(*mirek))
+                      : std::uint16_t{0};
+            break;
+        }
+        case ColourKind::Rgb:
+        case ColourKind::Rgbw: {
+            const auto read = [&](std::uint8_t selector) -> std::optional<std::uint8_t> {
+                const auto byte = colour_.query_colour_value(address, selector);
+                if (byte.status != dali::TransportStatus::Ok || !byte.msb) {
+                    result.error = ControlError::TransportFailure;
+                    result.transport_status = byte.status;
+                    return std::nullopt;
+                }
+                return byte.msb;
+            };
+            const auto r = read(sel_red_dimlevel);
+            const auto g = read(sel_green_dimlevel);
+            const auto b = read(sel_blue_dimlevel);
+            const auto w = kind == ColourKind::Rgbw ? read(sel_white_dimlevel)
+                                                    : std::optional<std::uint8_t>{0};
+            if (result.error != ControlError::None || !r || !g || !b || !w) {
+                return result;
+            }
+            colour.r = dali::scaling_from_channel(*r);
+            colour.g = dali::scaling_from_channel(*g);
+            colour.b = dali::scaling_from_channel(*b);
+            colour.w = dali::scaling_from_channel(*w);
+            colour.rgbw_validity = kind == ColourKind::Rgbw ? std::uint8_t{0b1111}
+                                                            : std::uint8_t{0b1110};
+            colour.colour_scaling =
+                std::max({colour.r, colour.g, colour.b, colour.w, std::uint8_t{1}});
+            break;
+        }
+        case ColourKind::XyY: {
+            const auto read = [&](std::uint8_t selector) -> std::optional<std::uint16_t> {
+                const auto word = colour_.query_colour_value(address, selector);
+                if (word.status != dali::TransportStatus::Ok || !word.msb || !word.lsb) {
+                    result.error = ControlError::TransportFailure;
+                    result.transport_status = word.status;
+                    return std::nullopt;
+                }
+                return static_cast<std::uint16_t>(*word.msb << 8U | *word.lsb);
+            };
+            const auto x = read(sel_x_coordinate);
+            const auto y = read(sel_y_coordinate);
+            if (!x || !y) {
+                return result;
+            }
+            colour.x = *x;
+            colour.y = *y;
+            break;
+        }
+        case ColourKind::None:
+            return result;
+    }
+
+    channel_colours_[address.value()] = colour;
+    result.changed_colour_channels.set(address.value());
+    return result;
+}
+
+std::optional<ColourReport> LightingService::colour_report(dali::Address address) const noexcept {
+    const ColourState* colour = nullptr;
+    std::uint8_t scaling = 0;
+    const auto scaling_of = [](const State& state) {
+        return state.level ? dali::scaling_from_arc(*state.level) : std::uint8_t{0};
+    };
+    if (const auto channel = address.as_short()) {
+        colour = &channel_colours_[channel->value()];
+        scaling = scaling_of(channel_states_[channel->value()]);
+    } else if (const auto group = address.as_group()) {
+        colour = &group_colours_[group->value()];
+        scaling = scaling_of(group_states_[group->value()]);
+    } else {
+        return std::nullopt;
+    }
+    if (colour->kind == ColourKind::None) {
+        return std::nullopt;
+    }
+
+    ColourReport report{colour->kind, {}, {}, {}};
+    switch (colour->kind) {
+        case ColourKind::Temperature:
+            report.kelvin = colour->temperature_kelvin;
+            break;
+        case ColourKind::Rgb:
+        case ColourKind::Rgbw: {
+            const auto rescale = [&](std::uint8_t component) -> std::uint8_t {
+                if (colour->colour_scaling == 0) {
+                    return component;
+                }
+                return static_cast<std::uint8_t>(
+                    (component * scaling + colour->colour_scaling / 2) / colour->colour_scaling);
+            };
+            report.r = rescale(colour->r);
+            report.g = rescale(colour->g);
+            report.b = rescale(colour->b);
+            report.w = rescale(colour->w);
+            report.rgbw_validity = colour->rgbw_validity;
+            break;
+        }
+        case ColourKind::XyY:
+            report.x = colour->x;
+            report.y = colour->y;
+            report.brightness = scaling;
+            break;
+        case ColourKind::None:
+            break;
+    }
+    return report;
 }
 
 }

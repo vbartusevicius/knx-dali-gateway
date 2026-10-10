@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 KNX-DALI gateway contributors
+# SPDX-License-Identifier: CERN-OHL-P-2.0
+#
+# Freerouting autorouter, jar pinned by sha256. 2.4.1 is the last 2.4.x;
+# 2.5.x is intentionally not used yet.
+# Freerouting 2.4.1 is compiled for Java 25 (class file 69); JRE 21 is too old.
+FROM eclipse-temurin:25.0.4.1_1-jre
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL -o /opt/freerouting.jar \
+      https://github.com/freerouting/freerouting/releases/download/v2.4.1/freerouting-2.4.1.jar \
+    && echo "251101c3eeac22d7e7dfcf6796603279e5d1000283eb82d8f093780f7afc6aa9  /opt/freerouting.jar" \
+       | sha256sum -c -
+
+WORKDIR /work
+ENTRYPOINT ["/bin/bash", "-lc"]
