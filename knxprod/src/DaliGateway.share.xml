@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <ManufacturerData>
+    <Manufacturer>
+      <ApplicationPrograms>
+        <ApplicationProgram>
+          <Static>
+            <ParameterTypes>
+              <ParameterType Id="%AID%_PT-StartupDelay" Name="StartupDelay">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="255" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SwitchOnLevel" Name="SwitchOnLevel">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="Last level" Value="0" />
+                  <Enumeration Id="%ENID%" Text="Fixed level" Value="1" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Percent" Name="Percent">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" />
+              </ParameterType>
+            </ParameterTypes>
+            <Parameters>
+              <Parameter Id="%AID%_P-%TT%00001" Name="StartupDelay" ParameterType="%AID%_PT-StartupDelay" Text="Startup delay" SuffixText="s" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%00002" Name="BcSwitchOnMode" ParameterType="%AID%_PT-SwitchOnLevel" Text="Broadcast switch-on level" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%00003" Name="BcFixedLevel" ParameterType="%AID%_PT-Percent" Text="Broadcast fixed switch-on level" SuffixText="%" Value="100">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="2" BitOffset="0" />
+              </Parameter>
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
+              <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" />
+              <ParameterRef Id="%AID%_P-%TT%00003_R-%TT%0000301" RefId="%AID%_P-%TT%00003" />
+            </ParameterRefs>
+            <ComObjectTable>
+              <ComObject Id="%AID%_O-%TT%00401" Name="BcSwitch"          Number="401" Text="Broadcast: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00402" Name="BcBrightness"      Number="402" Text="Broadcast: Brightness"       FunctionText="Brightness"       ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00403" Name="BcRelativeDimming" Number="403" Text="Broadcast: Relative dimming" FunctionText="Relative dimming" ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%00404" Name="BcScene"           Number="404" Text="Broadcast: Scene"            FunctionText="Scene"            ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-18-1" />
+            </ComObjectTable>
+            <ComObjectRefs>
+              <ComObjectRef Id="%AID%_O-%TT%00401_R-%TT%0040101" RefId="%AID%_O-%TT%00401" />
+              <ComObjectRef Id="%AID%_O-%TT%00402_R-%TT%0040201" RefId="%AID%_O-%TT%00402" />
+              <ComObjectRef Id="%AID%_O-%TT%00403_R-%TT%0040301" RefId="%AID%_O-%TT%00403" />
+              <ComObjectRef Id="%AID%_O-%TT%00404_R-%TT%0040401" RefId="%AID%_O-%TT%00404" />
+            </ComObjectRefs>
+          </Static>
+          <Dynamic>
+            <ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-%TT%00001" Name="General" Text="General">
+                <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" />
+              </ParameterBlock>
+              <ParameterBlock Id="%AID%_PB-%TT%00002" Name="Broadcast" Text="Broadcast">
+                <ParameterRefRef RefId="%AID%_P-%TT%00002_R-%TT%0000201" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00003_R-%TT%0000301" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%00401_R-%TT%0040101" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%00402_R-%TT%0040201" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%00403_R-%TT%0040301" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%00404_R-%TT%0040401" />
+              </ParameterBlock>
+            </ChannelIndependentBlock>
+            <op:include href="DaliChannel.templ.xml" xpath="//ApplicationProgram/Dynamic/Channel" type="template" prefix="CH" IsInner="true" />
+            <op:include href="DaliGroup.templ.xml" xpath="//ApplicationProgram/Dynamic/Channel" type="template" prefix="GR" IsInner="true" />
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>

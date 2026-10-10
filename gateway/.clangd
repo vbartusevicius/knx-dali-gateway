@@ -1,0 +1,17 @@
+CompileFlags:
+  CompilationDatabase: .pio/build/dev_c6/clangd
+  Remove:
+    - -march=*
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+    - -fno-shrink-wrap
+    - -Werror=all
+---
+If:
+  PathMatch: tests/.*
+CompileFlags:
+  CompilationDatabase: .pio/build/native/clangd
+  Add:
+    - -I.pio/libdeps/native/Unity/src
+  Remove:
+    - -DUNITY_INCLUDE_CONFIG_H

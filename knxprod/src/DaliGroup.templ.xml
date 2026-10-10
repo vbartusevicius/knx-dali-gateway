@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <ManufacturerData>
+    <Manufacturer>
+      <ApplicationPrograms>
+        <ApplicationProgram>
+          <Static>
+            <Parameters>
+              <Parameter Id="%AID%_P-%TT%%CC%001" Name="f%C%SwitchOnMode" ParameterType="%AID%_PT-SwitchOnLevel" Text="Switch-on level" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%002" Name="f%C%FixedLevel" ParameterType="%AID%_PT-Percent" Text="Fixed switch-on level" SuffixText="%" Value="100">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
+              </Parameter>
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_P-%TT%%CC%002" />
+            </ParameterRefs>
+            <ComObjectTable>
+              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"           Number="%K0%" Text="DALI group %C%: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%SwitchStatus"     Number="%K1%" Text="DALI group %C%: Switch status"     FunctionText="Switch status"     ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%Brightness"       Number="%K2%" Text="DALI group %C%: Brightness"        FunctionText="Brightness"        ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%BrightnessStatus" Number="%K3%" Text="DALI group %C%: Brightness status" FunctionText="Brightness status" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%005" Name="%C%RelativeDimming"  Number="%K4%" Text="DALI group %C%: Relative dimming"  FunctionText="Relative dimming"  ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+            </ComObjectTable>
+            <ComObjectRefs>
+              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_O-%TT%%CC%005" />
+            </ComObjectRefs>
+          </Static>
+          <Dynamic>
+            <Channel Id="%AID%_CH-%TT%%CC%" Number="%PREFIX%" Name="DALI group %C%" Text="DALI group %C%">
+              <ParameterBlock Id="%AID%_PB-%TT%%CC%001" Name="DaliGroup%C%" Text="DALI group %C%">
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
+              </ParameterBlock>
+            </Channel>
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>

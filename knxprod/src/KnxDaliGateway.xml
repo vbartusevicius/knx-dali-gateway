@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KNX xmlns="http://knx.org/xml/project/20" xmlns:op="http://github.com/OpenKNX/OpenKNXproducer">
+  <op:ETS
+    OpenKnxId="0xFF"
+    ApplicationNumber="90"
+    ApplicationVersion="0.1"
+    ReplacesVersions="0"
+    ApplicationRevision="0"
+    ProductName="KNX DALI Gateway"
+    HardwareName="KNX-DALI-GW-C6-proto"
+    IsRailMounted="true"
+    MediumTypes="MT-0" />
+
+  <op:define prefix="CH" ModuleType="1"
+    share="DaliGateway.share.xml"
+    template="DaliChannel.templ.xml"
+    NumChannels="64" KoOffset="1" />
+
+  <op:define prefix="GR" ModuleType="2"
+    template="DaliGroup.templ.xml"
+    NumChannels="16" KoOffset="321" />
+
+  <generate />
+</KNX>
