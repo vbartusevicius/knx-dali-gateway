@@ -131,9 +131,7 @@ ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel
 
     if (status != dali::TransportStatus::Ok) {
         result.error = ControlError::TransportFailure;
-        result.state = address.as_short() ? channel_states_[address.as_short()->value()]
-                       : address.as_group() ? group_states_[address.as_group()->value()]
-                       : State{};
+        result.state = state_of(address);
         return result;
     }
 
@@ -157,10 +155,96 @@ ControlResult LightingService::apply_level(dali::Address address, dali::ArcLevel
     persist(address, target, result);
     remember_if_active(address, target);
 
-    result.state = address.as_short() ? channel_states_[address.as_short()->value()]
-                   : address.as_group() ? group_states_[address.as_group()->value()]
-                   : State{target, StateSource::Commanded};
+    result.state = address.kind() == dali::AddressKind::Broadcast ? State{target, StateSource::Commanded}
+                                                                : state_of(address);
     return result;
+}
+
+ControlResult LightingService::dim_step(dali::Address address, DimDirection direction, bool first) {
+    const auto command = direction == DimDirection::Up
+                             ? (first ? dali::GearCommand::OnAndStepUp : dali::GearCommand::Up)
+                             : dali::GearCommand::Down;
+    const auto status = transport_.send(address, command);
+    return {status == dali::TransportStatus::Ok ? ControlError::None : ControlError::TransportFailure,
+            status, state_of(address), {}, {}};
+}
+
+ControlResult LightingService::finish_dimming(dali::Address address) {
+    ControlResult result{ControlError::None, dali::TransportStatus::Ok, {}, {}, {}};
+    std::bitset<dali::ShortAddress::capacity> members;
+    std::bitset<dali::Group::capacity> groups_to_derive;
+    switch (address.kind()) {
+        case dali::AddressKind::Short:
+            members.set(address.as_short()->value());
+            break;
+        case dali::AddressKind::Group:
+            for (std::size_t channel = 0; channel < members.size(); ++channel) {
+                if ((config_.group_masks[channel] >> address.as_group()->value() & 1U) != 0) {
+                    members.set(channel);
+                }
+            }
+            groups_to_derive.set(address.as_group()->value());
+            break;
+        case dali::AddressKind::Broadcast:
+            members.set();
+            groups_to_derive.set();
+            break;
+    }
+
+    std::bitset<dali::ShortAddress::capacity> answered;
+    for (std::size_t channel = 0; channel < members.size(); ++channel) {
+        if (!members.test(channel)) {
+            continue;
+        }
+        const auto readback = refresh(*dali::ShortAddress::from(channel));
+        if (readback.transport_status == dali::TransportStatus::Ok && readback.state.level) {
+            answered.set(channel);
+            result.changed_channels.set(channel);
+        } else if (result.transport_status == dali::TransportStatus::Ok) {
+            result.error = ControlError::TransportFailure;
+            result.transport_status = readback.transport_status;
+        }
+    }
+
+    for (std::size_t group = 0; group < groups_to_derive.size(); ++group) {
+        if (!groups_to_derive.test(group)) {
+            continue;
+        }
+        for (std::size_t channel = 0; channel < members.size(); ++channel) {
+            if (answered.test(channel) && (config_.group_masks[channel] >> group & 1U) != 0) {
+                group_states_[group] = channel_states_[channel];
+                result.changed_groups.set(group);
+                break;
+            }
+        }
+    }
+
+    result.state = state_of(address);
+    return result;
+}
+
+ControlResult LightingService::recall_scene(dali::Scene scene) {
+    const auto status = transport_.go_to_scene(dali::Address::broadcast(), scene);
+    if (status != dali::TransportStatus::Ok) {
+        return {ControlError::TransportFailure, status, {}, {}, {}};
+    }
+    return finish_dimming(dali::Address::broadcast());
+}
+
+ControlResult LightingService::store_scene(dali::Scene scene) {
+    const auto status = transport_.store_scene(dali::Address::broadcast(), scene);
+    return {status == dali::TransportStatus::Ok ? ControlError::None : ControlError::TransportFailure,
+            status, {}, {}, {}};
+}
+
+State LightingService::state_of(dali::Address address) const noexcept {
+    if (const auto channel = address.as_short()) {
+        return channel_states_[channel->value()];
+    }
+    if (const auto group = address.as_group()) {
+        return group_states_[group->value()];
+    }
+    return {};
 }
 
 void LightingService::persist(dali::Address address, dali::ArcLevel level, ControlResult& result) noexcept {

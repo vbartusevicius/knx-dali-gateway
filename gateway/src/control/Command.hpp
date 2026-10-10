@@ -5,8 +5,10 @@
 
 #include "dali/Address.hpp"
 #include "dali/ArcLevel.hpp"
+#include "dali/Scene.hpp"
 #include "dali/ShortAddress.hpp"
 #include "lighting/LightingService.hpp"
+#include "lighting/RelativeDimmer.hpp"
 
 namespace gateway::control {
 
@@ -36,7 +38,25 @@ struct ReconcileGroups {
     dali::ShortAddress address;
 };
 
-using Command = std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups>;
+struct DimStart {
+    dali::Address address;
+    lighting::DimDirection direction;
+};
+
+struct DimStop {
+    dali::Address address;
+};
+
+struct RecallScene {
+    dali::Scene scene;
+};
+
+struct StoreScene {
+    dali::Scene scene;
+};
+
+using Command = std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups, DimStart,
+                             DimStop, RecallScene, StoreScene>;
 
 static_assert(std::is_trivially_copyable_v<Command>, "Command travels through FreeRTOS queues");
 
@@ -48,6 +68,11 @@ struct StatusUpdate {
 static_assert(std::is_trivially_copyable_v<StatusUpdate>, "StatusUpdate travels through FreeRTOS queues");
 
 [[nodiscard]] dali::Address address_of(const Command& command) noexcept;
-[[nodiscard]] lighting::ControlResult execute(lighting::LightingService& service, const Command& command);
+
+// Dispatches one command: dim start/stop go to the worker's dimmer (a stop
+// finishes dimming in the service), everything else to the service.
+[[nodiscard]] lighting::ControlResult execute(lighting::LightingService& service,
+                                              lighting::RelativeDimmer& dimmer, std::uint32_t now_ms,
+                                              const Command& command);
 
 }

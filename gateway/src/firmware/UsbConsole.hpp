@@ -8,7 +8,8 @@
 namespace gateway::firmware {
 
 // Bench/debug command line over the ESP32 USB port (status, level, on, off, read,
-// recover) built on ESP-IDF's console REPL. Development tool, not the production control path.
+// recover, dim, scene, store) built on ESP-IDF's console REPL. Development tool,
+// not the production control path.
 class UsbConsole final {
 public:
     UsbConsole(Queue<control::Command>& commands, bool dali_configured, bool storage_available) noexcept;
@@ -27,6 +28,9 @@ private:
     static int off_command(void* context, int argc, char** argv);
     static int read_command(void* context, int argc, char** argv);
     static int recover_command(void* context, int argc, char** argv);
+    static int dim_command(void* context, int argc, char** argv);
+    static int scene_command(void* context, int argc, char** argv);
+    static int store_command(void* context, int argc, char** argv);
 
     Queue<control::Command>& commands_;
     bool dali_configured_;

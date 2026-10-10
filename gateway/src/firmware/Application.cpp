@@ -4,6 +4,7 @@
 
 #include <esp_app_desc.h>
 #include <esp_log.h>
+#include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <nvs_flash.h>
@@ -11,6 +12,7 @@
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
 #include "espidf/DaliTransport.hpp"
+#include "lighting/RelativeDimmer.hpp"
 #include "espidf/NvsLevelStore.hpp"
 #include "firmware/Board.hpp"
 #include "firmware/KnxDevice.hpp"
@@ -162,17 +164,50 @@ void apply_configuration(Wiring& wiring) {
     ESP_LOGI(log_tag, "applied ETS configuration; reconciled %u channels, %u failed", reconciled, failed);
 }
 
+std::uint32_t now_ms() {
+    return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
+}
+
+TickType_t dimmer_wait(const lighting::RelativeDimmer& dimmer) {
+    const auto deadline = dimmer.next_deadline();
+    if (!deadline) {
+        return portMAX_DELAY;
+    }
+    const auto remaining = static_cast<std::int32_t>(*deadline - now_ms());
+    if (remaining <= 0) {
+        return 0;
+    }
+    return pdMS_TO_TICKS(static_cast<std::uint32_t>(remaining));
+}
+
+void handle_step(Wiring& wiring, lighting::DimStep step) {
+    const auto result = wiring.lighting.dim_step(step.address, step.direction, step.first);
+    if (result.error != lighting::ControlError::None) {
+        ESP_LOGW(log_tag, "dim step on %s failed: transport=%s", address_name(step.address),
+                 transport_name(result.transport_status));
+    }
+}
+
+void handle_expiry(Wiring& wiring, lighting::DimExpiry expiry) {
+    ESP_LOGW(log_tag, "relative dimming on %s hit the safety limit; reading back", address_name(expiry.address));
+    const auto result = wiring.lighting.finish_dimming(expiry.address);
+    publish_changes(wiring.statuses, wiring.lighting, result);
+}
+
 void dali_task(void* arg) {
     auto& wiring = *static_cast<Wiring*>(arg);
+    lighting::RelativeDimmer dimmer;
     for (;;) {
-        const auto command = wiring.commands.pop(portMAX_DELAY);
-        if (!command) {
-            continue;
+        const auto command = wiring.commands.pop(dimmer_wait(dimmer));
+        const auto now = now_ms();
+        if (command) {
+            apply_configuration(wiring);
+            const auto result = control::execute(wiring.lighting, dimmer, now, *command);
+            log_result(control::address_of(*command), result);
+            publish_changes(wiring.statuses, wiring.lighting, result);
         }
-        apply_configuration(wiring);
-        const auto result = control::execute(wiring.lighting, *command);
-        log_result(control::address_of(*command), result);
-        publish_changes(wiring.statuses, wiring.lighting, result);
+        dimmer.poll(now, [&wiring](lighting::DimStep step) { handle_step(wiring, step); },
+                    [&wiring](lighting::DimExpiry expiry) { handle_expiry(wiring, expiry); });
     }
 }
 

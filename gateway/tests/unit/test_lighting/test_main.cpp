@@ -10,6 +10,7 @@
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
 #include "lighting/LightingService.hpp"
+#include "lighting/RelativeDimmer.hpp"
 
 using gateway::dali::Address;
 using gateway::dali::AddressKind;
@@ -31,6 +32,7 @@ void tearDown() {}
 void run_storage_adapter_tests();
 void run_dali_adapter_tests();
 void run_config_tests();
+void run_dimmer_tests();
 
 namespace {
 
@@ -512,31 +514,223 @@ void test_execute_dispatches_every_command() {
     bus.next_groups = {TransportStatus::Ok, std::uint16_t{0}};
     MemoryLevelStore store;
     LightingService service{bus, store};
+    gateway::lighting::RelativeDimmer dimmer;
+    constexpr std::uint32_t now = 1'000;
 
-    auto result = gateway::control::execute(service, gateway::control::SetLevel{channel_address(1), level(33)});
+    auto result = gateway::control::execute(service, dimmer, now,
+                                            gateway::control::SetLevel{channel_address(1), level(33)});
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
     TEST_ASSERT_EQUAL_UINT8(33, bus.writes.back().level.value());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, gateway::control::SwitchOn{channel_address(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, now,
+                                                               gateway::control::SwitchOn{channel_address(1)}).error));
     TEST_ASSERT_EQUAL_UINT8(33, bus.writes.back().level.value());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, gateway::control::SwitchOff{channel_address(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, now,
+                                                               gateway::control::SwitchOff{channel_address(1)}).error));
     TEST_ASSERT_EQUAL_UINT8(0, bus.writes.back().level.value());
 
     const auto reads_before = bus.reads.size();
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, gateway::control::Refresh{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, now,
+                                                               gateway::control::Refresh{channel(1)}).error));
     TEST_ASSERT_EQUAL_UINT32(reads_before + 1, bus.reads.size());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, gateway::control::Recover{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, now,
+                                                               gateway::control::Recover{channel(1)}).error));
     TEST_ASSERT_EQUAL_UINT32(reads_before + 2, bus.reads.size());
 
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None),
-                      static_cast<int>(gateway::control::execute(service, gateway::control::ReconcileGroups{channel(1)}).error));
+                      static_cast<int>(gateway::control::execute(service, dimmer, now,
+                                                               gateway::control::ReconcileGroups{channel(1)}).error));
     TEST_ASSERT_EQUAL_UINT32(1, bus.group_reads.size());
+}
+
+void test_execute_routes_dim_commands_to_the_dimmer() {
+    FakeDaliTransport bus;
+    bus.next_read = {TransportStatus::Ok, level(60)};
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    gateway::lighting::RelativeDimmer dimmer;
+
+    const auto started = gateway::control::execute(
+        service, dimmer, 0, gateway::control::DimStart{channel_address(2), gateway::lighting::DimDirection::Up});
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(started.error));
+    TEST_ASSERT_TRUE(dimmer.running(channel_address(2)));
+
+    std::vector<gateway::lighting::DimStep> steps;
+    dimmer.poll(0, [&steps](gateway::lighting::DimStep step) { steps.push_back(step); },
+                [](gateway::lighting::DimExpiry) {});
+    TEST_ASSERT_EQUAL_UINT32(1, steps.size());
+    const auto step = service.dim_step(steps.front().address, steps.front().direction, steps.front().first);
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(step.error));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.gear_commands.size());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::OnAndStepUp),
+                      static_cast<int>(bus.gear_commands.front().command));
+
+    const auto stopped = gateway::control::execute(service, dimmer, 0,
+                                                   gateway::control::DimStop{channel_address(2)});
+    TEST_ASSERT_FALSE(dimmer.running(channel_address(2)));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.reads.size());  // finish_dimming refreshed the channel
+    TEST_ASSERT_TRUE(stopped.changed_channels.test(2));
+
+    const auto idle_stop = gateway::control::execute(service, dimmer, 0,
+                                                     gateway::control::DimStop{channel_address(2)});
+    TEST_ASSERT_EQUAL_UINT32(1, bus.reads.size());  // no second readback when nothing ran
+    TEST_ASSERT_EQUAL_UINT32(0, idle_stop.changed_channels.count());
+}
+
+void test_dim_step_command_selection() {
+    FakeDaliTransport bus;
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    const auto target = channel_address(4);
+
+    (void)service.dim_step(target, gateway::lighting::DimDirection::Up, true);
+    (void)service.dim_step(target, gateway::lighting::DimDirection::Up, false);
+    (void)service.dim_step(target, gateway::lighting::DimDirection::Down, true);
+    (void)service.dim_step(target, gateway::lighting::DimDirection::Down, false);
+    TEST_ASSERT_EQUAL_UINT32(4, bus.gear_commands.size());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::OnAndStepUp),
+                      static_cast<int>(bus.gear_commands[0].command));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::Up),
+                      static_cast<int>(bus.gear_commands[1].command));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::Down),
+                      static_cast<int>(bus.gear_commands[2].command));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::dali::GearCommand::Down),
+                      static_cast<int>(bus.gear_commands[3].command));
+    for (const auto& write : bus.gear_commands) {
+        TEST_ASSERT_TRUE(write.address == target);
+    }
+}
+
+void test_dim_step_reports_transport_failure() {
+    FakeDaliTransport bus;
+    bus.write_status = TransportStatus::Timeout;
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    const auto result = service.dim_step(channel_address(0), gateway::lighting::DimDirection::Up, true);
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Timeout), static_cast<int>(result.transport_status));
+}
+
+void test_finish_dimming_refreshes_a_short_address() {
+    FakeDaliTransport bus;
+    bus.next_read = {TransportStatus::Ok, level(90)};
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    const auto result = service.finish_dimming(channel_address(6));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.reads.size());
+    TEST_ASSERT_EQUAL_UINT8(6, bus.reads.front().value());
+    TEST_ASSERT_TRUE(result.changed_channels.test(6));
+    TEST_ASSERT_EQUAL_UINT8(90, result.state.level->value());
+}
+
+void test_finish_dimming_refreshes_group_members_and_derives_group_state() {
+    FakeDaliTransport bus;
+    bus.next_read = {TransportStatus::Ok, level(70)};
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    service.configure(configured_groups({{2, 0x0004}, {5, 0x0004}}));  // group 2: channels 2, 5
+    const auto result = service.finish_dimming(Address::group(group(2)));
+    TEST_ASSERT_EQUAL_UINT32(2, bus.reads.size());
+    TEST_ASSERT_TRUE(result.changed_channels.test(2));
+    TEST_ASSERT_TRUE(result.changed_channels.test(5));
+    TEST_ASSERT_EQUAL_UINT32(2, result.changed_channels.count());
+    TEST_ASSERT_TRUE(result.changed_groups.test(2));
+    TEST_ASSERT_EQUAL_UINT8(70, service.state(group(2)).level->value());
+    TEST_ASSERT_EQUAL_UINT8(70, service.state(channel(2)).level->value());
+}
+
+void test_finish_dimming_broadcast_refreshes_all_and_derives_each_group() {
+    FakeDaliTransport bus;
+    bus.next_read = {TransportStatus::Ok, level(40)};
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    service.configure(configured_groups({{0, 0x0007}}));  // group 0,1,2 have channel 0
+    const auto result = service.finish_dimming(Address::broadcast());
+    TEST_ASSERT_EQUAL_UINT32(64, bus.reads.size());
+    TEST_ASSERT_EQUAL_UINT32(64, result.changed_channels.count());
+    TEST_ASSERT_EQUAL_UINT32(3, result.changed_groups.count());
+    TEST_ASSERT_EQUAL_UINT8(40, service.state(group(0)).level->value());
+    TEST_ASSERT_FALSE(service.state(group(15)).level.has_value());  // no members -> unchanged
+}
+
+void test_group_state_uses_lowest_numbered_answering_member() {
+    // Channel 1 times out, channel 4 answers: group takes channel 4's level.
+    MemoryLevelStore store;
+    struct : gateway::dali::Transport {
+        gateway::dali::TransportStatus set_level(gateway::dali::Address, ArcLevel) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::TransportStatus send(gateway::dali::Address, gateway::dali::GearCommand) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::TransportStatus go_to_scene(gateway::dali::Address, Scene) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::TransportStatus store_scene(gateway::dali::Address, Scene) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+        gateway::dali::LevelRead read_level(ShortAddress address) override {
+            return address.value() == 1
+                       ? gateway::dali::LevelRead{TransportStatus::Timeout, std::nullopt}
+                       : gateway::dali::LevelRead{TransportStatus::Ok, ArcLevel::from(55)};
+        }
+        gateway::dali::GroupsRead read_groups(ShortAddress) override {
+            return {TransportStatus::Ok, std::uint16_t{0}};
+        }
+        gateway::dali::TransportStatus set_group_membership(ShortAddress, Group, bool) override {
+            return gateway::dali::TransportStatus::Ok;
+        }
+    } selective_bus;
+    LightingService selective{selective_bus, store};
+    selective.configure(configured_groups({{1, 0x0002}, {4, 0x0002}}));  // group 1: channels 1, 4
+    const auto finished = selective.finish_dimming(Address::group(group(1)));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure), static_cast<int>(finished.error));
+    TEST_ASSERT_TRUE(finished.changed_groups.test(1));
+    TEST_ASSERT_EQUAL_UINT8(55, selective.state(group(1)).level->value());
+}
+
+void test_recall_scene_sends_broadcast_scene_then_reads_everything() {
+    FakeDaliTransport bus;
+    bus.next_read = {TransportStatus::Ok, level(120)};
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    service.configure(configured_groups({{0, 0x0001}}));
+    const auto result = service.recall_scene(*Scene::from(3));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.scenes_recalled.size());
+    TEST_ASSERT_EQUAL_UINT8(3, bus.scenes_recalled.front().value());
+    TEST_ASSERT_EQUAL_UINT32(64, bus.reads.size());
+    TEST_ASSERT_TRUE(result.changed_groups.test(0));
+    TEST_ASSERT_EQUAL_UINT8(120, service.state(group(0)).level->value());
+}
+
+void test_recall_scene_failure_does_not_refresh() {
+    FakeDaliTransport bus;
+    bus.write_status = TransportStatus::Failure;
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    const auto result = service.recall_scene(*Scene::from(0));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL_UINT32(0, bus.reads.size());
+}
+
+void test_store_scene_sends_store_sequence_without_state_change() {
+    FakeDaliTransport bus;
+    MemoryLevelStore store;
+    LightingService service{bus, store};
+    const auto result = service.store_scene(*Scene::from(11));
+    TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
+    TEST_ASSERT_EQUAL_UINT32(1, bus.scenes_stored.size());
+    TEST_ASSERT_EQUAL_UINT8(11, bus.scenes_stored.front().value());
+    TEST_ASSERT_EQUAL_UINT32(0, bus.reads.size());
+    TEST_ASSERT_EQUAL_UINT32(0, result.changed_channels.count());
 }
 
 void test_address_of_returns_each_command_address() {
@@ -548,6 +742,8 @@ void test_address_of_returns_each_command_address() {
         gateway::control::Refresh{target},
         gateway::control::Recover{target},
         gateway::control::ReconcileGroups{target},
+        gateway::control::DimStart{channel_address(12), gateway::lighting::DimDirection::Up},
+        gateway::control::DimStop{channel_address(12)},
     };
     for (const auto& command : commands) {
         const auto resolved = gateway::control::address_of(command);
@@ -556,6 +752,10 @@ void test_address_of_returns_each_command_address() {
     }
     const auto grouped = gateway::control::SetLevel{Address::group(group(3)), level(1)};
     TEST_ASSERT_EQUAL_UINT8(3, gateway::control::address_of(grouped).as_group()->value());
+    const auto recall = gateway::control::Command{gateway::control::RecallScene{*Scene::from(0)}};
+    TEST_ASSERT_TRUE(gateway::control::address_of(recall) == Address::broadcast());
+    const auto store = gateway::control::Command{gateway::control::StoreScene{*Scene::from(0)}};
+    TEST_ASSERT_TRUE(gateway::control::address_of(store) == Address::broadcast());
 }
 
 void test_refresh_never_replays_saved_commands() {
@@ -621,6 +821,17 @@ int main() {
     RUN_TEST(test_address_of_returns_each_command_address);
     RUN_TEST(test_refresh_never_replays_saved_commands);
     RUN_TEST(test_failed_commit_is_reported_but_the_command_was_sent);
+    RUN_TEST(test_execute_routes_dim_commands_to_the_dimmer);
+    RUN_TEST(test_dim_step_command_selection);
+    RUN_TEST(test_dim_step_reports_transport_failure);
+    RUN_TEST(test_finish_dimming_refreshes_a_short_address);
+    RUN_TEST(test_finish_dimming_refreshes_group_members_and_derives_group_state);
+    RUN_TEST(test_finish_dimming_broadcast_refreshes_all_and_derives_each_group);
+    RUN_TEST(test_group_state_uses_lowest_numbered_answering_member);
+    RUN_TEST(test_recall_scene_sends_broadcast_scene_then_reads_everything);
+    RUN_TEST(test_recall_scene_failure_does_not_refresh);
+    RUN_TEST(test_store_scene_sends_store_sequence_without_state_change);
+    run_dimmer_tests();
     run_config_tests();
     run_storage_adapter_tests();
     run_dali_adapter_tests();

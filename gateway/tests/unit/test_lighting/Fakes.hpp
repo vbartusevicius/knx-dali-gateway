@@ -22,6 +22,11 @@ struct MembershipWrite {
     bool member;
 };
 
+struct GearCommandWrite {
+    dali::Address address;
+    dali::GearCommand command;
+};
+
 // Scriptable dali::Transport that records writes/reads, so LightingService is
 // tested without hardware.
 class FakeDaliTransport final : public dali::Transport {
@@ -34,21 +39,27 @@ public:
     std::vector<dali::ShortAddress> reads;
     std::vector<dali::ShortAddress> group_reads;
     std::vector<MembershipWrite> membership_writes;
+    std::vector<GearCommandWrite> gear_commands;
+    std::vector<dali::Scene> scenes_recalled;
+    std::vector<dali::Scene> scenes_stored;
 
     dali::TransportStatus set_level(dali::Address address, dali::ArcLevel level) override {
         writes.push_back({address, level});
         return write_status;
     }
 
-    dali::TransportStatus send(dali::Address, dali::GearCommand) override {
+    dali::TransportStatus send(dali::Address address, dali::GearCommand command) override {
+        gear_commands.push_back({address, command});
         return write_status;
     }
 
-    dali::TransportStatus go_to_scene(dali::Address, dali::Scene) override {
+    dali::TransportStatus go_to_scene(dali::Address, dali::Scene scene) override {
+        scenes_recalled.push_back(scene);
         return write_status;
     }
 
-    dali::TransportStatus store_scene(dali::Address, dali::Scene) override {
+    dali::TransportStatus store_scene(dali::Address, dali::Scene scene) override {
+        scenes_stored.push_back(scene);
         return write_status;
     }
 

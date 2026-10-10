@@ -155,7 +155,7 @@ void test_scaling_command_for_group_and_broadcast() {
     TEST_ASSERT_EQUAL_UINT8(254, std::get<SetLevel>(*broadcast_command).level.value());
 }
 
-void test_relative_dimming_and_scene_produce_no_command_yet() {
+void test_switch_and_scaling_decoders_reject_dim_and_scene_objects() {
     TEST_ASSERT_FALSE(gateway::knx::command_for_switch(30, true).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(30, 1).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_switch(403, true).has_value());
@@ -185,6 +185,61 @@ void test_invalid_objects_produce_no_command() {
     TEST_ASSERT_FALSE(gateway::knx::command_for_switch(0, true).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(0, 1).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(405, 1).has_value());
+}
+
+void test_relative_dimming_decodes_start_and_stop() {
+    const auto start_up = gateway::knx::command_for_relative_dimming(30, 0x09);  // ch5, up, code 1
+    TEST_ASSERT_TRUE(start_up.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::DimStart>(*start_up));
+    TEST_ASSERT_TRUE(std::get<gateway::control::DimStart>(*start_up).address == channel(5));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::DimDirection::Up),
+                      static_cast<int>(std::get<gateway::control::DimStart>(*start_up).direction));
+
+    const auto start_down = gateway::knx::command_for_relative_dimming(30, 0x01);  // down, code 1
+    TEST_ASSERT_TRUE(start_down.has_value());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::DimDirection::Down),
+                      static_cast<int>(std::get<gateway::control::DimStart>(*start_down).direction));
+
+    const auto stop_down = gateway::knx::command_for_relative_dimming(30, 0x00);
+    TEST_ASSERT_TRUE(stop_down.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::DimStop>(*stop_down));
+
+    const auto stop_up = gateway::knx::command_for_relative_dimming(30, 0x08);
+    TEST_ASSERT_TRUE(stop_up.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::DimStop>(*stop_up));
+}
+
+void test_relative_dimming_on_group_and_broadcast_objects() {
+    const auto group_dim = gateway::knx::command_for_relative_dimming(325, 0x0F);  // group 0 dim
+    TEST_ASSERT_TRUE(group_dim.has_value());
+    TEST_ASSERT_TRUE(std::get<gateway::control::DimStart>(*group_dim).address == group(0));
+
+    const auto broadcast_dim = gateway::knx::command_for_relative_dimming(403, 0x03);
+    TEST_ASSERT_TRUE(broadcast_dim.has_value());
+    TEST_ASSERT_TRUE(std::get<gateway::control::DimStart>(*broadcast_dim).address == Address::broadcast());
+
+    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(1, 0x09).has_value());   // switch object
+    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(404, 0x09).has_value()); // scene object
+}
+
+void test_scene_decodes_recall_and_store() {
+    const auto recall = gateway::knx::command_for_scene(404, 0x00);
+    TEST_ASSERT_TRUE(recall.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::RecallScene>(*recall));
+    TEST_ASSERT_EQUAL_UINT8(0, std::get<gateway::control::RecallScene>(*recall).scene.value());
+
+    const auto recall_max = gateway::knx::command_for_scene(404, 0x0F);
+    TEST_ASSERT_TRUE(recall_max.has_value());
+    TEST_ASSERT_EQUAL_UINT8(15, std::get<gateway::control::RecallScene>(*recall_max).scene.value());
+
+    const auto store = gateway::knx::command_for_scene(404, 0x80);
+    TEST_ASSERT_TRUE(store.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::StoreScene>(*store));
+    TEST_ASSERT_EQUAL_UINT8(0, std::get<gateway::control::StoreScene>(*store).scene.value());
+
+    TEST_ASSERT_FALSE(gateway::knx::command_for_scene(404, 0x10).has_value());  // scene 16+ has no DALI scene
+    TEST_ASSERT_FALSE(gateway::knx::command_for_scene(404, 0x90).has_value());
+    TEST_ASSERT_FALSE(gateway::knx::command_for_scene(403, 0x00).has_value());  // relative dimming object
 }
 
 void test_status_objects_report_known_levels() {
@@ -238,7 +293,10 @@ int main() {
     RUN_TEST(test_switch_command_for_channel_five);
     RUN_TEST(test_switch_command_for_group_and_broadcast);
     RUN_TEST(test_scaling_command_for_group_and_broadcast);
-    RUN_TEST(test_relative_dimming_and_scene_produce_no_command_yet);
+    RUN_TEST(test_switch_and_scaling_decoders_reject_dim_and_scene_objects);
+    RUN_TEST(test_relative_dimming_decodes_start_and_stop);
+    RUN_TEST(test_relative_dimming_on_group_and_broadcast_objects);
+    RUN_TEST(test_scene_decodes_recall_and_store);
     RUN_TEST(test_status_objects_do_not_produce_commands);
     RUN_TEST(test_scaling_command_maps_full_range);
     RUN_TEST(test_invalid_objects_produce_no_command);

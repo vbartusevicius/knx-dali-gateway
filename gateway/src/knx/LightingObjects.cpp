@@ -24,6 +24,35 @@ std::optional<control::Command> command_for_scaling(std::uint16_t object, std::u
     return control::Command{control::SetLevel{target->address, arc_from_scaling(raw)}};
 }
 
+std::optional<control::Command> command_for_relative_dimming(std::uint16_t object,
+                                                           std::uint8_t raw) noexcept {
+    const auto target = object_target(object);
+    if (!target || target->function != ObjectFunction::RelativeDimming) {
+        return std::nullopt;
+    }
+    const auto direction = (raw & 0x08) != 0 ? lighting::DimDirection::Up : lighting::DimDirection::Down;
+    if ((raw & 0x07) == 0) {
+        return control::Command{control::DimStop{target->address}};
+    }
+    return control::Command{control::DimStart{target->address, direction}};
+}
+
+std::optional<control::Command> command_for_scene(std::uint16_t object, std::uint8_t raw) noexcept {
+    const auto target = object_target(object);
+    if (!target || target->function != ObjectFunction::Scene) {
+        return std::nullopt;
+    }
+    const auto number = raw & 0x3F;
+    const auto scene = dali::Scene::from(number);
+    if (!scene) {
+        return std::nullopt;
+    }
+    if ((raw & 0x80) != 0) {
+        return control::Command{control::StoreScene{*scene}};
+    }
+    return control::Command{control::RecallScene{*scene}};
+}
+
 std::optional<StatusObjects> status_objects(const control::StatusUpdate& update) noexcept {
     if (!update.state.level) {
         return std::nullopt;

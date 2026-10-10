@@ -5,7 +5,9 @@
 #include <optional>
 
 #include "config/Configuration.hpp"
+#include "dali/Scene.hpp"
 #include "dali/Transport.hpp"
+#include "lighting/RelativeDimmer.hpp"
 #include "storage/LevelStore.hpp"
 
 namespace gateway::lighting {
@@ -56,6 +58,14 @@ public:
     [[nodiscard]] ControlResult refresh(dali::ShortAddress address);
     [[nodiscard]] ControlResult recover(dali::ShortAddress address);
     [[nodiscard]] ControlResult reconcile_groups(dali::ShortAddress address);
+    // One relative-dim step produced by the worker's RelativeDimmer. Sends
+    // ON AND STEP UP for the first up-step, UP/DOWN afterwards; never off.
+    [[nodiscard]] ControlResult dim_step(dali::Address address, DimDirection direction, bool first);
+    // Read back actual levels after a dim finished (stop or expiry); group and
+    // broadcast states are derived from the lowest-numbered answering member.
+    [[nodiscard]] ControlResult finish_dimming(dali::Address address);
+    [[nodiscard]] ControlResult recall_scene(dali::Scene scene);
+    [[nodiscard]] ControlResult store_scene(dali::Scene scene);
     State state(dali::ShortAddress address) const noexcept;
     State state(dali::Group group) const noexcept;
 
@@ -70,6 +80,7 @@ private:
     std::optional<dali::ArcLevel> last_active(dali::Address address) noexcept;
     const config::SwitchOn& switch_on_policy(dali::Address address) const noexcept;
     void remember_if_active(dali::Address address, dali::ArcLevel level) noexcept;
+    State state_of(dali::Address address) const noexcept;
 
     dali::Transport& transport_;
     storage::LevelStore& store_;

@@ -88,7 +88,10 @@ esp_err_t UsbConsole::start() {
         {"on", "<a0..63|g0..15|b>", on_command},
         {"off", "<a0..63|g0..15|b>", off_command},
         {"read", "<a0..63>", read_command},
-        {"recover", "<a0..63>", recover_command}
+        {"recover", "<a0..63>", recover_command},
+        {"dim", "<a0..63|g0..15|b> up|down|stop", dim_command},
+        {"scene", "<0..15>", scene_command},
+        {"store", "<0..15>", store_command}
     };
     for (const auto& command : commands) {
         error = register_command(command.name, command.hint, command.handler);
@@ -180,6 +183,56 @@ int UsbConsole::recover_command(void* context, int argc, char** argv) {
     }
     auto& console = *static_cast<UsbConsole*>(context);
     return console.submit(control::Recover{*address});
+}
+
+int UsbConsole::dim_command(void* context, int argc, char** argv) {
+    if (argc != 3) {
+        return 1;
+    }
+    const auto address = target_argument(argv[1]);
+    if (!address) {
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    if (std::strcmp(argv[2], "up") == 0) {
+        return console.submit(control::DimStart{*address, lighting::DimDirection::Up});
+    }
+    if (std::strcmp(argv[2], "down") == 0) {
+        return console.submit(control::DimStart{*address, lighting::DimDirection::Down});
+    }
+    if (std::strcmp(argv[2], "stop") == 0) {
+        return console.submit(control::DimStop{*address});
+    }
+    std::printf("Expected up, down or stop.\n");
+    return 1;
+}
+
+int UsbConsole::scene_command(void* context, int argc, char** argv) {
+    if (argc != 2) {
+        return 1;
+    }
+    const auto number = unsigned_argument(argv[1]);
+    const auto scene = number ? dali::Scene::from(*number) : std::nullopt;
+    if (!scene) {
+        std::printf("Expected a scene number 0..15.\n");
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::RecallScene{*scene});
+}
+
+int UsbConsole::store_command(void* context, int argc, char** argv) {
+    if (argc != 2) {
+        return 1;
+    }
+    const auto number = unsigned_argument(argv[1]);
+    const auto scene = number ? dali::Scene::from(*number) : std::nullopt;
+    if (!scene) {
+        std::printf("Expected a scene number 0..15.\n");
+        return 1;
+    }
+    auto& console = *static_cast<UsbConsole*>(context);
+    return console.submit(control::StoreScene{*scene});
 }
 
 }

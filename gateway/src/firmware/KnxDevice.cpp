@@ -126,9 +126,26 @@ void KnxDevice::attach_objects() {
 void KnxDevice::on_group_object(GroupObject& object) {
     const std::uint16_t number = object.asap();
     const std::uint8_t raw = object.valueRef()[0];
-    auto command = knx::command_for_switch(number, (raw & 1) != 0);
-    if (!command) {
+    const auto target = knx::object_target(number);
+    if (!target) {
+        return;
+    }
+    std::optional<control::Command> command;
+    switch (target->function) {
+    case knx::ObjectFunction::Switch:
+        command = knx::command_for_switch(number, (raw & 1) != 0);
+        break;
+    case knx::ObjectFunction::Brightness:
         command = knx::command_for_scaling(number, raw);
+        break;
+    case knx::ObjectFunction::RelativeDimming:
+        command = knx::command_for_relative_dimming(number, raw);
+        break;
+    case knx::ObjectFunction::Scene:
+        command = knx::command_for_scene(number, raw);
+        break;
+    default:
+        break;
     }
     if (command && !commands_.try_push(*command)) {
         ESP_LOGW(log_tag, "command queue full; dropped write on object %u", number);
