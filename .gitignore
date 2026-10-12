@@ -24,6 +24,8 @@ skidl*.log
 knxprod/build/
 knxprod/src/*.debug.xml
 knxprod/src/KnxDaliGateway.h
+knxprod/ETS
+knxprod/ets-cv.zip
 
 # Mechanical: generated case STL/STEP, assembly and renders
 mechanical/build/

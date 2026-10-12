@@ -1,7 +1,7 @@
 # ETS product database: the committed firmware header must match the XML, and
 # every build produces KnxDaliGateway.knxprod (schema project/20, ETS 5.7 and
-# ETS 6). Pushes to the repository sign it with the ETS key from the
-# ETS_SIGNING_KEY secret; pull requests build it unsigned. Tags require a
+# ETS 6). Pushes can sign with encrypted ETS libraries through Wine, or an
+# explicitly supplied ETS_SIGNING_KEY; pull requests build unsigned. Tags require a
 # signed file and attach it to the GitHub release.
 name: knxprod
 
@@ -32,27 +32,42 @@ jobs:
       - name: Verifier tests
         run: docker compose --profile knxprod run --rm -T --entrypoint python3 producer -m pytest -q tests
 
-      - name: Provide the signing key
+      - name: Provide signing libraries or key
         if: github.event_name == 'push'
         env:
           ETS_SIGNING_KEY: ${{ secrets.ETS_SIGNING_KEY }}
+          ETS_CV_PASSPHRASE: ${{ secrets.ETS_CV_PASSPHRASE }}
         run: |
-          if [ -n "$ETS_SIGNING_KEY" ]; then
+          umask 077
+          if [ -n "$ETS_CV_PASSPHRASE" ]; then
+            test -f knxprod/ets-cv.zip.gpg
+            printf '%s' "$ETS_CV_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+              --output "$RUNNER_TEMP/ets-cv.zip" --decrypt knxprod/ets-cv.zip.gpg
+            mkdir -p "$RUNNER_TEMP/ets-cv"
+            unzip -j "$RUNNER_TEMP/ets-cv.zip" '*.dll' -d "$RUNNER_TEMP/ets-cv"
+            echo "ETS_CV_DIR=$RUNNER_TEMP/ets-cv" >> "$GITHUB_ENV"
+            docker compose --profile knxprod build producer-wine
+          elif [ -n "$ETS_SIGNING_KEY" ]; then
             umask 077
             printf '%s' "$ETS_SIGNING_KEY" > "$RUNNER_TEMP/ets-signing-key"
             echo "ETS_SIGNING_KEY_FILE=$RUNNER_TEMP/ets-signing-key" >> "$GITHUB_ENV"
           elif [ "${GITHUB_REF_TYPE}" = tag ]; then
-            echo "::error::a tagged release needs the ETS_SIGNING_KEY secret"; exit 1
+            echo "::error::a tagged release needs ETS_CV_PASSPHRASE and its encrypted DLL bundle, or ETS_SIGNING_KEY"; exit 1
           else
-            echo "::warning::ETS_SIGNING_KEY not set; building an unsigned .knxprod"
+            echo "::warning::No signing credentials configured; building an unsigned .knxprod"
           fi
 
       - name: Build and verify the .knxprod
         run: knxprod/scripts/package.sh
 
-      - name: Remove the signing key
+      - name: Remove private signing inputs
         if: always()
-        run: rm -f "$RUNNER_TEMP/ets-signing-key"
+        run: |
+          rm -f "$RUNNER_TEMP/ets-signing-key" "$RUNNER_TEMP/ets-cv.zip"
+          if [ -d "$RUNNER_TEMP/ets-cv" ]; then
+            find "$RUNNER_TEMP/ets-cv" -type f -name '*.dll' -delete
+            rmdir "$RUNNER_TEMP/ets-cv"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

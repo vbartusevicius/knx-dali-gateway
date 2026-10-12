@@ -5,5 +5,9 @@
 **/__pycache__
 **/.git
 knxprod/build
+knxprod/ETS
+knxprod/ets-cv.zip*
+**/*.dll
+**/*ets-signing-key*
 hardware/build
 mechanical/build

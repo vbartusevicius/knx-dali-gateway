@@ -71,6 +71,10 @@ def verify(archive, header_text, signed=False):
             digest = base64.b64decode(program.get("Hash"))
             if f"{digest[0]:02X}{digest[-1]:02X}" != app_id[-4:]:
                 problems.append(f"{app_id}: fingerprint does not match the registration Hash")
+        if program is not None:
+            for name in ("ContextHelpFile", "IconFile"):
+                if "%" in program.get(name, ""):
+                    problems.append(f"{apps[0]}: unresolved {name}: {program.get(name)}")
         refs = [e.get("RefId") for e in docs[f"{manu}/Hardware.xml"].iterfind(".//k:ApplicationProgramRef", ns)]
         hp_ids = {e.get("Id") for e in docs[f"{manu}/Hardware.xml"].iterfind(".//k:Hardware2Program", ns)}
         catalog_hps = {e.get("Hardware2ProgramRefId") for e in docs[f"{manu}/Catalog.xml"].iterfind(".//k:CatalogItem", ns)}

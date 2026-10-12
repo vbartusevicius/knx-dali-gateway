@@ -17,6 +17,16 @@ services:
     working_dir: /work/knxprod
     volumes: [".:/work"]
 
+  producer-wine:
+    profiles: ["knxprod"]
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/knxprod/Dockerfile.wine
+    working_dir: /work/knxprod
+    volumes: [".:/work"]
+    entrypoint: ["/bin/sh", "/work/knxprod/scripts/sign_wine.sh"]
+
   # ---- Docker integration lab ---------------------------------------------
   dali-sim:
     profiles: ["lab"]

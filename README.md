@@ -50,7 +50,7 @@ steps.
 | --- | --- |
 | Firmware tests / build | `pio test -d gateway -e native`, `pio run -d gateway -e dev_c6` |
 | Integration lab | `simulation/run-tests.sh` |
-| ETS product (.knxprod, ETS 5.7 + 6) | `ETS_SIGNING_KEY_FILE=<key> knxprod/scripts/package.sh` ([how](knxprod/docs/knxprod-pipeline.md)) |
+| ETS product (.knxprod, ETS 5.7 + 6) | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` ([how](knxprod/docs/knxprod-pipeline.md)) |
 | Hardware and enclosure checks | see `.github/workflows/hardware.yml` (eda and cad containers) |
 | New hardware release | `docker compose --profile hardware run --rm -T eda "python3 hardware/scripts/release.py <version>"` |
 | Lint | `docker compose --profile lint run --rm lint check .`, `... cpp-lint gateway/scripts/check_cpp.sh` |

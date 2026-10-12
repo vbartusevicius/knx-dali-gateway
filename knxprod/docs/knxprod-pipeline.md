@@ -1,65 +1,78 @@
 # Building the .knxprod
 
-`knxprod/scripts/package.sh` builds `knxprod/build/KnxDaliGateway.knxprod` in the
-`producer` container, locally and in CI (`.github/workflows/knxprod.yml`).
+## Local signed build (tested)
 
-## ETS 5 and ETS 6
+1. Put the libraries from the same ETS 5.7 installation in `knxprod/ETS/`:
+   - `Knx.Ets.XmlSigning.dll`
+   - `Knx.Ets.Xml.ObjectModel.dll`
+   - `Knx.Ets.Xml.RegistrationRelevanceInformation.dll`
+   - `Knx.Ets.ObjectModel.dll` and `log4net.dll` (included in the tested set)
+2. Build: `docker compose --profile knxprod build producer producer-wine`.
+3. Sign: `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh`.
+4. Output: `knxprod/build/KnxDaliGateway.knxprod`.
 
-One file serves both: the product XML uses schema `project/20`, the newest
-schema ETS 5.7 imports, and ETS 6 imports `project/20` product data as well. No
-ETS 6-only (`project/21+`) feature is used; the verifier rejects any other
-schema.
+No Windows VM or extracted private key is needed. The libraries are ignored by
+Git and excluded from Docker build contexts. They are mounted read-only and
+copied into a disposable Wine prefix, never baked into an image.
 
 ## Chain
 
-| Step | Tool | Output |
-| --- | --- | --- |
-| Expand includes, channels, KO numbering | OpenKNXproducer 4.3.12 (`create -d`) | monolithic product XML + firmware header |
-| Registration hash, fingerprint in every id, split, sign, embed master data, zip | knx-rs-prod 0.10.1 (pure Rust, GPL-3.0, SHA-256-pinned source) | `.knxprod` |
-| Structure check | `scripts/verify_knxprod.py` (+ tests in `tests/`) | pass/fail |
+- Native OpenKNXproducer 4.3.12 expands includes/channels and generates the header.
+- `prepare_xml.py` removes the upstream template's unused help/icon placeholders
+  and provides a Hash attribute, preserving real assets and embedded scripts.
+- Windows OpenKNXproducer 4.3.12 runs under Wine 10 in an amd64 Linux container:
+  ETS's own libraries hash, sign and package the expanded XML.
+- `verify_knxprod.py` checks structure, header/application identity, registration
+  hash/fingerprint, cross-file references, signature presence/size and master data.
+  This is a structural check, not cryptographic signature verification or an ETS
+  import test.
 
-`knx_master.xml` for `project/20` comes from update.knx.org, pinned by SHA-256
-in the image. knx-rs-prod reproduces ETS's hashing and signature format
-byte-for-byte (verified by its author against products of MDT, Gira, ABB,
-Siemens and OpenKNX; ETS 6.3/6.4 import confirmed). OpenKNXproducer writes no
-`Hash` attribute and knx-rs-prod only fills an existing one, so `package.sh`
-inserts an empty one first.
+The native Linux signer fails on ETS 5.7's Windows `shlwapi.dll` call. Wine
+implements that API. Its built-in `mscoree` must remain enabled so .NET can load
+ETS assemblies (`WINEDLLOVERRIDES="mscoree=b;mshtml="`). On Apple Silicon,
+Wine startup emits Rosetta/syswow64 warnings, but the tested signing command
+returns success and the resulting archive passes the verifier.
 
-## The signing key
+Both OpenKNXproducer binaries and the `project/20` KNX master data are fetched
+from upstream with SHA-256 checks. Master data is cached in the Wine image so
+signing does not require a runtime download.
 
-ETS accepts only product data signed with the RSA key inside ETS's
-`Knx.Ets.XmlSigning.dll`. It is the same key in every ETS installation, is
-KNX Association property and is never committed, published or baked into an
-image.
+Without `ETS_CV_DIR`, the script uses knx-rs-prod 0.10.1 for unsigned packaging.
+An already supplied `ETS_SIGNING_KEY_FILE` is an optional alternative; no key
+extraction is performed by this repository. Unsigned files cannot be imported
+into ETS.
 
-- Take it from your own ETS installation (ETS 5 or 6, the free demo is
-  enough): open `Knx.Ets.XmlSigning.dll` from the ETS program folder in a .NET
-  decompiler such as ILSpy and copy the embedded `<RSAKeyValue>` XML into a file
-  outside the repository, e.g. `~/.config/knx-dali-gateway/ets-signing-key.xml`.
-- Local signed build: `ETS_SIGNING_KEY_FILE=~/.config/knx-dali-gateway/ets-signing-key.xml knxprod/scripts/package.sh`
-- CI: store the same file content as the repository secret `ETS_SIGNING_KEY`.
-  Pushes to `main` build a signed file (artifact `knxprod`); pull requests build
-  unsigned; a `v*` tag fails without the secret and attaches the signed file to
-  the GitHub release.
+## Linux pipeline
 
-Without a key the script still builds and verifies everything except the
-signature; that archive is not importable.
+`.github/workflows/knxprod.yml` supports the same Wine route:
 
-## Verification
+- ZIP the licensed ETS DLL set and encrypt it with GPG symmetric encryption
+  (AES-256, a strong unique passphrase). Store only the encrypted bundle at
+  `knxprod/ets-cv.zip.gpg`, subject to your redistribution/licensing permissions.
+- Set repository secret `ETS_CV_PASSPHRASE` to that passphrase. Do not commit it
+  or the plaintext ZIP/DLLs. The encrypted bundle has not been created here.
+- Push jobs decrypt into the runner's temporary directory, mount the DLLs into
+  Wine, build/verify, and delete the temporary inputs. Pull requests never
+  receive the secret and build unsigned.
+- Tags require signing inputs and attach the result to the release. Without
+  signing inputs, ordinary pushes produce unsigned artifacts with a warning.
+- Existing `ETS_SIGNING_KEY` support remains as a fallback, but is unnecessary
+  with the Wine route.
 
-`verify_knxprod.py` checks the archive against the committed firmware header:
-one manufacturer folder with Catalog, Hardware and one application program,
-schema `project/20` throughout, application id = OpenKNX id + application number
-+ version from the header, fingerprint = first and last byte of the
-registration hash, Catalog and Hardware referencing exactly that application,
-and for signed builds the 128-byte RSA signature and the `project/20` master.
+This workflow has not yet been run on GitHub.
 
-Still manual, once per release: import into ETS 5.7 and ETS 6, add the device to
-a project, download it to a gateway.
+## ETS compatibility and remaining checks
 
-## Open points
+The product uses schema `project/20`, targeting ETS **5.7 and ETS 6**; earlier
+ETS5 versions are not claimed. The signed archive was generated locally using
+ETS libraries version 5.7.298.38537. Actual import, project insertion and device
+download in ETS 5.7 and ETS 6 are still required.
 
-- First signed build has not been imported into ETS yet (needs the key).
-- Product identity: OpenKNX id `0xFF` with application number 90 is fine for
-  own use; distribution needs an application number registered with OpenKNX
-  (manufacturer M-00FA) or an own KNX manufacturer id.
+Full XSD validation is still unavailable: obtain the `project/20` schema
+folder (including its imports) from KNX Manufacturer Tool 5.7 or KNX member
+support. It is separate from ETS's runtime DLLs and is not included here;
+Wine signing currently uses `-N`, explicitly skipping that validation.
+
+Before distribution, confirm allocation of application number 90 and OpenKNX
+id `0xFF` under manufacturer M-00FA with OpenKNX, or use your own assigned
+manufacturer/product identity.

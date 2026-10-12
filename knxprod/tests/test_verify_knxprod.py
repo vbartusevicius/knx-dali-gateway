@@ -18,13 +18,13 @@ APP = f"M-00FA_A-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 HP = f"M-00FA_H-0xFF5A-1_HP-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 
 
-def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None):
+def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets=""):
     hash_ = base64.b64encode(DIGEST).decode() if hash_ is None else hash_
     files = {
         "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}"><CatalogItem Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
         "M-00FA/Hardware.xml": f'<KNX xmlns="{ns}"><Hardware2Program Id="{hp}">'
                                f'<ApplicationProgramRef RefId="{app}"/></Hardware2Program></KNX>',
-        f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}"/></KNX>',
+        f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}" {assets}/></KNX>',
     }
     if signed:
         files["M-00FA.signature"] = b"\xef\xbb\xbf" + base64.b64encode(bytes(128))
@@ -34,6 +34,11 @@ def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=N
         for name, data in files.items():
             z.writestr(name, data)
     return path
+
+
+def test_unresolved_help_and_icon_references_are_rejected(tmp_path):
+    assets = 'ContextHelpFile="%FILE-HELP-de%" IconFile="%FILE-ICONS%"'
+    assert any("unresolved" in p for p in v.verify(archive(tmp_path, assets=assets), HEADER))
 
 
 def test_well_formed_signed_archive_passes(tmp_path):

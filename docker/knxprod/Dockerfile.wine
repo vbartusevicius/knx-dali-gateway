@@ -1,0 +1,19 @@
+FROM --platform=linux/amd64 debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f
+
+ARG OKP_VERSION=4.3.12
+ARG OKP_SHA256=c73d3a5181edc41551637a1ad31935b8a23f88694bd115f10127ead060e76266
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wine wine64 xvfb xauth curl ca-certificates unzip python3 \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL -o /tmp/okp.zip \
+        "https://github.com/OpenKNX/OpenKNXproducer/releases/download/v${OKP_VERSION}/OpenKNXproducer-${OKP_VERSION}.zip" \
+    && echo "${OKP_SHA256}  /tmp/okp.zip" | sha256sum -c - \
+    && unzip /tmp/okp.zip 'tools/Windows/*' -d /opt/okp \
+    && rm /tmp/okp.zip
+RUN mkdir -p /opt/okp/tools/Windows/Masters \
+    && curl -fsSL -o /opt/okp/tools/Windows/Masters/project-20.xml \
+       https://update.knx.org/data/XML/project-20/knx_master.xml \
+    && echo 'e1731fd67e64addb7d3ddf74c23b32027f4b6568f4e9d098709992d30bd39d17  /opt/okp/tools/Windows/Masters/project-20.xml' | sha256sum -c -
+ENV WINEDEBUG=-all WINEARCH=win64 WINEPREFIX=/opt/wine WINEDLLOVERRIDES="mscoree=b;mshtml="
+WORKDIR /work/knxprod
+ENTRYPOINT ["/bin/sh", "-c"]
