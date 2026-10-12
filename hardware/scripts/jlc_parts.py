@@ -1,8 +1,10 @@
 """Check every JLC-assembled part against what JLCPCB will actually place.
 
-For each LCSC number this fetches JLCPCB's part record (manufacturer part,
-attributes, stock) and the EasyEDA footprint JLCPCB's pick-and-place uses
-(cached in hardware/build/jlc/). Then, per footprint on the board:
+CI reads the versioned supplier reference in hardware/product/jlc_reference.json,
+without contacting JLCPCB or EasyEDA. Release checks use live=True to fetch fresh
+part records, footprints and stock (raw responses cached in hardware/build/jlc/).
+Refresh the reference with `python3 hardware/scripts/jlc_parts.py snapshot`;
+`--cached` captures existing downloads without networking. Then, per footprint:
 
   - the manufacturer part matches the circuit's MPN, and resistance,
     capacitance and voltage rating match the circuit's value
@@ -11,7 +13,7 @@ attributes, stock) and the EasyEDA footprint JLCPCB's pick-and-place uses
     hardware/product/jlc_pad_maps.yaml where the numbering differs) and
     covers every pin of ours: this proves the package and the pin mapping,
     and yields the placement rotation and centre JLCPCB needs
-  - stock covers the order quantity
+  - in live mode only, current stock covers the order quantity
 
 Placement model (JLCPCB, as documented by the KiKit and KiBot maintainers):
 rotation counter-clockwise as seen from the top; a bottom part is JLCPCB's
@@ -38,9 +40,9 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW
            "Accept": "application/json"}
 
 
-def fetch(url, path, attempts=6):
+def fetch(url, path, attempts=6, *, refresh=False):
     """Cached GET; both services answer 403 when asked too fast, so wait and retry."""
-    if not path.exists():
+    if refresh or not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         for attempt in range(attempts):
             try:
@@ -55,13 +57,13 @@ def fetch(url, path, attempts=6):
     return json.loads(path.read_text())
 
 
-def jlc_record(lcsc):
-    return fetch(JLC_URL.format(lcsc), CACHE / f"{lcsc}.jlc.json")["data"]
+def jlc_record(lcsc, *, refresh=False):
+    return fetch(JLC_URL.format(lcsc), CACHE / f"{lcsc}.jlc.json", refresh=refresh)["data"]
 
 
-def easyeda_pads(lcsc):
+def easyeda_pads(lcsc, *, refresh=False):
     """(number, x, y) in mm relative to the footprint origin, y up."""
-    result = fetch(EASYEDA_URL.format(lcsc), CACHE / f"{lcsc}.easyeda.json")["result"]
+    result = fetch(EASYEDA_URL.format(lcsc), CACHE / f"{lcsc}.easyeda.json", refresh=refresh)["result"]
     data = result["packageDetail"]["dataStr"]
     ox, oy = float(data["head"]["x"]), float(data["head"]["y"])
     pads = []
@@ -181,20 +183,65 @@ class Check:
     footprint: str
     jlc_footprint: str = ""
     placement: Placement | None = None
-    stock: int = 0
+    stock: int | None = None
     library: str = ""
     problems: list = field(default_factory=list)
 
 
 PAD_MAPS = REPO / "hardware/product/jlc_pad_maps.yaml"
+REFERENCE = REPO / "hardware/product/jlc_reference.json"
 
 
-def check_board(pcb, parts):
+def load_reference():
+    return json.loads(REFERENCE.read_text())["parts"]
+
+
+def supplier_data(lcsc, *, refresh=False):
+    record = jlc_record(lcsc, refresh=refresh)
+    footprint, pads = easyeda_pads(lcsc, refresh=refresh)
+    return {"record": record, "footprint": footprint, "pads": pads}
+
+
+def snapshot(*, cached=False):
+    import yaml
+
+    variant = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())["active_variant"]
+    sources = [REPO / "hardware/build" / variant / board / "parts.json" for board in ("main", "ui")]
+    lcscs = sorted({p["lcsc"] for path in sources for p in json.loads(path.read_text()) if p["assembly"] == "jlc"})
+    parts, notices = {}, set()
+    for lcsc in lcscs:
+        if cached:
+            for suffix in ("jlc", "easyeda"):
+                path = CACHE / f"{lcsc}.{suffix}.json"
+                if not path.exists():
+                    raise FileNotFoundError(f"Missing cached supplier data: {path}")
+        data = supplier_data(lcsc, refresh=not cached)
+        record = data["record"]
+        data["record"] = {key: record[key] for key in ("componentModelEn", "componentBrandEn",
+                                                       "componentSpecificationEn", "dataManualUrl",
+                                                       "componentLibraryType")}
+        data["record"]["attributes"] = [a for a in record.get("attributes") or []
+                                         if a["attribute_name_en"] in ("Resistance", "Capacitance",
+                                                                       "Voltage Rating", "Voltage Rated")]
+        parts[lcsc] = data
+        raw = json.loads((CACHE / f"{lcsc}.easyeda.json").read_text())
+        notice = raw["result"]["packageDetail"]["dataStr"]["head"].get("license")
+        if notice:
+            notices.add(notice)
+    document = {"source": "嘉立创EDA/EasyEDA官方库 (JLCEDA/EasyEDA Official Library) and JLCPCB catalogue",
+                "source_links": ["https://lceda.cn/", "https://easyeda.com", JLC_URL, EASYEDA_URL],
+                "source_notices": sorted(notices), "parts": parts}
+    REFERENCE.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n")
+    print(f"Wrote {len(parts)} supplier references to {REFERENCE.relative_to(REPO)} (no stock data)")
+
+
+def check_board(pcb, parts, *, live=False):
     """One Check per JLC-assembled footprint of a pcbnew board."""
     import pcbnew
     import yaml
 
     pad_maps = yaml.safe_load(PAD_MAPS.read_text())
+    supplier = {} if live else load_reference()
     by_ref = {p["ref"]: p for p in parts}
     quantity = {}
     for p in parts:
@@ -207,16 +254,22 @@ def check_board(pcb, parts):
             continue
         check = Check(fp.GetReference(), part["lcsc"], str(fp.GetFPID().GetLibItemName()))
         try:
-            record = jlc_record(part["lcsc"])
-            check.jlc_footprint, theirs = easyeda_pads(part["lcsc"])
+            lcsc = part["lcsc"]
+            if live and lcsc not in supplier:
+                supplier[lcsc] = supplier_data(lcsc, refresh=True)
+            data = supplier[lcsc]
+            record = data["record"]
+            check.jlc_footprint, theirs = data["footprint"], data["pads"]
         except (OSError, KeyError, TypeError, ValueError) as error:
             check.problems.append(f"no JLCPCB data: {error}")
             checks.append(check)
             continue
-        check.stock, check.library = int(record.get("stockCount") or 0), record.get("componentLibraryType", "")
+        check.library = record.get("componentLibraryType", "")
         check.problems += value_problems(part, record)
-        if check.stock < quantity[part["lcsc"]] * ORDER_BOARDS:
-            check.problems.append(f"stock {check.stock} < {quantity[part['lcsc']] * ORDER_BOARDS} needed")
+        if live:
+            check.stock = int(record.get("stockCount") or 0)
+            if check.stock < quantity[part["lcsc"]] * ORDER_BOARDS:
+                check.problems.append(f"stock {check.stock} < {quantity[part['lcsc']] * ORDER_BOARDS} needed")
         ours = []
         for pad in fp.Pads():
             if pad.GetNumber() and pad.GetNetname():
@@ -231,3 +284,13 @@ def check_board(pcb, parts):
                                   f"({sorted({p.number for p in ours})}): wrong package or pin mapping")
         checks.append(check)
     return checks
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["snapshot"])
+    parser.add_argument("--cached", action="store_true")
+    args = parser.parse_args()
+    snapshot(cached=args.cached)

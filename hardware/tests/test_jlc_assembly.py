@@ -1,9 +1,11 @@
 """JLCPCB assembly: every JLC part is what the circuit asks for and JLCPCB's
 own footprint for it lands pin for pin on ours (hardware/scripts/jlc_parts.py).
-The board checks fetch live JLCPCB/EasyEDA data (cached in hardware/build/jlc)."""
+The board checks use versioned supplier references; live stock/API gates are mocked."""
 
+import io
 import json
 import sys
+import urllib.error
 from pathlib import Path
 
 import pcbnew
@@ -75,6 +77,68 @@ def test_value_check_catches_wrong_capacitance_rating_and_part():
     assert jp.value_problems(part, record("CC0603KRX7R9BB104", Capacitance="10nF", Voltage_Rating="50V"))
     assert jp.value_problems(part, record("CC0603KRX7R9BB104", Capacitance="100nF", Voltage_Rating="25V"))
     assert jp.value_problems(part, record("CL10B104KB8NNNC", Capacitance="100nF", Voltage_Rating="50V"))
+
+
+def test_board_checks_do_not_use_supplier_api_or_download_cache(monkeypatch):
+    def unavailable(*args, **kwargs):
+        raise OSError("supplier API blocked")
+
+    monkeypatch.setattr(jp, "fetch", unavailable)
+    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
+    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
+    checks = jp.check_board(pcb, parts)
+    assert checks
+    assert not [p for c in checks for p in c.problems]
+
+
+def test_refresh_fetches_even_when_download_cache_exists(monkeypatch, tmp_path):
+    cache = tmp_path / "record.json"
+    cache.write_text('{"stale": true}')
+    calls = []
+
+    def response(request, **kwargs):
+        calls.append(request.full_url)
+        return io.BytesIO(b'{"fresh": true}')
+
+    monkeypatch.setattr(jp.urllib.request, "urlopen", response)
+    monkeypatch.setattr(jp.time, "sleep", lambda _: None)
+    assert jp.fetch(jp.JLC_URL.format("C7484"), cache, refresh=True) == {"fresh": True}
+    assert len(calls) == 1
+
+
+def test_missing_reference_fails_without_network_fallback(monkeypatch):
+    references = jp.load_reference()
+    references.pop("C2890035")
+    monkeypatch.setattr(jp, "load_reference", lambda: references)
+    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
+    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
+    checks = jp.check_board(pcb, parts)
+    assert all(c.problems for c in checks if c.ref in ("D1", "D2", "D3"))
+
+
+@pytest.mark.parametrize("blocked", [False, True])
+def test_live_checks_reject_stock_shortages_and_api_failures(monkeypatch, blocked):
+    references = jp.load_reference()
+    calls = []
+
+    def supplier(lcsc, *, refresh):
+        assert refresh
+        calls.append(lcsc)
+        if blocked:
+            raise urllib.error.HTTPError(jp.JLC_URL.format(lcsc), 403, "Forbidden", {}, None)
+        data = references[lcsc]
+        return {**data, "record": {**data["record"], "stockCount": 0}}
+
+    monkeypatch.setattr(jp, "supplier_data", supplier)
+    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
+    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
+    checks = jp.check_board(pcb, parts, live=True)
+    assert checks and all(c.problems for c in checks)
+    if not blocked:
+        assert len(calls) == len(set(calls))
+        assert all(c.stock == 0 for c in checks)
+    else:
+        assert all("403" in c.problems[0] for c in checks)
 
 
 @pytest.fixture(scope="module", params=("main", "ui"))

@@ -41,8 +41,8 @@ def parts(board):
     return json.loads((REPO / "hardware/build" / VARIANT / board / "parts.json").read_text())
 
 
-def assembly_checks(board):
-    return jlc_parts.check_board(pcbnew.LoadBoard(str(layout_path(board))), parts(board))
+def assembly_checks(board, *, live=True):
+    return jlc_parts.check_board(pcbnew.LoadBoard(str(layout_path(board))), parts(board), live=live)
 
 
 def gate(board, out, checks):

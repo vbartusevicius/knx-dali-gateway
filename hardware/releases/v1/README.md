@@ -8,7 +8,13 @@ part, value and voltage rating match the circuit, there is stock for 5 boards,
 and JLCPCB's own (EasyEDA) footprint for that LCSC number lands pin for pin on
 our pads. The placement file's rotations and centres come from that fit.
 CI (`hardware/tests/test_release_current.py`) fails as soon as the boards no
-longer match this release.
+longer match this release. CI uses versioned supplier identities/footprints in
+`hardware/product/jlc_reference.json`, not live APIs or stock. Release generation
+still fetches fresh supplier data and checks current stock; API failure blocks
+release generation rather than silently accepting old availability.
+
+After changing part selections, refresh and review the reference in the eda
+container: `python3 hardware/scripts/jlc_parts.py snapshot`, then commit it.
 
 | Board | Size | Layers | Folder |
 |---|---|---|---|
