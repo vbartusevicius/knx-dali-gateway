@@ -1,0 +1,68 @@
+# ETS product database: the committed firmware header must match the XML, and
+# every build produces KnxDaliGateway.knxprod (schema project/20, ETS 5.7 and
+# ETS 6). Pushes to the repository sign it with the ETS key from the
+# ETS_SIGNING_KEY secret; pull requests build it unsigned. Tags require a
+# signed file and attach it to the GitHub release.
+name: knxprod
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: ["knxprod/**", "docker/knxprod/**", "gateway/src/knx/generated/**", "compose.yaml",
+            ".github/workflows/knxprod.yml"]
+  pull_request:
+    paths: ["knxprod/**", "docker/knxprod/**", "gateway/src/knx/generated/**", "compose.yaml",
+            ".github/workflows/knxprod.yml"]
+
+jobs:
+  knxprod:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the knxprod image
+        run: docker compose --profile knxprod build producer
+
+      - name: Committed firmware header matches the ETS XML
+        run: knxprod/scripts/check.sh
+
+      - name: Verifier tests
+        run: docker compose --profile knxprod run --rm -T --entrypoint python3 producer -m pytest -q tests
+
+      - name: Provide the signing key
+        if: github.event_name == 'push'
+        env:
+          ETS_SIGNING_KEY: ${{ secrets.ETS_SIGNING_KEY }}
+        run: |
+          if [ -n "$ETS_SIGNING_KEY" ]; then
+            umask 077
+            printf '%s' "$ETS_SIGNING_KEY" > "$RUNNER_TEMP/ets-signing-key"
+            echo "ETS_SIGNING_KEY_FILE=$RUNNER_TEMP/ets-signing-key" >> "$GITHUB_ENV"
+          elif [ "${GITHUB_REF_TYPE}" = tag ]; then
+            echo "::error::a tagged release needs the ETS_SIGNING_KEY secret"; exit 1
+          else
+            echo "::warning::ETS_SIGNING_KEY not set; building an unsigned .knxprod"
+          fi
+
+      - name: Build and verify the .knxprod
+        run: knxprod/scripts/package.sh
+
+      - name: Remove the signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ets-signing-key"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: knxprod
+          path: knxprod/build/KnxDaliGateway.knxprod
+
+      - name: Attach to the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes ""
+          gh release upload "$GITHUB_REF_NAME" knxprod/build/KnxDaliGateway.knxprod --clobber

@@ -37,4 +37,6 @@ The boards use KiCad's stock symbol, footprint and 3D libraries (CC-BY-SA-4.0
 with an exception for designs made with them). Build, test and viewer tools
 are not distributed with anything; the container images download them at
 build time under their own licences (PlatformIO, Unity, OpenKNXproducer,
-KiCad, SKiDL, Freerouting, CadQuery, VTK, LLVM, ruff, three.js, KiCanvas).
+KiCad, SKiDL, Freerouting, CadQuery, VTK, LLVM, ruff, three.js, KiCanvas,
+knx-rs-prod). The `.knxprod` embeds the KNX Association's public
+`knx_master.xml`; the ETS signing key is never part of this repository.

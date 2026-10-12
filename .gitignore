@@ -16,6 +16,15 @@ fp-info-cache
 skidl*.log
 *_sklib.py
 
+# ETS libraries and keys are KNX Association property: never commit them
+*.dll
+*ets-signing-key*
+
+# ETS product build output (package.sh) and OpenKNXproducer scratch files
+knxprod/build/
+knxprod/src/*.debug.xml
+knxprod/src/KnxDaliGateway.h
+
 # Mechanical: generated case STL/STEP, assembly and renders
 mechanical/build/
 

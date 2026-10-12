@@ -4,6 +4,6 @@
 **/.venv
 **/__pycache__
 **/.git
-knxprod/output
+knxprod/build
 hardware/build
 mechanical/build
