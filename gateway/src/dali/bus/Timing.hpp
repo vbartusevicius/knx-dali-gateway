@@ -40,10 +40,8 @@ inline constexpr std::uint32_t backward_max_us = 10500;
 // starting a forward frame, indexed by (priority - 1). The actual wait is a
 // random point inside the window.
 inline constexpr std::uint32_t settling_count = 5;
-inline constexpr std::uint32_t settling_min_us[settling_count] = {
-    13500, 14900, 16300, 17900, 19500};
-inline constexpr std::uint32_t settling_max_us[settling_count] = {
-    14700, 16100, 17700, 19300, 21100};
+inline constexpr std::uint32_t settling_min_us[settling_count] = {13500, 14900, 16300, 17900, 19500};
+inline constexpr std::uint32_t settling_max_us[settling_count] = {14700, 16100, 17700, 19300, 21100};
 
 // Collision handling: after detecting a collision the unit holds the bus
 // active for a break so every receiver sees a timing violation, then

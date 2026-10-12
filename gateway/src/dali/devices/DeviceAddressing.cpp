@@ -1,5 +1,9 @@
 #include "dali/devices/DeviceAddressing.hpp"
 
+#include <cstdint>
+
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
 #include "dali/devices/DeviceFrames.hpp"
 
 namespace gateway::dali {
@@ -34,19 +38,16 @@ TransportStatus DeviceAddressing::compare_yes(bool& yes) {
     }
 }
 
-CommissionResult DeviceAddressing::commission(CommissionMode mode, ShortAddress start,
-                                              unsigned max_devices) {
+CommissionResult DeviceAddressing::commission(CommissionMode mode, ShortAddress start, unsigned max_devices) {
     unsigned addressed = 0;
     const auto finish = [&](TransportStatus status) {
         bus_.send_device_frame(device::special::terminate(), false);
-        bus_.send_device_command(device::address_broadcast,
-                                 device::cmd::stop_quiescent_mode, true);
+        bus_.send_device_command(device::address_broadcast, device::cmd::stop_quiescent_mode, true);
         return CommissionResult{status, addressed};
     };
 
     // Silence device event traffic; failure only means there are none.
-    bus_.send_device_command(device::address_broadcast,
-                             device::cmd::start_quiescent_mode, true);
+    bus_.send_device_command(device::address_broadcast, device::cmd::start_quiescent_mode, true);
 
     auto status = bus_.send_device_frame(device::special::terminate(), false);
     if (status != TransportStatus::Ok) {
@@ -54,8 +55,8 @@ CommissionResult DeviceAddressing::commission(CommissionMode mode, ShortAddress 
     }
     // INITIALISE operand: 0x00 all devices, 0xFF devices without a short
     // address, 0AAAAAA1 one device.
-    status = bus_.send_device_frame(
-        device::special::initialise(mode == CommissionMode::All ? 0x00 : 0xFF), true);
+    status =
+        bus_.send_device_frame(device::special::initialise(mode == CommissionMode::All ? 0x00 : 0xFF), true);
     if (status != TransportStatus::Ok) {
         return finish(status);
     }
@@ -68,8 +69,7 @@ CommissionResult DeviceAddressing::commission(CommissionMode mode, ShortAddress 
     }
 
     std::uint8_t next = start.value();
-    for (unsigned slot = 0; slot < max_slots && addressed < max_devices && next <= 63;
-         ++slot) {
+    for (unsigned slot = 0; slot < max_slots && addressed < max_devices && next <= 63; ++slot) {
         status = set_search_address(search_max);
         if (status != TransportStatus::Ok) {
             return finish(status);
@@ -108,16 +108,13 @@ CommissionResult DeviceAddressing::commission(CommissionMode mode, ShortAddress 
         }
 
         const std::uint8_t encoded = device::special::encode_short_address(next);
-        status =
-            bus_.send_device_frame(device::special::program_short_address(encoded), true);
+        status = bus_.send_device_frame(device::special::program_short_address(encoded), true);
         if (status != TransportStatus::Ok) {
             return finish(status);
         }
-        const auto verified =
-            bus_.query_device_frame(device::special::verify_short_address(encoded));
+        const auto verified = bus_.query_device_frame(device::special::verify_short_address(encoded));
         const bool verified_yes =
-            verified.status == TransportStatus::Ok ||
-            verified.status == TransportStatus::Collision;
+            verified.status == TransportStatus::Ok || verified.status == TransportStatus::Collision;
         status = bus_.send_device_frame(device::special::withdraw(), true);
         if (status != TransportStatus::Ok) {
             return finish(status);

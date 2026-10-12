@@ -51,13 +51,11 @@ public:
     dali::GearStatusRead query_status(dali::ShortAddress address) override;
     dali::CommissionResult commission(dali::CommissionMode mode, dali::ShortAddress start,
                                       unsigned max_devices) override;
-    dali::CommissionResult commission_devices(dali::CommissionMode mode,
-                                              dali::ShortAddress start,
+    dali::CommissionResult commission_devices(dali::CommissionMode mode, dali::ShortAddress start,
                                               unsigned max_devices) override;
     dali::TransportStatus identify(dali::ShortAddress address) override;
     dali::TransportStatus clear_short_addresses() override;
-    dali::TransportStatus send_special(std::uint8_t opcode, std::uint8_t data,
-                                       bool twice) override;
+    dali::TransportStatus send_special(std::uint8_t opcode, std::uint8_t data, bool twice) override;
     dali::ByteRead query_special(std::uint8_t opcode, std::uint8_t data) override;
     dali::TransportStatus send_device_frame(std::uint32_t frame, bool twice) override;
     dali::ByteRead query_device_frame(std::uint32_t frame) override;
@@ -66,7 +64,7 @@ public:
 private:
     struct Response {
         dali::TransportStatus status;
-        int reply = -1;              // -1: no backward frame
+        int reply = -1;  // -1: no backward frame
         bool forward_collision = false;
     };
 
@@ -84,7 +82,7 @@ private:
     // acknowledged, the first response line is returned. Blocks only when
     // wait is true.
     std::string next_response(bool wait);
-    void acknowledge_event(std::uint32_t frame);
+    void acknowledge_event(std::uint32_t frame) const;
 
     std::string host_;
     std::uint16_t port_;

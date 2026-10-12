@@ -1,5 +1,15 @@
 #include "control/Command.hpp"
 
+#include <cstdint>
+#include <type_traits>
+#include <variant>
+
+#include "commissioning/Commissioning.hpp"
+#include "dali/Address.hpp"
+#include "dali/Transport.hpp"
+#include "lighting/LightingService.hpp"
+#include "lighting/RelativeDimmer.hpp"
+
 namespace gateway::control {
 namespace {
 
@@ -13,8 +23,7 @@ bool instance_bound(std::uint8_t device, std::uint8_t instance, void* context) {
 
 // After a fresh input inventory, light channels pick up their reported
 // resolution (lux step) from it.
-void refresh_input_resolutions(commissioning::Commissioning& commissioning,
-                               inputs::InputMapper& inputs) {
+void refresh_input_resolutions(commissioning::Commissioning& commissioning, inputs::InputMapper& inputs) {
     inputs.refresh_resolutions(commissioning.devices());
 }
 
@@ -26,11 +35,9 @@ dali::Address address_of(const Command& command) noexcept {
             using Request = std::decay_t<decltype(alternative)>;
             if constexpr (std::is_same_v<Request, SetLevel> || std::is_same_v<Request, SwitchOn> ||
                           std::is_same_v<Request, SwitchOff> || std::is_same_v<Request, DimStart> ||
-                          std::is_same_v<Request, DimStop> ||
-                          std::is_same_v<Request, SetColourTemperature> ||
+                          std::is_same_v<Request, DimStop> || std::is_same_v<Request, SetColourTemperature> ||
                           std::is_same_v<Request, SetRgb> || std::is_same_v<Request, SetRgbw> ||
-                          std::is_same_v<Request, SetXy> ||
-                          std::is_same_v<Request, ColourDimStart> ||
+                          std::is_same_v<Request, SetXy> || std::is_same_v<Request, ColourDimStart> ||
                           std::is_same_v<Request, ColourDimStop>) {
                 return alternative.address;
             } else if constexpr (std::is_same_v<Request, RecallScene> ||
@@ -50,9 +57,8 @@ dali::Address address_of(const Command& command) noexcept {
 
 commissioning::JobResult execute(lighting::LightingService& service, lighting::RelativeDimmer& dimmer,
                                  lighting::RelativeDimmer& colour_dimmer,
-                                 commissioning::Commissioning& commissioning,
-                                 inputs::InputMapper& inputs, std::uint32_t now_ms,
-                                 const Command& command) {
+                                 commissioning::Commissioning& commissioning, inputs::InputMapper& inputs,
+                                 std::uint32_t now_ms, const Command& command) {
     return std::visit(
         [&](const auto& alternative) -> commissioning::JobResult {
             using Request = std::decay_t<decltype(alternative)>;
@@ -87,8 +93,7 @@ commissioning::JobResult execute(lighting::LightingService& service, lighting::R
                 refresh_input_resolutions(commissioning, inputs);
                 return result;
             } else if constexpr (std::is_same_v<Request, AssignInputDevices>) {
-                auto result = commissioning.assign_inputs(alternative.mode, &instance_bound,
-                                                          &inputs);
+                auto result = commissioning.assign_inputs(alternative.mode, &instance_bound, &inputs);
                 refresh_input_resolutions(commissioning, inputs);
                 return result;
             } else if constexpr (std::is_same_v<Request, InputFeedback>) {
@@ -101,8 +106,7 @@ commissioning::JobResult execute(lighting::LightingService& service, lighting::R
                                             alternative.blue));
             } else if constexpr (std::is_same_v<Request, SetRgbw>) {
                 return wrap(service.set_rgbw(alternative.address, alternative.red, alternative.green,
-                                             alternative.blue, alternative.white,
-                                             alternative.validity));
+                                             alternative.blue, alternative.white, alternative.validity));
             } else if constexpr (std::is_same_v<Request, SetXy>) {
                 return wrap(service.set_xy(alternative.address, alternative.x, alternative.y,
                                            alternative.xy_valid, alternative.brightness,

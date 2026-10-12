@@ -92,8 +92,7 @@ void test_scan_bus_error_keeps_previous_state_and_reports_error() {
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                       static_cast<int>(result.result.error));
     // The scan itself completed; the bus error rides in last_error.
-    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Done),
-                      static_cast<int>(progress(f.commissioning).phase));
+    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Done), static_cast<int>(progress(f.commissioning).phase));
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Failure),
                       static_cast<int>(progress(f.commissioning).last_error));
     TEST_ASSERT_TRUE(present(f.commissioning, 5));  // old bitmap untouched
@@ -147,8 +146,7 @@ void test_assign_failure_marks_failed() {
     const auto result = f.commissioning.assign(CommissionMode::All);
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                       static_cast<int>(result.result.error));
-    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed),
-                      static_cast<int>(progress(f.commissioning).phase));
+    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed), static_cast<int>(progress(f.commissioning).phase));
 }
 
 void test_replace_rejects_a_still_present_target() {
@@ -158,8 +156,7 @@ void test_replace_rejects_a_still_present_target() {
     const auto result = f.commissioning.replace(channel(7));
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                       static_cast<int>(result.result.error));
-    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed),
-                      static_cast<int>(progress(f.commissioning).phase));
+    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed), static_cast<int>(progress(f.commissioning).phase));
     TEST_ASSERT_EQUAL_UINT32(0, f.bus.commission_calls.size());
 }
 
@@ -171,8 +168,7 @@ void test_replace_fails_on_zero_or_two_found() {
         const auto result = f.commissioning.replace(channel(9));
         TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                           static_cast<int>(result.result.error));
-        TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed),
-                          static_cast<int>(progress(f.commissioning).phase));
+        TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed), static_cast<int>(progress(f.commissioning).phase));
     }
 }
 
@@ -201,8 +197,7 @@ void test_replace_commission_transport_failure() {
     const auto result = f.commissioning.replace(channel(0));
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                       static_cast<int>(result.result.error));
-    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed),
-                      static_cast<int>(progress(f.commissioning).phase));
+    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed), static_cast<int>(progress(f.commissioning).phase));
 }
 
 void test_identify_invokes_the_transport() {
@@ -233,12 +228,12 @@ void test_poll_next_is_round_robin_over_present_addresses() {
 
     TEST_ASSERT_FALSE(f.commissioning.poll_next().has_value());  // 5 healthy: no flag change
     TEST_ASSERT_EQUAL_UINT8(5, f.bus.status_queries[0].value());
-    const auto flagged = f.commissioning.poll_next();            // 7 lamp failure
+    const auto flagged = f.commissioning.poll_next();  // 7 lamp failure
     TEST_ASSERT_TRUE(flagged.has_value());
     TEST_ASSERT_EQUAL_UINT8(7, flagged->value());
     TEST_ASSERT_TRUE(faulty(f.commissioning, 7));
     TEST_ASSERT_EQUAL_UINT8(7, f.bus.status_queries[1].value());
-    const auto third = f.commissioning.poll_next();              // wraps to 5
+    const auto third = f.commissioning.poll_next();  // wraps to 5
     TEST_ASSERT_TRUE(third.has_value());
     TEST_ASSERT_EQUAL_UINT8(5, f.bus.status_queries[2].value());
     TEST_ASSERT_TRUE(faulty(f.commissioning, 5));
@@ -321,8 +316,7 @@ void test_reset_addresses_reports_clear_failure_without_scanning() {
     const auto result = f.commissioning.reset_addresses();
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::TransportFailure),
                       static_cast<int>(result.result.error));
-    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed),
-                      static_cast<int>(progress(f.commissioning).phase));
+    TEST_ASSERT_EQUAL(static_cast<int>(Phase::Failed), static_cast<int>(progress(f.commissioning).phase));
     TEST_ASSERT_EQUAL_UINT32(0, f.bus.presence_queries.size());
 }
 
@@ -361,9 +355,7 @@ public:
             Unit unit;
             unit.random = random;
             unit.instance_types = types;
-            unit.resolutions = resolutions.empty()
-                                   ? std::vector<std::uint8_t>(types.size(), 0)
-                                   : resolutions;
+            unit.resolutions = resolutions.empty() ? std::vector<std::uint8_t>(types.size(), 0) : resolutions;
             unit.enabled.assign(types.size(), false);
             return unit;
         }
@@ -395,8 +387,7 @@ public:
                 break;
             case 0x01:  // INITIALISE
                 for (auto& unit : units) {
-                    if (operand == 0x00 ||
-                        (operand == 0xFF && unit.short_address < 0) ||
+                    if (operand == 0x00 || (operand == 0xFF && unit.short_address < 0) ||
                         operand == device::special::encode_short_address(unit.short_address)) {
                         unit.initialising = true;
                         unit.withdrawn = false;
@@ -417,8 +408,8 @@ public:
             case 0x07: {  // SEARCHADDRH/M/L
                 const int shift = operation == 0x05 ? 16 : operation == 0x06 ? 8 : 0;
                 for (auto& unit : units) {
-                    unit.search = (unit.search & ~(0xFFu << shift)) |
-                                  (static_cast<std::uint32_t>(operand) << shift);
+                    unit.search =
+                        (unit.search & ~(0xFFu << shift)) | (static_cast<std::uint32_t>(operand) << shift);
                 }
                 break;
             }
@@ -489,10 +480,8 @@ public:
         if (!unit) {
             return {TransportStatus::Timeout, std::nullopt};
         }
-        if (operation == device::instance_device &&
-            operand == device::cmd::query_number_of_instances) {
-            return {TransportStatus::Ok,
-                    static_cast<std::uint8_t>(unit->instance_types.size())};
+        if (operation == device::instance_device && operand == device::cmd::query_number_of_instances) {
+            return {TransportStatus::Ok, static_cast<std::uint8_t>(unit->instance_types.size())};
         }
         if (operation < unit->instance_types.size()) {
             if (operand == device::inst::query_instance_type) {
@@ -528,8 +517,7 @@ struct InputFixture {
 
 void test_scan_inputs_discovers_devices_and_enables_bound_instances() {
     InputFixture f;
-    f.bus.units = {InputBus::Unit::of(0x100, {device::type::push_button,
-                                            device::type::push_button}),
+    f.bus.units = {InputBus::Unit::of(0x100, {device::type::push_button, device::type::push_button}),
                    InputBus::Unit::of(0x200, {device::type::light}, {12})};
     f.bus.units[0].short_address = 3;
     f.bus.units[1].short_address = 7;
@@ -546,9 +534,9 @@ void test_scan_inputs_discovers_devices_and_enables_bound_instances() {
     TEST_ASSERT_TRUE(f.bus.units[1].enabled[0]);
 
     const auto snapshot = f.commissioning.input_snapshot();
-    TEST_ASSERT_EQUAL_UINT8(0x88, snapshot.present[0]);       // devices 3 and 7
-    TEST_ASSERT_EQUAL_UINT8(0x20 | 2, snapshot.summary[3]);   // 2 instances, has button
-    TEST_ASSERT_EQUAL_UINT8(0x80 | 1, snapshot.summary[7]);   // 1 instance, has light
+    TEST_ASSERT_EQUAL_UINT8(0x88, snapshot.present[0]);      // devices 3 and 7
+    TEST_ASSERT_EQUAL_UINT8(0x20 | 2, snapshot.summary[3]);  // 2 instances, has button
+    TEST_ASSERT_EQUAL_UINT8(0x80 | 1, snapshot.summary[7]);  // 1 instance, has light
     TEST_ASSERT_EQUAL_UINT8(0, snapshot.summary[0]);
 }
 
@@ -558,8 +546,7 @@ void test_assign_inputs_commissions_unaddressed_then_configures() {
                    InputBus::Unit::of(0x0030, {device::type::occupancy})};
 
     BoundList bound{{{0, 0}, {1, 0}}};
-    const auto result = f.commissioning.assign_inputs(CommissionMode::Unaddressed,
-                                                      BoundList::test, &bound);
+    const auto result = f.commissioning.assign_inputs(CommissionMode::Unaddressed, BoundList::test, &bound);
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.result.error));
     // Lowest random address gets the first free short address.
     TEST_ASSERT_EQUAL(0, f.bus.units[1].short_address);
@@ -580,8 +567,7 @@ void test_assign_inputs_with_no_free_address_reports_done() {
     }
     f.bus.units.push_back(InputBus::Unit::of(0x9000, {device::type::push_button}));
     BoundList bound{};
-    const auto result = f.commissioning.assign_inputs(CommissionMode::Unaddressed,
-                                                      BoundList::test, &bound);
+    const auto result = f.commissioning.assign_inputs(CommissionMode::Unaddressed, BoundList::test, &bound);
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.result.error));
     TEST_ASSERT_EQUAL(-1, f.bus.units.back().short_address);  // never commissioned
 }
@@ -616,27 +602,23 @@ void test_execute_dispatches_input_commands() {
     gateway::inputs::InputMapper inputs;
     auto config = gateway::config::default_configuration();
     config.inputs[0] = gateway::config::InputChannel{
-        0, 0, gateway::config::InputType::PushButton, gateway::config::InputFunction::Toggle,
-        1, 0};
+        0, 0, gateway::config::InputType::PushButton, gateway::config::InputFunction::Toggle, 1, 0};
     inputs.configure(config);
 
-    auto result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning,
-                                            inputs, 0, gateway::control::ScanInputDevices{});
+    auto result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning, inputs, 0,
+                                            gateway::control::ScanInputDevices{});
     // The unit is unaddressed: the inventory stays empty but succeeds.
     TEST_ASSERT_EQUAL_UINT32(0, f.commissioning.devices().present().count());
 
-    result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning,
-                                       inputs, 0,
-                                       gateway::control::AssignInputDevices{
-                                           CommissionMode::Unaddressed});
+    result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning, inputs, 0,
+                                       gateway::control::AssignInputDevices{CommissionMode::Unaddressed});
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.result.error));
     TEST_ASSERT_EQUAL(0, f.bus.units[0].short_address);
     TEST_ASSERT_TRUE(f.commissioning.devices().present().test(0));
     TEST_ASSERT_TRUE(f.bus.units[0].enabled[0]);  // the bound channel's instance
 
     // KNX feedback on the channel's switch object reaches the mapper.
-    result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning,
-                                       inputs, 0,
+    result = gateway::control::execute(f.service, dimmer, colour_dimmer, f.commissioning, inputs, 0,
                                        gateway::control::InputFeedback{input_channel(0), true});
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.result.error));
     TEST_ASSERT_TRUE(inputs.toggle_state(0));

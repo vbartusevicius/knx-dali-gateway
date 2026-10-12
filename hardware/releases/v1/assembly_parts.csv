@@ -1,0 +1,7 @@
+Item,Qty,Part,Description,Source
+Main-to-UI cable,1,JST A10SR10SR30K102A,"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 to UI J1",Digi-Key / Mouser (not stocked at LCSC); any 1:1 SH 10P cable of 80-150 mm works
+XIAO sockets,2,PM2.54-1x7PZZ-H8.5 (LCSC C54876729),"1x7 female header, 2.54 mm, 8.5 mm tall, for U7",LCSC
+DALI supply jumper caps,2,LCSC C100114,"2.54 mm closed jumper cap, 3 A; both on JP1 = internal DALI supply on",LCSC
+Case screws,2,"2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot),any
+Case base,1,enclosure/base.stl,"PETG or ASA, 0.2 mm layers, rail channel face down",printed
+Case cover,1,enclosure/cover.stl,"PETG or ASA, 0.2 mm layers, front face down",printed

@@ -112,54 +112,38 @@ void test_set_colour_temperature_sequence() {
     const auto status = colour.set_colour_temperature(channel_address(5), *Mirek::from(370));
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(status));
     ops_equal(bus, {
-                       dtr(Dtr::Dtr0, 0x72),
-                       dtr(Dtr::Dtr1, 0x01),
-                       enable(),
-                       command_op(channel_address(5), 0xE7),  // SET TEMPORARY TC
-                       enable(),
-                       command_op(channel_address(5), 0xE2),  // ACTIVATE
+                       dtr(Dtr::Dtr0, 0x72), dtr(Dtr::Dtr1, 0x01), enable(),
+                       command_op(channel_address(5), 0xE7),            // SET TEMPORARY TC
+                       enable(), command_op(channel_address(5), 0xE2),  // ACTIVATE
                    });
 }
 
 void test_set_xy_sequence() {
     FakeDaliTransport bus;
     ColourControl colour{bus};
-    const auto status = colour.set_xy(channel_address(3), *XyCoordinate::from(0x3227),
-                                      *XyCoordinate::from(0x3341));
+    const auto status =
+        colour.set_xy(channel_address(3), *XyCoordinate::from(0x3227), *XyCoordinate::from(0x3341));
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(status));
     ops_equal(bus, {
-                       dtr(Dtr::Dtr0, 0x27),
-                       dtr(Dtr::Dtr1, 0x32),
-                       enable(),
+                       dtr(Dtr::Dtr0, 0x27), dtr(Dtr::Dtr1, 0x32), enable(),
                        command_op(channel_address(3), 0xE0),  // SET TEMPORARY x
-                       dtr(Dtr::Dtr0, 0x41),
-                       dtr(Dtr::Dtr1, 0x33),
-                       enable(),
-                       command_op(channel_address(3), 0xE1),  // SET TEMPORARY y
-                       enable(),
-                       command_op(channel_address(3), 0xE2),  // ACTIVATE
+                       dtr(Dtr::Dtr0, 0x41), dtr(Dtr::Dtr1, 0x33), enable(),
+                       command_op(channel_address(3), 0xE1),            // SET TEMPORARY y
+                       enable(), command_op(channel_address(3), 0xE2),  // ACTIVATE
                    });
 }
 
 void test_set_rgbwaf_sequence() {
     FakeDaliTransport bus;
     ColourControl colour{bus};
-    const auto status =
-        colour.set_rgbwaf(group_address(0), 10, 20, 30, 40, 0xFF, 0xFF);
+    const auto status = colour.set_rgbwaf(group_address(0), 10, 20, 30, 40, 0xFF, 0xFF);
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(status));
     ops_equal(bus, {
-                       dtr(Dtr::Dtr0, 10),
-                       dtr(Dtr::Dtr1, 20),
-                       dtr(Dtr::Dtr2, 30),
-                       enable(),
+                       dtr(Dtr::Dtr0, 10), dtr(Dtr::Dtr1, 20), dtr(Dtr::Dtr2, 30), enable(),
                        command_op(group_address(0), 0xEB),  // SET TEMPORARY RGB DIMLEVEL
-                       dtr(Dtr::Dtr0, 40),
-                       dtr(Dtr::Dtr1, 0xFF),
-                       dtr(Dtr::Dtr2, 0xFF),
-                       enable(),
-                       command_op(group_address(0), 0xEC),  // SET TEMPORARY WAF DIMLEVEL
-                       enable(),
-                       command_op(group_address(0), 0xE2),  // ACTIVATE
+                       dtr(Dtr::Dtr0, 40), dtr(Dtr::Dtr1, 0xFF), dtr(Dtr::Dtr2, 0xFF), enable(),
+                       command_op(group_address(0), 0xEC),            // SET TEMPORARY WAF DIMLEVEL
+                       enable(), command_op(group_address(0), 0xE2),  // ACTIVATE
                    });
 }
 
@@ -224,12 +208,10 @@ void test_colour_queries_decode_and_query_dtr0_for_lsb() {
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(value.status));
     TEST_ASSERT_EQUAL_UINT8(0x01, *value.msb);
     TEST_ASSERT_EQUAL_UINT8(0x72, *value.lsb);
-    ops_equal(bus, {
-                       dtr(Dtr::Dtr0, 2),
-                       enable(),
-                       query_op(2, 0xFA),
-                       query_op(2, 0x98),  // QUERY CONTENT DTR0
-                   });
+    ops_equal(bus,
+              {
+                  dtr(Dtr::Dtr0, 2), enable(), query_op(2, 0xFA), query_op(2, 0x98),  // QUERY CONTENT DTR0
+              });
 }
 
 void test_scene_store_captures_colour_before_storing() {
@@ -238,10 +220,9 @@ void test_scene_store_captures_colour_before_storing() {
     const auto status = colour.store_scene(Address::broadcast(), *Scene::from(11));
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(status));
     ops_equal(bus, {
-                       command_op(Address::broadcast(), 0x21, true),  // STORE ACTUAL LEVEL
-                       enable(),
-                       command_op(Address::broadcast(), 0xEE),  // COPY REPORT TO TEMPORARY
-                       command_op(Address::broadcast(), 0x4B, true),  // STORE DTR AS SCENE 11
+                       command_op(Address::broadcast(), 0x21, true),      // STORE ACTUAL LEVEL
+                       enable(), command_op(Address::broadcast(), 0xEE),  // COPY REPORT TO TEMPORARY
+                       command_op(Address::broadcast(), 0x4B, true),      // STORE DTR AS SCENE 11
                    });
 }
 
@@ -333,10 +314,8 @@ void test_set_rgb_scales_channels_and_drives_brightness() {
         {TransportStatus::Ok, std::uint8_t{254}},   // red dimlevel
         {TransportStatus::Ok, std::uint8_t{0}},     // QUERY CONTENT DTR0
         {TransportStatus::Ok, std::uint8_t{127}},   // green dimlevel
-        {TransportStatus::Ok, std::uint8_t{0}},
-        {TransportStatus::Ok, std::uint8_t{64}},    // blue dimlevel
-        {TransportStatus::Ok, std::uint8_t{0}},
-        {TransportStatus::Ok, std::uint8_t{0}},     // white dimlevel
+        {TransportStatus::Ok, std::uint8_t{0}},    {TransportStatus::Ok, std::uint8_t{64}},  // blue dimlevel
+        {TransportStatus::Ok, std::uint8_t{0}},    {TransportStatus::Ok, std::uint8_t{0}},   // white dimlevel
         {TransportStatus::Ok, std::uint8_t{0}},
     };
     const auto result = service.set_rgb(channel_address(1), 255, 128, 64);
@@ -399,19 +378,18 @@ void test_set_rgbw_honours_validity_mask() {
 
     const auto& dtrs = bus.dtr_writes;
     TEST_ASSERT_EQUAL_UINT32(6, dtrs.size());
-    TEST_ASSERT_EQUAL_UINT8(0xFF, dtrs[0].value);                     // red = no change
-    TEST_ASSERT_EQUAL_UINT8(199, dtrs[1].value);                      // 200 -> 199
-    TEST_ASSERT_EQUAL_UINT8(0xFF, dtrs[2].value);                     // blue = no change
-    TEST_ASSERT_EQUAL_UINT8(127, dtrs[3].value);                      // white 128 -> 127
+    TEST_ASSERT_EQUAL_UINT8(0xFF, dtrs[0].value);  // red = no change
+    TEST_ASSERT_EQUAL_UINT8(199, dtrs[1].value);   // 200 -> 199
+    TEST_ASSERT_EQUAL_UINT8(0xFF, dtrs[2].value);  // blue = no change
+    TEST_ASSERT_EQUAL_UINT8(127, dtrs[3].value);   // white 128 -> 127
     // Brightness = max(200, 128) = 200 -> arc.
     const auto& writes = bus.writes;
     TEST_ASSERT_EQUAL_UINT32(1, writes.size());
-    TEST_ASSERT_EQUAL_UINT8(gateway::dali::arc_from_scaling(200).value(),
-                            writes[0].level.value());
+    TEST_ASSERT_EQUAL_UINT8(gateway::dali::arc_from_scaling(200).value(), writes[0].level.value());
 
     const auto colour = service.colour_state(group(0));
     TEST_ASSERT_EQUAL_UINT8(0b0101, colour.rgbw_validity);
-    TEST_ASSERT_EQUAL_UINT8(0, colour.r);   // invalid channels are not remembered
+    TEST_ASSERT_EQUAL_UINT8(0, colour.r);  // invalid channels are not remembered
     TEST_ASSERT_EQUAL_UINT8(200, colour.g);
     TEST_ASSERT_EQUAL_UINT8(128, colour.w);
 }
@@ -482,12 +460,9 @@ void test_finish_colour_temperature_reads_back_members() {
 
     // Each member's readback: colour status + colour value (2 queries + DTR0).
     bus.query_replies = {
-        {TransportStatus::Ok, std::uint8_t{0x20}},
-        {TransportStatus::Ok, std::uint8_t{0x01}},
-        {TransportStatus::Ok, std::uint8_t{0x72}},
-        {TransportStatus::Ok, std::uint8_t{0x20}},
-        {TransportStatus::Ok, std::uint8_t{0x01}},
-        {TransportStatus::Ok, std::uint8_t{0x72}},
+        {TransportStatus::Ok, std::uint8_t{0x20}}, {TransportStatus::Ok, std::uint8_t{0x01}},
+        {TransportStatus::Ok, std::uint8_t{0x72}}, {TransportStatus::Ok, std::uint8_t{0x20}},
+        {TransportStatus::Ok, std::uint8_t{0x01}}, {TransportStatus::Ok, std::uint8_t{0x72}},
     };
     const auto result = service.finish_colour_temperature(group_address(0));
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(result.error));
@@ -569,9 +544,9 @@ void test_execute_routes_colour_commands() {
     gateway::commissioning::Commissioning commissioning{bus, service};
     gateway::inputs::InputMapper inputs;
 
-    const auto set = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, 0,
-                                               Command{gateway::control::SetColourTemperature{
-                                                   channel_address(0), 3000}});
+    const auto set =
+        gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, 0,
+                                  Command{gateway::control::SetColourTemperature{channel_address(0), 3000}});
     TEST_ASSERT_EQUAL(static_cast<int>(ControlError::None), static_cast<int>(set.result.error));
     TEST_ASSERT_EQUAL_UINT32(6, bus.ops.size());
 
@@ -585,9 +560,8 @@ void test_execute_routes_colour_commands() {
 
     // A stop ends the dim and triggers a readback (capabilities unknown here,
     // so finish_colour_temperature has nothing to refresh).
-    outcome = gateway::control::execute(
-        service, dimmer, colour_dimmer, commissioning, inputs, 100,
-        Command{gateway::control::ColourDimStop{channel_address(0)}});
+    outcome = gateway::control::execute(service, dimmer, colour_dimmer, commissioning, inputs, 100,
+                                        Command{gateway::control::ColourDimStop{channel_address(0)}});
     TEST_ASSERT_FALSE(colour_dimmer.running(channel_address(0)));
 }
 

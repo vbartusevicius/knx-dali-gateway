@@ -48,10 +48,13 @@ std::optional<dali::ShortAddress> address_argument(const char* text) {
 }
 
 UsbConsole::UsbConsole(Queue<control::Command>& commands, Queue<commissioning::Snapshot>& snapshots,
-                       Queue<commissioning::InputSnapshot>& input_snapshots,
-                       bool dali_configured, bool storage_available) noexcept
-    : commands_(commands), snapshots_(snapshots), input_snapshots_(input_snapshots),
-      dali_configured_(dali_configured), storage_available_(storage_available) {}
+                       Queue<commissioning::InputSnapshot>& input_snapshots, bool dali_configured,
+                       bool storage_available) noexcept
+    : commands_(commands),
+      snapshots_(snapshots),
+      input_snapshots_(input_snapshots),
+      dali_configured_(dali_configured),
+      storage_available_(storage_available) {}
 
 UsbConsole::~UsbConsole() {
     if (repl_) {
@@ -59,7 +62,8 @@ UsbConsole::~UsbConsole() {
     }
 }
 
-esp_err_t UsbConsole::register_command(const char* name, const char* hint, esp_console_cmd_func_with_context_t handler) {
+esp_err_t UsbConsole::register_command(const char* name, const char* hint,
+                                       esp_console_cmd_func_with_context_t handler) {
     esp_console_cmd_t command{};
     command.command = name;
     command.help = hint;
@@ -87,25 +91,23 @@ esp_err_t UsbConsole::start() {
         const char* name;
         const char* hint;
         esp_console_cmd_func_with_context_t handler;
-    } commands[] = {
-        {"status", "", status_command},
-        {"level", "<a0..63|g0..15|b> <arc-level 0..254>", level_command},
-        {"on", "<a0..63|g0..15|b>", on_command},
-        {"off", "<a0..63|g0..15|b>", off_command},
-        {"read", "<a0..63>", read_command},
-        {"recover", "<a0..63>", recover_command},
-        {"dim", "<a0..63|g0..15|b> up|down|stop", dim_command},
-        {"scene", "<0..15>", scene_command},
-        {"store", "<0..15>", store_command},
-        {"scan", "", scan_command},
-        {"assign", "new|all", assign_command},
-        {"replace", "<a0..63>", replace_command},
-        {"identify", "<a0..63>", identify_command},
-        {"faults", "", faults_command},
-        {"reset-addresses", "confirm", reset_addresses_command},
-        {"inputs", "scan|assign new|assign all|list", inputs_command},
-        {"factory-reset", "confirm", factory_reset_command}
-    };
+    } commands[] = {{"status", "", status_command},
+                    {"level", "<a0..63|g0..15|b> <arc-level 0..254>", level_command},
+                    {"on", "<a0..63|g0..15|b>", on_command},
+                    {"off", "<a0..63|g0..15|b>", off_command},
+                    {"read", "<a0..63>", read_command},
+                    {"recover", "<a0..63>", recover_command},
+                    {"dim", "<a0..63|g0..15|b> up|down|stop", dim_command},
+                    {"scene", "<0..15>", scene_command},
+                    {"store", "<0..15>", store_command},
+                    {"scan", "", scan_command},
+                    {"assign", "new|all", assign_command},
+                    {"replace", "<a0..63>", replace_command},
+                    {"identify", "<a0..63>", identify_command},
+                    {"faults", "", faults_command},
+                    {"reset-addresses", "confirm", reset_addresses_command},
+                    {"inputs", "scan|assign new|assign all|list", inputs_command},
+                    {"factory-reset", "confirm", factory_reset_command}};
     for (const auto& command : commands) {
         error = register_command(command.name, command.hint, command.handler);
         if (error != ESP_OK) {
@@ -143,7 +145,8 @@ int UsbConsole::level_command(void* context, int argc, char** argv) {
     const auto value = unsigned_argument(argv[2]);
     const auto level = value ? dali::ArcLevel::from(*value) : std::nullopt;
     if (!address || !level) {
-        std::printf("Expected a target a0..63, g0..15 or b and arc level 0..254; 255 is MASK, not a target.\n");
+        std::printf(
+            "Expected a target a0..63, g0..15 or b and arc level 0..254; 255 is MASK, not a target.\n");
         return 1;
     }
     auto& console = *static_cast<UsbConsole*>(context);
@@ -317,11 +320,10 @@ int UsbConsole::faults_command(void* context, int argc, char**) {
     print_bitmap("present", snapshot->present);
     std::printf(" ");
     print_bitmap("faulty", snapshot->faulty);
-    std::printf(" phase=%u progress=%u%% found=%u error=%u\n",
-                static_cast<unsigned>(snapshot->progress.phase),
-                static_cast<unsigned>(snapshot->progress.progress),
-                static_cast<unsigned>(snapshot->progress.found),
-                static_cast<unsigned>(snapshot->progress.last_error));
+    std::printf(
+        " phase=%u progress=%u%% found=%u error=%u\n", static_cast<unsigned>(snapshot->progress.phase),
+        static_cast<unsigned>(snapshot->progress.progress), static_cast<unsigned>(snapshot->progress.found),
+        static_cast<unsigned>(snapshot->progress.last_error));
     return 0;
 }
 
@@ -341,8 +343,7 @@ int UsbConsole::inputs_command(void* context, int argc, char** argv) {
     }
     if (argc == 3 && std::strcmp(argv[1], "assign") == 0) {
         if (std::strcmp(argv[2], "new") == 0) {
-            return console.submit(
-                control::AssignInputDevices{dali::CommissionMode::Unaddressed});
+            return console.submit(control::AssignInputDevices{dali::CommissionMode::Unaddressed});
         }
         if (std::strcmp(argv[2], "all") == 0) {
             return console.submit(control::AssignInputDevices{dali::CommissionMode::All});
@@ -364,10 +365,8 @@ int UsbConsole::inputs_command(void* context, int argc, char** argv) {
             }
             found = true;
             const auto summary = snapshot->summary[index];
-            std::printf("device %2u: %u instance(s)%s%s%s\n", index,
-                        static_cast<unsigned>(summary & 0x1F),
-                        (summary & 0x20) ? " push-button" : "",
-                        (summary & 0x40) ? " occupancy" : "",
+            std::printf("device %2u: %u instance(s)%s%s%s\n", index, static_cast<unsigned>(summary & 0x1F),
+                        (summary & 0x20) ? " push-button" : "", (summary & 0x40) ? " occupancy" : "",
                         (summary & 0x80) ? " light" : "");
         }
         if (!found) {

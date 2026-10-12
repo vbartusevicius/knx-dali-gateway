@@ -161,8 +161,8 @@ void test_writes_never_retry() {
 
 void test_write_collision_returns_after_one_attempt() {
     AttemptTransport inner;
-    inner.write_script = {TransportStatus::Collision, TransportStatus::Collision,
-                          TransportStatus::Collision, TransportStatus::Ok};
+    inner.write_script = {TransportStatus::Collision, TransportStatus::Collision, TransportStatus::Collision,
+                          TransportStatus::Ok};
     auto transport = retrying(inner);
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Collision),
                       static_cast<int>(transport.send_command(Address::broadcast(), 0x21, true)));
@@ -180,8 +180,8 @@ void test_membership_write_does_not_retry_collision() {
 
 void test_read_retries_transient_statuses_and_returns_last_result() {
     AttemptTransport inner;
-    for (const auto status : {TransportStatus::Timeout, TransportStatus::Collision,
-                              TransportStatus::InvalidResponse}) {
+    for (const auto status :
+         {TransportStatus::Timeout, TransportStatus::Collision, TransportStatus::InvalidResponse}) {
         inner.reads = 0;
         inner.read_script = {{status, std::nullopt}, {TransportStatus::Ok, ArcLevel::from(42)}};
         auto transport = retrying(inner);
@@ -194,8 +194,8 @@ void test_read_retries_transient_statuses_and_returns_last_result() {
 
 void test_read_does_not_retry_permanent_statuses() {
     AttemptTransport inner;
-    for (const auto status : {TransportStatus::Unconfigured, TransportStatus::Unsupported,
-                              TransportStatus::Failure}) {
+    for (const auto status :
+         {TransportStatus::Unconfigured, TransportStatus::Unsupported, TransportStatus::Failure}) {
         inner.reads = 0;
         inner.read_script = {{status, std::nullopt}, {TransportStatus::Ok, ArcLevel::from(42)}};
         auto transport = retrying(inner);
@@ -221,8 +221,7 @@ void test_group_presence_and_status_reads_retry() {
     AttemptTransport inner;
     inner.groups_script = {{TransportStatus::Collision, std::nullopt},
                            {TransportStatus::Ok, std::uint16_t{0x00FF}}};
-    inner.presence_script = {{TransportStatus::InvalidResponse, false},
-                             {TransportStatus::Ok, true}};
+    inner.presence_script = {{TransportStatus::InvalidResponse, false}, {TransportStatus::Ok, true}};
     inner.status_script = {{TransportStatus::Timeout, std::nullopt},
                            {TransportStatus::Ok, std::uint8_t{0x04}}};
     auto transport = retrying(inner);
@@ -239,10 +238,9 @@ void test_commission_and_identify_are_never_retried() {
     inner.commission_script = {{TransportStatus::Collision, 0}};
     inner.identify_script = {TransportStatus::Collision};
     auto transport = retrying(inner);
-    TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Collision),
-                      static_cast<int>(transport.commission(gateway::dali::CommissionMode::All,
-                                                            channel(0), 64)
-                                           .status));
+    TEST_ASSERT_EQUAL(
+        static_cast<int>(TransportStatus::Collision),
+        static_cast<int>(transport.commission(gateway::dali::CommissionMode::All, channel(0), 64).status));
     TEST_ASSERT_EQUAL_UINT32(1, inner.commissions);
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Collision),
                       static_cast<int>(transport.identify(channel(0))));
@@ -255,8 +253,7 @@ void test_dt8_primitives_follow_read_write_retry_rules() {
     inner.query_script = {{TransportStatus::Timeout, std::nullopt},
                           {TransportStatus::Ok, std::uint8_t{0x2A}}};
     // DTR/EDT writes pass Collision and Timeout straight through.
-    inner.write_script = {TransportStatus::Collision, TransportStatus::Timeout,
-                          TransportStatus::Ok};
+    inner.write_script = {TransportStatus::Collision, TransportStatus::Timeout, TransportStatus::Ok};
     auto transport = retrying(inner);
     const auto answer = transport.query(channel(0), 0xF9);
     TEST_ASSERT_EQUAL(static_cast<int>(TransportStatus::Ok), static_cast<int>(answer.status));

@@ -28,7 +28,7 @@ async def test_no_status_telegrams_to_unassociated_destination(
             break
         try:
             telegrams.append(await asyncio.wait_for(knx.incoming.get(), remaining))
-        except asyncio.TimeoutError:
+        except TimeoutError:
             break
 
     group_values = [

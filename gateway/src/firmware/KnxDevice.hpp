@@ -7,22 +7,22 @@
 #include "commissioning/Commissioning.hpp"
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
-#include "device/ProgButton.hpp"
+#include "device/FrontPanel.hpp"
+#include "device/StatusLeds.hpp"
 #include "firmware/Board.hpp"
 #include "firmware/Queue.hpp"
 #include "knxstack/KnxApplication.hpp"
 
 namespace gateway::firmware {
 
-// ESP-IDF half of the KNX device: UART pins, WS2812 prog LED, prog-button
-// sampling and the task loop. Everything that talks to the thelsing stack
+// ESP-IDF half of the KNX device: UART pins, WS2812 status LED, front-panel
+// button sampling and the task loop. Everything that talks to the thelsing stack
 // (object callbacks, statuses, function properties, parameters) lives in the
 // portable knxstack::KnxApplication.
 class KnxDevice final {
 public:
     KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
-              Queue<config::Configuration>& configuration,
-              Queue<commissioning::Snapshot>& snapshots,
+              Queue<config::Configuration>& configuration, Queue<commissioning::Snapshot>& snapshots,
               Queue<commissioning::InputSnapshot>& input_snapshots) noexcept;
 
     void run();
@@ -47,9 +47,8 @@ private:
     commissioning::InputSnapshot latest_input_snapshot_{};
     knxstack::KnxApplication<Facade>::Hooks hooks_{};
     knxstack::KnxApplication<Facade> app_;
-    device::ProgButton prog_button_;
-    std::uint32_t last_blink_ms_ = 0;
-    bool led_on_ = false;
+    device::FrontPanel panel_;
+    device::Rgb shown_{};
     bool led_written_ = false;
 };
 

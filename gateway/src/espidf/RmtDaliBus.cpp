@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
 #include "espidf/RmtDaliBus.hpp"
 
@@ -58,7 +57,12 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
         std::uint16_t count;
     };
     struct Message {
-        enum class Kind : std::uint8_t { RxDone, RxActive, TxDone, Request };
+        enum class Kind : std::uint8_t {
+            RxDone,
+            RxActive,
+            TxDone,
+            Request
+        };
         Kind kind;
         union {
             RxDoneMsg rx;
@@ -69,20 +73,15 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
     };
 
     explicit Impl(const Config& config)
-        : config_(config),
-          link_(static_cast<dali::bus::LinkLayer::Sink&>(*this), &Impl::random,
-                this) {}
+        : config_(config), link_(static_cast<dali::bus::LinkLayer::Sink&>(*this), &Impl::random, this) {}
 
     static std::uint32_t random(void* /*ctx*/) { return esp_random(); }
 
-    static std::uint32_t now_us() {
-        return static_cast<std::uint32_t>(esp_timer_get_time());
-    }
+    static std::uint32_t now_us() { return static_cast<std::uint32_t>(esp_timer_get_time()); }
 
     std::uint16_t pin_level(dali::bus::Line line) const {
-        return line == dali::bus::Line::Active
-                   ? (config_.invert_tx ? 1u : 0u)
-                   : (config_.invert_tx ? 0u : 1u);
+        return line == dali::bus::Line::Active ? (config_.invert_tx ? 1u : 0u)
+                                               : (config_.invert_tx ? 0u : 1u);
     }
 
     bool start() {
@@ -119,11 +118,7 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
             .mem_block_symbols = rx_buffer_symbols,
             .trans_queue_depth = 2,
             .intr_priority = 0,
-            .flags = {.invert_out = 0u,
-                      .with_dma = 0u,
-                      .io_loop_back = 0u,
-                      .io_od_mode = 0u,
-                      .allow_pd = 0u},
+            .flags = {.invert_out = 0u, .with_dma = 0u, .io_loop_back = 0u, .io_od_mode = 0u, .allow_pd = 0u},
         };
         if (rmt_new_tx_channel(&tx_cfg, &tx_channel_) != ESP_OK) {
             return false;
@@ -153,11 +148,9 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
         gpio_config(&rx_sense);
         const auto isr_status = gpio_install_isr_service(0);
         if (isr_status == ESP_OK || isr_status == ESP_ERR_INVALID_STATE) {
-            gpio_isr_handler_add(static_cast<gpio_num_t>(config_.rx_gpio),
-                                 &Impl::on_rx_edge, this);
+            gpio_isr_handler_add(static_cast<gpio_num_t>(config_.rx_gpio), &Impl::on_rx_edge, this);
         }
-        if (xTaskCreate(&Impl::task_entry, "dali-bus", task_stack, this,
-                        task_priority, &task_) != pdPASS) {
+        if (xTaskCreate(&Impl::task_entry, "dali-bus", task_stack, this, task_priority, &task_) != pdPASS) {
             return false;
         }
         arm_rx();
@@ -170,8 +163,7 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
             .signal_range_max_ns = rx_idle_threshold_ns,
             .flags = {.en_partial_rx = 0u},
         };
-        const auto error =
-            rmt_receive(rx_channel_, rx_buffer_, sizeof(rx_buffer_), &receive_cfg);
+        const auto error = rmt_receive(rx_channel_, rx_buffer_, sizeof(rx_buffer_), &receive_cfg);
         if (error != ESP_OK && error != ESP_ERR_INVALID_STATE) {
             ESP_LOGW(log_tag, "rmt_receive failed: %s", esp_err_to_name(error));
         }
@@ -218,14 +210,12 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
             const rmt_symbol_word_t& word = rx_buffer_[i];
             total_us += word.duration0 + word.duration1;
             const auto first = decoder_.feed(
-                word.level0 == 0 ? dali::bus::Line::Active : dali::bus::Line::Idle,
-                word.duration0);
+                word.level0 == 0 ? dali::bus::Line::Active : dali::bus::Line::Idle, word.duration0);
             if (first) {
                 decoded = first;
             }
             const auto second = decoder_.feed(
-                word.level1 == 0 ? dali::bus::Line::Active : dali::bus::Line::Idle,
-                word.duration1);
+                word.level1 == 0 ? dali::bus::Line::Active : dali::bus::Line::Idle, word.duration1);
             if (second) {
                 decoded = second;
             }
@@ -267,10 +257,8 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
             link_.on_tx_complete(msg.tx_end_us);
             return;
         case Message::Kind::Request:
-            if (!link_.request(msg.request.request.value,
-                               msg.request.request.bits,
-                               msg.request.request.priority,
-                               msg.request.request.expect_reply,
+            if (!link_.request(msg.request.request.value, msg.request.request.bits,
+                               msg.request.request.priority, msg.request.request.expect_reply,
                                msg.request.request.repeat_gap_us)) {
                 waiter_seq_ = msg.request.seq;
                 waiter_ = msg.request.waiter;
@@ -303,25 +291,17 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
         }
     }
 
-    static void task_entry(void* arg) {
-        static_cast<Impl*>(arg)->run();
-    }
+    static void task_entry(void* arg) { static_cast<Impl*>(arg)->run(); }
 
-    static bool IRAM_ATTR on_rx_done(rmt_channel_handle_t,
-                                     const rmt_rx_done_event_data_t* edata,
-                                     void* ctx) {
+    static bool IRAM_ATTR on_rx_done(rmt_channel_handle_t, const rmt_rx_done_event_data_t* edata, void* ctx) {
         return static_cast<Impl*>(ctx)->on_rx_done_isr(edata);
     }
 
-    static bool IRAM_ATTR on_tx_done(rmt_channel_handle_t,
-                                     const rmt_tx_done_event_data_t*,
-                                     void* ctx) {
+    static bool IRAM_ATTR on_tx_done(rmt_channel_handle_t, const rmt_tx_done_event_data_t*, void* ctx) {
         return static_cast<Impl*>(ctx)->on_tx_done_isr();
     }
 
-    static void IRAM_ATTR on_rx_edge(void* ctx) {
-        static_cast<Impl*>(ctx)->on_rx_edge_isr();
-    }
+    static void IRAM_ATTR on_rx_edge(void* ctx) { static_cast<Impl*>(ctx)->on_rx_edge_isr(); }
 
     // LinkLayer::Sink ------------------------------------------------------
 
@@ -349,12 +329,10 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
         }
         const rmt_transmit_config_t tx_cfg = {
             .loop_count = 0,
-            .flags = {.eot_level = pin_level(dali::bus::Line::Idle),
-                      .queue_nonblocking = 0u},
+            .flags = {.eot_level = pin_level(dali::bus::Line::Idle), .queue_nonblocking = 0u},
         };
         const auto error =
-            rmt_transmit(tx_channel_, encoder_, tx_items_,
-                         count * sizeof(rmt_symbol_word_t), &tx_cfg);
+            rmt_transmit(tx_channel_, encoder_, tx_items_, count * sizeof(rmt_symbol_word_t), &tx_cfg);
         if (error != ESP_OK) {
             ESP_LOGW(log_tag, "rmt_transmit failed: %s", esp_err_to_name(error));
         }
@@ -370,11 +348,9 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
         };
         const rmt_transmit_config_t tx_cfg = {
             .loop_count = 0,
-            .flags = {.eot_level = pin_level(dali::bus::Line::Idle),
-                      .queue_nonblocking = 0u},
+            .flags = {.eot_level = pin_level(dali::bus::Line::Idle), .queue_nonblocking = 0u},
         };
-        rmt_transmit(tx_channel_, encoder_, &break_symbol_,
-                     sizeof(break_symbol_), &tx_cfg);
+        rmt_transmit(tx_channel_, encoder_, &break_symbol_, sizeof(break_symbol_), &tx_cfg);
     }
 
     // Public surface used by RmtDaliBus ------------------------------------
@@ -418,8 +394,7 @@ struct RmtDaliBus::Impl final : dali::bus::LinkLayer::Sink {
     // burst, so the ISR never sees it being overwritten.
     rmt_symbol_word_t rx_buffer_[rx_buffer_symbols] = {};
 
-    static constexpr std::size_t tx_items_capacity =
-        (dali::bus::EncodedFrame::max_symbols + 1) / 2;
+    static constexpr std::size_t tx_items_capacity = (dali::bus::EncodedFrame::max_symbols + 1) / 2;
     rmt_symbol_word_t tx_items_[tx_items_capacity] = {};
     rmt_symbol_word_t break_symbol_ = {};
 

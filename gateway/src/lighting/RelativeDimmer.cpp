@@ -1,5 +1,11 @@
 #include "lighting/RelativeDimmer.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+
+#include "dali/Address.hpp"
+
 namespace gateway::lighting {
 
 void RelativeDimmer::start(dali::Address address, DimDirection direction, std::uint32_t now_ms) noexcept {
@@ -29,7 +35,8 @@ std::optional<std::uint32_t> RelativeDimmer::next_deadline() const noexcept {
             continue;
         }
         const std::uint32_t expires_at = slot.started_at + safety_limit_ms;
-        const std::uint32_t deadline = reached(expires_at, slot.next_step_at) ? slot.next_step_at : expires_at;
+        const std::uint32_t deadline =
+            reached(expires_at, slot.next_step_at) ? slot.next_step_at : expires_at;
         if (!earliest || reached(*earliest, deadline)) {
             earliest = deadline;
         }

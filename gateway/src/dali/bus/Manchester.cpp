@@ -1,5 +1,10 @@
 #include "dali/bus/Manchester.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/bus/Timing.hpp"
+
 namespace gateway::dali::bus {
 
 namespace {

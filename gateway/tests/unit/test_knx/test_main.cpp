@@ -80,8 +80,7 @@ void test_object_target_decoding_channel_group_broadcast() {
     const auto channel_last = gateway::knx::object_target(960);
     TEST_ASSERT_TRUE(channel_last.has_value());
     TEST_ASSERT_TRUE(channel_last->address == channel(63));
-    TEST_ASSERT_EQUAL(static_cast<int>(ObjectFunction::XyYStatus),
-                      static_cast<int>(channel_last->function));
+    TEST_ASSERT_EQUAL(static_cast<int>(ObjectFunction::XyYStatus), static_cast<int>(channel_last->function));
 
     const auto group_first = gateway::knx::object_target(961);
     TEST_ASSERT_TRUE(group_first.has_value());
@@ -91,15 +90,17 @@ void test_object_target_decoding_channel_group_broadcast() {
     const auto group_last = gateway::knx::object_target(1184);
     TEST_ASSERT_TRUE(group_last.has_value());
     TEST_ASSERT_TRUE(group_last->address == group(15));
-    TEST_ASSERT_EQUAL(static_cast<int>(ObjectFunction::XyYStatus),
-                      static_cast<int>(group_last->function));
+    TEST_ASSERT_EQUAL(static_cast<int>(ObjectFunction::XyYStatus), static_cast<int>(group_last->function));
 
-    const ObjectFunction expected[] = {
-        ObjectFunction::Switch,          ObjectFunction::Brightness,
-        ObjectFunction::RelativeDimming, ObjectFunction::Scene,
-        ObjectFunction::ColourTemperature, ObjectFunction::RelativeColourTemperature,
-        ObjectFunction::Rgb,             ObjectFunction::Rgbw,
-        ObjectFunction::XyY};
+    const ObjectFunction expected[] = {ObjectFunction::Switch,
+                                       ObjectFunction::Brightness,
+                                       ObjectFunction::RelativeDimming,
+                                       ObjectFunction::Scene,
+                                       ObjectFunction::ColourTemperature,
+                                       ObjectFunction::RelativeColourTemperature,
+                                       ObjectFunction::Rgb,
+                                       ObjectFunction::Rgbw,
+                                       ObjectFunction::XyY};
     for (std::uint16_t number = 1185; number <= 1193; ++number) {
         const auto decoded = gateway::knx::object_target(number);
         TEST_ASSERT_TRUE(decoded.has_value());
@@ -118,18 +119,18 @@ void test_input_object_map_layout() {
     // objects (switch, dimming, illuminance, scene), 1194..1321.
     TEST_ASSERT_EQUAL_UINT16(1194,
                              gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Switch));
-    TEST_ASSERT_EQUAL_UINT16(1195,
-                             gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Dimming));
-    TEST_ASSERT_EQUAL_UINT16(1196,
-                             gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Illuminance));
+    TEST_ASSERT_EQUAL_UINT16(
+        1195, gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Dimming));
+    TEST_ASSERT_EQUAL_UINT16(
+        1196, gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Illuminance));
     TEST_ASSERT_EQUAL_UINT16(1197,
                              gateway::knx::input_object_number(0, gateway::knx::InputObjectFunction::Scene));
     TEST_ASSERT_EQUAL_UINT16(1194 + 4 * 31 + 3,
                              gateway::knx::input_object_number(31, gateway::knx::InputObjectFunction::Scene));
     TEST_ASSERT_EQUAL_UINT16(1321,
                              gateway::knx::input_object_number(31, gateway::knx::InputObjectFunction::Scene));
-    TEST_ASSERT_EQUAL_UINT16(0,
-                             gateway::knx::input_object_number(32, gateway::knx::InputObjectFunction::Switch));
+    TEST_ASSERT_EQUAL_UINT16(
+        0, gateway::knx::input_object_number(32, gateway::knx::InputObjectFunction::Switch));
 
     for (std::uint16_t number = 1194; number <= 1321; ++number) {
         const auto decoded = gateway::knx::input_object_target(number);
@@ -138,8 +139,8 @@ void test_input_object_map_layout() {
         TEST_ASSERT_EQUAL(static_cast<int>(gateway::knx::InputObjectFunction::Switch) +
                               static_cast<int>((number - 1194) % 4),
                           static_cast<int>(decoded->function));
-        TEST_ASSERT_EQUAL_UINT16(
-            number, gateway::knx::input_object_number(decoded->channel, decoded->function));
+        TEST_ASSERT_EQUAL_UINT16(number,
+                                 gateway::knx::input_object_number(decoded->channel, decoded->function));
     }
     TEST_ASSERT_FALSE(gateway::knx::input_object_target(1193).has_value());
     TEST_ASSERT_FALSE(gateway::knx::input_object_target(1322).has_value());
@@ -151,13 +152,17 @@ void test_object_number_is_zero_for_nonexistent_combinations() {
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(channel(0), ObjectFunction::Scene));
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(group(0), ObjectFunction::Scene));
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(group(0), ObjectFunction::Fault));
-    TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::SwitchStatus));
-    TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::BrightnessStatus));
+    TEST_ASSERT_EQUAL_UINT16(0,
+                             gateway::knx::object_number(Address::broadcast(), ObjectFunction::SwitchStatus));
+    TEST_ASSERT_EQUAL_UINT16(
+        0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::BrightnessStatus));
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::Fault));
     // Broadcast has colour write objects but no colour status objects.
-    TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::ColourTemperatureStatus));
+    TEST_ASSERT_EQUAL_UINT16(
+        0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::ColourTemperatureStatus));
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::RgbStatus));
-    TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::RgbwStatus));
+    TEST_ASSERT_EQUAL_UINT16(0,
+                             gateway::knx::object_number(Address::broadcast(), ObjectFunction::RgbwStatus));
     TEST_ASSERT_EQUAL_UINT16(0, gateway::knx::object_number(Address::broadcast(), ObjectFunction::XyYStatus));
 }
 
@@ -177,8 +182,8 @@ void test_object_map_round_trip_for_all_objects() {
     for (std::uint16_t number = 1194; number <= gateway::knx::object_count; ++number) {
         const auto decoded = gateway::knx::input_object_target(number);
         TEST_ASSERT_TRUE(decoded.has_value());
-        TEST_ASSERT_EQUAL_UINT16(
-            number, gateway::knx::input_object_number(decoded->channel, decoded->function));
+        TEST_ASSERT_EQUAL_UINT16(number,
+                                 gateway::knx::input_object_number(decoded->channel, decoded->function));
     }
 }
 
@@ -217,16 +222,16 @@ void test_scaling_command_for_group_and_broadcast() {
 }
 
 void test_switch_and_scaling_decoders_reject_dim_and_scene_objects() {
-    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(80, true).has_value());    // ch5 rel dim
+    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(80, true).has_value());  // ch5 rel dim
     TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(80, 1).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_switch(1187, true).has_value());  // broadcast rel dim
     TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(1188, 1).has_value());    // broadcast scene
 }
 
 void test_status_objects_do_not_produce_commands() {
-    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(77, true).has_value());    // ch5 switch status
-    TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(79, 128).has_value());    // ch5 brightness status
-    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(990, true).has_value());   // group 2 switch status
+    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(77, true).has_value());   // ch5 switch status
+    TEST_ASSERT_FALSE(gateway::knx::command_for_scaling(79, 128).has_value());   // ch5 brightness status
+    TEST_ASSERT_FALSE(gateway::knx::command_for_switch(990, true).has_value());  // group 2 switch status
 }
 
 void test_scaling_command_maps_full_range() {
@@ -279,8 +284,8 @@ void test_relative_dimming_on_group_and_broadcast_objects() {
     TEST_ASSERT_TRUE(broadcast_dim.has_value());
     TEST_ASSERT_TRUE(std::get<gateway::control::DimStart>(*broadcast_dim).address == Address::broadcast());
 
-    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(1, 0x09).has_value());    // switch object
-    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(1188, 0x09).has_value()); // scene object
+    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(1, 0x09).has_value());     // switch object
+    TEST_ASSERT_FALSE(gateway::knx::command_for_relative_dimming(1188, 0x09).has_value());  // scene object
 }
 
 void test_scene_decodes_recall_and_store() {
@@ -298,30 +303,31 @@ void test_scene_decodes_recall_and_store() {
     TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::StoreScene>(*store));
     TEST_ASSERT_EQUAL_UINT8(0, std::get<gateway::control::StoreScene>(*store).scene.value());
 
-    TEST_ASSERT_FALSE(gateway::knx::command_for_scene(1188, 0x10).has_value());  // scene 16+ has no DALI scene
+    TEST_ASSERT_FALSE(
+        gateway::knx::command_for_scene(1188, 0x10).has_value());  // scene 16+ has no DALI scene
     TEST_ASSERT_FALSE(gateway::knx::command_for_scene(1188, 0x90).has_value());
     TEST_ASSERT_FALSE(gateway::knx::command_for_scene(1187, 0x00).has_value());  // relative dimming object
 }
 
 void test_status_objects_report_known_levels() {
-    const auto off = gateway::knx::status_objects(
-        StatusUpdate{channel(5), {level(0), StateSource::Readback}});
+    const auto off =
+        gateway::knx::status_objects(StatusUpdate{channel(5), {level(0), StateSource::Readback}});
     TEST_ASSERT_TRUE(off.has_value());
     TEST_ASSERT_EQUAL_UINT16(77, off->switch_object);
     TEST_ASSERT_FALSE(off->on);
     TEST_ASSERT_EQUAL_UINT16(79, off->brightness_object);
     TEST_ASSERT_EQUAL_UINT8(0, off->scaling);
 
-    const auto full = gateway::knx::status_objects(
-        StatusUpdate{channel(5), {level(254), StateSource::Commanded}});
+    const auto full =
+        gateway::knx::status_objects(StatusUpdate{channel(5), {level(254), StateSource::Commanded}});
     TEST_ASSERT_TRUE(full.has_value());
     TEST_ASSERT_TRUE(full->on);
     TEST_ASSERT_EQUAL_UINT8(255, full->scaling);
 }
 
 void test_status_objects_for_group() {
-    const auto update = gateway::knx::status_objects(
-        StatusUpdate{group(2), {level(100), StateSource::Commanded}});
+    const auto update =
+        gateway::knx::status_objects(StatusUpdate{group(2), {level(100), StateSource::Commanded}});
     TEST_ASSERT_TRUE(update.has_value());
     TEST_ASSERT_EQUAL_UINT16(990, update->switch_object);
     TEST_ASSERT_EQUAL_UINT16(992, update->brightness_object);
@@ -334,8 +340,8 @@ void test_status_objects_broadcast_has_none() {
 }
 
 void test_status_objects_unknown_level_has_no_status() {
-    const auto update = gateway::knx::status_objects(
-        StatusUpdate{channel(5), {std::nullopt, StateSource::Unknown}});
+    const auto update =
+        gateway::knx::status_objects(StatusUpdate{channel(5), {std::nullopt, StateSource::Unknown}});
     TEST_ASSERT_FALSE(update.has_value());
 }
 
@@ -349,16 +355,15 @@ void test_colour_temperature_datapoint_roundtrip() {
     TEST_ASSERT_TRUE(decoded.has_value());
     TEST_ASSERT_EQUAL_UINT16(2700, decoded->kelvin);
 
-    const auto max = gateway::knx::decode_colour_temperature(
-        std::array<std::uint8_t, 2>{0xFF, 0xFF}.data(), 2);
+    const auto max =
+        gateway::knx::decode_colour_temperature(std::array<std::uint8_t, 2>{0xFF, 0xFF}.data(), 2);
     TEST_ASSERT_EQUAL_UINT16(65535, max->kelvin);
     const std::uint8_t short_data[] = {0x01};
     TEST_ASSERT_FALSE(gateway::knx::decode_colour_temperature(short_data, 1).has_value());
 }
 
 void test_rgb_datapoint_roundtrip() {
-    const auto decoded = gateway::knx::decode_rgb(
-        std::array<std::uint8_t, 3>{0x10, 0x80, 0xFF}.data(), 3);
+    const auto decoded = gateway::knx::decode_rgb(std::array<std::uint8_t, 3>{0x10, 0x80, 0xFF}.data(), 3);
     TEST_ASSERT_TRUE(decoded.has_value());
     TEST_ASSERT_EQUAL_UINT8(0x10, decoded->red);
     TEST_ASSERT_EQUAL_UINT8(0x80, decoded->green);
@@ -431,8 +436,7 @@ void test_relative_colour_temperature_decodes() {
     TEST_ASSERT_TRUE(start.has_value());
     const auto& dim = std::get<gateway::control::ColourDimStart>(*start);
     TEST_ASSERT_TRUE(dim.address == channel(5));
-    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::DimDirection::Up),
-                      static_cast<int>(dim.direction));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::DimDirection::Up), static_cast<int>(dim.direction));
 
     const auto stop = gateway::knx::command_for_relative_colour_temperature(1190, 0x00);
     TEST_ASSERT_TRUE(stop.has_value());
@@ -508,7 +512,9 @@ void test_colour_status_object_per_kind() {
     TEST_ASSERT_EQUAL_UINT8(4000 & 0xFF, tc->data[1]);
 
     ColourReport rgb{ColourKind::Rgb};
-    rgb.r = 10; rgb.g = 20; rgb.b = 30;
+    rgb.r = 10;
+    rgb.g = 20;
+    rgb.b = 30;
     const auto rgb_status = gateway::knx::colour_status_object(ColourUpdate{group(2), rgb});
     TEST_ASSERT_TRUE(rgb_status.has_value());
     TEST_ASSERT_EQUAL_UINT16(998, rgb_status->object);  // group 2 RGB status
@@ -516,14 +522,20 @@ void test_colour_status_object_per_kind() {
     TEST_ASSERT_EQUAL_UINT8(20, rgb_status->data[1]);
 
     ColourReport rgbw{ColourKind::Rgbw};
-    rgbw.r = 1; rgbw.g = 2; rgbw.b = 3; rgbw.w = 4; rgbw.rgbw_validity = 0b0110;
+    rgbw.r = 1;
+    rgbw.g = 2;
+    rgbw.b = 3;
+    rgbw.w = 4;
+    rgbw.rgbw_validity = 0b0110;
     const auto rgbw_status = gateway::knx::colour_status_object(ColourUpdate{channel(5), rgbw});
     TEST_ASSERT_EQUAL_UINT16(88, rgbw_status->object);
     TEST_ASSERT_EQUAL_UINT8(6, rgbw_status->length);
     TEST_ASSERT_EQUAL_UINT8(0b0110, rgbw_status->data[5]);
 
     ColourReport xyy{ColourKind::XyY};
-    xyy.x = 0x3227; xyy.y = 0x3341; xyy.brightness = 128;
+    xyy.x = 0x3227;
+    xyy.y = 0x3341;
+    xyy.brightness = 128;
     const auto xyy_status = gateway::knx::colour_status_object(ColourUpdate{channel(5), xyy});
     TEST_ASSERT_EQUAL_UINT16(90, xyy_status->object);
     TEST_ASSERT_EQUAL_UINT8(6, xyy_status->length);
@@ -532,12 +544,10 @@ void test_colour_status_object_per_kind() {
     TEST_ASSERT_EQUAL_UINT8(0b11, xyy_status->data[5]);  // a report is fully valid
 
     ColourReport none{ColourKind::None};
-    TEST_ASSERT_FALSE(
-        gateway::knx::colour_status_object(ColourUpdate{channel(5), none}).has_value());
+    TEST_ASSERT_FALSE(gateway::knx::colour_status_object(ColourUpdate{channel(5), none}).has_value());
     // Broadcast colour changes have no status object.
     TEST_ASSERT_FALSE(
-        gateway::knx::colour_status_object(ColourUpdate{Address::broadcast(), temperature})
-            .has_value());
+        gateway::knx::colour_status_object(ColourUpdate{Address::broadcast(), temperature}).has_value());
 }
 
 using gateway::commissioning::Phase;
@@ -548,9 +558,9 @@ using gateway::knx::CommandProperty;
 using gateway::knx::RequestResponse;
 
 void test_protocol_decodes_scan() {
-    const auto decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                                      static_cast<std::uint8_t>(CommandProperty::Scan),
-                                                      nullptr, 0);
+    const auto decoded =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index,
+                                     static_cast<std::uint8_t>(CommandProperty::Scan), nullptr, 0);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::ScanBus>(*decoded.command));
     TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::Accepted), static_cast<int>(decoded.response));
@@ -559,8 +569,8 @@ void test_protocol_decodes_scan() {
 void test_protocol_decodes_assign_modes_and_rejects_invalid() {
     const auto assign = static_cast<std::uint8_t>(CommandProperty::Assign);
     const std::uint8_t unaddressed[] = {0};
-    auto decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                                assign, unaddressed, 1);
+    auto decoded =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, unaddressed, 1);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_EQUAL(static_cast<int>(CommissionMode::Unaddressed),
                       static_cast<int>(std::get<gateway::control::AssignAddresses>(*decoded.command).mode));
@@ -573,85 +583,72 @@ void test_protocol_decodes_assign_modes_and_rejects_invalid() {
     const std::uint8_t invalid[] = {2};
     decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, invalid, 1);
     TEST_ASSERT_FALSE(decoded.command.has_value());
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
 
-    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign,
-                                         nullptr, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, nullptr, 0);
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
 }
 
 void test_protocol_decodes_replace_and_identify_addresses() {
     const std::uint8_t five[] = {5};
     auto decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                                static_cast<std::uint8_t>(CommandProperty::Replace),
-                                                five, 1);
+                                                static_cast<std::uint8_t>(CommandProperty::Replace), five, 1);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_EQUAL_UINT8(5, std::get<gateway::control::ReplaceDevice>(*decoded.command).address.value());
 
     decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                         static_cast<std::uint8_t>(CommandProperty::Identify), five, 1);
+                                           static_cast<std::uint8_t>(CommandProperty::Identify), five, 1);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_EQUAL_UINT8(5, std::get<gateway::control::IdentifyDevice>(*decoded.command).address.value());
 
     const std::uint8_t out_of_range[] = {64};
+    decoded =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index,
+                                     static_cast<std::uint8_t>(CommandProperty::Replace), out_of_range, 1);
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
     decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                         static_cast<std::uint8_t>(CommandProperty::Replace),
-                                         out_of_range, 1);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
-    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                         static_cast<std::uint8_t>(CommandProperty::Identify),
-                                         nullptr, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+                                           static_cast<std::uint8_t>(CommandProperty::Identify), nullptr, 0);
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
 }
 
 void test_protocol_decodes_reset_addresses() {
-    const auto decoded = gateway::knx::decode_command(
-        gateway::knx::function_property_object_index,
-        static_cast<std::uint8_t>(CommandProperty::ResetAddresses), nullptr, 0);
+    const auto decoded =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index,
+                                     static_cast<std::uint8_t>(CommandProperty::ResetAddresses), nullptr, 0);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::ResetAddresses>(*decoded.command));
     TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::Accepted), static_cast<int>(decoded.response));
 }
 
 void test_protocol_decodes_input_commands() {
-    const auto scan = gateway::knx::decode_command(
-        gateway::knx::function_property_object_index,
-        static_cast<std::uint8_t>(CommandProperty::ScanInputs), nullptr, 0);
+    const auto scan =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index,
+                                     static_cast<std::uint8_t>(CommandProperty::ScanInputs), nullptr, 0);
     TEST_ASSERT_TRUE(scan.command.has_value());
     TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::ScanInputDevices>(*scan.command));
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::Accepted),
-                      static_cast<int>(scan.response));
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::Accepted), static_cast<int>(scan.response));
 
     const auto assign = static_cast<std::uint8_t>(CommandProperty::AssignInputs);
     const std::uint8_t unaddressed[] = {0};
-    auto decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                                assign, unaddressed, 1);
+    auto decoded =
+        gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, unaddressed, 1);
     TEST_ASSERT_TRUE(decoded.command.has_value());
     TEST_ASSERT_EQUAL(
         static_cast<int>(CommissionMode::Unaddressed),
         static_cast<int>(std::get<gateway::control::AssignInputDevices>(*decoded.command).mode));
 
     const std::uint8_t all[] = {1};
-    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                           assign, all, 1);
+    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, all, 1);
     TEST_ASSERT_EQUAL(
         static_cast<int>(CommissionMode::All),
         static_cast<int>(std::get<gateway::control::AssignInputDevices>(*decoded.command).mode));
 
     const std::uint8_t invalid[] = {2};
-    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                           assign, invalid, 1);
+    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, invalid, 1);
     TEST_ASSERT_FALSE(decoded.command.has_value());
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
-    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index,
-                                           assign, nullptr, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
+    decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, assign, nullptr, 0);
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
 }
 
 void test_protocol_encodes_input_snapshot_layout() {
@@ -665,9 +662,9 @@ void test_protocol_encodes_input_snapshot_layout() {
     const auto length = gateway::knx::encode_input_state(snapshot, output);
     TEST_ASSERT_EQUAL_UINT8(gateway::knx::input_state_response_size, length);
     TEST_ASSERT_EQUAL_UINT8(72, length);
-    TEST_ASSERT_EQUAL_UINT8(0x01, output[0]);   // presence: device 0
-    TEST_ASSERT_EQUAL_UINT8(0x02, output[1]);   // device 9
-    TEST_ASSERT_EQUAL_UINT8(0x80, output[7]);   // device 63
+    TEST_ASSERT_EQUAL_UINT8(0x01, output[0]);  // presence: device 0
+    TEST_ASSERT_EQUAL_UINT8(0x02, output[1]);  // device 9
+    TEST_ASSERT_EQUAL_UINT8(0x80, output[7]);  // device 63
     TEST_ASSERT_EQUAL_UINT8(0x22, output[8]);
     TEST_ASSERT_EQUAL_UINT8(0x41, output[8 + 9]);
     TEST_ASSERT_EQUAL_UINT8(0x83, output[8 + 63]);
@@ -675,13 +672,10 @@ void test_protocol_encodes_input_snapshot_layout() {
 
 void test_protocol_rejects_wrong_object_and_property() {
     auto decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index - 1,
-                                                static_cast<std::uint8_t>(CommandProperty::Scan),
-                                                nullptr, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+                                                static_cast<std::uint8_t>(CommandProperty::Scan), nullptr, 0);
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
     decoded = gateway::knx::decode_command(gateway::knx::function_property_object_index, 99, nullptr, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument),
-                      static_cast<int>(decoded.response));
+    TEST_ASSERT_EQUAL(static_cast<int>(RequestResponse::InvalidArgument), static_cast<int>(decoded.response));
 }
 
 void test_protocol_response_byte_values() {

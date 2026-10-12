@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
 #include <unity.h>
 
@@ -13,13 +12,14 @@ using device::ButtonEvent;
 
 // Device/instance event frame: bit 23 = 0 (short address), bit 16 = 0
 // (event), bit 15 = 1; {0AAAAAA, 1, 0IIIII, info[9:0]}.
-constexpr std::uint32_t event_frame(std::uint8_t address, std::uint8_t instance,
-                                    std::uint16_t info) {
+constexpr std::uint32_t event_frame(std::uint8_t address, std::uint8_t instance, std::uint16_t info) {
     return (static_cast<std::uint32_t>(address) << 17) | (1u << 15) |
            (static_cast<std::uint32_t>(instance) << 10) | (info & 0x3FF);
 }
 
-BusEvent event(std::uint32_t frame) { return BusEvent{frame, 24}; }
+BusEvent event(std::uint32_t frame) {
+    return BusEvent{frame, 24};
+}
 
 void test_decodes_device_instance_event_fields() {
     // Device short 5, instance 2, info 0x002 (push-button short press);
@@ -40,14 +40,12 @@ void test_decodes_device_instance_event_fields() {
 void test_rejects_non_event_and_other_schemes() {
     // Command frames set bit 16.
     TEST_ASSERT_FALSE(
-        device::decode_event(event(device::command(device::address_short(5),
-                                                   device::instance_device, 0x1D)))
+        device::decode_event(event(device::command(device::address_short(5), device::instance_device, 0x1D)))
             .has_value());
     // Device scheme (bit 15 clear) is not device/instance.
     TEST_ASSERT_FALSE(device::decode_event(event((5u << 17) | (1u << 10) | 2)).has_value());
     // Device-group / instance-group schemes set bit 23.
-    TEST_ASSERT_FALSE(
-        device::decode_event(event((1u << 23) | (1u << 15) | 2)).has_value());
+    TEST_ASSERT_FALSE(device::decode_event(event((1u << 23) | (1u << 15) | 2)).has_value());
     // Non-24-bit frames are never device events.
     TEST_ASSERT_FALSE(device::decode_event(BusEvent{0x0B80, 16}).has_value());
     TEST_ASSERT_FALSE(device::decode_event(BusEvent{0x00, 8}).has_value());

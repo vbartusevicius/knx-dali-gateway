@@ -1,5 +1,10 @@
 #include "config/Configuration.hpp"
 
+#include <cstddef>
+#include <cstdint>
+
+#include "dali/Group.hpp"
+#include "dali/ShortAddress.hpp"
 #include "knx/BrightnessScale.hpp"
 #include "knx/generated/KnxDaliGateway.h"
 
@@ -25,8 +30,8 @@ static_assert(IN_ParamBlockOffset == GR_ParamBlockOffset + GR_ChannelCount * GR_
               "input parameters must follow the group blocks");
 static_assert(IN_ChannelCount == input_count, "knxprod must define 32 input channels");
 static_assert(IN_ParamBlockSize == 6, "input parameter block must stay 6 bytes");
-static_assert(IN_fDeviceAddress == 0 && IN_fInstance == 1 && IN_fInputType == 2 &&
-                  IN_fFunction == 3 && IN_fScene == 4 && IN_fThreshold == 5,
+static_assert(IN_fDeviceAddress == 0 && IN_fInstance == 1 && IN_fInputType == 2 && IN_fFunction == 3 &&
+                  IN_fScene == 4 && IN_fThreshold == 5,
               "input parameter layout changed");
 static_assert(MAIN_ParameterSize == IN_ParamBlockOffset + IN_ChannelCount * IN_ParamBlockSize,
               "parameter memory must end after the input blocks");
@@ -59,18 +64,18 @@ Configuration parse_configuration(const std::uint8_t* parameters, std::size_t si
         return config;
     }
     for (unsigned channel = 0; channel < dali::ShortAddress::capacity; ++channel) {
-        const auto block = parameters + CH_ParamBlockOffset + channel * CH_ParamBlockSize;
+        const auto block = parameters + CH_ParamBlockOffset + std::size_t{channel} * CH_ParamBlockSize;
         config.channels[channel] = parse_switch_on(block[CH_fSwitchOnMode], block[CH_fFixedLevel]);
         config.group_masks[channel] =
             static_cast<std::uint16_t>(block[CH_fGroup01] | (block[CH_fGroup16] << 8));
     }
     for (unsigned group = 0; group < dali::Group::capacity; ++group) {
-        const auto block = parameters + GR_ParamBlockOffset + group * GR_ParamBlockSize;
+        const auto block = parameters + GR_ParamBlockOffset + std::size_t{group} * GR_ParamBlockSize;
         config.groups[group] = parse_switch_on(block[GR_fSwitchOnMode], block[GR_fFixedLevel]);
     }
     config.broadcast = parse_switch_on(parameters[CH_BcSwitchOnMode], parameters[CH_BcFixedLevel]);
     for (unsigned index = 0; index < IN_ChannelCount; ++index) {
-        const auto block = parameters + IN_ParamBlockOffset + index * IN_ParamBlockSize;
+        const auto block = parameters + IN_ParamBlockOffset + std::size_t{index} * IN_ParamBlockSize;
         auto& input = config.inputs[index];
         if (block[IN_fDeviceAddress] <= 63) {
             input.device = block[IN_fDeviceAddress];

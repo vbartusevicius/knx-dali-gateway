@@ -1,0 +1,47 @@
+# Hardware and enclosure gate: the committed boards must still match the
+# circuits, be fully routed and DRC-clean, and fit the generated case. Routing
+# itself is a developer step (layout.py <board> route); this only verifies it.
+name: hardware
+
+on:
+  push:
+    paths: ["hardware/**", "mechanical/**", "docker/eda/**", "docker/cad/**", "compose.yaml",
+            ".github/workflows/hardware.yml"]
+  pull_request:
+    paths: ["hardware/**", "mechanical/**", "docker/eda/**", "docker/cad/**", "compose.yaml",
+            ".github/workflows/hardware.yml"]
+
+jobs:
+  boards-and-enclosure:
+    runs-on: ubuntu-24.04
+    env:
+      EDA: docker compose --profile hardware run --rm -T eda
+      CAD: docker compose --profile hardware run --rm -T cad
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the eda and cad images
+        run: docker compose --profile hardware build eda cad
+
+      - name: Regenerate the netlists
+        run: $EDA "python3 hardware/scripts/gen_circuits.py"
+
+      - name: Generated sections of committed files are up to date
+        run: git diff --exit-code
+
+      - name: Export part data from the committed boards
+        run: $EDA "cd hardware/scripts && python3 layout.py main components && python3 layout.py ui components"
+
+      - name: Board tests (netlist match, DRC, routing, isolation, parts) and fit tests
+        run: $EDA "python3 -m pytest hardware/tests mechanical/tests/test_fit.py mechanical/tests/test_ui_stackup.py --ignore=hardware/tests/test_step_geometry.py -q"
+
+      - name: Build the enclosure and probe it with the boards
+        run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py hardware/tests/test_step_geometry.py -q"
+
+      - name: Renders and fit drawings for review
+        run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: enclosure-review
+          path: mechanical/build/

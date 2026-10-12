@@ -7,8 +7,8 @@
 #include "dali/ArcLevel.hpp"
 #include "dali/Frame.hpp"
 #include "dali/Scene.hpp"
-#include "dali/devices/DeviceFrames.hpp"
 #include "dali/ShortAddress.hpp"
+#include "dali/devices/DeviceFrames.hpp"
 
 namespace gateway::dali {
 
@@ -108,9 +108,7 @@ public:
     }
     // Part 103 24-bit forward frame {address, instance, opcode}, encoded
     // through dali::device::command; twice marks send-twice commands.
-    virtual TransportStatus send_device_frame(std::uint32_t, bool) {
-        return TransportStatus::Unsupported;
-    }
+    virtual TransportStatus send_device_frame(std::uint32_t, bool) { return TransportStatus::Unsupported; }
     // Part 103 query expecting an 8-bit backward frame. Collision means
     // several units answered at once, which still counts as "yes" for
     // COMPARE-style queries.
@@ -119,10 +117,8 @@ public:
     }
     // Table 21 device-level command: instance byte 0xFE "device"; the
     // broadcast destination byte is 0xFF.
-    TransportStatus send_device_command(std::uint8_t destination, std::uint8_t command,
-                                        bool twice) {
-        return send_device_frame(device::command(destination, device::instance_device, command),
-                                 twice);
+    TransportStatus send_device_command(std::uint8_t destination, std::uint8_t command, bool twice) {
+        return send_device_frame(device::command(destination, device::instance_device, command), twice);
     }
     // Next unsolicited frame observed outside a transaction (bounded queue;
     // implementations without a receive path return nullopt).

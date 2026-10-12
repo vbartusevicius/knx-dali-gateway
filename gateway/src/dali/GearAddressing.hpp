@@ -18,12 +18,10 @@ public:
     // delay_ms yields the worker while gear generate their 24-bit random
     // addresses (>= 100 ms after RANDOMISE); a nullptr delay is a no-op
     // (native tests drive no real time).
-    explicit GearAddressing(Transport& bus,
-                            void (*delay_ms)(std::uint32_t) = nullptr)
+    explicit GearAddressing(Transport& bus, void (*delay_ms)(std::uint32_t) = nullptr)
         : bus_(bus), delay_ms_(delay_ms) {}
 
-    CommissionResult commission(CommissionMode mode, ShortAddress start,
-                                unsigned max_devices);
+    CommissionResult commission(CommissionMode mode, ShortAddress start, unsigned max_devices);
 
 private:
     static constexpr std::uint32_t search_max = 0xFFFFFF;

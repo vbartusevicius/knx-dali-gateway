@@ -33,16 +33,13 @@ public:
     // DTR0 = event scheme device/instance + SET EVENT SCHEME, DTR0..2 =
     // the type's default filter + SET EVENT FILTER, ENABLE INSTANCE.
     // Unbound instances get DISABLE INSTANCE. Returns the first error.
-    TransportStatus apply(bool (*bound)(std::uint8_t device, std::uint8_t instance,
-                                        void* context),
+    TransportStatus apply(bool (*bound)(std::uint8_t device, std::uint8_t instance, void* context),
                           void* context);
 
     const std::bitset<ShortAddress::capacity>& present() const noexcept { return present_; }
     std::optional<std::uint8_t> instance_count(std::uint8_t device) const noexcept;
-    std::optional<std::uint8_t> instance_type(std::uint8_t device,
-                                            std::uint8_t instance) const noexcept;
-    std::optional<std::uint8_t> resolution(std::uint8_t device,
-                                           std::uint8_t instance) const noexcept;
+    std::optional<std::uint8_t> instance_type(std::uint8_t device, std::uint8_t instance) const noexcept;
+    std::optional<std::uint8_t> resolution(std::uint8_t device, std::uint8_t instance) const noexcept;
     // True when the device has at least one instance of the given type.
     bool has_type(std::uint8_t device, std::uint8_t type) const noexcept;
 
@@ -53,8 +50,8 @@ private:
         std::uint8_t count = 0;
     };
 
-    TransportStatus configure_instance(std::uint8_t device, std::uint8_t instance,
-                                       std::uint8_t type, bool bound);
+    TransportStatus configure_instance(std::uint8_t device, std::uint8_t instance, std::uint8_t type,
+                                       bool bound);
 
     Transport& bus_;
     std::bitset<ShortAddress::capacity> present_{};

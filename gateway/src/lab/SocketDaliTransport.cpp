@@ -1,20 +1,31 @@
 #include "lab/SocketDaliTransport.hpp"
 
-#include <arpa/inet.h>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
+#include <string>
+#include <thread>
+
+#include <asm-generic/socket.h>
+#include <bits/types/struct_timeval.h>
 #include <netdb.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <thread>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include "dali/Address.hpp"
+#include "dali/ArcLevel.hpp"
 #include "dali/Frame.hpp"
 #include "dali/GearAddressing.hpp"
-#include "dali/devices/DeviceAddressing.hpp"
+#include "dali/Group.hpp"
+#include "dali/Scene.hpp"
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
 #include "dali/bus/Timing.hpp"
+#include "dali/devices/DeviceAddressing.hpp"
 
 namespace gateway::lab {
 namespace {
@@ -81,8 +92,7 @@ bool json_is_null(const std::string& line, const char* key) {
 
 }  // namespace
 
-SocketDaliTransport::SocketDaliTransport(const char* host, std::uint16_t port)
-    : host_(host), port_(port) {
+SocketDaliTransport::SocketDaliTransport(const char* host, std::uint16_t port) : host_(host), port_(port) {
     try_connect();
 }
 
@@ -118,10 +128,9 @@ SocketDaliTransport::~SocketDaliTransport() {
     }
 }
 
-void SocketDaliTransport::acknowledge_event(std::uint32_t frame) {
+void SocketDaliTransport::acknowledge_event(std::uint32_t frame) const {
     char line[64];
-    const auto length = std::snprintf(line, sizeof(line),
-                                      "{\"op\":\"event_ack\",\"frame\":%u}\n",
+    const auto length = std::snprintf(line, sizeof(line), "{\"op\":\"event_ack\",\"frame\":%u}\n",
                                       static_cast<unsigned>(frame));
     ::send(fd_, line, static_cast<std::size_t>(length), MSG_NOSIGNAL);
 }
@@ -138,16 +147,14 @@ std::string SocketDaliTransport::next_response(bool wait) {
                 if (events_.size() >= max_pending_events) {
                     events_.pop_front();
                 }
-                events_.push_back(
-                    dali::BusEvent{static_cast<std::uint32_t>(frame), 24});
+                events_.push_back(dali::BusEvent{static_cast<std::uint32_t>(frame), 24});
                 acknowledge_event(static_cast<std::uint32_t>(frame));
                 continue;
             }
             return line;
         }
         char chunk[256];
-        const auto received =
-            ::recv(fd_, chunk, sizeof(chunk), wait ? 0 : MSG_DONTWAIT);
+        const auto received = ::recv(fd_, chunk, sizeof(chunk), wait ? 0 : MSG_DONTWAIT);
         if (received <= 0) {
             return {};
         }
@@ -179,36 +186,30 @@ SocketDaliTransport::Response SocketDaliTransport::exchange(const std::string& l
         // collided; anything else is a forward collision worth retrying.
         response.forward_collision = json_string(reply, "\"kind\"") != "reply";
     }
-    response.reply = json_is_null(reply, "\"reply\"")
-                         ? -1
-                         : static_cast<int>(json_int(reply, "\"reply\"", -1));
+    response.reply =
+        json_is_null(reply, "\"reply\"") ? -1 : static_cast<int>(json_int(reply, "\"reply\"", -1));
     return response;
 }
 
 SocketDaliTransport::Response SocketDaliTransport::request(const std::string& line) {
     Response response = exchange(line);
     for (std::uint8_t attempt = 1;
-         response.forward_collision && attempt < dali::bus::timing::collision_attempts_max;
-         ++attempt) {
+         response.forward_collision && attempt < dali::bus::timing::collision_attempts_max; ++attempt) {
         response = exchange(line);
     }
     return response;
 }
 
-dali::TransportStatus SocketDaliTransport::send_frame(std::uint32_t frame, bool twice,
-                                                    bool reply) {
+dali::TransportStatus SocketDaliTransport::send_frame(std::uint32_t frame, bool twice, bool reply) {
     char line[96];
-    std::snprintf(line, sizeof(line),
-                  "{\"op\":\"frame\",\"frame\":%u,\"twice\":%s,\"reply\":%s}",
-                  static_cast<unsigned>(frame), twice ? "true" : "false",
-                  reply ? "true" : "false");
+    std::snprintf(line, sizeof(line), "{\"op\":\"frame\",\"frame\":%u,\"twice\":%s,\"reply\":%s}",
+                  static_cast<unsigned>(frame), twice ? "true" : "false", reply ? "true" : "false");
     return request(line).status;
 }
 
 SocketDaliTransport::Response SocketDaliTransport::send_command_frame(std::uint16_t frame) {
     char line[96];
-    std::snprintf(line, sizeof(line),
-                  "{\"op\":\"frame\",\"frame\":%u,\"twice\":false,\"reply\":true}",
+    std::snprintf(line, sizeof(line), "{\"op\":\"frame\",\"frame\":%u,\"twice\":false,\"reply\":true}",
                   static_cast<unsigned>(frame));
     return request(line);
 }
@@ -242,10 +243,9 @@ dali::TransportStatus SocketDaliTransport::send_command(dali::Address address, s
 }
 
 dali::TransportStatus SocketDaliTransport::set_dtr(dali::Dtr which, std::uint8_t value) {
-    const auto opcode = static_cast<std::uint8_t>(
-        which == dali::Dtr::Dtr1   ? special_data_transfer_reg1
-        : which == dali::Dtr::Dtr2 ? special_data_transfer_reg2
-                                   : special_data_transfer_reg);
+    const auto opcode = static_cast<std::uint8_t>(which == dali::Dtr::Dtr1   ? special_data_transfer_reg1
+                                                  : which == dali::Dtr::Dtr2 ? special_data_transfer_reg2
+                                                                             : special_data_transfer_reg);
     return send_frame(dali::frame::special(opcode, value), false, false);
 }
 
@@ -256,22 +256,19 @@ dali::TransportStatus SocketDaliTransport::enable_device_type(std::uint8_t type)
 dali::ByteRead SocketDaliTransport::query(dali::ShortAddress address, std::uint8_t opcode) {
     const auto response =
         send_command_frame(dali::frame::command(dali::Address::short_address(address), opcode));
-    if (response.status != dali::TransportStatus::Ok || response.reply < 0 ||
-        response.reply > 0xFF) {
+    if (response.status != dali::TransportStatus::Ok || response.reply < 0 || response.reply > 0xFF) {
         return {response.status, std::nullopt};
     }
     return {dali::TransportStatus::Ok, static_cast<std::uint8_t>(response.reply)};
 }
 
 dali::TransportStatus SocketDaliTransport::go_to_scene(dali::Address address, dali::Scene scene) {
-    return send_frame(dali::frame::command(address, cmd_go_to_scene_0 + scene.value()), false,
-                      false);
+    return send_frame(dali::frame::command(address, cmd_go_to_scene_0 + scene.value()), false, false);
 }
 
 dali::LevelRead SocketDaliTransport::read_level(dali::ShortAddress address) {
-    const auto response =
-        send_command_frame(dali::frame::command(dali::Address::short_address(address),
-                                                cmd_query_actual_level));
+    const auto response = send_command_frame(
+        dali::frame::command(dali::Address::short_address(address), cmd_query_actual_level));
     if (response.status != dali::TransportStatus::Ok || response.reply < 0) {
         return {response.status, std::nullopt};
     }
@@ -279,12 +276,12 @@ dali::LevelRead SocketDaliTransport::read_level(dali::ShortAddress address) {
     if (!level) {
         return {dali::TransportStatus::InvalidResponse, std::nullopt};
     }
-    return {dali::TransportStatus::Ok, *level};
+    return {dali::TransportStatus::Ok, level};
 }
 
 dali::GroupsRead SocketDaliTransport::read_groups(dali::ShortAddress address) {
-    const auto low = send_command_frame(
-        dali::frame::command(dali::Address::short_address(address), cmd_query_groups_0_7));
+    const auto low =
+        send_command_frame(dali::frame::command(dali::Address::short_address(address), cmd_query_groups_0_7));
     if (low.status != dali::TransportStatus::Ok || low.reply < 0) {
         return {low.status, std::nullopt};
     }
@@ -293,16 +290,14 @@ dali::GroupsRead SocketDaliTransport::read_groups(dali::ShortAddress address) {
     if (high.status != dali::TransportStatus::Ok || high.reply < 0) {
         return {high.status, std::nullopt};
     }
-    return {dali::TransportStatus::Ok,
-            static_cast<std::uint16_t>((high.reply << 8) | low.reply)};
+    return {dali::TransportStatus::Ok, static_cast<std::uint16_t>((high.reply << 8) | low.reply)};
 }
 
-dali::TransportStatus SocketDaliTransport::set_group_membership(dali::ShortAddress address,
-                                                                dali::Group group, bool member) {
-    const auto opcode = static_cast<std::uint8_t>(
-        (member ? cmd_add_to_group_0 : cmd_remove_from_group_0) + group.value());
-    return send_frame(dali::frame::command(dali::Address::short_address(address), opcode), true,
-                      false);
+dali::TransportStatus SocketDaliTransport::set_group_membership(dali::ShortAddress address, dali::Group group,
+                                                                bool member) {
+    const auto opcode =
+        static_cast<std::uint8_t>((member ? cmd_add_to_group_0 : cmd_remove_from_group_0) + group.value());
+    return send_frame(dali::frame::command(dali::Address::short_address(address), opcode), true, false);
 }
 
 dali::GearPresence SocketDaliTransport::query_present(dali::ShortAddress address) {
@@ -312,78 +307,66 @@ dali::GearPresence SocketDaliTransport::query_present(dali::ShortAddress address
 }
 
 dali::GearStatusRead SocketDaliTransport::query_status(dali::ShortAddress address) {
-    const auto response = send_command_frame(
-        dali::frame::command(dali::Address::short_address(address), cmd_query_status));
+    const auto response =
+        send_command_frame(dali::frame::command(dali::Address::short_address(address), cmd_query_status));
     if (response.status != dali::TransportStatus::Ok || response.reply < 0) {
         return {response.status, std::nullopt};
     }
     return {dali::TransportStatus::Ok, static_cast<std::uint8_t>(response.reply)};
 }
 
-dali::CommissionResult SocketDaliTransport::commission(dali::CommissionMode mode,
-                                                     dali::ShortAddress start,
-                                                     unsigned max_devices) {
-    dali::GearAddressing addressing{*this, [](std::uint32_t ms) {
-                                        std::this_thread::sleep_for(
-                                            std::chrono::milliseconds(ms));
-                                    }};
+dali::CommissionResult SocketDaliTransport::commission(dali::CommissionMode mode, dali::ShortAddress start,
+                                                       unsigned max_devices) {
+    dali::GearAddressing addressing{
+        *this, [](std::uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }};
     return addressing.commission(mode, start, max_devices);
 }
 
-dali::CommissionResult SocketDaliTransport::commission_devices(
-    dali::CommissionMode mode, dali::ShortAddress start, unsigned max_devices) {
-    dali::DeviceAddressing addressing{*this, [](std::uint32_t ms) {
-                                          std::this_thread::sleep_for(
-                                              std::chrono::milliseconds(ms));
-                                      }};
+dali::CommissionResult SocketDaliTransport::commission_devices(dali::CommissionMode mode,
+                                                               dali::ShortAddress start,
+                                                               unsigned max_devices) {
+    dali::DeviceAddressing addressing{
+        *this, [](std::uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }};
     return addressing.commission(mode, start, max_devices);
 }
 
 dali::TransportStatus SocketDaliTransport::identify(dali::ShortAddress address) {
     // Like the firmware adapter: RECALL MAX LEVEL stands in for IDENTIFY.
-    return send_frame(
-        dali::frame::command(dali::Address::short_address(address), cmd_recall_max_level), false,
-        false);
+    return send_frame(dali::frame::command(dali::Address::short_address(address), cmd_recall_max_level),
+                      false, false);
 }
 
 dali::TransportStatus SocketDaliTransport::clear_short_addresses() {
-    const auto loaded =
-        send_frame(dali::frame::special(special_data_transfer_reg, 0xFF), false, false);
+    const auto loaded = send_frame(dali::frame::special(special_data_transfer_reg, 0xFF), false, false);
     if (loaded != dali::TransportStatus::Ok) {
         return loaded;
     }
-    return send_frame(dali::frame::command(dali::Address::broadcast(),
-                                         cmd_store_dtr_as_short_addr),
-                      true, false);
+    return send_frame(dali::frame::command(dali::Address::broadcast(), cmd_store_dtr_as_short_addr), true,
+                      false);
 }
 
-dali::TransportStatus SocketDaliTransport::send_special(std::uint8_t opcode, std::uint8_t data,
-                                                      bool twice) {
+dali::TransportStatus SocketDaliTransport::send_special(std::uint8_t opcode, std::uint8_t data, bool twice) {
     return send_frame(dali::frame::special(opcode, data), twice, false);
 }
 
 dali::ByteRead SocketDaliTransport::query_special(std::uint8_t opcode, std::uint8_t data) {
     const auto response = send_command_frame(dali::frame::special(opcode, data));
-    if (response.status != dali::TransportStatus::Ok || response.reply < 0 ||
-        response.reply > 0xFF) {
+    if (response.status != dali::TransportStatus::Ok || response.reply < 0 || response.reply > 0xFF) {
         return {response.status, std::nullopt};
     }
     return {dali::TransportStatus::Ok, static_cast<std::uint8_t>(response.reply)};
 }
 
-dali::TransportStatus SocketDaliTransport::send_device_frame(std::uint32_t frame,
-                                                             bool twice) {
+dali::TransportStatus SocketDaliTransport::send_device_frame(std::uint32_t frame, bool twice) {
     return send_frame(frame, twice, false);
 }
 
 dali::ByteRead SocketDaliTransport::query_device_frame(std::uint32_t frame) {
     char line[96];
-    std::snprintf(line, sizeof(line),
-                  "{\"op\":\"frame\",\"frame\":%u,\"twice\":false,\"reply\":true}",
+    std::snprintf(line, sizeof(line), "{\"op\":\"frame\",\"frame\":%u,\"twice\":false,\"reply\":true}",
                   static_cast<unsigned>(frame));
     const auto response = request(line);
-    if (response.status != dali::TransportStatus::Ok || response.reply < 0 ||
-        response.reply > 0xFF) {
+    if (response.status != dali::TransportStatus::Ok || response.reply < 0 || response.reply > 0xFF) {
         return {response.status, std::nullopt};
     }
     return {dali::TransportStatus::Ok, static_cast<std::uint8_t>(response.reply)};

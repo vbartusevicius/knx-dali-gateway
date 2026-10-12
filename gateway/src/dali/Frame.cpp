@@ -1,5 +1,10 @@
 #include "dali/Frame.hpp"
 
+#include <cstdint>
+
+#include "dali/Address.hpp"
+#include "dali/ArcLevel.hpp"
+
 namespace gateway::dali::frame {
 namespace {
 

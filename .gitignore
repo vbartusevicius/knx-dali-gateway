@@ -1,0 +1,23 @@
+# Python
+**/__pycache__
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Hardware: everything the pipeline regenerates (netlists, DSN/SES, review
+# renders, fab staging). Committed: circuits, libraries, the routed layouts
+# with their KiCad project files, and hardware/releases/.
+hardware/build/
+*.kicad_prl
+*-backups/
+fp-info-cache
+*.erc
+skidl*.log
+*_sklib.py
+
+# Mechanical: generated case STL/STEP, assembly and renders
+mechanical/build/
+
+# Devin local MCP config (machine-specific)
+.devin/mcp_config.local.json

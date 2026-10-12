@@ -1,5 +1,11 @@
 #include "dali/Address.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/Group.hpp"
+#include "dali/ShortAddress.hpp"
+
 namespace gateway::dali {
 
 Address::Address(AddressKind kind, std::uint8_t value) noexcept : kind_(kind), value_(value) {}

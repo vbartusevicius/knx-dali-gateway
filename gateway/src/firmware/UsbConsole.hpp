@@ -23,7 +23,8 @@ public:
     esp_err_t start();
 
 private:
-    esp_err_t register_command(const char* name, const char* hint, esp_console_cmd_func_with_context_t handler);
+    esp_err_t register_command(const char* name, const char* hint,
+                               esp_console_cmd_func_with_context_t handler);
     int submit(const control::Command& command);
     static int status_command(void* context, int argc, char** argv);
     static int level_command(void* context, int argc, char** argv);

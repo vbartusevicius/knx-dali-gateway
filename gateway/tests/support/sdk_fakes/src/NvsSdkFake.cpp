@@ -1,5 +1,7 @@
 #include "NvsSdkFake.hpp"
 
+#include <cstdint>
+
 #include <nvs.h>
 
 namespace gateway::testing {

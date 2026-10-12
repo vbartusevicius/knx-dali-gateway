@@ -17,8 +17,8 @@ Status: review of the current code (after slices C1–C5b) and a proposed plan. 
 | 9 | Results built with repeated literals (`{ControlError::None, TransportStatus::Ok, {}, {}, {}}`) | control, lighting | Noise; easy to get wrong |
 | 10 | Folder layout grew by accretion (dali/ holds types, frames, gear transport, DT8; knx/ mixes DPT codecs, object layout and the ETS protocol; device/, knxstack/, firmware/, espidf/ and lab/ are siblings of domain folders) | src/ | Layering is not visible from the tree |
 | 11 | Large files: LightingService.cpp 851, test files up to 928 lines; one test suite (test_lighting) holds bus, colour, commissioning and input tests | src, tests | Navigation and review cost; slow incremental test builds |
-| 12 | No automatic lint: unused includes/imports slipped in (e.g. Fakes.hpp, simulation tests) | C++, Python | Needs a gate, not manual review |
-| 13 | Per-file SPDX headers in hardware/simulation files | various | User decision: remove; folder-level licence mapping is enough |
+| 12 | Done: ruff (Python) and clang-format + clang-tidy (C++, gateway/scripts/check_cpp.sh) now gate in CI | C++, Python | — |
+| 13 | Done: per-file SPDX headers removed; the root LICENSE.md maps folders to licences | various | — |
 
 ## 2. Design principles for the refactor
 

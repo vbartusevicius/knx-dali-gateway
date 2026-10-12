@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KNX-DALI gateway — model viewer</title>
+<style>
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; display: flex; height: 100vh; }
+  #list { width: 260px; overflow: auto; padding: 12px; background: #1d2125; color: #ddd; }
+  #list h1 { font-size: 15px; }
+  #list ul { list-style: none; padding: 0; }
+  #list li { padding: 4px 8px; cursor: pointer; border-radius: 4px; }
+  #list li:hover, #list li.active { background: #2d343c; }
+  #view { flex: 1; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js",
+               "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="list"><h1>Enclosure models</h1><ul id="files"></ul>
+  <p id="empty" hidden>No STL files found under <code>/models/</code>.
+  Run the enclosure build first.</p></div>
+<div id="view"></div>
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setClearColor(0x20262b);
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 4000);
+const controls = new OrbitControls(camera, renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.2));
+const dir = new THREE.DirectionalLight(0xffffff, 1.6);
+dir.position.set(60, 80, 100);
+scene.add(dir);
+let mesh = null;
+
+function resize() {
+  renderer.setSize(view.clientWidth, view.clientHeight);
+  camera.aspect = view.clientWidth / view.clientHeight;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+(function loop() { requestAnimationFrame(loop); renderer.render(scene, camera); })();
+
+function show(file) {
+  new STLLoader().load('/models/' + file, geo => {
+    if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+    geo.computeBoundingBox();
+    const c = geo.boundingBox.getCenter(new THREE.Vector3());
+    geo.translate(-c.x, -c.y, -c.z);
+    const s = geo.boundingBox.getSize(new THREE.Vector3()).length();
+    mesh = new THREE.Mesh(geo,
+      new THREE.MeshStandardMaterial({ color: 0x7aa2f7, roughness: 0.7 }));
+    scene.add(mesh);
+    camera.position.set(s * 0.7, s * 0.5, s * 0.7);
+    camera.near = s / 100; camera.far = s * 10; camera.updateProjectionMatrix();
+    controls.target.set(0, 0, 0); controls.update();
+  });
+}
+
+const list = document.getElementById('files');
+// Scan the enclosure build output for STL files
+async function collectStls() {
+  const stls = [];
+  for (const dir of ['build/poc']) {
+    try {
+      const r = await fetch('/models/' + dir + '/');
+      if (!r.ok) continue;
+      const entries = await r.json();
+      for (const e of entries) {
+        if (e.name && e.name.endsWith('.stl'))
+          stls.push(dir + '/' + e.name);
+      }
+    } catch (err) { /* directory not found, skip */ }
+  }
+  return stls;
+}
+const stls = await collectStls();
+document.getElementById('empty').hidden = stls.length > 0;
+for (const path of stls) {
+  const name = path.split('/').pop();
+  const li = document.createElement('li');
+  li.textContent = name;
+  li.title = path;
+  li.onclick = () => {
+    document.querySelectorAll('#list li').forEach(x => x.classList.remove('active'));
+    li.classList.add('active');
+    show(path);
+  };
+  list.appendChild(li);
+}
+if (stls[0]) list.firstChild.click();
+</script>
+</body>
+</html>

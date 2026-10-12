@@ -1,0 +1,8 @@
+# Tool configuration only: the hardware scripts run inside the `eda` and `cad`
+# images (docker/eda, docker/cad), which pin the Python dependencies.
+[tool.ruff]
+extend-exclude = ["build", "releases"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

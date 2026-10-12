@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
-#include <unity.h>
-
 #include <algorithm>
 #include <map>
 #include <optional>
 #include <vector>
+
+#include <unity.h>
 
 #include "dali/Transport.hpp"
 #include "dali/devices/DeviceFrames.hpp"
@@ -55,12 +54,8 @@ public:
     TransportStatus send_command(gateway::dali::Address, std::uint8_t, bool) override {
         return TransportStatus::Ok;
     }
-    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
-    TransportStatus enable_device_type(std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override { return TransportStatus::Ok; }
+    TransportStatus enable_device_type(std::uint8_t) override { return TransportStatus::Ok; }
     ByteRead query(gateway::dali::ShortAddress, std::uint8_t) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
@@ -73,8 +68,7 @@ public:
     gateway::dali::GroupsRead read_groups(gateway::dali::ShortAddress) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
-    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group,
-                                         bool) override {
+    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group, bool) override {
         return TransportStatus::Ok;
     }
     gateway::dali::GearPresence query_present(gateway::dali::ShortAddress) override {
@@ -86,9 +80,7 @@ public:
     CommissionResult commission(CommissionMode, ShortAddress, unsigned) override {
         return {TransportStatus::Unsupported, 0};
     }
-    TransportStatus identify(gateway::dali::ShortAddress) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus identify(gateway::dali::ShortAddress) override { return TransportStatus::Ok; }
     TransportStatus clear_short_addresses() override { return TransportStatus::Ok; }
 
     TransportStatus send_device_frame(std::uint32_t frame, bool twice) override {
@@ -123,8 +115,7 @@ public:
             sim.scheme = dtr0;
             break;
         case device::inst::set_event_filter:
-            sim.filter = static_cast<std::uint32_t>(dtr0) |
-                         (static_cast<std::uint32_t>(dtr1) << 8) |
+            sim.filter = static_cast<std::uint32_t>(dtr0) | (static_cast<std::uint32_t>(dtr1) << 8) |
                          (static_cast<std::uint32_t>(dtr2) << 16);
             break;
         case device::inst::enable_instance:
@@ -151,10 +142,8 @@ public:
         if (it == devices.end()) {
             return {TransportStatus::Timeout, std::nullopt};
         }
-        if (instance == device::instance_device &&
-            opcode == device::cmd::query_number_of_instances) {
-            return {TransportStatus::Ok,
-                    static_cast<std::uint8_t>(it->second.size())};
+        if (instance == device::instance_device && opcode == device::cmd::query_number_of_instances) {
+            return {TransportStatus::Ok, static_cast<std::uint8_t>(it->second.size())};
         }
         if (instance < it->second.size()) {
             const auto& sim = it->second[instance];
@@ -169,21 +158,22 @@ public:
     }
 };
 
-bool bound_all(std::uint8_t, std::uint8_t, void*) { return true; }
+bool bound_all(std::uint8_t, std::uint8_t, void*) {
+    return true;
+}
 
 struct BoundList {
     std::vector<std::pair<std::uint8_t, std::uint8_t>> pairs;
     static bool test(std::uint8_t device, std::uint8_t instance, void* context) {
         const auto* list = static_cast<const BoundList*>(context);
-        return std::find(list->pairs.begin(), list->pairs.end(),
-                         std::make_pair(device, instance)) != list->pairs.end();
+        return std::find(list->pairs.begin(), list->pairs.end(), std::make_pair(device, instance)) !=
+               list->pairs.end();
     }
 };
 
 void test_scan_finds_devices_and_instances() {
     InventoryBus bus;
-    bus.devices[3] = {SimInstance::of(device::type::push_button),
-                      SimInstance::of(device::type::push_button)};
+    bus.devices[3] = {SimInstance::of(device::type::push_button), SimInstance::of(device::type::push_button)};
     bus.devices[7] = {SimInstance::of(device::type::light, 12)};
     DeviceInventory inventory{bus};
 
@@ -244,8 +234,7 @@ void test_apply_configures_scheme_filter_and_enable() {
 
 void test_apply_disables_unbound_instances() {
     InventoryBus bus;
-    bus.devices[3] = {SimInstance::of(device::type::push_button),
-                      SimInstance::of(device::type::occupancy)};
+    bus.devices[3] = {SimInstance::of(device::type::push_button), SimInstance::of(device::type::occupancy)};
     DeviceInventory inventory{bus};
     TEST_ASSERT_EQUAL(TransportStatus::Ok, inventory.scan());
     BoundList bound{{std::make_pair(3, 0)}};

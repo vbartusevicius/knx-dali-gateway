@@ -1,0 +1,39 @@
+# misc-include-cleaner: every include is used and every used symbol has its
+# own include (what clangd shows as "unused include"). The rest catches real
+# bugs and pessimisations; style-only checks are left to clang-format.
+# Off: unchecked-optional-access (the validated-value factories are unwrapped
+# right after an in-range construction it cannot follow, e.g.
+# *ShortAddress::from(i) for i < capacity) and exception-escape (the firmware
+# has no exception handling; std::visit cannot throw on a never-valueless
+# variant).
+Checks: >
+  -*,
+  misc-include-cleaner,
+  misc-unused-using-decls,
+  misc-redundant-expression,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-unchecked-optional-access,
+  -bugprone-exception-escape,
+  performance-*,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-using,
+  modernize-use-equals-default,
+  modernize-use-equals-delete,
+  modernize-use-emplace,
+  modernize-loop-convert,
+  modernize-make-unique,
+  modernize-redundant-void-arg,
+  readability-redundant-*,
+  readability-else-after-return,
+  readability-container-size-empty,
+  readability-simplify-boolean-expr,
+  readability-inconsistent-declaration-parameter-name,
+  readability-misleading-indentation,
+  readability-make-member-function-const
+WarningsAsErrors: "*"
+HeaderFilterRegex: "gateway/(src|tests)/"
+ExcludeHeaderFilterRegex: "knx/generated/"
+CheckOptions:
+  misc-include-cleaner.IgnoreHeaders: "unity.*;esp_.*;freertos/.*;driver/.*;hal/.*;soc/.*;sdkconfig.h;knx/.*;knx_facade.h;esp32_idf_platform.h"

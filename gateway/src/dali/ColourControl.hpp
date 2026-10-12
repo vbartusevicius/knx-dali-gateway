@@ -106,13 +106,11 @@ public:
     // ACTIVATE.
     TransportStatus set_xy(Address address, XyCoordinate x, XyCoordinate y);
     // SET TEMPORARY PRIMARY N DIMLEVEL: DTR0/DTR1 = dimlevel, DTR2 = N.
-    TransportStatus set_primary_n(Address address, std::uint8_t primary,
-                                  std::uint16_t dimlevel);
+    TransportStatus set_primary_n(Address address, std::uint8_t primary, std::uint16_t dimlevel);
     // DTR0..2 = R,G,B -> SET TEMPORARY RGB DIMLEVEL; DTR0..2 = W,A,F ->
     // SET TEMPORARY WAF DIMLEVEL; ACTIVATE. 0xFF per channel = "no change".
-    TransportStatus set_rgbwaf(Address address, std::uint8_t red, std::uint8_t green,
-                               std::uint8_t blue, std::uint8_t white, std::uint8_t amber,
-                               std::uint8_t freecolour);
+    TransportStatus set_rgbwaf(Address address, std::uint8_t red, std::uint8_t green, std::uint8_t blue,
+                               std::uint8_t white, std::uint8_t amber, std::uint8_t freecolour);
     TransportStatus step_colour_temperature(Address address, ColourStep step);
     // STORE COLOUR TEMPERATURE TC LIMIT (send-twice): DTR0/DTR1 = mirek,
     // DTR2 selects which limit is stored.

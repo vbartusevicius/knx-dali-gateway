@@ -1,5 +1,10 @@
 #include "dali/devices/EventDecoder.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/Frame.hpp"
+
 namespace gateway::dali::device {
 
 std::optional<InputEvent> decode_event(const BusEvent& frame) noexcept {
@@ -9,8 +14,7 @@ std::optional<InputEvent> decode_event(const BusEvent& frame) noexcept {
     const std::uint32_t value = frame.value;
     // Event frames have bit 16 clear; the device/instance scheme has
     // bit 23 = 0 (short address) and bit 15 = 1.
-    if ((value & (1u << 16)) != 0 || (value & (1u << 23)) != 0 ||
-        (value & (1u << 15)) == 0) {
+    if ((value & (1u << 16)) != 0 || (value & (1u << 23)) != 0 || (value & (1u << 15)) == 0) {
         return std::nullopt;
     }
     return InputEvent{

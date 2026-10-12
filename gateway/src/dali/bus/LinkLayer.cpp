@@ -1,5 +1,11 @@
 #include "dali/bus/LinkLayer.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/bus/Manchester.hpp"
+#include "dali/bus/Timing.hpp"
+
 namespace gateway::dali::bus {
 
 namespace {
@@ -10,12 +16,10 @@ bool reached(std::uint32_t now, std::uint32_t target) {
 
 }  // namespace
 
-LinkLayer::LinkLayer(Sink& sink, std::uint32_t (*random)(void*),
-                     void* random_context)
+LinkLayer::LinkLayer(Sink& sink, std::uint32_t (*random)(void*), void* random_context)
     : sink_(sink), random_(random), random_context_(random_context) {}
 
-bool LinkLayer::request(std::uint32_t value, std::uint8_t bits,
-                        Priority priority, bool expect_reply,
+bool LinkLayer::request(std::uint32_t value, std::uint8_t bits, Priority priority, bool expect_reply,
                         std::uint32_t repeat_gap_us) {
     if (queue_count_ >= queue_size) {
         return false;
@@ -130,8 +134,7 @@ void LinkLayer::complete_attempt(std::uint32_t now_us) {
     finish_request(TxOutcome::Sent, 0, now_us);
 }
 
-void LinkLayer::finish_request(TxOutcome outcome, std::uint8_t reply,
-                               std::uint32_t now_us) {
+void LinkLayer::finish_request(TxOutcome outcome, std::uint8_t reply, std::uint32_t now_us) {
     if (outcome == TxOutcome::Sent && active_.repeats_left > 0) {
         --active_.repeats_left;
         repeat_at_us_ = now_us + active_.repeat_gap_us;
@@ -144,13 +147,11 @@ void LinkLayer::finish_request(TxOutcome outcome, std::uint8_t reply,
     last_activity_us_ = now_us;
 }
 
-void LinkLayer::on_decoded(const ReceivedFrame& frame,
-                           std::uint32_t frame_start_us) {
+void LinkLayer::on_decoded(const ReceivedFrame& frame, std::uint32_t frame_start_us) {
     switch (state_) {
     case State::Transmitting:
     case State::AwaitEcho:
-        if (!echo_ok_ && frame.value == active_.value &&
-            frame.bits == active_.bits) {
+        if (!echo_ok_ && frame.value == active_.value && frame.bits == active_.bits) {
             echo_ok_ = true;
         } else {
             collision_seen_ = true;
@@ -160,12 +161,9 @@ void LinkLayer::on_decoded(const ReceivedFrame& frame,
     case State::WaitReply:
         if (!reply_resolved_ && frame.bits == 8 &&
             reached(frame_start_us, tx_end_us_ + timing::backward_min_us) &&
-            !reached(frame_start_us,
-                     tx_end_us_ + timing::backward_max_us + 1)) {
+            !reached(frame_start_us, tx_end_us_ + timing::backward_max_us + 1)) {
             reply_resolved_ = true;
-            finish_request(TxOutcome::Reply,
-                           static_cast<std::uint8_t>(frame.value),
-                           frame_start_us);
+            finish_request(TxOutcome::Reply, static_cast<std::uint8_t>(frame.value), frame_start_us);
             return;
         }
         emit_event(frame);
@@ -232,10 +230,8 @@ void LinkLayer::poll(std::uint32_t now_us) {
         if (!settle_computed_) {
             const auto index = static_cast<std::uint8_t>(active_.priority);
             const std::uint32_t min = timing::settling_min_us[index];
-            const std::uint32_t span =
-                timing::settling_max_us[index] - min + 1;
-            const std::uint32_t jitter =
-                random_ != nullptr ? random_(random_context_) % span : 0;
+            const std::uint32_t span = timing::settling_max_us[index] - min + 1;
+            const std::uint32_t jitter = random_ != nullptr ? random_(random_context_) % span : 0;
             settle_target_us_ = last_activity_us_ + min + jitter;
             settle_computed_ = true;
         }

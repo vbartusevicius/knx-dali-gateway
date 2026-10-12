@@ -56,8 +56,7 @@ struct InputSnapshot {
     std::array<std::uint8_t, 64> summary{};
 };
 
-static_assert(std::is_trivially_copyable_v<InputSnapshot>,
-              "InputSnapshot travels through FreeRTOS queues");
+static_assert(std::is_trivially_copyable_v<InputSnapshot>, "InputSnapshot travels through FreeRTOS queues");
 
 // Reports whether an ETS input channel binds (device, instance); the
 // callback and context come from the worker's InputMapper.
@@ -130,8 +129,8 @@ private:
     dali::Transport& transport_;
     lighting::LightingService& service_;
     dali::DeviceInventory devices_;
-    std::bitset<dali::ShortAddress::capacity> present_{};
-    std::bitset<dali::ShortAddress::capacity> faulty_{};
+    std::bitset<dali::ShortAddress::capacity> present_;
+    std::bitset<dali::ShortAddress::capacity> faulty_;
     Progress progress_{};
     unsigned poll_index_ = 0;
     SnapshotListener* listener_ = nullptr;

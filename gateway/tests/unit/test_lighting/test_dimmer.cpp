@@ -25,8 +25,9 @@ struct Collected {
 
 Collected poll(RelativeDimmer& dimmer, std::uint32_t now_ms) {
     Collected collected;
-    dimmer.poll(now_ms, [&collected](DimStep step) { collected.steps.push_back(step); },
-                [&collected](DimExpiry expiry) { collected.expiries.push_back(expiry); });
+    dimmer.poll(
+        now_ms, [&collected](DimStep step) { collected.steps.push_back(step); },
+        [&collected](DimExpiry expiry) { collected.expiries.push_back(expiry); });
     return collected;
 }
 
@@ -37,7 +38,8 @@ void test_start_produces_an_immediate_first_step() {
     TEST_ASSERT_EQUAL_UINT32(1, collected.steps.size());
     TEST_ASSERT_TRUE(collected.steps.front().first);
     TEST_ASSERT_TRUE(collected.steps.front().address == channel(3));
-    TEST_ASSERT_EQUAL(static_cast<int>(DimDirection::Up), static_cast<int>(collected.steps.front().direction));
+    TEST_ASSERT_EQUAL(static_cast<int>(DimDirection::Up),
+                      static_cast<int>(collected.steps.front().direction));
     TEST_ASSERT_EQUAL_UINT32(0, collected.expiries.size());
 }
 

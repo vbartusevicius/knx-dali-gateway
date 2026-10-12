@@ -1,0 +1,111 @@
+"""The stored board layouts must match their netlists exactly, and every part
+must be orderable or explicitly hand-fitted.
+
+A symbol pin that has no pad of the same number on the footprint silently
+drops its connection (that is how the DALI MOSFET once ended up with no
+nets), so the pin-to-pad check runs on the netlist itself.
+"""
+
+import json
+import re
+from pathlib import Path
+
+import pcbnew
+import pytest
+
+REPO = Path(__file__).resolve().parents[2]
+BOARDS = ("main", "ui")
+
+
+def sexpr(text):
+    stack, current = [], []
+    for token in re.findall(r'\(|\)|"(?:[^"\\]|\\.)*"|[^\s()]+', text):
+        if token == "(":
+            stack.append(current)
+            current = []
+        elif token == ")":
+            stack[-1].append(current)
+            current = stack.pop()
+        else:
+            current.append(token.strip('"'))
+    return current[0]
+
+
+def field(node, name):
+    return next(item[1] for item in node if isinstance(item, list) and item[0] == name)
+
+
+def section(tree, name):
+    return next(item for item in tree if isinstance(item, list) and item[0] == name)[1:]
+
+
+def netlist(board):
+    tree = sexpr((REPO / f"hardware/build/poc/{board}/{board}.net").read_text())
+    parts = {field(c, "ref"): field(c, "footprint") for c in section(tree, "components")
+             if not field(c, "ref").startswith("#")}
+    pins = {}
+    for net in section(tree, "nets"):
+        for node in (n for n in net if isinstance(n, list) and n[0] == "node"):
+            if not field(node, "ref").startswith("#"):
+                pins[(field(node, "ref"), field(node, "pin"))] = field(net, "name")
+    return parts, pins
+
+
+def layout(board):
+    path = REPO / f"hardware/layout/poc/{board}/{board}.kicad_pcb"
+    if not path.exists():
+        pytest.skip(f"{path} not found")
+    return pcbnew.LoadBoard(str(path))
+
+
+@pytest.mark.parametrize("board", BOARDS)
+def test_every_netlist_pin_has_a_pad(board):
+    _parts, pins = netlist(board)
+    pads = {(fp.GetReference(), pad.GetNumber())
+            for fp in layout(board).Footprints() for pad in fp.Pads()}
+    missing = sorted(key for key in pins if key not in pads)
+    assert not missing, f"netlist pins without a footprint pad: {missing}"
+
+
+@pytest.mark.parametrize("board", BOARDS)
+def test_board_matches_netlist(board):
+    parts, pins = netlist(board)
+    pcb = layout(board)
+    footprints = {fp.GetReference(): f"{fp.GetFPID().GetLibNickname()}:{fp.GetFPID().GetLibItemName()}"
+                  for fp in pcb.Footprints()}
+    assert footprints == parts
+    pad_nets = {(fp.GetReference(), pad.GetNumber()): pad.GetNetname()
+                for fp in pcb.Footprints() for pad in fp.Pads() if pad.GetNetname()}
+    wrong = {k: (v, pad_nets.get(k)) for k, v in pins.items() if pad_nets.get(k) != v}
+    assert not wrong, f"pads whose net differs from the netlist: {wrong}"
+
+
+@pytest.mark.parametrize("board", BOARDS)
+def test_every_part_is_sourced(board):
+    parts = json.loads((REPO / f"hardware/build/poc/{board}/parts.json").read_text())
+    unsourced = [p["ref"] for p in parts
+                 if p["assembly"] == "jlc" and not p["lcsc"].startswith("C")
+                 or p["assembly"] == "hand" and not p["mpn"]]
+    assert not unsourced, f"parts without an LCSC number or hand-fit MPN: {unsourced}"
+
+
+def test_ui_cable_connects_matching_nets_pin_for_pin():
+    """The JST SH jumper is wired 1:1, so main J4 pin n and UI J1 pin n must
+    carry the same signal."""
+    _, main_pins = netlist("main")
+    _, ui_pins = netlist("ui")
+    main_side = {pin: net for (ref, pin), net in main_pins.items() if ref == "J4"}
+    ui_side = {pin: net for (ref, pin), net in ui_pins.items() if ref == "J1"}
+    assert len(main_side) == len(ui_side) == 10
+    assert main_side == ui_side
+
+
+UNUSED_ON_UI = {"LED_DALI"}
+
+
+def test_main_board_led_lines_end_unused_on_the_ui_board():
+    """The status LEDs are one addressable chain on LED_DATA; the spare
+    LED_DALI wire arrives on the cable and touches nothing else there."""
+    _, ui_pins = netlist("ui")
+    users = {net: [k for k, n in ui_pins.items() if n == net] for net in UNUSED_ON_UI}
+    assert all(refs == [("J1", refs[0][1])] for refs in users.values()), users

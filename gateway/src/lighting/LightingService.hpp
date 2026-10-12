@@ -131,13 +131,12 @@ public:
     // invalid channels are sent as 0xFF "no change".
     [[nodiscard]] ControlResult set_rgbw(dali::Address address, std::uint8_t red, std::uint8_t green,
                                          std::uint8_t blue, std::uint8_t white, std::uint8_t validity);
-    [[nodiscard]] ControlResult set_xy(dali::Address address, std::uint16_t x, std::uint16_t y,
-                                       bool xy_valid, std::uint8_t brightness, bool brightness_valid);
+    [[nodiscard]] ControlResult set_xy(dali::Address address, std::uint16_t x, std::uint16_t y, bool xy_valid,
+                                       std::uint8_t brightness, bool brightness_valid);
     // One relative step produced by the worker's colour dimmer; DPT 3.007
     // "increase" means a higher colour temperature (cooler), documented
     // explicitly because DALI steps in mirek.
-    [[nodiscard]] ControlResult colour_temperature_step(dali::Address address,
-                                                        DimDirection direction);
+    [[nodiscard]] ControlResult colour_temperature_step(dali::Address address, DimDirection direction);
     // Read back colour temperatures after a relative dim stopped.
     [[nodiscard]] ControlResult finish_colour_temperature(dali::Address address);
     // Reads the colour value matching the gear's active (or first capable)
@@ -170,13 +169,12 @@ private:
     bool colour_supported(dali::Address address, ColourKind kind) const noexcept;
     // Records `state` on every channel/group the address reaches and marks
     // the corresponding changed_colour bits.
-    void apply_colour_state(dali::Address address, const ColourState& state,
-                            ControlResult& result) noexcept;
+    void apply_colour_state(dali::Address address, const ColourState& colour, ControlResult& result) noexcept;
     // Shared RGB/RGBW path: sends the RGBWAF dim levels then drives the arc
     // level to the brightest valid component.
-    ControlResult apply_rgbwaf(dali::Address address, std::uint8_t red, std::uint8_t green,
-                               std::uint8_t blue, std::uint8_t white, std::uint8_t amber,
-                               std::uint8_t freecolour, std::uint8_t validity, ColourKind kind);
+    ControlResult apply_rgbwaf(dali::Address address, std::uint8_t red, std::uint8_t green, std::uint8_t blue,
+                               std::uint8_t white, std::uint8_t amber, std::uint8_t freecolour,
+                               std::uint8_t validity, ColourKind kind);
     void persist(dali::Address address, dali::ArcLevel level, ControlResult& result) noexcept;
     std::optional<dali::ArcLevel> last_active(dali::Address address) noexcept;
     const config::SwitchOn& switch_on_policy(dali::Address address) const noexcept;
@@ -191,8 +189,7 @@ private:
     std::array<State, dali::Group::capacity> group_states_{};
     std::array<ColourState, dali::ShortAddress::capacity> channel_colours_{};
     std::array<ColourState, dali::Group::capacity> group_colours_{};
-    std::array<std::optional<dali::ColourCapabilities>, dali::ShortAddress::capacity>
-        capabilities_{};
+    std::array<std::optional<dali::ColourCapabilities>, dali::ShortAddress::capacity> capabilities_{};
     std::array<LastActive, dali::ShortAddress::capacity> channel_last_active_{};
     std::array<LastActive, dali::Group::capacity> group_last_active_{};
     LastActive broadcast_last_active_{};

@@ -21,14 +21,14 @@
 #include "dali/BusTransport.hpp"
 #include "dali/RetryingTransport.hpp"
 #include "dali/devices/EventDecoder.hpp"
-#include "espidf/RmtDaliBus.hpp"
-#include "inputs/InputMapper.hpp"
-#include "lighting/RelativeDimmer.hpp"
 #include "espidf/NvsLevelStore.hpp"
+#include "espidf/RmtDaliBus.hpp"
 #include "firmware/Board.hpp"
 #include "firmware/KnxDevice.hpp"
 #include "firmware/Queue.hpp"
 #include "firmware/UsbConsole.hpp"
+#include "inputs/InputMapper.hpp"
+#include "lighting/RelativeDimmer.hpp"
 
 namespace gateway::firmware {
 namespace {
@@ -37,57 +37,76 @@ constexpr const char* log_tag = "gateway";
 
 const char* source_name(lighting::StateSource source) {
     switch (source) {
-    case lighting::StateSource::Readback: return "readback";
-    case lighting::StateSource::Commanded: return "commanded";
-    case lighting::StateSource::RestoredCommand: return "restored-command";
-    case lighting::StateSource::Unknown: return "unknown";
+    case lighting::StateSource::Readback:
+        return "readback";
+    case lighting::StateSource::Commanded:
+        return "commanded";
+    case lighting::StateSource::RestoredCommand:
+        return "restored-command";
+    case lighting::StateSource::Unknown:
+        return "unknown";
     }
     return "unknown";
 }
 
 const char* error_name(lighting::ControlError error) {
     switch (error) {
-    case lighting::ControlError::None: return "none";
-    case lighting::ControlError::TransportFailure: return "transport-failure";
-    case lighting::ControlError::NoSavedTarget: return "no-saved-target";
-    case lighting::ControlError::StorageFailure: return "storage-failure";
-    case lighting::ControlError::Unsupported: return "unsupported";
-    case lighting::ControlError::InvalidValue: return "invalid-value";
+    case lighting::ControlError::None:
+        return "none";
+    case lighting::ControlError::TransportFailure:
+        return "transport-failure";
+    case lighting::ControlError::NoSavedTarget:
+        return "no-saved-target";
+    case lighting::ControlError::StorageFailure:
+        return "storage-failure";
+    case lighting::ControlError::Unsupported:
+        return "unsupported";
+    case lighting::ControlError::InvalidValue:
+        return "invalid-value";
     }
     return "unknown";
 }
 
 const char* transport_name(dali::TransportStatus status) {
     switch (status) {
-    case dali::TransportStatus::Ok: return "ok";
-    case dali::TransportStatus::Unconfigured: return "unconfigured";
-    case dali::TransportStatus::Timeout: return "timeout";
-    case dali::TransportStatus::Collision: return "collision";
-    case dali::TransportStatus::InvalidResponse: return "invalid-response";
-    case dali::TransportStatus::Unsupported: return "unsupported";
-    case dali::TransportStatus::Failure: return "failure";
+    case dali::TransportStatus::Ok:
+        return "ok";
+    case dali::TransportStatus::Unconfigured:
+        return "unconfigured";
+    case dali::TransportStatus::Timeout:
+        return "timeout";
+    case dali::TransportStatus::Collision:
+        return "collision";
+    case dali::TransportStatus::InvalidResponse:
+        return "invalid-response";
+    case dali::TransportStatus::Unsupported:
+        return "unsupported";
+    case dali::TransportStatus::Failure:
+        return "failure";
     }
     return "unknown";
 }
 
 const char* address_name(dali::Address address) {
     switch (address.kind()) {
-    case dali::AddressKind::Short: return "channel";
-    case dali::AddressKind::Group: return "group";
-    case dali::AddressKind::Broadcast: return "broadcast";
+    case dali::AddressKind::Short:
+        return "channel";
+    case dali::AddressKind::Group:
+        return "group";
+    case dali::AddressKind::Broadcast:
+        return "broadcast";
     }
     return "unknown";
 }
 
 void log_result(dali::Address address, const lighting::ControlResult& result) {
     if (result.state.level) {
-        ESP_LOGI(log_tag, "address=%s%u source=%s error=%s transport=%s arc-level=%u",
-                 address_name(address),
-                 address.as_short() ? static_cast<unsigned>(address.as_short()->value())
-                     : address.as_group() ? static_cast<unsigned>(address.as_group()->value()) : 0,
+        ESP_LOGI(log_tag, "address=%s%u source=%s error=%s transport=%s arc-level=%u", address_name(address),
+                 address.as_short()   ? static_cast<unsigned>(address.as_short()->value())
+                 : address.as_group() ? static_cast<unsigned>(address.as_group()->value())
+                                      : 0,
                  source_name(result.state.source), error_name(result.error),
-                 transport_name(result.transport_status),
-                 static_cast<unsigned>(result.state.level->value()));
+                 transport_name(result.transport_status), static_cast<unsigned>(result.state.level->value()));
     } else {
         ESP_LOGI(log_tag, "address=%s source=%s error=%s transport=%s arc-level=unknown",
                  address_name(address), source_name(result.state.source), error_name(result.error),
@@ -98,7 +117,8 @@ void log_result(dali::Address address, const lighting::ControlResult& result) {
 nvs_handle_t open_targets() {
     auto error = nvs_flash_init();
     if (error != ESP_OK) {
-        ESP_LOGE(log_tag, "NVS unavailable (%s); configuration will not be erased automatically", esp_err_to_name(error));
+        ESP_LOGE(log_tag, "NVS unavailable (%s); configuration will not be erased automatically",
+                 esp_err_to_name(error));
         return 0;
     }
     nvs_handle_t handle = 0;
@@ -193,15 +213,14 @@ std::uint32_t now_ms() {
 
 // Ticks until the next dimmer deadline or fault poll, capped so the task
 // watchdog stays fed while idle.
-TickType_t worker_wait(const lighting::RelativeDimmer& dimmer,
-                       const lighting::RelativeDimmer& colour_dimmer, std::uint32_t next_poll_ms) {
+TickType_t worker_wait(const lighting::RelativeDimmer& dimmer, const lighting::RelativeDimmer& colour_dimmer,
+                       std::uint32_t next_poll_ms) {
     auto deadline = dimmer.next_deadline();
     if (const auto colour = colour_dimmer.next_deadline();
         colour && (!deadline || static_cast<std::int32_t>(*colour - *deadline) < 0)) {
         deadline = colour;
     }
-    return pdMS_TO_TICKS(control::worker_wait_ms(now_ms(), deadline, next_poll_ms,
-                                                 watchdog_feed_ms));
+    return pdMS_TO_TICKS(control::worker_wait_ms(now_ms(), deadline, next_poll_ms, watchdog_feed_ms));
 }
 
 void handle_step(Wiring& wiring, lighting::DimStep step) {
@@ -213,7 +232,8 @@ void handle_step(Wiring& wiring, lighting::DimStep step) {
 }
 
 void handle_expiry(Wiring& wiring, lighting::DimExpiry expiry) {
-    ESP_LOGW(log_tag, "relative dimming on %s hit the safety limit; reading back", address_name(expiry.address));
+    ESP_LOGW(log_tag, "relative dimming on %s hit the safety limit; reading back",
+             address_name(expiry.address));
     const auto result = wiring.lighting.finish_dimming(expiry.address);
     const auto push = [&wiring](const control::StatusEvent& event) {
         publish_status(wiring.statuses, event);
@@ -226,8 +246,8 @@ void handle_expiry(Wiring& wiring, lighting::DimExpiry expiry) {
 void handle_colour_step(Wiring& wiring, lighting::DimStep step) {
     const auto result = wiring.lighting.colour_temperature_step(step.address, step.direction);
     if (result.error != lighting::ControlError::None) {
-        ESP_LOGW(log_tag, "colour temperature step on %s failed: transport=%s",
-                 address_name(step.address), transport_name(result.transport_status));
+        ESP_LOGW(log_tag, "colour temperature step on %s failed: transport=%s", address_name(step.address),
+                 transport_name(result.transport_status));
     }
 }
 
@@ -305,9 +325,8 @@ void dali_task(void* arg) {
                 std::holds_alternative<control::AssignInputDevices>(*command)) {
                 ESP_LOGI(log_tag, "commissioning job started");
             }
-            const auto result = control::execute(wiring.lighting, dimmer, colour_dimmer,
-                                                 wiring.commissioning, wiring.inputs, now,
-                                                 *command);
+            const auto result = control::execute(wiring.lighting, dimmer, colour_dimmer, wiring.commissioning,
+                                                 wiring.inputs, now, *command);
             log_result(control::address_of(*command), result.result);
             publish_job_result(wiring, result);
         } else if (static_cast<std::int32_t>(now - next_poll) >= 0) {
@@ -315,38 +334,34 @@ void dali_task(void* arg) {
             if (const auto changed = wiring.commissioning.poll_next()) {
                 ESP_LOGW(log_tag, "channel %u fault state changed to %u", changed->value(),
                          static_cast<unsigned>(wiring.commissioning.faulty().test(changed->value())));
-                publish_status(wiring.statuses,
-                               control::FaultUpdate{*changed,
-                                                    wiring.commissioning.faulty().test(changed->value())});
+                publish_status(
+                    wiring.statuses,
+                    control::FaultUpdate{*changed, wiring.commissioning.faulty().test(changed->value())});
                 snapshot_forwarder.on_snapshot(wiring.commissioning.snapshot());
             }
         }
-        dimmer.poll(now, [&wiring](lighting::DimStep step) { handle_step(wiring, step); },
-                    [&wiring](lighting::DimExpiry expiry) { handle_expiry(wiring, expiry); });
+        dimmer.poll(
+            now, [&wiring](lighting::DimStep step) { handle_step(wiring, step); },
+            [&wiring](lighting::DimExpiry expiry) { handle_expiry(wiring, expiry); });
         while (const auto event = wiring.transport.poll_event()) {
             if (event->bits != 24) {
                 ESP_LOGD(log_tag, "dali bus frame from another master: 0x%06X (%u bits)",
-                         static_cast<unsigned>(event->value),
-                         static_cast<unsigned>(event->bits));
+                         static_cast<unsigned>(event->value), static_cast<unsigned>(event->bits));
                 continue;
             }
             const auto decoded = dali::device::decode_event(*event);
             if (!decoded) {
-                ESP_LOGD(log_tag, "dali event dropped: 0x%06X",
-                         static_cast<unsigned>(event->value));
+                ESP_LOGD(log_tag, "dali event dropped: 0x%06X", static_cast<unsigned>(event->value));
                 continue;
             }
             std::array<inputs::Action, inputs::InputMapper::max_actions> actions;
             const auto count = wiring.inputs.map(
-                *decoded,
-                wiring.commissioning.devices().instance_type(decoded->address,
-                                                             decoded->instance),
+                *decoded, wiring.commissioning.devices().instance_type(decoded->address, decoded->instance),
                 actions);
             for (std::uint8_t index = 0; index < count; ++index) {
                 const auto& action = actions[index];
                 publish_status(wiring.statuses,
-                               control::InputAction{action.object, action.data,
-                                                    action.length});
+                               control::InputAction{action.object, action.data, action.length});
             }
         }
         colour_dimmer.poll(
@@ -382,12 +397,13 @@ void factory_reset() {
 
 void run() {
     const auto* description = esp_app_get_description();
-    ESP_LOGI(log_tag, "%s %s: development slice, not a commissioned gateway", description->project_name, description->version);
+    ESP_LOGI(log_tag, "%s %s: development slice, not a commissioned gateway", description->project_name,
+             description->version);
     espidf::NvsLevelStore targets{open_targets()};
     espidf::RmtDaliBus bus{{.tx_gpio = board::dali_tx,
-                           .rx_gpio = board::dali_rx,
-                           .invert_tx = board::dali_invert_tx,
-                           .invert_rx = board::dali_invert_rx}};
+                            .rx_gpio = board::dali_rx,
+                            .invert_tx = board::dali_invert_tx,
+                            .invert_rx = board::dali_invert_rx}};
     open_dali(bus);
     dali::BusTransport bus_transport{bus, &bus_delay_ms};
     dali::RetryingTransport retrying{bus_transport};
@@ -403,9 +419,9 @@ void run() {
     Queue<commissioning::Snapshot> console_snapshots{1};
     Queue<commissioning::InputSnapshot> input_snapshots{1};
     Queue<commissioning::InputSnapshot> console_input_snapshots{1};
-    Wiring wiring{lighting, retrying, commissioning, inputs, commands, statuses,
-                  configuration, snapshots, console_snapshots, input_snapshots,
-                  console_input_snapshots};
+    Wiring wiring{lighting,          retrying,        commissioning,          inputs,
+                  commands,          statuses,        configuration,          snapshots,
+                  console_snapshots, input_snapshots, console_input_snapshots};
     xTaskCreate(dali_task, "dali", 4096, &wiring, 5, nullptr);
     xTaskCreate(knx_task, "knx", 12288, &wiring, 6, nullptr);
     UsbConsole console{commands, console_snapshots, console_input_snapshots, bus.configured(),

@@ -139,7 +139,7 @@ class SimGear(_FakeGear):
                 self._apply_channel(self.actual_rgb, self.temp_rgb)
                 self._apply_channel(self.actual_waf, self.temp_waf)
         if self._temp_dirty:
-            self.active_colour = sorted(self._temp_dirty)[-1]
+            self.active_colour = max(self._temp_dirty)
         self._temp_dirty.clear()
 
     def _temp_snapshot(self) -> dict:

@@ -3,8 +3,6 @@
 import asyncio
 import time
 
-import dali.address
-import dali.gear.general as gear_cmd
 from xknx.telegram.apci import DPTArray, DPTBinary
 
 from .scenario import BROADCAST, CHANNELS

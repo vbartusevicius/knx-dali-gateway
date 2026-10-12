@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from xknx import XKNX
 from xknx.telegram import Telegram
@@ -41,7 +42,7 @@ class SimClient:
             await self._writer.drain()
             try:
                 line = await asyncio.wait_for(self._reader.readline(), timeout=15)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # A late response would poison the next request; reconnect.
                 await self.close()
                 await self.connect()
@@ -183,7 +184,10 @@ class KnxClient:
 
 async def commissioning_command(knx: KnxClient, address: str, prop: int, data: bytes) -> list[int]:
     """FunctionPropertyCommand on the commissioning object; returns response."""
-    from xknx.telegram.apci import FunctionPropertyCommand, FunctionPropertyStateResponse
+    from xknx.telegram.apci import (
+        FunctionPropertyCommand,
+        FunctionPropertyStateResponse,
+    )
 
     async with knx.xknx.management.connection(IndividualAddress(address)) as conn:
         response = await conn.request(
@@ -199,7 +203,10 @@ async def commissioning_command(knx: KnxClient, address: str, prop: int, data: b
 
 async def commissioning_state(knx: KnxClient, address: str) -> dict:
     """Read commissioning state property 1: [phase, progress, found, error, bitmaps]."""
-    from xknx.telegram.apci import FunctionPropertyStateRead, FunctionPropertyStateResponse
+    from xknx.telegram.apci import (
+        FunctionPropertyStateRead,
+        FunctionPropertyStateResponse,
+    )
 
     async with knx.xknx.management.connection(IndividualAddress(address)) as conn:
         response = await conn.request(
@@ -227,7 +234,10 @@ async def input_state(knx: KnxClient, address: str) -> dict:
     instance, bit 6 = has an occupancy instance, bit 7 = has a light
     instance (Commissioning::input_snapshot).
     """
-    from xknx.telegram.apci import FunctionPropertyStateRead, FunctionPropertyStateResponse
+    from xknx.telegram.apci import (
+        FunctionPropertyStateRead,
+        FunctionPropertyStateResponse,
+    )
 
     async with knx.xknx.management.connection(IndividualAddress(address)) as conn:
         response = await conn.request(

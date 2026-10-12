@@ -43,8 +43,7 @@ public:
     // this (device, instance) — the event is dropped when it disagrees with
     // the channel's declared type or when no channel binds the instance.
     // Returns the number of actions written to out.
-    std::uint8_t map(const dali::device::InputEvent& event,
-                     std::optional<std::uint8_t> reported_type,
+    std::uint8_t map(const dali::device::InputEvent& event, std::optional<std::uint8_t> reported_type,
                      std::array<Action, max_actions>& out) noexcept;
 
 private:

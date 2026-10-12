@@ -1,5 +1,8 @@
 #include "knx/BrightnessScale.hpp"
 
+#include <cstdint>
+
+#include "dali/ArcLevel.hpp"
 #include "dali/Scaling.hpp"
 
 namespace gateway::knx {

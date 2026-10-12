@@ -2,6 +2,13 @@
 
 #include <cstdio>
 #include <fstream>
+#include <ios>
+#include <optional>
+#include <string>
+#include <utility>
+
+#include "dali/ArcLevel.hpp"
+#include "storage/LevelStore.hpp"
 
 namespace gateway::lab {
 namespace {
@@ -52,9 +59,8 @@ std::string FileLevelStore::key(storage::Slot slot) {
 
 storage::TargetRead FileLevelStore::load(storage::Slot slot) {
     const auto found = values_.find(key(slot));
-    return found != values_.end()
-               ? storage::TargetRead{storage::ReadStatus::Ok, found->second}
-               : storage::TargetRead{storage::ReadStatus::NotFound, std::nullopt};
+    return found != values_.end() ? storage::TargetRead{storage::ReadStatus::Ok, found->second}
+                                  : storage::TargetRead{storage::ReadStatus::NotFound, std::nullopt};
 }
 
 bool FileLevelStore::save(storage::Slot slot, dali::ArcLevel level) {

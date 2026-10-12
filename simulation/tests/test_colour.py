@@ -137,7 +137,7 @@ async def test_relative_colour_temperature_steps_until_stop(knx, sim):
     assert 0.1 <= gap <= 0.5, f"colour step interval {gap}s not ~200ms"
 
     # Stop triggers a colour readback and a fresh status telegram.
-    telegram = await knx.wait_telegram(ch["colour_temperature_status"], timeout=10)
+    await knx.wait_telegram(ch["colour_temperature_status"], timeout=10)
     after = (await sim.gear_by_short(0))["actual_tc_mirek"]
     assert after < before, "increase should step towards cooler (lower mirek)"
     assert (after - before) == -len(steps)

@@ -55,7 +55,7 @@ async def test_brightness_write_maps_to_arc_level(knx, sim):
     await knx.write(ch["brightness"], DPTArray((128,)))  # 50%
 
     # KNX scaling 128/255 maps to DALI arc 127 (linear mapping).
-    gear = await sim.wait_gear(
+    await sim.wait_gear(
         lambda g: g["short"] == 1 and 120 <= g["level"] <= 135
     )
     await knx.wait_telegram(

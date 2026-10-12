@@ -57,8 +57,8 @@ public:
     // Queues a forward frame. `repeat_gap_us > 0` resends it once after that
     // spacing (IEC 62386-102 send-twice); replies are only expected on the
     // first transmission. Returns false when the queue is full.
-    bool request(std::uint32_t value, std::uint8_t bits, Priority priority,
-                 bool expect_reply, std::uint32_t repeat_gap_us = 0);
+    bool request(std::uint32_t value, std::uint8_t bits, Priority priority, bool expect_reply,
+                 std::uint32_t repeat_gap_us = 0);
 
     // Decoder output. `frame_start_us` is the timestamp of the frame's first
     // half-bit — the backward window is measured on it.
@@ -133,8 +133,7 @@ private:
     void begin_transmission(std::uint32_t now_us);
     void begin_settling();
     void complete_attempt(std::uint32_t now_us);
-    void finish_request(TxOutcome outcome, std::uint8_t reply,
-                        std::uint32_t now_us);
+    void finish_request(TxOutcome outcome, std::uint8_t reply, std::uint32_t now_us);
     void enter_break(std::uint32_t now_us);
 };
 

@@ -1,0 +1,4 @@
+Designator,Value,Manufacturer part,Notes
+J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
+U3,REM3-2415S/A 24V->15V 3W iso,REM3-2415S/A,"RECOM REM3 datasheet: 18-36V in, 15V 200mA out, 5kVAC reinforced 2MOPP, DIP-24 A-pinning"
+U7,XIAO ESP32C6,Seeed XIAO ESP32C6,Seeed wiki/schematic v1.0; plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)

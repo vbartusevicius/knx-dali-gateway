@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
-#include <unity.h>
-
 #include <deque>
 #include <optional>
 #include <vector>
+
+#include <unity.h>
 
 #include "dali/BusTransport.hpp"
 #include "dali/SpecialCommands.hpp"
@@ -25,9 +24,15 @@ using gateway::dali::TransportStatus;
 using gateway::dali::bus::TxOutcome;
 using gateway::dali::bus::TxResult;
 
-ShortAddress sa(unsigned value) { return *ShortAddress::from(value); }
-Group grp(unsigned value) { return *Group::from(value); }
-Scene scene(unsigned value) { return *Scene::from(value); }
+ShortAddress sa(unsigned value) {
+    return *ShortAddress::from(value);
+}
+Group grp(unsigned value) {
+    return *Group::from(value);
+}
+Scene scene(unsigned value) {
+    return *Scene::from(value);
+}
 
 class FakeBusPort final : public gateway::dali::BusPort {
 public:
@@ -60,8 +65,7 @@ void test_set_level_sends_dapc_frame() {
     FakeBusPort port;
     BusTransport transport{port};
     TEST_ASSERT_EQUAL(TransportStatus::Ok,
-                      transport.set_level(Address::short_address(sa(5)),
-                                          *ArcLevel::from(128)));
+                      transport.set_level(Address::short_address(sa(5)), *ArcLevel::from(128)));
     TEST_ASSERT_EQUAL_size_t(1, port.requests.size());
     TEST_ASSERT_EQUAL_UINT32(0x0A80, port.requests[0].value);
     TEST_ASSERT_EQUAL_UINT8(16, port.requests[0].bits);
@@ -92,12 +96,10 @@ void test_query_maps_link_outcomes() {
     TEST_ASSERT_EQUAL(TransportStatus::Timeout, transport.query(sa(1), 0xA0).status);
 
     port.scripted.push_back({TxOutcome::ReplyCollision, 0});
-    TEST_ASSERT_EQUAL(TransportStatus::Collision,
-                      transport.query(sa(1), 0xA0).status);
+    TEST_ASSERT_EQUAL(TransportStatus::Collision, transport.query(sa(1), 0xA0).status);
 
     port.scripted.push_back({TxOutcome::Collision, 0});
-    TEST_ASSERT_EQUAL(TransportStatus::Collision,
-                      transport.query(sa(1), 0xA0).status);
+    TEST_ASSERT_EQUAL(TransportStatus::Collision, transport.query(sa(1), 0xA0).status);
 }
 
 void test_special_commands_use_special_frames() {
@@ -116,8 +118,7 @@ void test_special_commands_use_special_frames() {
     TEST_ASSERT_EQUAL_UINT32(0xB1AB, port.requests[4].value);
 
     port.scripted.push_back({TxOutcome::ReplyCollision, 0});
-    const auto compare = transport.query_special(
-        gateway::dali::special::compare, 0x00);
+    const auto compare = transport.query_special(gateway::dali::special::compare, 0x00);
     TEST_ASSERT_EQUAL(TransportStatus::Collision, compare.status);
     TEST_ASSERT_EQUAL_UINT32(0xA900, port.requests[5].value);
 }
@@ -125,8 +126,7 @@ void test_special_commands_use_special_frames() {
 void test_device_command_sends_24bit_frame() {
     FakeBusPort port;
     BusTransport transport{port};
-    transport.send_device_command(0xFF, gateway::dali::device::cmd::start_quiescent_mode,
-                                  true);
+    transport.send_device_command(0xFF, gateway::dali::device::cmd::start_quiescent_mode, true);
     TEST_ASSERT_EQUAL_size_t(1, port.requests.size());
     TEST_ASSERT_EQUAL_UINT32(0xFFFE1D, port.requests[0].value);
     TEST_ASSERT_EQUAL_UINT8(24, port.requests[0].bits);
@@ -174,8 +174,7 @@ void test_commission_runs_gear_addressing_sequence() {
         port.scripted.push_back({TxOutcome::Sent, 0});
     }
     port.scripted.push_back({TxOutcome::NoReply, 0});  // COMPARE
-    const auto result = transport.commission(gateway::dali::CommissionMode::All,
-                                             sa(0), 4);
+    const auto result = transport.commission(gateway::dali::CommissionMode::All, sa(0), 4);
     TEST_ASSERT_EQUAL(TransportStatus::Ok, result.status);
     TEST_ASSERT_EQUAL_UINT32(0, result.count);
     TEST_ASSERT_EQUAL_size_t(10, port.requests.size());

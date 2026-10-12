@@ -7,12 +7,11 @@ import asyncio
 import logging
 import os
 
-import pytest
 import pytest_asyncio
-
-from knx_programmer import programmer, tables
-from xknx.telegram.apci import DeviceDescriptorRead, DeviceDescriptorResponse
 from xknx.telegram.address import IndividualAddress
+from xknx.telegram.apci import DeviceDescriptorRead, DeviceDescriptorResponse
+
+from knx_programmer import programmer
 
 from . import scenario
 from .helpers import KnxClient, SimClient
@@ -37,7 +36,7 @@ async def _wait_device_online(knx: KnxClient, address: str, timeout: float) -> N
                     DeviceDescriptorRead(), expected=DeviceDescriptorResponse
                 )
                 return
-        except Exception as exc:  # noqa: BLE001 - any failure means "not up yet"
+        except Exception as exc:  # any failure means "not up yet"
             if asyncio.get_event_loop().time() > deadline:
                 raise TimeoutError(
                     f"device {address} did not come online within {timeout}s"
@@ -55,7 +54,7 @@ async def _wait_state_property(knx: KnxClient, address: str, timeout: float) -> 
         try:
             await commissioning_state(knx, address)
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if asyncio.get_event_loop().time() > deadline:
                 raise TimeoutError(
                     f"commissioning state never answered on {address}"

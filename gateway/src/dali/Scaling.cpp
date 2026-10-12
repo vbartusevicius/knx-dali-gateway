@@ -1,5 +1,9 @@
 #include "dali/Scaling.hpp"
 
+#include <cstdint>
+
+#include "dali/ArcLevel.hpp"
+
 namespace gateway::dali {
 
 dali::ArcLevel arc_from_scaling(std::uint8_t raw) noexcept {

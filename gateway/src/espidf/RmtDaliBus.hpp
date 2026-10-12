@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
 #pragma once
 

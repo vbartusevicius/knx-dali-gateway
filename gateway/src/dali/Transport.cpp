@@ -1,5 +1,6 @@
 #include "dali/Transport.hpp"
 
+#include "dali/ShortAddress.hpp"
 #include "dali/devices/DeviceAddressing.hpp"
 
 namespace gateway::dali {

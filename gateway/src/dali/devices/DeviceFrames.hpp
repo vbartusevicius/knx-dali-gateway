@@ -50,10 +50,8 @@ inline constexpr std::uint8_t occupancy = 3;
 inline constexpr std::uint8_t light = 4;
 }  // namespace type
 
-constexpr std::uint32_t command(std::uint8_t address, std::uint8_t instance,
-                                std::uint8_t opcode) noexcept {
-    return (static_cast<std::uint32_t>(address) << 16) |
-           (static_cast<std::uint32_t>(instance) << 8) | opcode;
+constexpr std::uint32_t command(std::uint8_t address, std::uint8_t instance, std::uint8_t opcode) noexcept {
+    return (static_cast<std::uint32_t>(address) << 16) | (static_cast<std::uint32_t>(instance) << 8) | opcode;
 }
 
 // Table 21 device-level opcodes (instance byte 0xFE "device").
@@ -158,8 +156,7 @@ constexpr std::uint32_t dtr2(std::uint8_t value) noexcept {
 constexpr std::uint32_t send_testframe(std::uint8_t value) noexcept {
     return command(0xC1, 0x33, value);
 }
-constexpr std::uint32_t direct_write_memory(std::uint8_t param1,
-                                            std::uint8_t param2) noexcept {
+constexpr std::uint32_t direct_write_memory(std::uint8_t param1, std::uint8_t param2) noexcept {
     return command(0xC5, param1, param2);
 }
 constexpr std::uint32_t dtr1_dtr0(std::uint8_t value1, std::uint8_t value0) noexcept {

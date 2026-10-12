@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
-#include <unity.h>
-
 #include <vector>
+
+#include <unity.h>
 
 #include "dali/bus/LinkLayer.hpp"
 #include "dali/bus/Manchester.hpp"
@@ -31,8 +30,7 @@ const FrameError* error_of(const std::optional<Decoded>& result) {
     return result ? std::get_if<FrameError>(&*result) : nullptr;
 }
 
-std::optional<Decoded> decode_runs(
-    std::initializer_list<std::pair<Line, std::uint32_t>> runs) {
+std::optional<Decoded> decode_runs(std::initializer_list<std::pair<Line, std::uint32_t>> runs) {
     ManchesterDecoder decoder;
     std::optional<Decoded> out;
     for (const auto& run : runs) {
@@ -47,9 +45,8 @@ std::optional<Decoded> decode_runs(
 }
 
 // Re-encodes half-bit pairs for a raw bit cell sequence (1 = active->idle).
-std::optional<Decoded> decode_cells(std::initializer_list<bool> cells,
-                                  std::uint32_t half_us = te_us,
-                                  std::uint32_t stop_us_ = stop_us) {
+std::optional<Decoded> decode_cells(std::initializer_list<bool> cells, std::uint32_t half_us = te_us,
+                                    std::uint32_t stop_us_ = stop_us) {
     ManchesterDecoder decoder;
     std::optional<Decoded> out;
     for (const bool cell : cells) {
@@ -112,8 +109,7 @@ std::optional<Decoded> round_trip(std::uint32_t value, std::uint8_t bits) {
     ManchesterDecoder decoder;
     std::optional<Decoded> out;
     for (std::uint8_t i = 0; i < frame.count; ++i) {
-        if (const auto result = decoder.feed(frame.symbols[i].level,
-                                             frame.symbols[i].us)) {
+        if (const auto result = decoder.feed(frame.symbols[i].level, frame.symbols[i].us)) {
             out = result;
         }
     }
@@ -125,9 +121,8 @@ std::optional<Decoded> round_trip(std::uint32_t value, std::uint8_t bits) {
 
 void test_round_trip_frames() {
     const std::pair<std::uint32_t, std::uint8_t> vectors[] = {
-        {0x00, 8},   {0xFF, 8},     {0xA5, 8},    {0x0000, 16},
-        {0xFF00, 16}, {0xA3FF, 16}, {0xFFFF, 16}, {0x000000, 24},
-        {0xFFFE1D, 24}, {0xABCDEF, 24}, {0x123456, 24},
+        {0x00, 8},    {0xFF, 8},      {0xA5, 8},      {0x0000, 16},   {0xFF00, 16},   {0xA3FF, 16},
+        {0xFFFF, 16}, {0x000000, 24}, {0xFFFE1D, 24}, {0xABCDEF, 24}, {0x123456, 24},
     };
     for (const auto& vector : vectors) {
         const auto decoded = round_trip(vector.first, vector.second);
@@ -143,8 +138,7 @@ void test_round_trip_frames() {
 void test_decoder_accepts_tolerance_edges() {
     // Start + 8 payload ones at the half-bit extremes.
     for (const std::uint32_t half : {rx_half_min_us, rx_half_max_us}) {
-        const auto result = decode_cells(
-            {true, true, true, true, true, true, true, true, true}, half);
+        const auto result = decode_cells({true, true, true, true, true, true, true, true, true}, half);
         const auto* frame = frame_of(result);
         TEST_ASSERT_NOT_NULL(frame);
         TEST_ASSERT_EQUAL_UINT8(8, frame->bits);
@@ -154,14 +148,22 @@ void test_decoder_accepts_tolerance_edges() {
     // check both ends of the full-bit window. Frame: start bit + 0x00.
     for (const std::uint32_t span : {rx_full_min_us, rx_full_max_us}) {
         const auto merged = decode_runs({
-            {Line::Active, te_us}, {Line::Idle, span},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
-            {Line::Active, te_us}, {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, span},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
+            {Line::Active, te_us},
+            {Line::Idle, te_us},
             {Line::Active, te_us},
             {Line::Idle, stop_us},
         });
@@ -176,11 +178,16 @@ void test_decoder_accepts_tolerance_edges() {
         {Line::Idle, rx_full_min_us},
         {Line::Active, rx_full_max_us},
         {Line::Idle, rx_full_min_us},
-        {Line::Active, te_us}, {Line::Idle, te_us},
-        {Line::Active, te_us}, {Line::Idle, te_us},
-        {Line::Active, te_us}, {Line::Idle, te_us},
-        {Line::Active, te_us}, {Line::Idle, te_us},
-        {Line::Active, te_us}, {Line::Idle, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
         {Line::Active, te_us},
         {Line::Idle, stop_us},
     });
@@ -191,8 +198,7 @@ void test_decoder_accepts_tolerance_edges() {
 }
 
 void test_decoder_rejects_out_of_window_durations() {
-    for (const std::uint32_t bad : {rx_half_min_us - 1, rx_half_max_us + 1,
-                                    rx_full_min_us - 1}) {
+    for (const std::uint32_t bad : {rx_half_min_us - 1, rx_half_max_us + 1, rx_full_min_us - 1}) {
         ManchesterDecoder decoder;
         const auto result = decoder.feed(Line::Active, bad);
         TEST_ASSERT_TRUE(result.has_value());
@@ -207,23 +213,23 @@ void test_decoder_rejects_out_of_window_durations() {
 
 void test_decoder_rejects_wrong_bit_count() {
     // Start + 9 payload bits is not a legal frame length.
-    const auto result = decode_cells(
-        {true, false, false, false, false, false, false, false, false, false});
+    const auto result = decode_cells({true, false, false, false, false, false, false, false, false, false});
     TEST_ASSERT_TRUE(result.has_value());
     TEST_ASSERT_EQUAL(ErrorKind::Length, error_of(result)->kind);
 }
 
 void test_decoder_rejects_bad_start_bit() {
-    const auto result = decode_cells(
-        {false, true, true, true, true, true, true, true, true});
+    const auto result = decode_cells({false, true, true, true, true, true, true, true, true});
     TEST_ASSERT_TRUE(result.has_value());
     TEST_ASSERT_EQUAL(ErrorKind::Framing, error_of(result)->kind);
 }
 
 void test_decoder_rejects_manchester_violation() {
     const auto result = decode_runs({
-        {Line::Active, te_us}, {Line::Active, te_us},
-        {Line::Idle, te_us}, {Line::Active, te_us},
+        {Line::Active, te_us},
+        {Line::Active, te_us},
+        {Line::Idle, te_us},
+        {Line::Active, te_us},
         {Line::Idle, stop_us},
     });
     TEST_ASSERT_TRUE(result.has_value());
@@ -269,12 +275,8 @@ struct FakeSink final : LinkLayer::Sink {
     std::vector<EncodedFrame> transmits;
     std::vector<std::uint32_t> breaks;
 
-    void start_transmit(const EncodedFrame& frame) override {
-        transmits.push_back(frame);
-    }
-    void drive_break(std::uint32_t us) override {
-        breaks.push_back(us);
-    }
+    void start_transmit(const EncodedFrame& frame) override { transmits.push_back(frame); }
+    void drive_break(std::uint32_t us) override { breaks.push_back(us); }
 };
 
 std::uint32_t fixed_random(void* ctx) {
@@ -291,8 +293,7 @@ std::optional<Decoded> round_trip_symbols(const EncodedFrame& encoded) {
     ManchesterDecoder decoder;
     std::optional<Decoded> out;
     for (std::uint8_t i = 0; i < encoded.count; ++i) {
-        if (const auto r = decoder.feed(encoded.symbols[i].level,
-                                        encoded.symbols[i].us)) {
+        if (const auto r = decoder.feed(encoded.symbols[i].level, encoded.symbols[i].us)) {
             out = r;
         }
     }
@@ -362,8 +363,8 @@ void test_echo_mismatch_retries_then_collides() {
         if (attempt + 1 < collision_attempts_max) {
             TEST_ASSERT_EQUAL_size_t(attempt + 1, f.sink.breaks.size());
             now += collision_break_us;
-            f.link.poll(now);            // leave Breaking state
-            now += settling_min_us[0];   // re-settle
+            f.link.poll(now);           // leave Breaking state
+            now += settling_min_us[0];  // re-settle
         }
     }
     const auto result = f.link.take_result();
@@ -392,8 +393,7 @@ void test_missing_echo_is_collision() {
     TEST_ASSERT_EQUAL_size_t(1, f.sink.breaks.size());
 }
 
-void drive_query(Fixture& f, std::uint32_t frame = 0x03A0,
-                 std::uint32_t tx_start = settling_min_us[1]) {
+void drive_query(Fixture& f, std::uint32_t frame = 0x03A0, std::uint32_t tx_start = settling_min_us[1]) {
     f.link.request(frame, 16, Priority::P2, true);
     f.link.poll(tx_start);
     f.link.on_decoded(ReceivedFrame{frame, 16}, tx_start);

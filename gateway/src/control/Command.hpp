@@ -6,12 +6,12 @@
 
 #include "commissioning/Commissioning.hpp"
 #include "dali/Address.hpp"
-#include "inputs/InputChannel.hpp"
-#include "inputs/InputMapper.hpp"
 #include "dali/ArcLevel.hpp"
 #include "dali/Scene.hpp"
 #include "dali/ShortAddress.hpp"
 #include "dali/Transport.hpp"
+#include "inputs/InputChannel.hpp"
+#include "inputs/InputMapper.hpp"
 #include "lighting/LightingService.hpp"
 #include "lighting/RelativeDimmer.hpp"
 
@@ -136,11 +136,11 @@ struct ColourDimStop {
     dali::Address address;
 };
 
-using Command = std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups, DimStart,
-                             DimStop, RecallScene, StoreScene, ScanBus, AssignAddresses, ReplaceDevice,
-                             IdentifyDevice, ResetAddresses, ScanInputDevices, AssignInputDevices,
-                             InputFeedback, SetColourTemperature, SetRgb, SetRgbw,
-                             SetXy, ColourDimStart, ColourDimStop>;
+using Command =
+    std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups, DimStart, DimStop,
+                 RecallScene, StoreScene, ScanBus, AssignAddresses, ReplaceDevice, IdentifyDevice,
+                 ResetAddresses, ScanInputDevices, AssignInputDevices, InputFeedback, SetColourTemperature,
+                 SetRgb, SetRgbw, SetXy, ColourDimStart, ColourDimStop>;
 
 static_assert(std::is_trivially_copyable_v<Command>, "Command travels through FreeRTOS queues");
 
@@ -186,7 +186,7 @@ static_assert(std::is_trivially_copyable_v<StatusEvent>, "StatusEvent travels th
                                                lighting::RelativeDimmer& dimmer,
                                                lighting::RelativeDimmer& colour_dimmer,
                                                commissioning::Commissioning& commissioning,
-                                               inputs::InputMapper& inputs,
-                                               std::uint32_t now_ms, const Command& command);
+                                               inputs::InputMapper& inputs, std::uint32_t now_ms,
+                                               const Command& command);
 
 }

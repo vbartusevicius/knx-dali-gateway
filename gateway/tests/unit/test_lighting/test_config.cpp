@@ -113,8 +113,7 @@ void test_invalid_enum_falls_back_to_last_level() {
 void test_default_input_channels_are_unused() {
     const auto config = gateway::config::default_configuration();
     for (const auto& input : config.inputs) {
-        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
-                          static_cast<int>(input.type));
+        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused), static_cast<int>(input.type));
         TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::Toggle),
                           static_cast<int>(input.function));
         TEST_ASSERT_EQUAL_UINT8(1, input.scene);
@@ -127,16 +126,15 @@ void test_parse_input_channel_block() {
     const auto offset = IN_ParamBlockOffset + 2 * IN_ParamBlockSize;
     buffer[offset + IN_fDeviceAddress] = 5;
     buffer[offset + IN_fInstance] = 1;
-    buffer[offset + IN_fInputType] = 1;   // push button
-    buffer[offset + IN_fFunction] = 3;    // toggle + dimming
+    buffer[offset + IN_fInputType] = 1;  // push button
+    buffer[offset + IN_fFunction] = 3;   // toggle + dimming
     buffer[offset + IN_fScene] = 20;
     buffer[offset + IN_fThreshold] = 10;
     const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
     const auto& input = config.inputs[2];
     TEST_ASSERT_EQUAL_UINT8(5, input.device);
     TEST_ASSERT_EQUAL_UINT8(1, input.instance);
-    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton),
-                      static_cast<int>(input.type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton), static_cast<int>(input.type));
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::ToggleDim),
                       static_cast<int>(input.function));
     TEST_ASSERT_EQUAL_UINT8(20, input.scene);
@@ -158,8 +156,7 @@ void test_invalid_input_values_fall_back_to_defaults() {
     const auto& input = config.inputs[0];
     TEST_ASSERT_EQUAL_UINT8(0, input.device);
     TEST_ASSERT_EQUAL_UINT8(0, input.instance);
-    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
-                      static_cast<int>(input.type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused), static_cast<int>(input.type));
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::Toggle),
                       static_cast<int>(input.function));
     TEST_ASSERT_EQUAL_UINT8(1, input.scene);

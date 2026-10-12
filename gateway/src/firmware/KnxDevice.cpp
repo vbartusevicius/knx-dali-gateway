@@ -2,35 +2,30 @@
 
 #include <driver/gpio.h>
 #include <esp_log.h>
+#include <esp_system.h>
 #include <esp_task_wdt.h>
 #include <esp_timer.h>
 #include <led_strip.h>
 
+#include "device/StatusLeds.hpp"
 #include "firmware/Application.hpp"
 
 namespace gateway::firmware {
 namespace {
 
 constexpr const char* log_tag = "knx";
-constexpr std::uint32_t led_blink_interval_ms = 100;
 
 std::uint32_t now_ms() {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
 }
 
-// The LED driver handle lives at file scope; the strip is one pixel.
+// The LED driver handle lives at file scope; the DevKit strip is one pixel,
+// which shows what the product's KNX LED would.
 led_strip_handle_t prog_led_strip = nullptr;
 
-void prog_led_on() {
+void show(device::Rgb colour) {
     if (prog_led_strip) {
-        led_strip_set_pixel(prog_led_strip, 0, 255, 255, 255);
-        led_strip_refresh(prog_led_strip);
-    }
-}
-
-void prog_led_off() {
-    if (prog_led_strip) {
-        led_strip_clear(prog_led_strip);
+        led_strip_set_pixel(prog_led_strip, 0, colour.r, colour.g, colour.b);
         led_strip_refresh(prog_led_strip);
     }
 }
@@ -38,11 +33,13 @@ void prog_led_off() {
 }
 
 KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
-                     Queue<config::Configuration>& configuration,
-                     Queue<commissioning::Snapshot>& snapshots,
+                     Queue<config::Configuration>& configuration, Queue<commissioning::Snapshot>& snapshots,
                      Queue<commissioning::InputSnapshot>& input_snapshots) noexcept
-    : commands_(commands), statuses_(statuses), configuration_(configuration),
-      snapshots_(snapshots), input_snapshots_(input_snapshots),
+    : commands_(commands),
+      statuses_(statuses),
+      configuration_(configuration),
+      snapshots_(snapshots),
+      input_snapshots_(input_snapshots),
       hooks_{
           [](void* ctx, const control::Command& command) {
               return static_cast<KnxDevice*>(ctx)->commands_.try_push(command);
@@ -111,15 +108,21 @@ commissioning::InputSnapshot KnxDevice::drain_input_snapshots() {
 }
 
 void KnxDevice::handle_button(std::uint32_t now) {
-    // BOOT button is active low with the pull-up enabled.
-    const auto gesture = prog_button_.sample(gpio_get_level(board::prog_button) == 0, now);
-    switch (gesture) {
+    // DevKit: the BOOT button (active low) stands in for PRG/RST; FUNC is absent.
+    const device::Buttons pressed{gpio_get_level(board::prog_button) == 0, false};
+    switch (panel_.sample(pressed, now)) {
+    case device::Gesture::Reboot:
+        ESP_LOGW(log_tag, "PRG/RST tapped: reboot");
+        esp_restart();
     case device::Gesture::ToggleProgMode:
         knx_.toggleProgMode();
         break;
     case device::Gesture::FactoryReset:
-        ESP_LOGW(log_tag, "prog button held: factory reset");
+        ESP_LOGW(log_tag, "both buttons held: factory reset");
         factory_reset();
+    case device::Gesture::NextPage:
+    case device::Gesture::WifiSetup:
+        ESP_LOGI(log_tag, "FUNC gestures need the display and WiFi services");
         break;
     case device::Gesture::None:
         break;
@@ -127,21 +130,14 @@ void KnxDevice::handle_button(std::uint32_t now) {
 }
 
 void KnxDevice::update_led(std::uint32_t now) {
-    const auto pattern = prog_button_.led_pattern(knx_.progMode());
-    bool on;
-    if (pattern == device::LedPattern::FastBlink) {
-        if (static_cast<std::uint32_t>(now - last_blink_ms_) >= led_blink_interval_ms) {
-            last_blink_ms_ = now;
-            led_on_ = !led_on_;
-        }
-        on = led_on_;
-    } else {
-        on = pattern == device::LedPattern::On;
-        led_on_ = on;
-    }
-    if (on != led_written_) {
-        led_written_ = on;
-        on ? prog_led_on() : prog_led_off();
+    device::DeviceStatus status;
+    status.knx_prog_mode = knx_.progMode();
+    status.hint = panel_.hint();
+    const auto colour = device::led_colours(status, now)[device::knx_led];
+    if (!led_written_ || !(colour == shown_)) {
+        led_written_ = true;
+        shown_ = colour;
+        show(colour);
     }
 }
 

@@ -46,8 +46,8 @@ struct InputChannel {
     std::uint8_t instance = 0;  // instance number 0..31
     InputType type = InputType::Unused;
     InputFunction function = InputFunction::Toggle;
-    std::uint8_t scene = 1;     // KNX scene number 1..64
-    std::uint8_t threshold = 0; // illuminance send threshold %; 0 = every event
+    std::uint8_t scene = 1;      // KNX scene number 1..64
+    std::uint8_t threshold = 0;  // illuminance send threshold %; 0 = every event
 };
 
 // ETS parameter set: per-channel switch-on policy and DALI group membership

@@ -1,214 +1,248 @@
-# Single source of truth for the PCB pair and the 3D-printed DIN enclosure.
+# Single source of truth for the PCBs and the 3D-printed DIN enclosure.
 # Units: millimetres. Coordinate system (installed device, viewed from the front):
 #   x = width (left -> right), y = height (bottom -> top), z = depth (rail face = 0 -> front).
 # Generators (SKiDL/KiCad PCB scripts and the CadQuery enclosure) read this file;
-# the fit checker compares the generated PCBs against the generated enclosure.
+# the fit tests compare the generated PCBs against the generated enclosure.
 
 product:
   name: KNX DALI Gateway
   revision: A
   status: draft-unvalidated
 
-din_envelope:            # DIN 43880 size-1 modular device, 2 modules wide
-  modules: 2
-  width_max: 35.5        # 2 x 17.5 mm pitch + 0.5 mm tolerance
-  height_max: 90.0       # overall height (h1)
-  depth_max: 55.0        # rail face to front face (t2, size 1)
-  front_protrusion:
-    height_max: 45.0     # part that passes through the distribution-board cover cutout (h3)
-    depth_start: 44.0    # z where the protrusion starts (cover plane)
-  rail: TS35             # EN 60715 35 x 7.5 mm top-hat rail
-  rail_center_y: 45.0    # rail centred vertically on the device
+active_variant: poc        # 3 DIN, 2 boards, 2-layer POC (see variants below)
+
+# Envelope per user measurement (authoritative — see hardware/docs/din-envelope.svg
+# and hardware/docs/variants.md). Per module: 18 mm wide. Hidden part under
+# the distribution-board cover: 81 H x 44 D (rail already excluded). Front
+# protrusion: 45 H x 17 D, centred -> 18 mm shoulders above and below.
+# Shoulders are NOT only for terminals: terminals take ~one module width,
+# the rest is normal component space.
+din_envelope:
+  module_width: 18.0
+  module_pitch: 18.0       # 3 modules = 54 mm total width
+  modules: 3
+  hidden_part: { height: 81.0, depth: 44.0 }   # rail face excluded
+  front_protrusion: { height: 45.0, depth: 17.0, depth_start: 44.0 }
+  shoulder_height: 18.0    # (81 - 45) / 2
+  max_board_width_inside: 49.5    # 3 x 18 - 2 x 1.6 wall - 2 x 0.5 clearance
+  max_board_height_inside: 76.5    # 81 - 2 x 1.6 - 2 x 0.5
+  front_board_max: { width: 49.5, height: 40.5, depth: 15.0 }
+  rail: TS35
 
 enclosure:
-  material: PETG-or-ASA  # printed prototype; not an installation-rated material until reviewed
+  material: PETG-or-ASA  # printed prototype; not installation-rated until reviewed
   wall: 1.6
   min_clearance_to_pcb: 0.5
-  screw_terminal_access: front   # screwdriver from the front face of the shoulders
-  wire_entry: top-and-bottom     # wires enter from the shoulder ends
-  parts: [base, cover, light_pipes, din_clip]
+  shoulders: 1.3 mm above the tallest connector (mechanical/scripts/enclosure_features.py)
+  connector_faces: flush with the top (terminal wire entries) and bottom (KNX plug) faces
+  board_retention: legs-and-pegs # main board on base legs, clamped by cover pegs; UI board on cover standoffs + ledges
+  fasteners: "2 x thread-forming screws 2.5 x 10 (PT-style, pan head) through the top and bottom walls into screw tabs on the cover"
+  rail_mount: "TS35 channel (35.4 between hooks, EN 60715) in a 5 mm deep back; fixed top hook, sprung sliding latch whose tab sticks out below the case: screwdriver into its hole from the front, pull down"
+  screw_terminal_access: front   # screwdriver holes in the top shoulder
+  wire_entry: top                # terminal wire-entry faces sit in openings in the top wall
+  parts: [base, cover]
 
-boards:
-  lower:                 # terminals, KNX transceiver, power path, DALI interface + supply
-    role: power-terminal
-    thickness: 1.6
-    plane: parallel-to-front
-    z_bottom: 6.0        # PCB underside above the rail face
-    outline: { width: 31.5, height: 86.0 }   # inner width 35.5 - 2*1.6 - clearance
-    keep_out_isolation_slot: true            # slot between DALI domain and SELV domains
-  upper:                 # ESP32 module, USB-C (service, inside the case), buttons, LEDs, display header
-    role: logic-ui
-    thickness: 1.6
-    plane: parallel-to-front
-    z_bottom: 45.5       # inside the front protrusion so buttons/LEDs reach the front face
-    outline: { width: 31.5, height: 43.0 }   # fits inside the 45 mm front protrusion
-  interconnect:
-    type: cable          # ~38 mm vertical gap: short crimped/FFC cable rather than a stacking header
-    pins: 10             # 3V3, GND x3, UART TX/RX (KNX), DALI TX/RX, spare x2
-    connector_pitch: 1.0
+variants:
+  poc:
+    description: "3 DIN, 2 boards, 2 layers — proof of concept"
+    modules: 3
+    boards: [main, ui]
+  din2_modular:
+    status: planned
+    description: "2 DIN, >2 boards, 2 layers — carrier + KNX/DALI sub-boards"
+  golden:
+    status: planned
+    description: "2 DIN, 2 boards, 4 layers — production target"
 
-terminals:               # positions are the intended screw/plug axes on the lower board
+boards:                  # POC: 2-layer, 1.6 mm
+  main:                  # parallel to the rail; front side faces the cover
+    plane: parallel-to-front
+    thickness: 1.6
+    z: 21.2               # board top; storage capacitor (16 mm) 2 mm above the floor; mated KNX plug top 32.7, 1.3 mm below the shoulder face
+    max_outline: { width: 49.5, height: 76.5 }
+    domains:
+      SELV-KNX: bottom   # KNX terminal, NCN5130, storage, 3V3 buck, XIAO, UI connector
+      DALI: top          # DALI terminal, bridge, TX sink, RX threshold, supply output
+      SELV-AUX: top-right corner next to DALI   # aux terminal, protection, DC-DC primary
+    isolation:
+      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
+      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [isolated DC-DC] }
+      - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, note: "both SELV; kept separate so the KNX bus stays floating" }
+    side_assignment:
+      front: "terminals (screws face front), XIAO on female headers, optos, small parts"
+      rear: "tall parts toward rail — storage cap, isolated DC-DC, pass transistor with copper pour"
+  ui:                    # in the protrusion, parallel to the front at z~57
+    plane: parallel-to-front
+    thickness: 1.6
+    z: 57.0
+    max_outline: { width: 49.5, height: 40.5 }
+  interconnects:
+    - { from: main, to: ui, signals: [+3V3, GND, GND, BTN_LADDER, GND, LED_DATA, +5V, LED_DALI, I2C_SDA, I2C_SCL], domain: SELV-KNX, type: cable, pins: 10, connector_pitch: 1.0 }
+
+terminals:
   dali:
-    shoulder: top        # DALI (treated as non-SELV) alone on the top shoulder
+    board: main
+    shoulder: top        # DALI (treated as non-SELV)
     poles: 2
     pitch: 5.0
     type: screw
     labels: [DA, DA]
-  knx:
-    shoulder: bottom
-    type: knx-bus-terminal-pins   # red/black plug-in KNX bus terminal on 1.0 mm pins
-    labels: [KNX+, KNX-]
   aux_dc:
-    shoulder: bottom
+    board: main
+    shoulder: top        # next to DALI, separated by the AUX/DALI isolation band
     poles: 2
     pitch: 5.0
     type: screw
     labels: [AUX+, AUX-]  # 24 V or 30 V; powers only the internal DALI supply
   dali_supply_switch:
+    board: main
     shoulder: top
-    type: slide-switch    # disables the internal DALI supply when an external one is used
+    type: jumpers         # JP1, two jumper caps enable the internal DALI supply; remove both for an external one
+  knx:
+    board: main
+    shoulder: bottom
+    type: knx-bus-terminal-pins   # red/black plug-in KNX bus terminal on 1.0 mm pins
+    labels: [KNX+, KNX-]
 
-front_ui:                # on the 45 x 35.5 front face, mounted on the upper board
+front_ui:                # on the 45 mm x width front face, mounted on the UI board
+  # Stack-up computed by mechanical/scripts/ui_stackup.py (test_ui_stackup checks these values):
+  #   front outer z = 61.0, wall 1.6
+  #   board z = 53.8, board top = 55.4
+  #   OLED glass top = 60.9 (flush, panel through the window, module board in a 0.4 mm pocket)
+  #   PRG/RST and FUNC caps at 62.4 (1.4 mm proud, finger-operated), actuator 7.0 mm
+  #   SMD RGB LEDs on the board shine through a 0.6 mm skin of the front wall, one baffle tube each
+  board_z: 53.8
+  board_top_z: 55.4
   buttons:
-    - { id: prog, label: PROG, actuator: tactile-6x6 }
-    - { id: reset, label: RESET, actuator: tactile-recessed }   # reboot, configuration kept
-  leds:
-    - { id: prog, colour: red, light_pipe: true }
-    - { id: knx, colour: green, light_pipe: true }
-    - { id: dali, colour: yellow, light_pipe: true }
+    - { id: prg_rst, label: PRG/RST, actuator: tactile-PTS645SL70, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4,
+        tap: reboot (ESP32 + KNX stack, configuration kept), hold_5s: KNX programming mode on/off }
+    - { id: func, label: FUNC, actuator: tactile-PTS645SL70, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4,
+        tap: next display page / wake the display, hold_5s: WiFi setup }
+    - { id: both, hold_10s: factory reset (KNX, lighting and WiFi configuration) }
+  leds:   # SK6805-EC15 chain on LED_DATA; always lit, colours in gateway/src/device/StatusLeds.cpp
+    - { id: status, ref: D1, shows: "green healthy, blue blink WiFi connected, amber degraded, red fault, blue blinking WiFi setup" }
+    - { id: knx, ref: D2, shows: "dim green idle, green traffic, red programming mode, red blinking no bus" }
+    - { id: dali, ref: D3, shows: "dim green idle, green our frames, cyan other masters, amber gear fault, red no power, red blinking short, blue commissioning" }
   display:
-    type: optional-oled-0.96in-header   # connector and window reserved, not populated in rev A
+    type: oled-0.96in-ssd1306-i2c   # populated; module pins solder into the UI board; glass flush with the front
+    geometry: hardware/circuits/variants/poc/layout_ui.yaml oled_module
   labels_area: true
 
-checks:                  # tolerances used by the automatic fit checker
+mcu:
+  module: "Seeed XIAO ESP32C6"
+  package: "21 x 17.8 mm, 14 edge pads (2x7, 2.54 mm pitch, 15.24 mm row spacing)"
+  mounting: "2 x 7 female 2.54 mm headers, raised ~8.5 mm; passives allowed underneath (height <= 6 mm)"
+  power_feed: "5V pin via TI LM66100 ideal diode from KNX 5V buck; XIAO onboard regulator outputs 3V3 for our logic (optos, LEDs, OLED, pull-ups)"
+
+checks:
   hole_to_actuator_max_offset: 0.3
-  light_pipe_to_led_max_offset: 0.3
+  led_to_window_max_offset: 0.3
   terminal_axis_to_access_hole_max_offset: 0.4
   component_to_wall_min_gap: 0.5
   component_to_cover_min_gap: 0.5
+  component_air_gap: 2.0    # air between parts and the case (connectors that reach openings excepted)
+  board_to_board_component_gap: 1.0
+  dali_to_selv_creepage_min: 6.0
+
+rejected_variants:
+  din2_three_boards:     # 2 modules: main (vertical) + power (vertical) + ui (front)
+    result: rejected after the DALI-area shrink, SMD optocouplers and one routing run
+    evidence:
+      main_board: 36 x 86 mm, 2-layer, NCN5130 QFN-40 0.5 mm + ESP32 module + USB-C + 6 mm isolation band
+      courtyard_utilisation: { SELV_back: 0.66, SELV_front: 0.49, isolation_band: 0.96, DALI_back: 0.73 }
+      freerouting: 30 unconnected pads, 146 DRC violations (2026-10-11 10:31 run)
 
 # --- BEGIN GENERATED (hardware/scripts/gen_circuits.py) ---
 derived:
   mcu_pins:
-    knx_uart_rx:
-      pin: IO20
-      net: KNX_TXD
-      note: NCN5130 SDO/TXD -> MCU RX
+    led_data:
+      pin: D0/GPIO0
+      net: LED_DATA
+      note: RMT, SK6805 chain via 5 V buffer on UI
+    button_ladder:
+      pin: D2/GPIO2
+      net: BTN_LADDER
+      note: 'ADC ladder: PRG/RST + FUNC on UI board'
+    led_dali:
+      pin: D3/GPIO21
+      net: LED_DALI
+      note: spare, unused on the UI board
+    i2c_sda:
+      pin: D4/GPIO22
+      net: I2C_SDA
+      note: OLED on UI board
+    i2c_scl:
+      pin: D5/GPIO23
+      net: I2C_SCL
+      note: OLED on UI board
     knx_uart_tx:
-      pin: IO21
+      pin: D6/GPIO16
       net: KNX_RXD
       note: MCU TX -> NCN5130 SDI/RXD
-    dali_tx:
-      pin: IO18
-      net: DALI_TX
-      note: RMT TX channel -> TX optocoupler
+    knx_uart_rx:
+      pin: D7/GPIO17
+      net: KNX_TXD
+      note: NCN5130 SDO/TXD -> MCU RX
     dali_rx:
-      pin: IO19
+      pin: D8/GPIO19
       net: DALI_RX
-      note: RX optocoupler -> RMT RX channel
-    button_prog:
-      pin: IO9
-      net: PROG_BTN
-      note: BOOT strapping pin; also enters download mode
-    led_prog:
-      pin: IO10
-      net: LED_PROG
-      note: red, light pipe
-    led_knx:
-      pin: IO11
-      net: LED_KNX
-      note: green, light pipe
-    led_dali:
-      pin: IO2
-      net: LED_DALI
-      note: yellow, light pipe
-    i2c_sda:
-      pin: IO6
-      net: I2C_SDA
-      note: optional OLED
-    i2c_scl:
-      pin: IO7
-      net: I2C_SCL
-      note: optional OLED
-    usb_dm:
-      pin: IO12
-      net: USB_DM
-      note: native USB D-
-    usb_dp:
-      pin: IO13
-      net: USB_DP
-      note: native USB D+
+      note: RX optocoupler -> RMT RX
     ncn_saveb:
-      pin: IO8
-      net: INT_SPARE1
-      note: spare interconnect pin 9 -> NCN5130 SAVEB
-    ncn_resetb:
-      pin: IO1
-      net: INT_SPARE2
-      note: spare interconnect pin 10 -> NCN5130 RESETB
+      pin: D9/GPIO20
+      net: NCN_SAVEB
+      note: NCN5130 SAVEB (open-collector)
+    dali_tx:
+      pin: D10/GPIO18
+      net: DALI_TX
+      note: RMT TX -> TX optocoupler
   net_classes:
-    lower:
-      SELV:
+    main:
+      SELV-KNX:
       - GND
-      - +3V3_TRX
-      - +3V3_MCU
-      - +12V_STORE
-      - KNX_P
-      - KNX_P_PROT
+      - +3V3
+      - +5V_XIAO
+      - BTN_LADDER
+      - LED_DATA
+      - LED_DALI
+      - I2C_SDA
+      - I2C_SCL
       - KNX_TXD
       - KNX_RXD
       - DALI_TX
       - DALI_RX
-      - INT_SPARE1
-      - INT_SPARE2
-      - VFILT
-      - V20V
-      - CCP
-      - CCP_B
-      - CAV
-      - CEQ1
-      - CEQ2
-      - VSW1
-      - VSW2
-      - VDD2MV
+      - NCN_SAVEB
       - Net-*
+      KNX-Power:
+      - KNX_P
+      - KNX_P_PROT
+      - VFILT
+      SELV-AUX:
+      - GNDA
+      - AUX_P
+      - AUX_FUSED
       DALI:
       - GNDD
       - DA1
       - DA2
       - DA_P
-      - DALI_ISO24V
-      - DALI_20V
-      - DALI_SUPPLY_SW
       - DALI_GATE
+      - DALI_GATE_SW
       - DALI_SENSE
-      - DALI_FB6
-      AUX:
-      - GNDA
-      - AUX_P
-      - AUX_FUSED
-    upper:
-      SELV:
+      - DALI_BOOT
+      - DALI_ISO15V
+      - DALI_SUPPLY_SW
+      - RX_LIM_IN
+    ui:
+      SELV-KNX:
       - GND
       - +3V3
-      - +3V3_MCU
-      - +3V3_USB
-      - +5V_USB
-      - EN
-      - KNX_TXD
-      - KNX_RXD
-      - DALI_TX
-      - DALI_RX
-      - INT_SPARE1
-      - INT_SPARE2
-      - PROG_BTN
-      - LED_PROG
-      - LED_KNX
+      - +5V
+      - BTN_LADDER
+      - LED_DATA
       - LED_DALI
+      - LED_CHAIN1
+      - LED_CHAIN2
       - I2C_SDA
       - I2C_SCL
-      - USB_DP
-      - USB_DM
-      - USB_DP_MCU
-      - USB_DM_MCU
+      - Net-*
 # --- END GENERATED ---

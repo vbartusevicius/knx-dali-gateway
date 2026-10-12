@@ -1,5 +1,8 @@
 #include "dali/ArcLevel.hpp"
 
+#include <cstdint>
+#include <optional>
+
 namespace gateway::dali {
 
 ArcLevel::ArcLevel(std::uint8_t value) noexcept : value_(value) {}

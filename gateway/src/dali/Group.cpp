@@ -1,5 +1,8 @@
 #include "dali/Group.hpp"
 
+#include <cstdint>
+#include <optional>
+
 namespace gateway::dali {
 
 Group::Group(std::uint8_t value) noexcept : value_(value) {}

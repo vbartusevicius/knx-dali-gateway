@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="500" viewBox="0 0 760 500" font-family="sans-serif" font-size="12">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="#333"/>
+    </marker>
+    <pattern id="h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#c9a227" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="760" height="500" fill="#fff"/>
+  <text x="20" y="24" font-size="15" font-weight="bold">Side view (looking along the rail), 1 mm = 4 px</text>
+
+  <rect x="40" y="131" width="20" height="140" fill="#999"/>
+  <text x="4" y="390">DIN rail (grey, behind, excluded)</text>
+
+  <rect x="60" y="40" width="176" height="324" fill="#dce8f5" stroke="#246" stroke-width="2"/>
+  <text x="92" y="200">hidden part</text>
+  <text x="92" y="216">under the cover</text>
+
+  <rect x="60" y="40" width="176" height="72" fill="url(#h)" opacity="0.55"/>
+  <rect x="60" y="292" width="176" height="72" fill="url(#h)" opacity="0.55"/>
+  <text x="70" y="80" font-weight="bold">top shoulder</text>
+  <text x="70" y="96">DALI + AUX terminals</text>
+  <text x="70" y="332" font-weight="bold">bottom shoulder</text>
+  <text x="70" y="348">KNX terminal</text>
+
+  <rect x="236" y="112" width="68" height="180" fill="#f5dcdc" stroke="#622" stroke-width="2"/>
+  <text x="244" y="196">visible</text>
+  <text x="244" y="212">front</text>
+
+  <line x1="236" y1="20" x2="236" y2="420" stroke="#444" stroke-dasharray="6 4"/>
+  <text x="140" y="440" fill="#444">distribution-board cover plane</text>
+
+  <line x1="60" y1="460" x2="236" y2="460" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="138" y="476">44</text>
+  <line x1="236" y1="460" x2="304" y2="460" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="262" y="476">17</text>
+
+  <line x1="360" y1="40" x2="360" y2="364" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="366" y="206">81</text>
+  <line x1="326" y1="112" x2="326" y2="292" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="332" y="206">45</text>
+  <line x1="250" y1="40" x2="250" y2="112" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="256" y="80">18</text>
+  <line x1="250" y1="292" x2="250" y2="364" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="256" y="332">18</text>
+
+  <text x="430" y="24" font-size="15" font-weight="bold">Front view (2 modules), 1 mm = 4 px</text>
+  <rect x="470" y="40" width="144" height="324" fill="#dce8f5" stroke="#246" stroke-width="2"/>
+  <rect x="470" y="40" width="144" height="72" fill="url(#h)" opacity="0.55"/>
+  <rect x="470" y="292" width="144" height="72" fill="url(#h)" opacity="0.55"/>
+  <rect x="470" y="112" width="144" height="180" fill="#f5dcdc" stroke="#622" stroke-width="2"/>
+  <line x1="542" y1="40" x2="542" y2="364" stroke="#246" stroke-dasharray="4 4"/>
+  <text x="488" y="196">front face:</text>
+  <text x="488" y="212">LEDs, buttons, LCD</text>
+  <text x="478" y="80">shoulder: screws</text>
+  <text x="478" y="332">shoulder: screws</text>
+  <line x1="470" y1="390" x2="542" y2="390" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="498" y="406">18</text>
+  <line x1="542" y1="390" x2="614" y2="390" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="570" y="406">18</text>
+  <line x1="470" y1="420" x2="614" y2="420" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="522" y="436">36 (2 modules)</text>
+  <line x1="640" y1="40" x2="640" y2="364" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="646" y="206">81</text>
+  <line x1="626" y1="112" x2="626" y2="292" stroke="#333" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="600" y="254" transform="rotate(-90 600 254)">45</text>
+
+  <text x="430" y="470" fill="#622">Assumption to confirm: the 45 mm front part is centred,</text>
+  <text x="430" y="486" fill="#622">leaving (81 - 45) / 2 = 18 mm above and below it.</text>
+</svg>

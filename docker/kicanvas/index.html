@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KNX-DALI Gateway — KiCanvas viewer</title>
+<style>
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #1d2125; color: #ddd; }
+  #header { padding: 8px 16px; background: #2d343c; }
+  #header h1 { font-size: 16px; margin: 0; }
+  #boards { display: flex; gap: 8px; padding: 8px 16px; }
+  #boards button { background: #3a4048; color: #ddd; border: 1px solid #555;
+    padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  #boards button.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+  #viewer { width: 100%; height: calc(100vh - 80px); }
+  kicanvas-embed { width: 100%; height: 100%; display: block; }
+</style>
+<script type="module" src="/kicanvas.js"></script>
+</head>
+<body>
+<div id="header"><h1>KNX-DALI Gateway — PCB viewer (KiCanvas)</h1></div>
+<div id="boards">
+  <button data-board="main" class="active">Main board</button>
+  <button data-board="ui">UI board</button>
+</div>
+<div id="viewer">
+  <kicanvas-embed id="kcv" controls="full">
+    <kicanvas-source src="/pcb/main/main.kicad_pcb"></kicanvas-source>
+  </kicanvas-embed>
+</div>
+<script type="module">
+  const embed = document.getElementById('kcv');
+  const buttons = document.querySelectorAll('#boards button');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const board = btn.dataset.board;
+      embed.innerHTML = '';
+      const src = document.createElement('kicanvas-source');
+      src.src = `/pcb/${board}/${board}.kicad_pcb`;
+      embed.appendChild(src);
+    });
+  });
+</script>
+</body>
+</html>

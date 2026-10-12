@@ -143,8 +143,6 @@ async def _serve(
             if response is not None:
                 writer.write(json.dumps(response).encode() + b"\n")
                 await writer.drain()
-    except asyncio.CancelledError:
-        raise
     finally:
         _gateway_writers.discard(writer)
         writer.close()

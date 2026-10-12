@@ -19,18 +19,17 @@ std::optional<control::Command> command_for_relative_dimming(std::uint16_t objec
 std::optional<control::Command> command_for_scene(std::uint16_t object, std::uint8_t raw) noexcept;
 // DPT 7.600 (2 bytes Kelvin), 232.600 (3 bytes RGB), 251.600 (6 bytes RGBW),
 // 242.600 (6 bytes xyY); layouts in ColourDatapoints.
-std::optional<control::Command> command_for_colour_temperature(std::uint16_t object,
-                                                             const std::uint8_t* data,
-                                                             std::size_t length) noexcept;
+std::optional<control::Command> command_for_colour_temperature(std::uint16_t object, const std::uint8_t* data,
+                                                               std::size_t length) noexcept;
 // Same DPT 3.007 decode as brightness dimming, routed to the colour dimmer.
-std::optional<control::Command> command_for_relative_colour_temperature(
-    std::uint16_t object, std::uint8_t raw) noexcept;
+std::optional<control::Command> command_for_relative_colour_temperature(std::uint16_t object,
+                                                                        std::uint8_t raw) noexcept;
 std::optional<control::Command> command_for_rgb(std::uint16_t object, const std::uint8_t* data,
-                                              std::size_t length) noexcept;
+                                                std::size_t length) noexcept;
 std::optional<control::Command> command_for_rgbw(std::uint16_t object, const std::uint8_t* data,
-                                               std::size_t length) noexcept;
+                                                 std::size_t length) noexcept;
 std::optional<control::Command> command_for_xyy(std::uint16_t object, const std::uint8_t* data,
-                                              std::size_t length) noexcept;
+                                                std::size_t length) noexcept;
 
 struct StatusObjects {
     std::uint16_t switch_object;

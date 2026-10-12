@@ -1,0 +1,136 @@
+# One compose file for every containerized tool in the repo. Services are
+# grouped by profile so plain `docker compose up` starts nothing:
+#   docker compose --profile knxprod   run --rm producer ...
+#   docker compose --profile lab       run --rm tests
+#   docker compose --profile hardware  run --rm eda ...   (also routes: layout.py <board> route)
+#   docker compose --profile viewers   up
+#   docker compose --profile lint      run --rm lint check .
+#   docker compose --profile lint      run --rm cpp-lint gateway/scripts/check_cpp.sh
+services:
+
+  # ---- ETS product generation ---------------------------------------------
+  producer:
+    profiles: ["knxprod"]
+    build:
+      context: .
+      dockerfile: docker/knxprod/Dockerfile
+    working_dir: /work/knxprod
+    volumes: [".:/work"]
+
+  # ---- Docker integration lab ---------------------------------------------
+  dali-sim:
+    profiles: ["lab"]
+    build:
+      context: .
+      dockerfile: docker/lab-python/Dockerfile
+    command: ["python", "-m", "dali_sim"]
+    environment:
+      SIM_PORT: "5555"
+      CONTROL_PORT: "5556"
+      # 4 gear, two in DALI group 0: Tc DT8, RGBWAF DT8, xy DT8, non-DT8.
+      SIM_GEAR: '[{"short":0,"groups":[0],"colour":"tc"},{"short":1,"groups":[0],"colour":"rgbwaf"},{"short":2,"colour":"xy"},{"short":3}]'
+      # Control devices (must match scenario.INITIAL_DEVICES): 4 push-button
+      # instances, 2 occupancy instances, 1 light instance (resolution 5).
+      SIM_DEVICES: '[{"short":0,"instances":[1,1,1,1]},{"short":1,"instances":[3,3]},{"short":2,"instances":[4],"resolutions":[5]}]'
+    networks: [lab]
+
+  gateway-lab:
+    profiles: ["lab"]
+    build:
+      context: .
+      dockerfile: docker/lab-gateway/Dockerfile
+    environment:
+      DALI_SIM_HOST: dali-sim
+      DALI_SIM_PORT: "5555"
+      KNX_FLASH_FILE: /tmp/lab-flash.bin
+      DALI_LEVELS_FILE: /tmp/lab-levels.txt
+    depends_on: [dali-sim]
+    networks: [lab]
+
+  tests:
+    profiles: ["lab"]
+    build:
+      context: .
+      dockerfile: docker/lab-python/Dockerfile
+    working_dir: /app
+    command: ["python", "-m", "pytest", "-v", "-s", "tests/"]
+    environment:
+      DALI_SIM_HOST: dali-sim
+      DALI_SIM_CONTROL_PORT: "5556"
+    depends_on: [dali-sim, gateway-lab]
+    networks: [lab]
+
+  # ---- Hardware EDA pipeline ----------------------------------------------
+  eda:
+    profiles: ["hardware", "mcp"]
+    image: knx-dali-gateway-eda
+    build:
+      context: .
+      dockerfile: docker/eda/Dockerfile
+    volumes: [".:/work"]
+    working_dir: /work
+
+  cad:
+    profiles: ["hardware"]
+    build:
+      context: .
+      dockerfile: docker/cad/Dockerfile
+    volumes: [".:/work"]
+    working_dir: /work
+
+  # KiCad MCP servers for the agent (stdio; launched by .devin/mcp_config.local.json)
+  mcp:
+    profiles: ["mcp"]
+    image: knx-dali-gateway-mcp
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/mcp/Dockerfile
+      additional_contexts:
+        eda: service:eda
+    volumes: [".:/work"]
+    working_dir: /work
+
+  # ---- Python lint ---------------------------------------------------------
+  lint:
+    profiles: ["lint"]
+    build:
+      context: .
+      dockerfile: docker/lint/Dockerfile
+    volumes: [".:/work"]
+    working_dir: /work
+
+  # ---- C++ style (clang-format + clang-tidy over gateway/) -------------------
+  cpp-lint:
+    profiles: ["lint"]
+    build:
+      context: .
+      dockerfile: docker/cpp-lint/Dockerfile
+    volumes: [".:/work", "platformio-cache:/root/.platformio"]
+    working_dir: /work
+
+  # ---- Viewers (opt-in, left running while needed) -------------------------
+  stl-viewer:
+    profiles: ["viewers"]
+    build:
+      context: .
+      dockerfile: docker/stl-viewer/Dockerfile
+    volumes:
+      - ./mechanical/build:/models/build:ro
+    ports: ["8081:80"]
+
+  kicanvas:
+    profiles: ["viewers"]
+    build:
+      context: .
+      dockerfile: docker/kicanvas/Dockerfile
+    volumes:
+      - ./hardware/layout/poc:/pcb:ro
+    ports: ["8082:80"]
+
+networks:
+  lab:
+    driver: bridge
+
+volumes:
+  platformio-cache:

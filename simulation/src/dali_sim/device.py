@@ -11,6 +11,7 @@ that honours quiescent, enable and filter state like a real device.
 from __future__ import annotations
 
 import random
+from typing import ClassVar
 
 import dali.device.general as dev_cmd
 import dali.device.light as light_cmd
@@ -66,7 +67,7 @@ class SimDevice(_FakeDevice):
     # -- event emission ------------------------------------------------------
 
     # Event name -> (event constructor args builder, filter bit mask).
-    _BUTTON_EVENTS = {
+    _BUTTON_EVENTS: ClassVar = {
         "released": (pb_cmd.ButtonReleased, 0x01),
         "pressed": (pb_cmd.ButtonPressed, 0x02),
         "short_press": (pb_cmd.ShortPress, 0x04),
@@ -77,7 +78,7 @@ class SimDevice(_FakeDevice):
         "button_free": (pb_cmd.ButtonFree, 0x80),
         "button_stuck": (pb_cmd.ButtonStuck, 0x80),
     }
-    _OCCUPANCY_EVENTS = {
+    _OCCUPANCY_EVENTS: ClassVar = {
         "occupied": (0b0010, 0x01),
         "vacant": (0b0000, 0x02),
         "movement": (0b0001, 0x08),

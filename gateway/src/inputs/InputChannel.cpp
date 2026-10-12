@@ -1,5 +1,8 @@
 #include "inputs/InputChannel.hpp"
 
+#include <cstdint>
+#include <optional>
+
 namespace gateway::inputs {
 
 InputChannel::InputChannel(std::uint8_t value) noexcept : value_(value) {}

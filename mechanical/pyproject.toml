@@ -1,0 +1,9 @@
+# Tool configuration only: the enclosure scripts run inside the `cad` image
+# (docker/cad), which pins the Python dependencies; test_fit and
+# test_ui_stackup also run in `eda`.
+[tool.ruff]
+extend-exclude = ["build"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

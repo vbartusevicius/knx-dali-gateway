@@ -1,8 +1,14 @@
 #include "espidf/NvsLevelStore.hpp"
 
+#include <cstdint>
 #include <cstdio>
 #include <map>
+#include <optional>
 #include <string>
+
+#include "dali/ArcLevel.hpp"
+#include "nvs.h"
+#include "storage/LevelStore.hpp"
 
 namespace gateway::espidf {
 namespace {
@@ -14,19 +20,19 @@ std::string slot_key(storage::Slot slot) {
     const char* pattern = "b";
     int index = -1;
     switch (slot.kind) {
-        case storage::SlotKind::Target:
-            pattern = "arc_%02u";
-            index = slot.address.as_short() ? slot.address.as_short()->value() : -1;
-            break;
-        case storage::SlotKind::LastActive:
-            if (slot.address.as_short()) {
-                pattern = "a%02u";
-                index = slot.address.as_short()->value();
-            } else if (slot.address.as_group()) {
-                pattern = "g%02u";
-                index = slot.address.as_group()->value();
-            }
-            break;
+    case storage::SlotKind::Target:
+        pattern = "arc_%02u";
+        index = slot.address.as_short() ? slot.address.as_short()->value() : -1;
+        break;
+    case storage::SlotKind::LastActive:
+        if (slot.address.as_short()) {
+            pattern = "a%02u";
+            index = slot.address.as_short()->value();
+        } else if (slot.address.as_group()) {
+            pattern = "g%02u";
+            index = slot.address.as_group()->value();
+        }
+        break;
     }
     if (index < 0) {
         if (std::string(pattern).find('%') != std::string::npos) {

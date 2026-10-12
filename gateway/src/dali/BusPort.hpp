@@ -11,10 +11,10 @@ namespace gateway::dali {
 // One queued transaction on the bus layer.
 struct BusRequest {
     std::uint32_t value;
-    std::uint8_t bits;               // 8/16/24
+    std::uint8_t bits;  // 8/16/24
     bool expect_reply;
     bus::Priority priority;
-    std::uint32_t repeat_gap_us;     // >0: resend once after this spacing
+    std::uint32_t repeat_gap_us;  // >0: resend once after this spacing
 };
 
 // Synchronous port to the physical DALI bus: transact blocks until the

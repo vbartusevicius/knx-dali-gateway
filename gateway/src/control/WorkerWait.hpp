@@ -16,10 +16,8 @@ inline std::uint32_t ms_until(std::uint32_t deadline_ms, std::uint32_t now_ms) n
 // the dimmer's next step deadline and the next background fault poll, capped
 // at max_wait_ms so the loop wakes to feed the watchdog (firmware) or stay
 // responsive (lab).
-inline std::uint32_t worker_wait_ms(std::uint32_t now_ms,
-                                    std::optional<std::uint32_t> dim_deadline_ms,
-                                    std::uint32_t next_poll_ms,
-                                    std::uint32_t max_wait_ms) noexcept {
+inline std::uint32_t worker_wait_ms(std::uint32_t now_ms, std::optional<std::uint32_t> dim_deadline_ms,
+                                    std::uint32_t next_poll_ms, std::uint32_t max_wait_ms) noexcept {
     auto wait = max_wait_ms;
     if (dim_deadline_ms) {
         wait = std::min(wait, ms_until(*dim_deadline_ms, now_ms));

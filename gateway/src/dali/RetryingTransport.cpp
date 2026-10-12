@@ -1,10 +1,20 @@
 #include "dali/RetryingTransport.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/Address.hpp"
+#include "dali/ArcLevel.hpp"
+#include "dali/Frame.hpp"
+#include "dali/Group.hpp"
+#include "dali/Scene.hpp"
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
+
 namespace gateway::dali {
 
 bool RetryingTransport::retryable_read(TransportStatus status) noexcept {
-    return status == TransportStatus::Timeout ||
-           status == TransportStatus::Collision ||
+    return status == TransportStatus::Timeout || status == TransportStatus::Collision ||
            status == TransportStatus::InvalidResponse;
 }
 

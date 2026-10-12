@@ -15,11 +15,11 @@ import time
 from dataclasses import dataclass
 
 import dali.command
-import dali.device.general  # noqa: F401  (registers device decoding)
-import dali.device.light  # noqa: F401
-import dali.device.occupancy  # noqa: F401
-import dali.device.pushbutton  # noqa: F401
-import dali.gear.general  # noqa: F401  (registers command decoding)
+import dali.device.general  # registers device decoding
+import dali.device.light
+import dali.device.occupancy
+import dali.device.pushbutton
+import dali.gear.general  # registers command decoding
 from dali.frame import BackwardFrame, BackwardFrameError, ForwardFrame
 
 from .device import SimDevice

@@ -1,9 +1,20 @@
 #include "dali/BusTransport.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/Address.hpp"
+#include "dali/ArcLevel.hpp"
+#include "dali/BusPort.hpp"
 #include "dali/Commands.hpp"
 #include "dali/Frame.hpp"
 #include "dali/GearAddressing.hpp"
+#include "dali/Group.hpp"
+#include "dali/Scene.hpp"
+#include "dali/ShortAddress.hpp"
 #include "dali/SpecialCommands.hpp"
+#include "dali/Transport.hpp"
+#include "dali/bus/LinkLayer.hpp"
 #include "dali/bus/Timing.hpp"
 #include "dali/devices/DeviceAddressing.hpp"
 
@@ -87,15 +98,14 @@ TransportStatus BusTransport::send(Address address, GearCommand command) {
     return send16(frame::command(address, gear_opcode(command)), false);
 }
 
-TransportStatus BusTransport::send_command(Address address, std::uint8_t opcode,
-                                           bool twice) {
+TransportStatus BusTransport::send_command(Address address, std::uint8_t opcode, bool twice) {
     return send16(frame::command(address, opcode), twice);
 }
 
 TransportStatus BusTransport::set_dtr(Dtr which, std::uint8_t value) {
     const auto opcode = which == Dtr::Dtr1   ? special::dtr1
                         : which == Dtr::Dtr2 ? special::dtr2
-                                           : special::dtr0;
+                                             : special::dtr0;
     return send16(frame::special(opcode, value), false);
 }
 
@@ -104,12 +114,10 @@ TransportStatus BusTransport::enable_device_type(std::uint8_t type) {
 }
 
 ByteRead BusTransport::query(ShortAddress address, std::uint8_t opcode) {
-    return query16(
-        frame::command(Address::short_address(address), opcode));
+    return query16(frame::command(Address::short_address(address), opcode));
 }
 
-TransportStatus BusTransport::send_special(std::uint8_t opcode, std::uint8_t data,
-                                           bool twice) {
+TransportStatus BusTransport::send_special(std::uint8_t opcode, std::uint8_t data, bool twice) {
     return send16(frame::special(opcode, data), twice);
 }
 
@@ -155,8 +163,7 @@ std::optional<BusEvent> BusTransport::poll_event() {
 }
 
 TransportStatus BusTransport::go_to_scene(Address address, Scene scene) {
-    return send16(frame::command(address, cmd::go_to_scene_0 + scene.value()),
-                  false);
+    return send16(frame::command(address, cmd::go_to_scene_0 + scene.value()), false);
 }
 
 LevelRead BusTransport::read_level(ShortAddress address) {
@@ -168,7 +175,7 @@ LevelRead BusTransport::read_level(ShortAddress address) {
     if (!level) {
         return {TransportStatus::InvalidResponse, std::nullopt};
     }
-    return {TransportStatus::Ok, *level};
+    return {TransportStatus::Ok, level};
 }
 
 GroupsRead BusTransport::read_groups(ShortAddress address) {
@@ -180,17 +187,13 @@ GroupsRead BusTransport::read_groups(ShortAddress address) {
     if (high.status != TransportStatus::Ok || !high.value) {
         return {high.status, std::nullopt};
     }
-    return {TransportStatus::Ok,
-            static_cast<std::uint16_t>((*high.value << 8) | *low.value)};
+    return {TransportStatus::Ok, static_cast<std::uint16_t>((*high.value << 8) | *low.value)};
 }
 
-TransportStatus BusTransport::set_group_membership(ShortAddress address,
-                                                   Group group, bool member) {
-    const auto opcode = static_cast<std::uint8_t>(
-        (member ? cmd::add_to_group_0 : cmd::remove_from_group_0) +
-        group.value());
-    return send16(
-        frame::command(Address::short_address(address), opcode), true);
+TransportStatus BusTransport::set_group_membership(ShortAddress address, Group group, bool member) {
+    const auto opcode =
+        static_cast<std::uint8_t>((member ? cmd::add_to_group_0 : cmd::remove_from_group_0) + group.value());
+    return send16(frame::command(Address::short_address(address), opcode), true);
 }
 
 GearPresence BusTransport::query_present(ShortAddress address) {
@@ -203,26 +206,22 @@ GearStatusRead BusTransport::query_status(ShortAddress address) {
     if (read.status != TransportStatus::Ok || !read.value) {
         return {read.status, std::nullopt};
     }
-    return {TransportStatus::Ok, *read.value};
+    return {TransportStatus::Ok, read.value};
 }
 
-CommissionResult BusTransport::commission(CommissionMode mode, ShortAddress start,
-                                          unsigned max_devices) {
+CommissionResult BusTransport::commission(CommissionMode mode, ShortAddress start, unsigned max_devices) {
     GearAddressing addressing{*this, delay_ms_};
     return addressing.commission(mode, start, max_devices);
 }
 
-CommissionResult BusTransport::commission_devices(CommissionMode mode,
-                                                  ShortAddress start,
+CommissionResult BusTransport::commission_devices(CommissionMode mode, ShortAddress start,
                                                   unsigned max_devices) {
     DeviceAddressing addressing{*this, delay_ms_};
     return addressing.commission(mode, start, max_devices);
 }
 
 TransportStatus BusTransport::identify(ShortAddress address) {
-    return send16(frame::command(Address::short_address(address),
-                                 cmd::recall_max_level),
-                  false);
+    return send16(frame::command(Address::short_address(address), cmd::recall_max_level), false);
 }
 
 TransportStatus BusTransport::clear_short_addresses() {
@@ -230,9 +229,7 @@ TransportStatus BusTransport::clear_short_addresses() {
     if (loaded != TransportStatus::Ok) {
         return loaded;
     }
-    return send16(frame::command(Address::broadcast(),
-                                 cmd::store_dtr_as_short_address),
-                  true);
+    return send16(frame::command(Address::broadcast(), cmd::store_dtr_as_short_address), true);
 }
 
 }

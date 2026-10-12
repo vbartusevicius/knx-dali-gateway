@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
 #include <unity.h>
 
@@ -35,25 +34,20 @@ void test_command_frames() {
     // {address, instance, opcode}; verified against python-dali's
     // dali/device/general.py frame layout.
     TEST_ASSERT_EQUAL_UINT32(0x0BFE1D,
-        device::command(device::address_short(5), device::instance_device, 0x1D));
-    TEST_ASSERT_EQUAL_UINT32(0xFFFE1D,
-        device::command(device::address_broadcast, device::instance_device,
-                        device::cmd::start_quiescent_mode));
-    TEST_ASSERT_EQUAL_UINT32(0xFFFE1E,
-        device::command(device::address_broadcast, device::instance_device,
-                        device::cmd::stop_quiescent_mode));
+                             device::command(device::address_short(5), device::instance_device, 0x1D));
+    TEST_ASSERT_EQUAL_UINT32(0xFFFE1D, device::command(device::address_broadcast, device::instance_device,
+                                                       device::cmd::start_quiescent_mode));
+    TEST_ASSERT_EQUAL_UINT32(0xFFFE1E, device::command(device::address_broadcast, device::instance_device,
+                                                       device::cmd::stop_quiescent_mode));
     // QUERY NUMBER OF INSTANCES to device short 3.
-    TEST_ASSERT_EQUAL_UINT32(0x07FE35,
-        device::command(device::address_short(3), device::instance_device,
-                        device::cmd::query_number_of_instances));
+    TEST_ASSERT_EQUAL_UINT32(0x07FE35, device::command(device::address_short(3), device::instance_device,
+                                                       device::cmd::query_number_of_instances));
     // SET EVENT SCHEME on instance 2 of device 3.
-    TEST_ASSERT_EQUAL_UINT32(0x070267,
-        device::command(device::address_short(3), device::instance_number(2),
-                        device::inst::set_event_scheme));
+    TEST_ASSERT_EQUAL_UINT32(0x070267, device::command(device::address_short(3), device::instance_number(2),
+                                                       device::inst::set_event_scheme));
     // QUERY INSTANCE TYPE on instance 0 of device 3.
-    TEST_ASSERT_EQUAL_UINT32(0x070080,
-        device::command(device::address_short(3), device::instance_number(0),
-                        device::inst::query_instance_type));
+    TEST_ASSERT_EQUAL_UINT32(0x070080, device::command(device::address_short(3), device::instance_number(0),
+                                                       device::inst::query_instance_type));
 }
 
 void test_special_command_frames() {
@@ -71,10 +65,8 @@ void test_special_command_frames() {
     TEST_ASSERT_EQUAL_UINT32(0xC10809, device::special::program_short_address(0x09));
     TEST_ASSERT_EQUAL_UINT32(0xC10909, device::special::verify_short_address(0x09));
     TEST_ASSERT_EQUAL_UINT32(0xC10A00, device::special::query_short_address());
-    TEST_ASSERT_EQUAL_UINT32(0xC12042,
-                             device::special::write_memory_location(0x42));
-    TEST_ASSERT_EQUAL_UINT32(0xC12142,
-                             device::special::write_memory_location_no_reply(0x42));
+    TEST_ASSERT_EQUAL_UINT32(0xC12042, device::special::write_memory_location(0x42));
+    TEST_ASSERT_EQUAL_UINT32(0xC12142, device::special::write_memory_location_no_reply(0x42));
     TEST_ASSERT_EQUAL_UINT32(0xC13042, device::special::dtr0(0x42));
     TEST_ASSERT_EQUAL_UINT32(0xC13110, device::special::dtr1(0x10));
     TEST_ASSERT_EQUAL_UINT32(0xC13220, device::special::dtr2(0x20));

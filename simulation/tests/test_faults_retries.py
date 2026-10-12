@@ -71,7 +71,7 @@ async def test_injected_collision_retried(knx, sim):
 
     await sim.request("inject", collisions=2)
     await knx.write(CHANNELS[1]["switch"], DPTBinary(1))
-    gear = await sim.wait_gear(lambda g: g["short"] == 1 and g["level"] > 0)
+    await sim.wait_gear(lambda g: g["short"] == 1 and g["level"] > 0)
     await knx.wait_telegram(CHANNELS[1]["switch_status"], lambda v: v == 1)
 
     frames = await sim.frames()

@@ -41,8 +41,7 @@ void publish_colour_changes(Push&& push, const lighting::LightingService& lighti
         if (!result.changed_colour_channels.test(channel)) {
             continue;
         }
-        const auto address =
-            dali::Address::short_address(*dali::ShortAddress::from(channel));
+        const auto address = dali::Address::short_address(*dali::ShortAddress::from(channel));
         if (const auto report = lighting.colour_report(address)) {
             push(ColourUpdate{address, *report});
         }
@@ -63,8 +62,7 @@ void publish_fault_changes(Push&& push, const commissioning::Commissioning& comm
                            const std::bitset<dali::ShortAddress::capacity>& changes) {
     for (std::size_t channel = 0; channel < dali::ShortAddress::capacity; ++channel) {
         if (changes.test(channel)) {
-            push(FaultUpdate{*dali::ShortAddress::from(channel),
-                             commissioning.faulty().test(channel)});
+            push(FaultUpdate{*dali::ShortAddress::from(channel), commissioning.faulty().test(channel)});
         }
     }
 }

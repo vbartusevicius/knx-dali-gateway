@@ -1,14 +1,14 @@
 #pragma once
 
-#include <knx/interface_object.h>
-#include <knx/property.h>
-#include <knx_facade.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <optional>
 #include <vector>
+
+#include <knx/interface_object.h>
+#include <knx/property.h>
+#include <knx_facade.h>
 
 #include "commissioning/Commissioning.hpp"
 #include "config/Configuration.hpp"
@@ -47,9 +47,7 @@ public:
         void* context = nullptr;
     };
 
-    KnxApplication(Facade& knx, Hooks hooks) noexcept : knx_(knx), hooks_(hooks) {
-        active_ = this;
-    }
+    KnxApplication(Facade& knx, Hooks hooks) noexcept : knx_(knx), hooks_(hooks) { active_ = this; }
 
     void start() {
         knx_.bau().functionPropertyCallback(&on_function_property);
@@ -63,10 +61,8 @@ public:
         }
         if (hooks_.log) {
             char message[96];
-            std::snprintf(message, sizeof(message),
-                          "IA=%04x progMode=%u configured=%u",
-                          knx_.individualAddress(),
-                          static_cast<unsigned>(knx_.progMode()),
+            std::snprintf(message, sizeof(message), "IA=%04x progMode=%u configured=%u",
+                          knx_.individualAddress(), static_cast<unsigned>(knx_.progMode()),
                           static_cast<unsigned>(knx_.configured()));
             hooks_.log(hooks_.context, message);
         }
@@ -85,9 +81,8 @@ public:
 
     Facade& facade() { return knx_; }
 
-    bool function_property(std::uint8_t object_index, std::uint8_t property_id,
-                           std::uint8_t length, const std::uint8_t* data,
-                           std::uint8_t* result_data, std::uint8_t& result_length) {
+    bool function_property(std::uint8_t object_index, std::uint8_t property_id, std::uint8_t length,
+                           const std::uint8_t* data, std::uint8_t* result_data, std::uint8_t& result_length) {
         if (object_index != knx::function_property_object_index) {
             return false;
         }
@@ -107,15 +102,14 @@ public:
         return true;
     }
 
-    bool function_property_state(std::uint8_t object_index, std::uint8_t property_id,
-                                 std::uint8_t /*length*/, const std::uint8_t* /*data*/,
-                                 std::uint8_t* result_data, std::uint8_t& result_length) {
+    bool function_property_state(std::uint8_t object_index, std::uint8_t property_id, std::uint8_t /*length*/,
+                                 const std::uint8_t* /*data*/, std::uint8_t* result_data,
+                                 std::uint8_t& result_length) {
         if (object_index != knx::function_property_object_index) {
             return false;
         }
         if (property_id == knx::state_property) {
-            result_length =
-                static_cast<std::uint8_t>(knx::encode_state(snapshot(), result_data));
+            result_length = static_cast<std::uint8_t>(knx::encode_state(snapshot(), result_data));
             return true;
         }
         if (property_id == knx::input_state_property) {
@@ -129,23 +123,22 @@ public:
     }
 
 private:
-    static bool on_function_property(std::uint8_t object_index, std::uint8_t property_id,
-                                     std::uint8_t length, std::uint8_t* data,
-                                     std::uint8_t* result_data, std::uint8_t& result_length) {
-        return active_ && active_->function_property(object_index, property_id, length, data,
-                                                     result_data, result_length);
+    static bool on_function_property(std::uint8_t object_index, std::uint8_t property_id, std::uint8_t length,
+                                     std::uint8_t* data, std::uint8_t* result_data,
+                                     std::uint8_t& result_length) {
+        return active_ && active_->function_property(object_index, property_id, length, data, result_data,
+                                                     result_length);
     }
 
     static bool on_function_property_state(std::uint8_t object_index, std::uint8_t property_id,
-                                           std::uint8_t length, std::uint8_t* data,
-                                           std::uint8_t* result_data, std::uint8_t& result_length) {
+                                           std::uint8_t length, std::uint8_t* data, std::uint8_t* result_data,
+                                           std::uint8_t& result_length) {
         return active_ && active_->function_property_state(object_index, property_id, length, data,
                                                            result_data, result_length);
     }
 
     commissioning::Snapshot snapshot() {
-        return hooks_.latest_snapshot ? hooks_.latest_snapshot(hooks_.context)
-                                      : commissioning::Snapshot{};
+        return hooks_.latest_snapshot ? hooks_.latest_snapshot(hooks_.context) : commissioning::Snapshot{};
     }
 
     bool push_command(const control::Command& command) {
@@ -172,17 +165,14 @@ private:
         }
         const auto last = count < knx::object_count ? count : knx::object_count;
         for (std::uint16_t number = 1; number <= last; ++number) {
-            knx_.getGroupObject(number).callback(
-                [this](GroupObject& object) { on_group_object(object); });
+            knx_.getGroupObject(number).callback([this](GroupObject& object) { on_group_object(object); });
         }
         const auto* parameters = knx_.paramData(0);
         if (!hooks_.push_configuration ||
-            !hooks_.push_configuration(
-                hooks_.context,
-                config::parse_configuration(parameters, MAIN_ParameterSize))) {
+            !hooks_.push_configuration(hooks_.context,
+                                       config::parse_configuration(parameters, MAIN_ParameterSize))) {
             if (hooks_.log) {
-                hooks_.log(hooks_.context,
-                           "configuration handoff failed; worker keeps the defaults");
+                hooks_.log(hooks_.context, "configuration handoff failed; worker keeps the defaults");
             }
         }
         refresh_associations();
@@ -199,11 +189,9 @@ private:
             // gear address: only the switch object takes writes, feeding
             // the input channel's toggle state back to the worker.
             const auto input = knx::input_object_target(number);
-            if (input && input->function == knx::InputObjectFunction::Switch &&
-                length >= 1) {
+            if (input && input->function == knx::InputObjectFunction::Switch && length >= 1) {
                 const auto channel = inputs::InputChannel::from(input->channel);
-                if (channel && !push_command(
-                                   control::InputFeedback{*channel, (raw & 1) != 0})) {
+                if (channel && !push_command(control::InputFeedback{*channel, (raw & 1) != 0})) {
                     logf("command queue full; dropped input feedback on object %u", number);
                 }
             }
@@ -255,16 +243,14 @@ private:
         std::uint8_t elements = 1;
         std::uint8_t* data = nullptr;
         std::uint32_t length = 0;
-        knx_.bau().propertyValueRead(OT_ASSOC_TABLE, 0, PID_TABLE_REFERENCE,
-                                     elements, 1, &data, length);
+        knx_.bau().propertyValueRead(OT_ASSOC_TABLE, 0, PID_TABLE_REFERENCE, elements, 1, &data, length);
         if (data == nullptr || length < 4) {
             delete[] data;
             return;
         }
-        const std::uint32_t relative =
-            (static_cast<std::uint32_t>(data[0]) << 24) |
-            (static_cast<std::uint32_t>(data[1]) << 16) |
-            (static_cast<std::uint32_t>(data[2]) << 8) | data[3];
+        const std::uint32_t relative = (static_cast<std::uint32_t>(data[0]) << 24) |
+                                       (static_cast<std::uint32_t>(data[1]) << 16) |
+                                       (static_cast<std::uint32_t>(data[2]) << 8) | data[3];
         delete[] data;
         const auto* table = knx_.bau().memory().toAbsolute(relative);
         if (table == nullptr) {
@@ -276,15 +262,13 @@ private:
         }
         for (std::uint16_t i = 0; i < count; ++i) {
             const auto* entry = table + 2 + i * 4;
-            associated_asaps_.push_back(
-                (static_cast<std::uint16_t>(entry[2]) << 8) | entry[3]);
+            associated_asaps_.push_back((static_cast<std::uint16_t>(entry[2]) << 8) | entry[3]);
         }
         std::sort(associated_asaps_.begin(), associated_asaps_.end());
     }
 
     bool associated(std::uint16_t object) const {
-        return std::binary_search(associated_asaps_.begin(), associated_asaps_.end(),
-                                  object);
+        return std::binary_search(associated_asaps_.begin(), associated_asaps_.end(), object);
     }
 
     void publish_statuses() {
@@ -303,8 +287,7 @@ private:
                     switch_object.valueRef()[0] = status->on ? 1 : 0;
                     switch_object.objectWritten();
                 }
-                if (status->brightness_object <= table_count &&
-                    associated(status->brightness_object)) {
+                if (status->brightness_object <= table_count && associated(status->brightness_object)) {
                     auto& brightness_object = knx_.getGroupObject(status->brightness_object);
                     brightness_object.valueRef()[0] = status->scaling;
                     brightness_object.objectWritten();
@@ -332,9 +315,8 @@ private:
                 input_object.objectWritten();
             } else {
                 const auto& fault = std::get<control::FaultUpdate>(*event);
-                const auto number =
-                    knx::object_number(dali::Address::short_address(fault.address),
-                                       knx::ObjectFunction::Fault);
+                const auto number = knx::object_number(dali::Address::short_address(fault.address),
+                                                       knx::ObjectFunction::Fault);
                 if (number != 0 && number <= table_count && associated(number)) {
                     auto& fault_object = knx_.getGroupObject(number);
                     fault_object.valueRef()[0] = fault.faulty ? 1 : 0;

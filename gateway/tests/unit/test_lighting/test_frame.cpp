@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
 #include <unity.h>
 
@@ -12,21 +11,24 @@ using gateway::dali::Group;
 using gateway::dali::ShortAddress;
 namespace frame = gateway::dali::frame;
 
-ShortAddress sa(unsigned value) { return *ShortAddress::from(value); }
-ArcLevel arc(unsigned value) { return *ArcLevel::from(value); }
-Group grp(unsigned value) { return *Group::from(value); }
+ShortAddress sa(unsigned value) {
+    return *ShortAddress::from(value);
+}
+ArcLevel arc(unsigned value) {
+    return *ArcLevel::from(value);
+}
+Group grp(unsigned value) {
+    return *Group::from(value);
+}
 
 // All vectors cross-checked against IEC 62386-102 addressing rules:
 // short = (a << 1) | selector, group = 0x80 | (g << 1) | selector,
 // broadcast = 0xFE | selector; selector 0 = DAPC, 1 = command.
 
 void test_dapc_short_address() {
-    TEST_ASSERT_EQUAL_UINT16(0x0A80, frame::dapc(Address::short_address(sa(5)),
-                                                 arc(128)));
-    TEST_ASSERT_EQUAL_UINT16(0x0000, frame::dapc(Address::short_address(sa(0)),
-                                                 arc(0)));
-    TEST_ASSERT_EQUAL_UINT16(0x7EFE, frame::dapc(Address::short_address(sa(63)),
-                                                 arc(254)));
+    TEST_ASSERT_EQUAL_UINT16(0x0A80, frame::dapc(Address::short_address(sa(5)), arc(128)));
+    TEST_ASSERT_EQUAL_UINT16(0x0000, frame::dapc(Address::short_address(sa(0)), arc(0)));
+    TEST_ASSERT_EQUAL_UINT16(0x7EFE, frame::dapc(Address::short_address(sa(63)), arc(254)));
 }
 
 void test_dapc_group_and_broadcast() {

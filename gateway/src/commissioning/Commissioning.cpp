@@ -1,5 +1,16 @@
 #include "commissioning/Commissioning.hpp"
 
+#include <array>
+#include <bitset>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
+#include "dali/devices/DeviceFrames.hpp"
+#include "lighting/LightingService.hpp"
+
 namespace gateway::commissioning {
 namespace {
 
@@ -88,13 +99,14 @@ JobResult Commissioning::scan() {
             // not tell us whether the gear is there.
             error = reply.status;
         }
-        emit(Phase::Scanning, static_cast<std::uint8_t>(((index + 1) * 100) / dali::ShortAddress::capacity),
+        emit(Phase::Scanning,
+             static_cast<std::uint8_t>((std::size_t{index + 1} * 100) / dali::ShortAddress::capacity),
              static_cast<std::uint8_t>(present_.count()), error);
     }
     emit(Phase::Done, 100, static_cast<std::uint8_t>(present_.count()), error);
     output.result.transport_status = error;
-    output.result.error =
-        error == dali::TransportStatus::Ok ? lighting::ControlError::None : lighting::ControlError::TransportFailure;
+    output.result.error = error == dali::TransportStatus::Ok ? lighting::ControlError::None
+                                                             : lighting::ControlError::TransportFailure;
     return output;
 }
 
@@ -130,7 +142,8 @@ JobResult Commissioning::replace(dali::ShortAddress target) {
     JobResult output{};
     if (present_.test(target.value())) {
         emit(Phase::Failed, 0, 0, dali::TransportStatus::Failure);
-        output.result = {lighting::ControlError::TransportFailure, dali::TransportStatus::Failure, {}, {}, {}};
+        output.result = {
+            lighting::ControlError::TransportFailure, dali::TransportStatus::Failure, {}, {}, {}};
         return output;
     }
     emit(Phase::Replacing, 0, 0, dali::TransportStatus::Ok);
@@ -142,7 +155,8 @@ JobResult Commissioning::replace(dali::ShortAddress target) {
     }
     if (result.count != 1) {
         emit(Phase::Failed, 0, static_cast<std::uint8_t>(result.count), dali::TransportStatus::Failure);
-        output.result = {lighting::ControlError::TransportFailure, dali::TransportStatus::Failure, {}, {}, {}};
+        output.result = {
+            lighting::ControlError::TransportFailure, dali::TransportStatus::Failure, {}, {}, {}};
         return output;
     }
     present_.set(target.value());
@@ -202,8 +216,8 @@ InputSnapshot Commissioning::input_snapshot() const noexcept {
         if (!devices_.present().test(index)) {
             continue;
         }
-        snapshot.present[index / 8] = static_cast<std::uint8_t>(
-            snapshot.present[index / 8] | (1u << (index % 8)));
+        snapshot.present[index / 8] =
+            static_cast<std::uint8_t>(snapshot.present[index / 8] | (1u << (index % 8)));
         auto byte = static_cast<std::uint8_t>(
             devices_.instance_count(static_cast<std::uint8_t>(index)).value_or(0) & 0x1F);
         if (devices_.has_type(static_cast<std::uint8_t>(index), dali::device::type::push_button)) {
@@ -224,23 +238,19 @@ JobResult Commissioning::scan_inputs(InstanceBound bound, void* context) {
     JobResult output{};
     emit(Phase::Scanning, 0, 0, dali::TransportStatus::Ok);
     auto error = devices_.scan();
-    emit(Phase::Scanning, 50,
-         static_cast<std::uint8_t>(devices_.present().count()), error);
+    emit(Phase::Scanning, 50, static_cast<std::uint8_t>(devices_.present().count()), error);
     const auto applied = devices_.apply(bound, context);
     if (error == dali::TransportStatus::Ok) {
         error = applied;
     }
-    emit(Phase::Done, 100, static_cast<std::uint8_t>(devices_.present().count()),
-         error);
+    emit(Phase::Done, 100, static_cast<std::uint8_t>(devices_.present().count()), error);
     output.result.transport_status = error;
-    output.result.error = error == dali::TransportStatus::Ok
-                              ? lighting::ControlError::None
-                              : lighting::ControlError::TransportFailure;
+    output.result.error = error == dali::TransportStatus::Ok ? lighting::ControlError::None
+                                                             : lighting::ControlError::TransportFailure;
     return output;
 }
 
-JobResult Commissioning::assign_inputs(dali::CommissionMode mode, InstanceBound bound,
-                                       void* context) {
+JobResult Commissioning::assign_inputs(dali::CommissionMode mode, InstanceBound bound, void* context) {
     JobResult output{};
     emit(Phase::Addressing, 0, 0, dali::TransportStatus::Ok);
     auto start = dali::ShortAddress::from(0);
@@ -264,15 +274,13 @@ JobResult Commissioning::assign_inputs(dali::CommissionMode mode, InstanceBound 
         }
         start = dali::ShortAddress::from(free_index);
     }
-    const auto result = transport_.commission_devices(mode, *start,
-                                                      dali::ShortAddress::capacity);
+    const auto result = transport_.commission_devices(mode, *start, dali::ShortAddress::capacity);
     if (result.status != dali::TransportStatus::Ok) {
         emit(Phase::Failed, 0, result.count, result.status);
         output.result = {lighting::ControlError::TransportFailure, result.status, {}, {}, {}};
         return output;
     }
-    emit(Phase::Addressing, 50, static_cast<std::uint8_t>(result.count),
-         dali::TransportStatus::Ok);
+    emit(Phase::Addressing, 50, static_cast<std::uint8_t>(result.count), dali::TransportStatus::Ok);
     return scan_inputs(bound, context);
 }
 
@@ -288,9 +296,8 @@ std::optional<dali::ShortAddress> Commissioning::poll_next() {
         poll_index_ = index + 1;
         const auto address = *dali::ShortAddress::from(index);
         const auto reply = transport_.query_status(address);
-        const bool faulty =
-            reply.status != dali::TransportStatus::Ok ||
-            (reply.gear_status && (*reply.gear_status & lamp_failure_mask) != 0);
+        const bool faulty = reply.status != dali::TransportStatus::Ok ||
+                            (reply.gear_status && (*reply.gear_status & lamp_failure_mask) != 0);
         if (faulty_.test(index) != faulty) {
             faulty_.set(index, faulty);
             return address;

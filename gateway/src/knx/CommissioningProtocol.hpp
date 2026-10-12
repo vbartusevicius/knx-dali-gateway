@@ -30,7 +30,7 @@ constexpr std::uint8_t input_state_property = 2;
 // Single-byte response of a command request.
 enum class RequestResponse : std::uint8_t {
     Accepted = 0,
-    Busy = 1,            // a commissioning job is queued or running
+    Busy = 1,  // a commissioning job is queued or running
     InvalidArgument = 2
 };
 
@@ -58,7 +58,6 @@ std::size_t encode_state(const commissioning::Snapshot& snapshot, std::uint8_t* 
 constexpr std::size_t input_state_response_size = 72;
 
 // Encodes an input snapshot into the state-2 response; returns 72.
-std::size_t encode_input_state(const commissioning::InputSnapshot& snapshot,
-                               std::uint8_t* result) noexcept;
+std::size_t encode_input_state(const commissioning::InputSnapshot& snapshot, std::uint8_t* result) noexcept;
 
 }

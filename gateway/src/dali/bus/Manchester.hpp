@@ -14,7 +14,10 @@
 // Active = bus driven low, Idle = bus released high.
 namespace gateway::dali::bus {
 
-enum class Line : bool { Active = false, Idle = true };
+enum class Line : bool {
+    Active = false,
+    Idle = true
+};
 
 struct TxSymbol {
     Line level;
@@ -39,9 +42,9 @@ struct ReceivedFrame {
 };
 
 enum class ErrorKind {
-    Timing,   // a level run outside every tolerance window
-    Length,   // valid half-bits but the bit count is not 8/16/24
-    Framing   // start bit missing or a mid-frame Manchester violation
+    Timing,  // a level run outside every tolerance window
+    Length,  // valid half-bits but the bit count is not 8/16/24
+    Framing  // start bit missing or a mid-frame Manchester violation
 };
 
 struct FrameError {

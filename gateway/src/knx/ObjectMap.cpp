@@ -1,5 +1,10 @@
 #include "knx/ObjectMap.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include "dali/Address.hpp"
+
 namespace gateway::knx {
 
 static_assert(CH_ChannelCount == 64, "knxprod must define 64 channels");
@@ -25,8 +30,7 @@ static_assert(CH_KoRgbwStatus == 12, "knxprod object 12 must be RGBW status");
 static_assert(CH_KoXyY == 13, "knxprod object 13 must be xyY");
 static_assert(CH_KoXyYStatus == 14, "knxprod object 14 must be xyY status");
 static_assert(GR_KoSwitch == CH_KoSwitch && GR_KoSwitchStatus == CH_KoSwitchStatus &&
-                  GR_KoBrightness == CH_KoBrightness &&
-                  GR_KoBrightnessStatus == CH_KoBrightnessStatus &&
+                  GR_KoBrightness == CH_KoBrightness && GR_KoBrightnessStatus == CH_KoBrightnessStatus &&
                   GR_KoRelativeDimming == CH_KoRelativeDimming &&
                   GR_KoColourTemperature == CH_KoColourTemperature - 1 &&
                   GR_KoColourTemperatureStatus == CH_KoColourTemperatureStatus - 1 &&
@@ -38,11 +42,9 @@ static_assert(GR_KoSwitch == CH_KoSwitch && GR_KoSwitchStatus == CH_KoSwitchStat
 static_assert(CH_KoBcSwitch == GR_KoBlockOffset + GR_ChannelCount * GR_KoBlockSize,
               "broadcast objects must follow the group objects");
 static_assert(CH_KoBcSwitch + 1 == CH_KoBcBrightness && CH_KoBcSwitch + 2 == CH_KoBcRelativeDimming &&
-                  CH_KoBcSwitch + 3 == CH_KoBcScene &&
-                  CH_KoBcSwitch + 4 == CH_KoBcColourTemperature &&
-                  CH_KoBcSwitch + 5 == CH_KoBcRelativeColourTemperature &&
-                  CH_KoBcSwitch + 6 == CH_KoBcRgb && CH_KoBcSwitch + 7 == CH_KoBcRgbw &&
-                  CH_KoBcSwitch + 8 == CH_KoBcXyY,
+                  CH_KoBcSwitch + 3 == CH_KoBcScene && CH_KoBcSwitch + 4 == CH_KoBcColourTemperature &&
+                  CH_KoBcSwitch + 5 == CH_KoBcRelativeColourTemperature && CH_KoBcSwitch + 6 == CH_KoBcRgb &&
+                  CH_KoBcSwitch + 7 == CH_KoBcRgbw && CH_KoBcSwitch + 8 == CH_KoBcXyY,
               "broadcast object order must be Switch, Brightness, Relative dimming, Scene, "
               "Colour temperature, Relative colour temperature, RGB, RGBW, xyY");
 static_assert(IN_ChannelCount == 32, "knxprod must define 32 input channels");
@@ -58,147 +60,149 @@ namespace {
 
 constexpr std::uint16_t channel_offset(ObjectFunction function) noexcept {
     switch (function) {
-        case ObjectFunction::Switch:
-            return CH_KoSwitch;
-        case ObjectFunction::SwitchStatus:
-            return CH_KoSwitchStatus;
-        case ObjectFunction::Brightness:
-            return CH_KoBrightness;
-        case ObjectFunction::BrightnessStatus:
-            return CH_KoBrightnessStatus;
-        case ObjectFunction::RelativeDimming:
-            return CH_KoRelativeDimming;
-        case ObjectFunction::Fault:
-            return CH_KoFault;
-        case ObjectFunction::ColourTemperature:
-            return CH_KoColourTemperature;
-        case ObjectFunction::ColourTemperatureStatus:
-            return CH_KoColourTemperatureStatus;
-        case ObjectFunction::RelativeColourTemperature:
-            return CH_KoRelativeColourTemperature;
-        case ObjectFunction::Rgb:
-            return CH_KoRgb;
-        case ObjectFunction::RgbStatus:
-            return CH_KoRgbStatus;
-        case ObjectFunction::Rgbw:
-            return CH_KoRgbw;
-        case ObjectFunction::RgbwStatus:
-            return CH_KoRgbwStatus;
-        case ObjectFunction::XyY:
-            return CH_KoXyY;
-        case ObjectFunction::XyYStatus:
-            return CH_KoXyYStatus;
-        case ObjectFunction::Scene:
-            break;
+    case ObjectFunction::Switch:
+        return CH_KoSwitch;
+    case ObjectFunction::SwitchStatus:
+        return CH_KoSwitchStatus;
+    case ObjectFunction::Brightness:
+        return CH_KoBrightness;
+    case ObjectFunction::BrightnessStatus:
+        return CH_KoBrightnessStatus;
+    case ObjectFunction::RelativeDimming:
+        return CH_KoRelativeDimming;
+    case ObjectFunction::Fault:
+        return CH_KoFault;
+    case ObjectFunction::ColourTemperature:
+        return CH_KoColourTemperature;
+    case ObjectFunction::ColourTemperatureStatus:
+        return CH_KoColourTemperatureStatus;
+    case ObjectFunction::RelativeColourTemperature:
+        return CH_KoRelativeColourTemperature;
+    case ObjectFunction::Rgb:
+        return CH_KoRgb;
+    case ObjectFunction::RgbStatus:
+        return CH_KoRgbStatus;
+    case ObjectFunction::Rgbw:
+        return CH_KoRgbw;
+    case ObjectFunction::RgbwStatus:
+        return CH_KoRgbwStatus;
+    case ObjectFunction::XyY:
+        return CH_KoXyY;
+    case ObjectFunction::XyYStatus:
+        return CH_KoXyYStatus;
+    case ObjectFunction::Scene:
+        break;
     }
     return 0;
 }
 
 constexpr std::uint16_t group_offset(ObjectFunction function) noexcept {
     switch (function) {
-        case ObjectFunction::Switch:
-            return GR_KoSwitch;
-        case ObjectFunction::SwitchStatus:
-            return GR_KoSwitchStatus;
-        case ObjectFunction::Brightness:
-            return GR_KoBrightness;
-        case ObjectFunction::BrightnessStatus:
-            return GR_KoBrightnessStatus;
-        case ObjectFunction::RelativeDimming:
-            return GR_KoRelativeDimming;
-        case ObjectFunction::ColourTemperature:
-            return GR_KoColourTemperature;
-        case ObjectFunction::ColourTemperatureStatus:
-            return GR_KoColourTemperatureStatus;
-        case ObjectFunction::RelativeColourTemperature:
-            return GR_KoRelativeColourTemperature;
-        case ObjectFunction::Rgb:
-            return GR_KoRgb;
-        case ObjectFunction::RgbStatus:
-            return GR_KoRgbStatus;
-        case ObjectFunction::Rgbw:
-            return GR_KoRgbw;
-        case ObjectFunction::RgbwStatus:
-            return GR_KoRgbwStatus;
-        case ObjectFunction::XyY:
-            return GR_KoXyY;
-        case ObjectFunction::XyYStatus:
-            return GR_KoXyYStatus;
-        case ObjectFunction::Fault:
-        case ObjectFunction::Scene:
-            break;
+    case ObjectFunction::Switch:
+        return GR_KoSwitch;
+    case ObjectFunction::SwitchStatus:
+        return GR_KoSwitchStatus;
+    case ObjectFunction::Brightness:
+        return GR_KoBrightness;
+    case ObjectFunction::BrightnessStatus:
+        return GR_KoBrightnessStatus;
+    case ObjectFunction::RelativeDimming:
+        return GR_KoRelativeDimming;
+    case ObjectFunction::ColourTemperature:
+        return GR_KoColourTemperature;
+    case ObjectFunction::ColourTemperatureStatus:
+        return GR_KoColourTemperatureStatus;
+    case ObjectFunction::RelativeColourTemperature:
+        return GR_KoRelativeColourTemperature;
+    case ObjectFunction::Rgb:
+        return GR_KoRgb;
+    case ObjectFunction::RgbStatus:
+        return GR_KoRgbStatus;
+    case ObjectFunction::Rgbw:
+        return GR_KoRgbw;
+    case ObjectFunction::RgbwStatus:
+        return GR_KoRgbwStatus;
+    case ObjectFunction::XyY:
+        return GR_KoXyY;
+    case ObjectFunction::XyYStatus:
+        return GR_KoXyYStatus;
+    case ObjectFunction::Fault:
+    case ObjectFunction::Scene:
+        break;
     }
     return 0;
 }
 
 std::optional<ObjectFunction> channel_function(unsigned index) noexcept {
     switch (index) {
-        case CH_KoSwitch:
-            return ObjectFunction::Switch;
-        case CH_KoSwitchStatus:
-            return ObjectFunction::SwitchStatus;
-        case CH_KoBrightness:
-            return ObjectFunction::Brightness;
-        case CH_KoBrightnessStatus:
-            return ObjectFunction::BrightnessStatus;
-        case CH_KoRelativeDimming:
-            return ObjectFunction::RelativeDimming;
-        case CH_KoFault:
-            return ObjectFunction::Fault;
-        case CH_KoColourTemperature:
-            return ObjectFunction::ColourTemperature;
-        case CH_KoColourTemperatureStatus:
-            return ObjectFunction::ColourTemperatureStatus;
-        case CH_KoRelativeColourTemperature:
-            return ObjectFunction::RelativeColourTemperature;
-        case CH_KoRgb:
-            return ObjectFunction::Rgb;
-        case CH_KoRgbStatus:
-            return ObjectFunction::RgbStatus;
-        case CH_KoRgbw:
-            return ObjectFunction::Rgbw;
-        case CH_KoRgbwStatus:
-            return ObjectFunction::RgbwStatus;
-        case CH_KoXyY:
-            return ObjectFunction::XyY;
-        case CH_KoXyYStatus:
-            return ObjectFunction::XyYStatus;
+    case CH_KoSwitch:
+        return ObjectFunction::Switch;
+    case CH_KoSwitchStatus:
+        return ObjectFunction::SwitchStatus;
+    case CH_KoBrightness:
+        return ObjectFunction::Brightness;
+    case CH_KoBrightnessStatus:
+        return ObjectFunction::BrightnessStatus;
+    case CH_KoRelativeDimming:
+        return ObjectFunction::RelativeDimming;
+    case CH_KoFault:
+        return ObjectFunction::Fault;
+    case CH_KoColourTemperature:
+        return ObjectFunction::ColourTemperature;
+    case CH_KoColourTemperatureStatus:
+        return ObjectFunction::ColourTemperatureStatus;
+    case CH_KoRelativeColourTemperature:
+        return ObjectFunction::RelativeColourTemperature;
+    case CH_KoRgb:
+        return ObjectFunction::Rgb;
+    case CH_KoRgbStatus:
+        return ObjectFunction::RgbStatus;
+    case CH_KoRgbw:
+        return ObjectFunction::Rgbw;
+    case CH_KoRgbwStatus:
+        return ObjectFunction::RgbwStatus;
+    case CH_KoXyY:
+        return ObjectFunction::XyY;
+    case CH_KoXyYStatus:
+        return ObjectFunction::XyYStatus;
+    default:
+        return std::nullopt;
     }
-    return std::nullopt;
 }
 
 std::optional<ObjectFunction> group_function(unsigned index) noexcept {
     switch (index) {
-        case GR_KoSwitch:
-            return ObjectFunction::Switch;
-        case GR_KoSwitchStatus:
-            return ObjectFunction::SwitchStatus;
-        case GR_KoBrightness:
-            return ObjectFunction::Brightness;
-        case GR_KoBrightnessStatus:
-            return ObjectFunction::BrightnessStatus;
-        case GR_KoRelativeDimming:
-            return ObjectFunction::RelativeDimming;
-        case GR_KoColourTemperature:
-            return ObjectFunction::ColourTemperature;
-        case GR_KoColourTemperatureStatus:
-            return ObjectFunction::ColourTemperatureStatus;
-        case GR_KoRelativeColourTemperature:
-            return ObjectFunction::RelativeColourTemperature;
-        case GR_KoRgb:
-            return ObjectFunction::Rgb;
-        case GR_KoRgbStatus:
-            return ObjectFunction::RgbStatus;
-        case GR_KoRgbw:
-            return ObjectFunction::Rgbw;
-        case GR_KoRgbwStatus:
-            return ObjectFunction::RgbwStatus;
-        case GR_KoXyY:
-            return ObjectFunction::XyY;
-        case GR_KoXyYStatus:
-            return ObjectFunction::XyYStatus;
+    case GR_KoSwitch:
+        return ObjectFunction::Switch;
+    case GR_KoSwitchStatus:
+        return ObjectFunction::SwitchStatus;
+    case GR_KoBrightness:
+        return ObjectFunction::Brightness;
+    case GR_KoBrightnessStatus:
+        return ObjectFunction::BrightnessStatus;
+    case GR_KoRelativeDimming:
+        return ObjectFunction::RelativeDimming;
+    case GR_KoColourTemperature:
+        return ObjectFunction::ColourTemperature;
+    case GR_KoColourTemperatureStatus:
+        return ObjectFunction::ColourTemperatureStatus;
+    case GR_KoRelativeColourTemperature:
+        return ObjectFunction::RelativeColourTemperature;
+    case GR_KoRgb:
+        return ObjectFunction::Rgb;
+    case GR_KoRgbStatus:
+        return ObjectFunction::RgbStatus;
+    case GR_KoRgbw:
+        return ObjectFunction::Rgbw;
+    case GR_KoRgbwStatus:
+        return ObjectFunction::RgbwStatus;
+    case GR_KoXyY:
+        return ObjectFunction::XyY;
+    case GR_KoXyYStatus:
+        return ObjectFunction::XyYStatus;
+    default:
+        return std::nullopt;
     }
-    return std::nullopt;
 }
 
 constexpr std::uint16_t channel_objects_end = CH_KoBlockOffset + CH_ChannelCount * CH_KoBlockSize;
@@ -207,74 +211,73 @@ constexpr std::uint16_t input_objects_end = IN_KoBlockOffset + IN_ChannelCount *
 
 constexpr std::uint16_t input_offset(InputObjectFunction function) noexcept {
     switch (function) {
-        case InputObjectFunction::Switch:
-            return IN_KoSwitch;
-        case InputObjectFunction::Dimming:
-            return IN_KoDimming;
-        case InputObjectFunction::Illuminance:
-            return IN_KoIlluminance;
-        case InputObjectFunction::Scene:
-            return IN_KoScene;
+    case InputObjectFunction::Switch:
+        return IN_KoSwitch;
+    case InputObjectFunction::Dimming:
+        return IN_KoDimming;
+    case InputObjectFunction::Illuminance:
+        return IN_KoIlluminance;
+    case InputObjectFunction::Scene:
+        return IN_KoScene;
     }
     return 0;
 }
 
 std::optional<InputObjectFunction> input_function(unsigned index) noexcept {
     switch (index) {
-        case IN_KoSwitch:
-            return InputObjectFunction::Switch;
-        case IN_KoDimming:
-            return InputObjectFunction::Dimming;
-        case IN_KoIlluminance:
-            return InputObjectFunction::Illuminance;
-        case IN_KoScene:
-            return InputObjectFunction::Scene;
+    case IN_KoSwitch:
+        return InputObjectFunction::Switch;
+    case IN_KoDimming:
+        return InputObjectFunction::Dimming;
+    case IN_KoIlluminance:
+        return InputObjectFunction::Illuminance;
+    case IN_KoScene:
+        return InputObjectFunction::Scene;
+    default:
+        return std::nullopt;
     }
-    return std::nullopt;
 }
 
 }
 
 std::uint16_t object_number(dali::Address address, ObjectFunction function) noexcept {
     switch (address.kind()) {
-        case dali::AddressKind::Short:
-            if (function == ObjectFunction::Scene) {
-                return 0;
-            }
-            return static_cast<std::uint16_t>(CH_KoBlockOffset +
-                                              CH_KoBlockSize * address.as_short()->value() +
-                                              channel_offset(function));
-        case dali::AddressKind::Group:
-            if (function == ObjectFunction::Scene || function == ObjectFunction::Fault) {
-                return 0;
-            }
-            return static_cast<std::uint16_t>(GR_KoBlockOffset +
-                                              GR_KoBlockSize * address.as_group()->value() +
-                                              group_offset(function));
-        case dali::AddressKind::Broadcast:
-            switch (function) {
-                case ObjectFunction::Switch:
-                    return CH_KoBcSwitch;
-                case ObjectFunction::Brightness:
-                    return CH_KoBcBrightness;
-                case ObjectFunction::RelativeDimming:
-                    return CH_KoBcRelativeDimming;
-                case ObjectFunction::Scene:
-                    return CH_KoBcScene;
-                case ObjectFunction::ColourTemperature:
-                    return CH_KoBcColourTemperature;
-                case ObjectFunction::RelativeColourTemperature:
-                    return CH_KoBcRelativeColourTemperature;
-                case ObjectFunction::Rgb:
-                    return CH_KoBcRgb;
-                case ObjectFunction::Rgbw:
-                    return CH_KoBcRgbw;
-                case ObjectFunction::XyY:
-                    return CH_KoBcXyY;
-                default:
-                    // Broadcast has no status or fault objects.
-                    return 0;
-            }
+    case dali::AddressKind::Short:
+        if (function == ObjectFunction::Scene) {
+            return 0;
+        }
+        return static_cast<std::uint16_t>(CH_KoBlockOffset + CH_KoBlockSize * address.as_short()->value() +
+                                          channel_offset(function));
+    case dali::AddressKind::Group:
+        if (function == ObjectFunction::Scene || function == ObjectFunction::Fault) {
+            return 0;
+        }
+        return static_cast<std::uint16_t>(GR_KoBlockOffset + GR_KoBlockSize * address.as_group()->value() +
+                                          group_offset(function));
+    case dali::AddressKind::Broadcast:
+        switch (function) {
+        case ObjectFunction::Switch:
+            return CH_KoBcSwitch;
+        case ObjectFunction::Brightness:
+            return CH_KoBcBrightness;
+        case ObjectFunction::RelativeDimming:
+            return CH_KoBcRelativeDimming;
+        case ObjectFunction::Scene:
+            return CH_KoBcScene;
+        case ObjectFunction::ColourTemperature:
+            return CH_KoBcColourTemperature;
+        case ObjectFunction::RelativeColourTemperature:
+            return CH_KoBcRelativeColourTemperature;
+        case ObjectFunction::Rgb:
+            return CH_KoBcRgb;
+        case ObjectFunction::Rgbw:
+            return CH_KoBcRgbw;
+        case ObjectFunction::XyY:
+            return CH_KoBcXyY;
+        default:
+            // Broadcast has no status or fault objects.
+            return 0;
+        }
     }
     return 0;
 }
@@ -299,27 +302,26 @@ std::optional<ObjectTarget> object_target(std::uint16_t number) noexcept {
         return std::nullopt;
     }
     switch (number) {
-        case CH_KoBcSwitch:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Switch};
-        case CH_KoBcBrightness:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Brightness};
-        case CH_KoBcRelativeDimming:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::RelativeDimming};
-        case CH_KoBcScene:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Scene};
-        case CH_KoBcColourTemperature:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::ColourTemperature};
-        case CH_KoBcRelativeColourTemperature:
-            return ObjectTarget{dali::Address::broadcast(),
-                                ObjectFunction::RelativeColourTemperature};
-        case CH_KoBcRgb:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Rgb};
-        case CH_KoBcRgbw:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Rgbw};
-        case CH_KoBcXyY:
-            return ObjectTarget{dali::Address::broadcast(), ObjectFunction::XyY};
-        default:
-            return std::nullopt;
+    case CH_KoBcSwitch:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Switch};
+    case CH_KoBcBrightness:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Brightness};
+    case CH_KoBcRelativeDimming:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::RelativeDimming};
+    case CH_KoBcScene:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Scene};
+    case CH_KoBcColourTemperature:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::ColourTemperature};
+    case CH_KoBcRelativeColourTemperature:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::RelativeColourTemperature};
+    case CH_KoBcRgb:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Rgb};
+    case CH_KoBcRgbw:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::Rgbw};
+    case CH_KoBcXyY:
+        return ObjectTarget{dali::Address::broadcast(), ObjectFunction::XyY};
+    default:
+        return std::nullopt;
     }
 }
 
@@ -327,8 +329,7 @@ std::uint16_t input_object_number(std::uint8_t channel, InputObjectFunction func
     if (channel >= IN_ChannelCount) {
         return 0;
     }
-    return static_cast<std::uint16_t>(IN_KoBlockOffset + IN_KoBlockSize * channel +
-                                      input_offset(function));
+    return static_cast<std::uint16_t>(IN_KoBlockOffset + IN_KoBlockSize * channel + input_offset(function));
 }
 
 std::optional<InputObjectTarget> input_object_target(std::uint16_t number) noexcept {

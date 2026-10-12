@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <thread>
 
 #include <knx/bau57B0.h>
@@ -27,6 +28,8 @@
 #include "control/Publish.hpp"
 #include "control/WorkerWait.hpp"
 #include "dali/RetryingTransport.hpp"
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
 #include "dali/devices/EventDecoder.hpp"
 #include "inputs/InputMapper.hpp"
 #include "knxstack/KnxApplication.hpp"
@@ -45,10 +48,9 @@ void on_signal(int) {
 }
 
 std::uint32_t now_ms() {
-    return static_cast<std::uint32_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch())
-            .count());
+    return static_cast<std::uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          std::chrono::steady_clock::now().time_since_epoch())
+                                          .count());
 }
 
 constexpr std::uint32_t fault_poll_interval_ms = 1000;
@@ -145,8 +147,7 @@ void apply_configuration(Wiring& wiring, const gateway::config::Configuration& c
     unsigned reconciled = 0;
     unsigned failed = 0;
     for (unsigned channel = 0; channel < gateway::dali::ShortAddress::capacity; ++channel) {
-        const auto result =
-            wiring.service.reconcile_groups(*gateway::dali::ShortAddress::from(channel));
+        const auto result = wiring.service.reconcile_groups(*gateway::dali::ShortAddress::from(channel));
         if (result.transport_status == gateway::dali::TransportStatus::Ok) {
             ++reconciled;
         } else {
@@ -186,8 +187,7 @@ void worker(Wiring& wiring) {
         apply_configuration(wiring, *configuration);
     }
     log_line("worker", "startup: scanning the DALI bus");
-    publish_job_result(wiring, wiring.commissioning.startup(&input_instance_bound,
-                                                          &wiring.inputs));
+    publish_job_result(wiring, wiring.commissioning.startup(&input_instance_bound, &wiring.inputs));
     wiring.inputs.refresh_resolutions(wiring.commissioning.devices());
     std::fprintf(stderr, "[worker] startup: %u present, %u faulty\n",
                  static_cast<unsigned>(wiring.commissioning.present().count()),
@@ -200,20 +200,18 @@ void worker(Wiring& wiring) {
             colour && (!deadline || static_cast<std::int32_t>(*colour - *deadline) < 0)) {
             deadline = colour;
         }
-        const auto command = wiring.commands.pop(gateway::control::worker_wait_ms(
-            now_ms(), deadline, next_poll, max_idle_wait_ms));
+        const auto command = wiring.commands.pop(
+            gateway::control::worker_wait_ms(now_ms(), deadline, next_poll, max_idle_wait_ms));
         const auto now = now_ms();
         if (command) {
             if (const auto configuration = wiring.configuration.pop(0)) {
                 apply_configuration(wiring, *configuration);
             }
             const auto result = gateway::control::execute(wiring.service, dimmer, colour_dimmer,
-                                                        wiring.commissioning, wiring.inputs, now,
-                                                        *command);
+                                                          wiring.commissioning, wiring.inputs, now, *command);
             if (result.result.error != gateway::lighting::ControlError::None) {
                 std::fprintf(stderr, "[worker] command failed: %s (transport %s)\n",
-                             error_name(result.result.error),
-                             transport_name(result.result.transport_status));
+                             error_name(result.result.error), transport_name(result.result.transport_status));
             }
             publish_job_result(wiring, result);
         } else if (static_cast<std::int32_t>(now - next_poll) >= 0) {
@@ -221,38 +219,34 @@ void worker(Wiring& wiring) {
             if (const auto changed = wiring.commissioning.poll_next()) {
                 std::fprintf(stderr, "[worker] channel %u fault -> %u\n",
                              static_cast<unsigned>(changed->value()),
-                             static_cast<unsigned>(
-                                 wiring.commissioning.faulty().test(changed->value())));
-                publish_status(wiring,
-                               gateway::control::FaultUpdate{
-                                   *changed,
-                                   wiring.commissioning.faulty().test(changed->value())});
+                             static_cast<unsigned>(wiring.commissioning.faulty().test(changed->value())));
+                publish_status(wiring, gateway::control::FaultUpdate{
+                                           *changed, wiring.commissioning.faulty().test(changed->value())});
                 snapshot_forwarder.on_snapshot(wiring.commissioning.snapshot());
             }
         }
-        dimmer.poll(now,
-                    [&wiring](gateway::lighting::DimStep step) {
-                        const auto step_result = wiring.service.dim_step(
-                            step.address, step.direction, step.first);
-                        if (step_result.error != gateway::lighting::ControlError::None) {
-                            log_line("worker", "dim step failed");
-                        }
-                    },
-                    [&wiring](gateway::lighting::DimExpiry expiry) {
-                        log_line("worker", "dim hit the safety limit; reading back");
-                        const auto result = wiring.service.finish_dimming(expiry.address);
-                        const auto push = [&wiring](const gateway::control::StatusEvent& event) {
-                            publish_status(wiring, event);
-                            return true;
-                        };
-                        gateway::control::publish_changes(push, wiring.service, result);
-                        gateway::control::publish_colour_changes(push, wiring.service, result);
-                    });
+        dimmer.poll(
+            now,
+            [&wiring](gateway::lighting::DimStep step) {
+                const auto step_result = wiring.service.dim_step(step.address, step.direction, step.first);
+                if (step_result.error != gateway::lighting::ControlError::None) {
+                    log_line("worker", "dim step failed");
+                }
+            },
+            [&wiring](gateway::lighting::DimExpiry expiry) {
+                log_line("worker", "dim hit the safety limit; reading back");
+                const auto result = wiring.service.finish_dimming(expiry.address);
+                const auto push = [&wiring](const gateway::control::StatusEvent& event) {
+                    publish_status(wiring, event);
+                    return true;
+                };
+                gateway::control::publish_changes(push, wiring.service, result);
+                gateway::control::publish_colour_changes(push, wiring.service, result);
+            });
         colour_dimmer.poll(
             now,
             [&wiring](gateway::lighting::DimStep step) {
-                const auto step_result = wiring.service.colour_temperature_step(
-                    step.address, step.direction);
+                const auto step_result = wiring.service.colour_temperature_step(step.address, step.direction);
                 if (step_result.error != gateway::lighting::ControlError::None) {
                     log_line("worker", "colour temperature step failed");
                 }
@@ -269,8 +263,7 @@ void worker(Wiring& wiring) {
         while (const auto event = wiring.transport.poll_event()) {
             if (event->bits != 24) {
                 std::fprintf(stderr, "[worker] dali frame from another master: 0x%06X (%u bits)\n",
-                             static_cast<unsigned>(event->value),
-                             static_cast<unsigned>(event->bits));
+                             static_cast<unsigned>(event->value), static_cast<unsigned>(event->bits));
                 continue;
             }
             const auto decoded = gateway::dali::device::decode_event(*event);
@@ -279,17 +272,14 @@ void worker(Wiring& wiring) {
                              static_cast<unsigned>(event->value));
                 continue;
             }
-            std::array<gateway::inputs::Action, gateway::inputs::InputMapper::max_actions>
-                actions;
+            std::array<gateway::inputs::Action, gateway::inputs::InputMapper::max_actions> actions;
             const auto count = wiring.inputs.map(
-                *decoded,
-                wiring.commissioning.devices().instance_type(decoded->address,
-                                                             decoded->instance),
+                *decoded, wiring.commissioning.devices().instance_type(decoded->address, decoded->instance),
                 actions);
             for (std::uint8_t index = 0; index < count; ++index) {
                 const auto& action = actions[index];
-                publish_status(wiring, gateway::control::InputAction{
-                                           action.object, action.data, action.length});
+                publish_status(wiring,
+                               gateway::control::InputAction{action.object, action.data, action.length});
             }
         }
     }
@@ -308,8 +298,7 @@ int main(int argc, char** argv) {
     Bau57B0 bau(platform);
     KnxFacade<LinuxPlatform, Bau57B0> knx(bau);
 
-    gateway::lab::SocketDaliTransport socket_transport(env_or("DALI_SIM_HOST", "127.0.0.1"),
-                                                     5555);
+    gateway::lab::SocketDaliTransport socket_transport(env_or("DALI_SIM_HOST", "127.0.0.1"), 5555);
     for (unsigned attempt = 0; !socket_transport.connected() && attempt < 120; ++attempt) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         socket_transport.try_connect();
@@ -332,8 +321,8 @@ int main(int argc, char** argv) {
     gateway::lab::StdQueue<gateway::config::Configuration> configuration{1};
     gateway::lab::StdQueue<gateway::commissioning::Snapshot> snapshots{1};
     gateway::lab::StdQueue<gateway::commissioning::InputSnapshot> input_snapshots{1};
-    Wiring wiring{service, transport, commissioning, inputs, commands, statuses, configuration,
-                  snapshots, input_snapshots, {}, {}};
+    Wiring wiring{service,       transport, commissioning,   inputs, commands, statuses,
+                  configuration, snapshots, input_snapshots, {},     {}};
 
     using Facade = KnxFacade<LinuxPlatform, Bau57B0>;
     gateway::knxstack::KnxApplication<Facade>::Hooks hooks{

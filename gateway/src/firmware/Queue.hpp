@@ -24,18 +24,14 @@ public:
     Queue(const Queue&) = delete;
     Queue& operator=(const Queue&) = delete;
 
-    bool try_push(const T& item) {
-        return handle_ && xQueueSendToBack(handle_, &item, 0) == pdTRUE;
-    }
+    bool try_push(const T& item) { return handle_ && xQueueSendToBack(handle_, &item, 0) == pdTRUE; }
 
     bool push(const T& item, TickType_t wait) {
         return handle_ && xQueueSendToBack(handle_, &item, wait) == pdTRUE;
     }
 
     // Length-1 queue semantic: replace the pending item if there is one.
-    bool overwrite(const T& item) {
-        return handle_ && xQueueOverwrite(handle_, &item) == pdTRUE;
-    }
+    bool overwrite(const T& item) { return handle_ && xQueueOverwrite(handle_, &item) == pdTRUE; }
 
     std::optional<T> pop(TickType_t wait) {
         std::aligned_storage_t<sizeof(T), alignof(T)> storage{};

@@ -1,5 +1,14 @@
 #include "dali/ColourControl.hpp"
 
+#include <cstdint>
+#include <initializer_list>
+#include <optional>
+
+#include "dali/Address.hpp"
+#include "dali/Scene.hpp"
+#include "dali/ShortAddress.hpp"
+#include "dali/Transport.hpp"
+
 namespace gateway::dali {
 namespace {
 
@@ -11,20 +20,20 @@ constexpr std::uint8_t cmd_query_content_dtr0 = 0x98;
 // IEC 62386-209 application-extended commands (opcode >= 0xE0). Values
 // verified against IEC 62386-209 Table 10/13 and python-dali's
 // dali/gear/colour.py (_cmdval, uses_dtr0/1/2, sendtwice).
-constexpr std::uint8_t ext_set_temporary_x = 0xE0;          // 224, uses DTR0+DTR1
-constexpr std::uint8_t ext_set_temporary_y = 0xE1;          // 225, uses DTR0+DTR1
-constexpr std::uint8_t ext_activate = 0xE2;                 // 226
-constexpr std::uint8_t ext_set_temporary_tc = 0xE7;         // 231, uses DTR0+DTR1
-constexpr std::uint8_t ext_tc_step_cooler = 0xE8;           // 232
-constexpr std::uint8_t ext_tc_step_warmer = 0xE9;           // 233
-constexpr std::uint8_t ext_set_primary_n_dimlevel = 0xEA;   // 234, uses DTR0+DTR1+DTR2
-constexpr std::uint8_t ext_set_temporary_rgb = 0xEB;        // 235, uses DTR0+DTR1+DTR2
-constexpr std::uint8_t ext_set_temporary_waf = 0xEC;        // 236, uses DTR0+DTR1+DTR2
-constexpr std::uint8_t ext_copy_report_to_temporary = 0xEE; // 238
-constexpr std::uint8_t ext_store_tc_limit = 0xF2;           // 242, send-twice
-constexpr std::uint8_t ext_query_colour_status = 0xF8;      // 248
-constexpr std::uint8_t ext_query_colour_type_features = 0xF9; // 249
-constexpr std::uint8_t ext_query_colour_value = 0xFA;       // 250, uses DTR0
+constexpr std::uint8_t ext_set_temporary_x = 0xE0;             // 224, uses DTR0+DTR1
+constexpr std::uint8_t ext_set_temporary_y = 0xE1;             // 225, uses DTR0+DTR1
+constexpr std::uint8_t ext_activate = 0xE2;                    // 226
+constexpr std::uint8_t ext_set_temporary_tc = 0xE7;            // 231, uses DTR0+DTR1
+constexpr std::uint8_t ext_tc_step_cooler = 0xE8;              // 232
+constexpr std::uint8_t ext_tc_step_warmer = 0xE9;              // 233
+constexpr std::uint8_t ext_set_primary_n_dimlevel = 0xEA;      // 234, uses DTR0+DTR1+DTR2
+constexpr std::uint8_t ext_set_temporary_rgb = 0xEB;           // 235, uses DTR0+DTR1+DTR2
+constexpr std::uint8_t ext_set_temporary_waf = 0xEC;           // 236, uses DTR0+DTR1+DTR2
+constexpr std::uint8_t ext_copy_report_to_temporary = 0xEE;    // 238
+constexpr std::uint8_t ext_store_tc_limit = 0xF2;              // 242, send-twice
+constexpr std::uint8_t ext_query_colour_status = 0xF8;         // 248
+constexpr std::uint8_t ext_query_colour_type_features = 0xF9;  // 249
+constexpr std::uint8_t ext_query_colour_value = 0xFA;          // 250, uses DTR0
 
 constexpr std::uint8_t device_type_colour = 8;
 
@@ -118,8 +127,7 @@ TransportStatus ColourControl::set_xy(Address address, XyCoordinate x, XyCoordin
     return extended(address, ext_activate);
 }
 
-TransportStatus ColourControl::set_primary_n(Address address, std::uint8_t primary,
-                                             std::uint16_t dimlevel) {
+TransportStatus ColourControl::set_primary_n(Address address, std::uint8_t primary, std::uint16_t dimlevel) {
     auto status = first_of({transport_.set_dtr(Dtr::Dtr0, static_cast<std::uint8_t>(dimlevel & 0xFF)),
                             transport_.set_dtr(Dtr::Dtr1, static_cast<std::uint8_t>(dimlevel >> 8)),
                             transport_.set_dtr(Dtr::Dtr2, primary)});
@@ -161,12 +169,11 @@ TransportStatus ColourControl::step_colour_temperature(Address address, ColourSt
     return extended(address, step == ColourStep::Cooler ? ext_tc_step_cooler : ext_tc_step_warmer);
 }
 
-TransportStatus ColourControl::store_colour_temperature_limit(Address address, TcLimit which,
-                                                              Mirek value) {
-    const auto status = first_of(
-        {transport_.set_dtr(Dtr::Dtr0, static_cast<std::uint8_t>(value.value() & 0xFF)),
-         transport_.set_dtr(Dtr::Dtr1, static_cast<std::uint8_t>(value.value() >> 8)),
-         transport_.set_dtr(Dtr::Dtr2, static_cast<std::uint8_t>(which))});
+TransportStatus ColourControl::store_colour_temperature_limit(Address address, TcLimit which, Mirek value) {
+    const auto status =
+        first_of({transport_.set_dtr(Dtr::Dtr0, static_cast<std::uint8_t>(value.value() & 0xFF)),
+                  transport_.set_dtr(Dtr::Dtr1, static_cast<std::uint8_t>(value.value() >> 8)),
+                  transport_.set_dtr(Dtr::Dtr2, static_cast<std::uint8_t>(which))});
     if (status != TransportStatus::Ok) {
         return status;
     }
@@ -183,17 +190,16 @@ ColourStatusRead ColourControl::query_colour_status(ShortAddress address) {
         return {answer.status, std::nullopt};
     }
     const auto raw = *answer.value;
-    return {TransportStatus::Ok,
-            ColourStatus{
-                .xy_out_of_range = (raw & 0x01) != 0,
-                .tc_out_of_range = (raw & 0x02) != 0,
-                .auto_calibration_running = (raw & 0x04) != 0,
-                .auto_calibration_successful = (raw & 0x08) != 0,
-                .xy_active = (raw & 0x10) != 0,
-                .tc_active = (raw & 0x20) != 0,
-                .primary_n_active = (raw & 0x40) != 0,
-                .rgbwaf_active = (raw & 0x80) != 0,
-            }};
+    return {TransportStatus::Ok, ColourStatus{
+                                     .xy_out_of_range = (raw & 0x01) != 0,
+                                     .tc_out_of_range = (raw & 0x02) != 0,
+                                     .auto_calibration_running = (raw & 0x04) != 0,
+                                     .auto_calibration_successful = (raw & 0x08) != 0,
+                                     .xy_active = (raw & 0x10) != 0,
+                                     .tc_active = (raw & 0x20) != 0,
+                                     .primary_n_active = (raw & 0x40) != 0,
+                                     .rgbwaf_active = (raw & 0x80) != 0,
+                                 }};
 }
 
 CapabilitiesRead ColourControl::query_colour_type_features(ShortAddress address) {
@@ -206,13 +212,12 @@ CapabilitiesRead ColourControl::query_colour_type_features(ShortAddress address)
         return {answer.status, std::nullopt};
     }
     const auto raw = *answer.value;
-    return {TransportStatus::Ok,
-            ColourCapabilities{
-                .xy_capable = (raw & 0x01) != 0,
-                .tc_capable = (raw & 0x02) != 0,
-                .primary_count = static_cast<std::uint8_t>((raw >> 2) & 0x07),
-                .rgbwaf_channels = static_cast<std::uint8_t>((raw >> 5) & 0x07),
-            }};
+    return {TransportStatus::Ok, ColourCapabilities{
+                                     .xy_capable = (raw & 0x01) != 0,
+                                     .tc_capable = (raw & 0x02) != 0,
+                                     .primary_count = static_cast<std::uint8_t>((raw >> 2) & 0x07),
+                                     .rgbwaf_channels = static_cast<std::uint8_t>((raw >> 5) & 0x07),
+                                 }};
 }
 
 ColourValueRead ColourControl::query_colour_value(ShortAddress address, std::uint8_t selector) {
@@ -250,8 +255,7 @@ TransportStatus ColourControl::store_scene(Address address, Scene scene) {
         return copied;
     }
     return transport_.send_command(address,
-                                   static_cast<std::uint8_t>(cmd_store_dtr_as_scene_0 + scene.value()),
-                                   true);
+                                   static_cast<std::uint8_t>(cmd_store_dtr_as_scene_0 + scene.value()), true);
 }
 
 std::optional<Mirek> mirek_from_kelvin(std::uint32_t kelvin) noexcept {

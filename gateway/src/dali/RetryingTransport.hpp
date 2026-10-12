@@ -36,7 +36,8 @@ public:
     GearPresence query_present(ShortAddress address) override;
     GearStatusRead query_status(ShortAddress address) override;
     CommissionResult commission(CommissionMode mode, ShortAddress start, unsigned max_devices) override;
-    CommissionResult commission_devices(CommissionMode mode, ShortAddress start, unsigned max_devices) override;
+    CommissionResult commission_devices(CommissionMode mode, ShortAddress start,
+                                        unsigned max_devices) override;
     TransportStatus identify(ShortAddress address) override;
     TransportStatus clear_short_addresses() override;
 

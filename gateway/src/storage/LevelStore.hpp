@@ -17,8 +17,8 @@ struct TargetRead {
 };
 
 enum class SlotKind {
-    Target,      // last commanded level per gear, restores gear without readback
-    LastActive   // last non-zero level per destination, recalled by switch-on
+    Target,     // last commanded level per gear, restores gear without readback
+    LastActive  // last non-zero level per destination, recalled by switch-on
 };
 
 struct Slot {

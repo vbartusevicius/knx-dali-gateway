@@ -1,6 +1,4 @@
 #!/bin/sh
-# SPDX-FileCopyrightText: 2026 KNX-DALI gateway contributors
-# SPDX-License-Identifier: MIT
 #
 # Docker integration lab entry point: a clean stack per run — the gateway
 # starts unprogrammed (prog mode on) exactly once, so a previous run's
@@ -8,7 +6,7 @@
 #   simulation/run-tests.sh [pytest args...]
 set -u
 cd "$(dirname "$0")/.."
-COMPOSE="docker compose -f simulation/compose.yaml"
+COMPOSE="docker compose --profile lab -f compose.yaml"
 
 $COMPOSE down --remove-orphans >/dev/null 2>&1
 $COMPOSE build gateway-lab dali-sim tests

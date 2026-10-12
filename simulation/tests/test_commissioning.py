@@ -3,8 +3,6 @@
 import asyncio
 import time
 
-import pytest
-
 from .helpers import commissioning_command, commissioning_state
 from .scenario import DEVICE_ADDRESS
 
@@ -50,7 +48,7 @@ async def test_assign_unaddressed(knx, sim):
     state = await _wait_phase(knx, timeout=60)
     assert state["phase"] == PHASE_DONE
     assert state["found"] >= 1
-    gear = await sim.wait_gear(lambda g: g["short"] == 4, timeout=10)
+    await sim.wait_gear(lambda g: g["short"] == 4, timeout=10)
 
 
 async def test_replace_missing_gear_keeps_channel(knx, sim):

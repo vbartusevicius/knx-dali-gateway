@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
-#include <unity.h>
-
 #include <optional>
 #include <vector>
+
+#include <unity.h>
 
 #include "dali/GearAddressing.hpp"
 #include "dali/SpecialCommands.hpp"
@@ -19,7 +18,9 @@ using gateway::dali::ShortAddress;
 using gateway::dali::TransportStatus;
 namespace special = gateway::dali::special;
 
-ShortAddress sa(unsigned value) { return *ShortAddress::from(value); }
+ShortAddress sa(unsigned value) {
+    return *ShortAddress::from(value);
+}
 
 // In-memory bus model for Part 102 addressing: each gear tracks the
 // initialising/withdrawn flags, its search address and its short address,
@@ -52,12 +53,8 @@ public:
     TransportStatus send_command(gateway::dali::Address, std::uint8_t, bool) override {
         return TransportStatus::Ok;
     }
-    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
-    TransportStatus enable_device_type(std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override { return TransportStatus::Ok; }
+    TransportStatus enable_device_type(std::uint8_t) override { return TransportStatus::Ok; }
     ByteRead query(gateway::dali::ShortAddress, std::uint8_t) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
@@ -70,8 +67,7 @@ public:
     gateway::dali::GroupsRead read_groups(gateway::dali::ShortAddress) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
-    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group,
-                                         bool) override {
+    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group, bool) override {
         return TransportStatus::Ok;
     }
     gateway::dali::GearPresence query_present(gateway::dali::ShortAddress) override {
@@ -80,18 +76,14 @@ public:
     gateway::dali::GearStatusRead query_status(gateway::dali::ShortAddress) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
-    gateway::dali::CommissionResult commission(gateway::dali::CommissionMode,
-                                               gateway::dali::ShortAddress,
+    gateway::dali::CommissionResult commission(gateway::dali::CommissionMode, gateway::dali::ShortAddress,
                                                unsigned) override {
         return {TransportStatus::Unsupported, 0};
     }
-    TransportStatus identify(gateway::dali::ShortAddress) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus identify(gateway::dali::ShortAddress) override { return TransportStatus::Ok; }
     TransportStatus clear_short_addresses() override { return TransportStatus::Ok; }
 
-    TransportStatus send_special(std::uint8_t opcode, std::uint8_t data,
-                                 bool /*twice*/) override {
+    TransportStatus send_special(std::uint8_t opcode, std::uint8_t data, bool /*twice*/) override {
         specials.push_back({opcode, data});
         switch (opcode) {
         case special::terminate:
@@ -113,19 +105,15 @@ public:
         case special::searchaddr_h:
         case special::searchaddr_m:
         case special::searchaddr_l: {
-            const int shift = opcode == special::searchaddr_h   ? 16
-                              : opcode == special::searchaddr_m ? 8
-                                                                : 0;
+            const int shift = opcode == special::searchaddr_h ? 16 : opcode == special::searchaddr_m ? 8 : 0;
             for (auto& g : gear) {
-                g.search = (g.search & ~(0xFFu << shift)) |
-                           (static_cast<std::uint32_t>(data) << shift);
+                g.search = (g.search & ~(0xFFu << shift)) | (static_cast<std::uint32_t>(data) << shift);
             }
             break;
         }
         case special::program_short_address:
             for (auto& g : gear) {
-                if (g.initialising && !g.drops_program &&
-                    g.random == g.search) {
+                if (g.initialising && !g.drops_program && g.random == g.search) {
                     g.short_addr = data >> 1;
                 }
             }

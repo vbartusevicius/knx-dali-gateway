@@ -1,0 +1,17 @@
+# Docker integration lab: the real gateway application against the simulated
+# DALI line and an ETS-style KNX programmer.
+name: lab
+
+on:
+  push:
+    paths: ["simulation/**", "gateway/**", "docker/lab-*/**", "compose.yaml", ".github/workflows/lab.yml"]
+  pull_request:
+    paths: ["simulation/**", "gateway/**", "docker/lab-*/**", "compose.yaml", ".github/workflows/lab.yml"]
+
+jobs:
+  scenarios:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the lab scenarios
+        run: simulation/run-tests.sh

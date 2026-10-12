@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstdio>
 #include <deque>
 #include <map>
@@ -72,9 +71,9 @@ struct TransportOp {
     };
     Kind kind;
     dali::Address address = dali::Address::broadcast();
-    std::uint8_t opcode = 0;   // command/query opcode, gear command, device type
-    std::uint8_t value = 0;    // DTR data, level, DTR index, scene, member
-    bool flag = false;         // send-twice / member bool
+    std::uint8_t opcode = 0;  // command/query opcode, gear command, device type
+    std::uint8_t value = 0;   // DTR data, level, DTR index, scene, member
+    bool flag = false;        // send-twice / member bool
 };
 
 // Scriptable dali::Transport that records writes/reads, so LightingService is
@@ -123,13 +122,11 @@ public:
 
     dali::TransportStatus send(dali::Address address, dali::GearCommand command) override {
         gear_commands.push_back({address, command});
-        ops.push_back({TransportOp::Kind::GearCommand, address,
-                       static_cast<std::uint8_t>(command)});
+        ops.push_back({TransportOp::Kind::GearCommand, address, static_cast<std::uint8_t>(command)});
         return write_status;
     }
 
-    dali::TransportStatus send_command(dali::Address address, std::uint8_t opcode,
-                                       bool twice) override {
+    dali::TransportStatus send_command(dali::Address address, std::uint8_t opcode, bool twice) override {
         command_writes.push_back({address, opcode, twice});
         ops.push_back({TransportOp::Kind::Command, address, opcode, 0, twice});
         return write_status;
@@ -137,8 +134,8 @@ public:
 
     dali::TransportStatus set_dtr(dali::Dtr which, std::uint8_t value) override {
         dtr_writes.push_back({which, value});
-        ops.push_back({TransportOp::Kind::Dtr, dali::Address::broadcast(), value,
-                       static_cast<std::uint8_t>(which)});
+        ops.push_back(
+            {TransportOp::Kind::Dtr, dali::Address::broadcast(), value, static_cast<std::uint8_t>(which)});
         return write_status;
     }
 

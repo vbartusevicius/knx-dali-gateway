@@ -1,5 +1,8 @@
 #include "dali/ShortAddress.hpp"
 
+#include <cstdint>
+#include <optional>
+
 namespace gateway::dali {
 
 ShortAddress::ShortAddress(std::uint8_t value) noexcept : value_(value) {}

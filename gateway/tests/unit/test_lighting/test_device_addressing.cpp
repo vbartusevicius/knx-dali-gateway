@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2025 the knx-dali-gateway contributors
-#include <unity.h>
-
 #include <optional>
 #include <vector>
+
+#include <unity.h>
 
 #include "dali/Transport.hpp"
 #include "dali/devices/DeviceAddressing.hpp"
@@ -19,7 +18,9 @@ using gateway::dali::ShortAddress;
 using gateway::dali::TransportStatus;
 namespace device = gateway::dali::device;
 
-ShortAddress sa(unsigned value) { return *ShortAddress::from(value); }
+ShortAddress sa(unsigned value) {
+    return *ShortAddress::from(value);
+}
 
 // In-memory bus model for Part 103 addressing: each control device tracks
 // the initialising/withdrawn flags, its search address and its short
@@ -50,12 +51,8 @@ public:
     TransportStatus send_command(gateway::dali::Address, std::uint8_t, bool) override {
         return TransportStatus::Ok;
     }
-    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
-    TransportStatus enable_device_type(std::uint8_t) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus set_dtr(gateway::dali::Dtr, std::uint8_t) override { return TransportStatus::Ok; }
+    TransportStatus enable_device_type(std::uint8_t) override { return TransportStatus::Ok; }
     ByteRead query(gateway::dali::ShortAddress, std::uint8_t) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
@@ -68,8 +65,7 @@ public:
     gateway::dali::GroupsRead read_groups(gateway::dali::ShortAddress) override {
         return {TransportStatus::Timeout, std::nullopt};
     }
-    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group,
-                                         bool) override {
+    TransportStatus set_group_membership(gateway::dali::ShortAddress, gateway::dali::Group, bool) override {
         return TransportStatus::Ok;
     }
     gateway::dali::GearPresence query_present(gateway::dali::ShortAddress) override {
@@ -81,9 +77,7 @@ public:
     CommissionResult commission(CommissionMode, ShortAddress, unsigned) override {
         return {TransportStatus::Unsupported, 0};
     }
-    TransportStatus identify(gateway::dali::ShortAddress) override {
-        return TransportStatus::Ok;
-    }
+    TransportStatus identify(gateway::dali::ShortAddress) override { return TransportStatus::Ok; }
     TransportStatus clear_short_addresses() override { return TransportStatus::Ok; }
 
     TransportStatus send_device_frame(std::uint32_t frame, bool twice) override {
@@ -100,8 +94,7 @@ public:
                 break;
             case 0x01:  // INITIALISE
                 for (auto& d : devices) {
-                    if (operand == 0x00 ||
-                        (operand == 0xFF && d.short_addr < 0) ||
+                    if (operand == 0x00 || (operand == 0xFF && d.short_addr < 0) ||
                         operand == device::special::encode_short_address(d.short_addr)) {
                         d.initialising = true;
                         d.withdrawn = false;
@@ -122,8 +115,8 @@ public:
             case 0x07: {
                 const int shift = operation == 0x05 ? 16 : operation == 0x06 ? 8 : 0;
                 for (auto& d : devices) {
-                    d.search = (d.search & ~(0xFFu << shift)) |
-                               (static_cast<std::uint32_t>(operand) << shift);
+                    d.search =
+                        (d.search & ~(0xFFu << shift)) | (static_cast<std::uint32_t>(operand) << shift);
                 }
                 break;
             }
@@ -137,8 +130,7 @@ public:
             default:
                 break;
             }
-        } else if (operation == device::instance_device &&
-                   address == device::address_broadcast) {
+        } else if (operation == device::instance_device && address == device::address_broadcast) {
             if (operand == device::cmd::start_quiescent_mode) {
                 ++quiescent_starts;
             } else if (operand == device::cmd::stop_quiescent_mode) {
