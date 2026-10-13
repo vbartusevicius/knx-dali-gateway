@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pcbnew
 import pytest
+from board_variant import BOARDS, build_path, layout_path
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "hardware/scripts"))
@@ -84,8 +85,8 @@ def test_board_checks_do_not_use_supplier_api_or_download_cache(monkeypatch):
         raise OSError("supplier API blocked")
 
     monkeypatch.setattr(jp, "fetch", unavailable)
-    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
-    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
+    pcb = pcbnew.LoadBoard(str(layout_path("ui")))
+    parts = json.loads(build_path("ui", "parts.json").read_text())
     checks = jp.check_board(pcb, parts)
     assert checks
     assert not [p for c in checks for p in c.problems]
@@ -110,8 +111,8 @@ def test_missing_reference_fails_without_network_fallback(monkeypatch):
     references = jp.load_reference()
     references.pop("C2890035")
     monkeypatch.setattr(jp, "load_reference", lambda: references)
-    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
-    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
+    pcb = pcbnew.LoadBoard(str(layout_path("ui")))
+    parts = json.loads(build_path("ui", "parts.json").read_text())
     checks = jp.check_board(pcb, parts)
     assert all(c.problems for c in checks if c.ref in ("D1", "D2", "D3"))
 
@@ -130,9 +131,9 @@ def test_live_checks_reject_stock_shortages_and_api_failures(monkeypatch, blocke
         return {**data, "record": {**data["record"], "stockCount": 0}}
 
     monkeypatch.setattr(jp, "supplier_data", supplier)
-    pcb = pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/ui/ui.kicad_pcb"))
-    parts = json.loads((REPO / "hardware/build/poc/ui/parts.json").read_text())
-    checks = jp.check_board(pcb, parts, live=True)
+    pcb = pcbnew.LoadBoard(str(layout_path("ui")))
+    parts = json.loads(build_path("ui", "parts.json").read_text())
+    checks = [c for c in jp.check_board(pcb, parts, live=True) if c.assembly == "jlc"]
     assert checks and all(c.problems for c in checks)
     if not blocked:
         assert len(calls) == len(set(calls))
@@ -141,15 +142,50 @@ def test_live_checks_reject_stock_shortages_and_api_failures(monkeypatch, blocke
         assert all("403" in c.problems[0] for c in checks)
 
 
-@pytest.fixture(scope="module", params=("main", "ui"))
+@pytest.fixture(scope="module", params=BOARDS)
 def board_checks(request):
     board = request.param
-    pcb = pcbnew.LoadBoard(str(REPO / f"hardware/layout/poc/{board}/{board}.kicad_pcb"))
-    parts = json.loads((REPO / f"hardware/build/poc/{board}/parts.json").read_text())
+    pcb = pcbnew.LoadBoard(str(layout_path(board)))
+    parts = json.loads(build_path(board, "parts.json").read_text())
     return parts, jp.check_board(pcb, parts)
 
 
-def test_every_jlc_part_is_checked_and_lands_pin_for_pin(board_checks):
+def test_every_part_is_checked_and_lands_pin_for_pin(board_checks):
+    """Hand-fitted parts too: against a JLCPCB footprint reference or the cited
+    manufacturer pinout (hardware/product/pinouts.yaml)."""
     parts, checks = board_checks
-    assert {c.ref for c in checks} == {p["ref"] for p in parts if p["assembly"] == "jlc"}
+    assert {c.ref for c in checks} == {p["ref"] for p in parts}
     assert not [f"{c.ref} {c.lcsc}: {p}" for c in checks for p in c.problems]
+
+
+@pytest.mark.parametrize("ours,theirs,problem", [
+    ({"1": "DOUT", "2": "VSS", "3": "DIN", "4": "VDD"}, {"1": "DIN", "2": "VDD", "3": "DOUT", "4": "GND"}, True),
+    ({"1": "DIN", "2": "VDD", "3": "DOUT", "4": "GND"}, {"1": "DIN", "2": "VDD", "3": "DOUT", "4": "GND"}, False),
+    ({"8": "D7", "14": "5V"}, {"8": "5V", "14": "D7"}, True),
+    ({"1": "K", "2": "A"}, {"1": "C", "2": "A"}, False),
+    ({"1": "Pin_1", "3": "~{CE}", "41": "EPAD"}, {"1": "1", "3": "CE#", "41": "EP"}, False),
+])
+def test_pin_name_check_catches_swapped_functions(ours, theirs, problem):
+    """The SK6805-EC15 once used KiCad's SK6805 symbol (1 DOUT, 2 VSS, 3 DIN,
+    4 VDD) on a footprint with the datasheet's numbers: the pads landed, the
+    functions did not."""
+    assert bool(jp.name_problems("D1", ours, theirs)) is problem
+
+
+def test_pinout_check_catches_a_wrong_net():
+    class FakePad:
+        def __init__(self, number, net):
+            self.number, self.net = number, net
+
+        def GetNumber(self):
+            return self.number
+
+        def GetNetname(self):
+            return self.net
+
+    class FakeFootprint:
+        def Pads(self):
+            return [FakePad("1", "GND"), FakePad("2", "+3V3")]
+
+    wanted = {"1": "+3V3", "2": "GND"}
+    assert any("pin 1 carries 'GND'" in p for p in jp.net_problems(FakeFootprint(), wanted))

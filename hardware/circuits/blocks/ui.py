@@ -57,13 +57,13 @@ def status_leds(gnd, v5, led_data):
     buffer[4] += series[1]
     data = series[2]
     for i, name in enumerate(STATUS_LEDS):
-        led = part("LED", "SK6805", f"RGB {name}", LED_RGB,
+        led = part("gateway", "SK6805-EC15", f"RGB {name}", LED_RGB,
                    src(mpn="SK6805-EC15", mfr="OPSCO", lcsc="C2890035",
-                       source="SK6805-EC15 datasheet: 1 DIN, 2 VDD, 3 DOUT, 4 GND"),
+                       source="SK6805-EC15 datasheet p.4: 1 DIN, 2 VDD, 3 DOUT, 4 GND"),
                    ref=f"D{i + 1}")
         led["DIN"] += data
         led["VDD"] += v5
-        led["VSS"] += gnd
+        led["GND"] += gnd
         c = cap("100n 50V", src(source="SK6805-EC15 datasheet: decoupling per LED"))
         c[1] += v5
         c[2] += gnd
@@ -86,7 +86,13 @@ def build_interconnect_side(signals):
         j1[i] += net_
 
 
-def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl):
+WINSTAR_OLED = {"mpn": "WEA012864DWPP3N00003", "mfr": "Winstar", "pins": ("VCC", "GND", "SCL", "SDA"),
+                "source": "Winstar WEA012864D-03 (white; L = yellow, B = sky blue), 27.3x27.3 mm, SSD1306 I2C, "
+                          "drawing WEA012864D-03 p.3; lay it face down in the cover pocket, push the UI board "
+                          "over its pins, then solder them from the back"}
+
+
+def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED):
     """Create button ladder, LEDs, and OLED header on the UI board."""
     block("btn_ladder")
     r_pull = res("10k", src(source="Ladder pull-up; no-button = 3V3"))
@@ -114,13 +120,10 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl):
 
     block("oled")
     j3 = part("Connector", "Conn_01x04_Pin", "OLED", HDR_4,
-              src(mpn="SSD1306 0.96in 128x64 I2C module", hand=True,
-                  source="module pins soldered straight into these holes; buy "
-                         "the GND,VCC,SCL,SDA pin order (some sellers swap GND/VCC)"))
-    j3[1] += gnd
-    j3[2] += v3
-    j3[3] += scl
-    j3[4] += sda
+              src(mpn=oled["mpn"], mfr=oled.get("mfr", ""), hand=True, source=oled["source"]), ref="J2")
+    nets = {"GND": gnd, "VCC": v3, "SCL": scl, "SDA": sda}
+    for i, name in enumerate(oled["pins"], start=1):
+        j3[i] += nets[name]
 
 
 NET_CLASSES = {

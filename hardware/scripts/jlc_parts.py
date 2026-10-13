@@ -40,9 +40,13 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW
            "Accept": "application/json"}
 
 
+_FRESH = set()
+
+
 def fetch(url, path, attempts=6, *, refresh=False):
-    """Cached GET; both services answer 403 when asked too fast, so wait and retry."""
-    if refresh or not path.exists():
+    """Cached GET; both services answer 403 when asked too fast, so wait and
+    retry. A refresh downloads each URL once per process (boards share parts)."""
+    if (refresh and url not in _FRESH) or not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         for attempt in range(attempts):
             try:
@@ -52,13 +56,25 @@ def fetch(url, path, attempts=6, *, refresh=False):
             except urllib.error.HTTPError as error:
                 if error.code != 403 or attempt == attempts - 1:
                     raise
-                time.sleep(5 * (attempt + 1))
+                time.sleep(15 * (attempt + 1))
+        _FRESH.add(url)
         time.sleep(1)
     return json.loads(path.read_text())
 
 
 def jlc_record(lcsc, *, refresh=False):
     return fetch(JLC_URL.format(lcsc), CACHE / f"{lcsc}.jlc.json", refresh=refresh)["data"]
+
+
+def easyeda_pin_names(lcsc, *, refresh=False):
+    """Pin number -> pin name of JLCPCB's (EasyEDA) symbol for the part."""
+    shapes = fetch(EASYEDA_URL.format(lcsc), CACHE / f"{lcsc}.easyeda.json", refresh=refresh)["result"]["dataStr"]["shape"]
+    names = {}
+    for shape in shapes:
+        if shape.startswith("P~"):
+            segments = shape.split("^^")
+            names[segments[0].split("~")[3]] = segments[3].split("~")[4] if len(segments) > 3 else ""
+    return names
 
 
 def easyeda_pads(lcsc, *, refresh=False):
@@ -176,11 +192,37 @@ def value_problems(part, record):
     return problems
 
 
+PIN_ALIASES = {"CAT": "K", "CATHODE": "K", "AN": "A", "ANODE": "A", "COL": "C", "EM": "E", "EP": "EPAD",
+               "G": "GND", "VSS": "GND"}
+
+
+def canonical_pin(ref, name):
+    """Comparable form of a pin name, or None when it says nothing (a number,
+    'Pin_3', empty). Diode cathodes are 'C' in JLCPCB's symbols."""
+    text = re.sub(r"[^A-Z0-9+\-]", "", (name or "").upper()).replace("0", "O")
+    if not text or re.fullmatch(r"(PIN)?[O0-9]+", text.replace("O", "0")):
+        return None
+    if ref.startswith("D") and text == "C":
+        return "K"
+    return PIN_ALIASES.get(text, text)
+
+
+def name_problems(ref, ours, theirs):
+    """Pin numbers whose function in our symbol differs from the reference."""
+    problems = []
+    for number, name in sorted(ours.items(), key=lambda item: (len(item[0]), item[0])):
+        a, b = canonical_pin(ref, name), canonical_pin(ref, theirs.get(number, ""))
+        if a and b and a != b:
+            problems.append(f"pin {number} is {name!r} in our symbol but {theirs[number]!r} in the reference")
+    return problems
+
+
 @dataclass
 class Check:
     ref: str
     lcsc: str
     footprint: str
+    assembly: str = "jlc"
     jlc_footprint: str = ""
     placement: Placement | None = None
     stock: int | None = None
@@ -189,6 +231,7 @@ class Check:
 
 
 PAD_MAPS = REPO / "hardware/product/jlc_pad_maps.yaml"
+PINOUTS = REPO / "hardware/product/pinouts.yaml"
 REFERENCE = REPO / "hardware/product/jlc_reference.json"
 
 
@@ -199,15 +242,22 @@ def load_reference():
 def supplier_data(lcsc, *, refresh=False):
     record = jlc_record(lcsc, refresh=refresh)
     footprint, pads = easyeda_pads(lcsc, refresh=refresh)
-    return {"record": record, "footprint": footprint, "pads": pads}
+    return {"record": record, "footprint": footprint, "pads": pads,
+            "pin_names": easyeda_pin_names(lcsc, refresh=False)}
+
+
+def reference_key(part):
+    """The JLCPCB number whose footprint and symbol verify the part: the part
+    itself, or a footprint reference for a part bought elsewhere."""
+    return part["lcsc"] or part.get("footprint_ref", "")
 
 
 def snapshot(*, cached=False):
-    import yaml
-
-    variant = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())["active_variant"]
-    sources = [REPO / "hardware/build" / variant / board / "parts.json" for board in ("main", "ui")]
-    lcscs = sorted({p["lcsc"] for path in sources for p in json.loads(path.read_text()) if p["assembly"] == "jlc"})
+    """Reference every part of every generated variant that has a JLCPCB
+    number, hand-fitted ones included (run gen_circuits.py for each variant
+    first), so CI can check all of them offline."""
+    sources = sorted((REPO / "hardware/build").glob("*/*/parts.json"))
+    lcscs = sorted({reference_key(p) for path in sources for p in json.loads(path.read_text())} - {""})
     parts, notices = {}, set()
     for lcsc in lcscs:
         if cached:
@@ -235,12 +285,49 @@ def snapshot(*, cached=False):
     print(f"Wrote {len(parts)} supplier references to {REFERENCE.relative_to(REPO)} (no stock data)")
 
 
-def check_board(pcb, parts, *, live=False):
-    """One Check per JLC-assembled footprint of a pcbnew board."""
+def our_pads(fp):
     import pcbnew
+
+    pads = []
+    for pad in fp.Pads():
+        if pad.GetNumber() and pad.GetNetname():
+            box = pad.GetBoundingBox()
+            pads.append(Pad(pad.GetNumber(), pcbnew.ToMM(box.GetLeft()), -pcbnew.ToMM(box.GetBottom()),
+                            pcbnew.ToMM(box.GetRight()), -pcbnew.ToMM(box.GetTop())))
+    return pads
+
+
+def check_pinout(check, fp, part, pinout):
+    """Hand-fitted part without a JLCPCB record: the cited manufacturer pinout."""
+    theirs = [(n, x, y) for n, (x, y) in pinout["pads"].items()]
+    check.jlc_footprint = "pinouts.yaml"
+    check.placement = fit(our_pads(fp), theirs, fp.IsFlipped())
+    if check.placement is None:
+        check.problems.append(f"the manufacturer pinout (pads {sorted(pinout['pads'])}) does not land pin for "
+                              f"pin on our footprint: wrong package or pin mapping")
+    check.problems += name_problems(check.ref, part.get("pins", {}), pinout.get("names", {}))
+    check.problems += net_problems(fp, pinout.get("nets", {}))
+
+
+def net_problems(fp, wanted_nets):
+    nets = {pad.GetNumber(): pad.GetNetname() for pad in fp.Pads() if pad.GetNumber()}
+    problems = []
+    for number, wanted in wanted_nets.items():
+        allowed = wanted if isinstance(wanted, list) else [wanted]
+        if nets.get(number) not in allowed:
+            problems.append(f"pin {number} carries {nets.get(number)!r}, the pinout wants {wanted!r}")
+    return problems
+
+
+def check_board(pcb, parts, *, live=False):
+    """One Check per footprint of a pcbnew board: JLC-assembled parts against
+    their JLCPCB record (part, value, rating, stock in live mode) and every
+    part, hand-fitted ones included, against a JLCPCB/EasyEDA footprint and
+    symbol (pin for pin and pin names) or a cited manufacturer pinout."""
     import yaml
 
     pad_maps = yaml.safe_load(PAD_MAPS.read_text())
+    pinouts = yaml.safe_load(PINOUTS.read_text())
     supplier = {} if live else load_reference()
     by_ref = {p["ref"]: p for p in parts}
     quantity = {}
@@ -250,39 +337,41 @@ def check_board(pcb, parts, *, live=False):
     checks = []
     for fp in sorted(pcb.Footprints(), key=lambda fp: fp.GetReference()):
         part = by_ref[fp.GetReference()]
-        if part["assembly"] != "jlc":
+        key = reference_key(part)
+        check = Check(fp.GetReference(), key, str(fp.GetFPID().GetLibItemName()), part["assembly"])
+        checks.append(check)
+        if not key:
+            if part["mpn"] in pinouts:
+                check_pinout(check, fp, part, pinouts[part["mpn"]])
+            else:
+                check.problems.append(f"{part['mpn'] or part['value']!r} has neither a JLCPCB number nor a "
+                                      f"cited pinout in {PINOUTS.name}")
             continue
-        check = Check(fp.GetReference(), part["lcsc"], str(fp.GetFPID().GetLibItemName()))
         try:
-            lcsc = part["lcsc"]
-            if live and lcsc not in supplier:
-                supplier[lcsc] = supplier_data(lcsc, refresh=True)
-            data = supplier[lcsc]
+            if live and key not in supplier:
+                supplier[key] = supplier_data(key, refresh=True)
+            data = supplier[key]
             record = data["record"]
             check.jlc_footprint, theirs = data["footprint"], data["pads"]
         except (OSError, KeyError, TypeError, ValueError) as error:
             check.problems.append(f"no JLCPCB data: {error}")
-            checks.append(check)
             continue
         check.library = record.get("componentLibraryType", "")
-        check.problems += value_problems(part, record)
-        if live:
+        if part["lcsc"]:
+            check.problems += value_problems(part, record)
+        if live and part["assembly"] == "jlc":
             check.stock = int(record.get("stockCount") or 0)
-            if check.stock < quantity[part["lcsc"]] * ORDER_BOARDS:
-                check.problems.append(f"stock {check.stock} < {quantity[part['lcsc']] * ORDER_BOARDS} needed")
-        ours = []
-        for pad in fp.Pads():
-            if pad.GetNumber() and pad.GetNetname():
-                box = pad.GetBoundingBox()
-                ours.append(Pad(pad.GetNumber(), pcbnew.ToMM(box.GetLeft()), -pcbnew.ToMM(box.GetBottom()),
-                                pcbnew.ToMM(box.GetRight()), -pcbnew.ToMM(box.GetTop())))
-        pad_map = pad_maps.get(part["lcsc"], {}).get("map")
+            if check.stock < quantity[key] * ORDER_BOARDS:
+                check.problems.append(f"stock {check.stock} < {quantity[key] * ORDER_BOARDS} needed")
+        pad_map = pad_maps.get(key, {}).get("map")
+        ours = our_pads(fp)
         check.placement = fit(ours, theirs, fp.IsFlipped(), pad_map)
         if check.placement is None:
             check.problems.append(f"JLCPCB footprint {check.jlc_footprint} (pads "
                                   f"{sorted({n for n, _, _ in theirs})}) does not land pin for pin on ours "
                                   f"({sorted({p.number for p in ours})}): wrong package or pin mapping")
-        checks.append(check)
+        if not pad_map:
+            check.problems += name_problems(check.ref, part.get("pins", {}), data.get("pin_names", {}))
     return checks
 
 

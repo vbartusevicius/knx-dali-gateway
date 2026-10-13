@@ -79,7 +79,7 @@ def cap(value, fields=None, footprint=C0603):
     return part("Device", "C", value, footprint, fields)
 
 
-def build(gnd, v3):
+def build(gnd, v3, *, include_interface=True):
     """Build the DALI block. Returns (dali_tx, dali_rx)."""
     gndd = power("GNDD")
     gnda = power("GNDA")
@@ -189,6 +189,12 @@ def build(gnd, v3):
     j3[1] += da1
     j3[2] += da2
 
+    if not include_interface:
+        return {"da1": da1, "da2": da2, "gndd": gndd}
+    return build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx)
+
+
+def build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx):
     block("dali_bridge")
     d5 = part("Diode_Bridge", "DF06S", "DF06S", D_BRIDGE,
               src(mpn="DF06S-T", mfr="MDD", lcsc="C460867",

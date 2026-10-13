@@ -16,7 +16,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "mechanical/scripts"))
 import enclosure_features as ef
 
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+SPEC = ef.SPEC
 WALL = SPEC["enclosure"]["wall"]
 MIN_GAP = SPEC["checks"]["component_to_cover_min_gap"]
 AIR = SPEC["checks"]["component_air_gap"]
@@ -30,7 +30,7 @@ THROUGH_FRONT = ef.THROUGH_FRONT
 
 
 def heights(board):
-    plan = yaml.safe_load((REPO / f"hardware/circuits/variants/poc/layout_{board}.yaml").read_text())
+    plan = yaml.safe_load((REPO / f"hardware/circuits/variants/{ef.VARIANT}/layout_{board}.yaml").read_text())
     return plan["heights"]
 
 
@@ -215,7 +215,7 @@ def test_part_bodies_stay_inside_the_case_walls(board):
 
 def test_wall_check_catches_a_part_overhanging_the_top_edge():
     comps = ef.components("main")
-    jp1 = dict(comps["JP1"], bbox=dict(comps["JP1"]["bbox"], y1=comps["JP1"]["bbox"]["y1"] + 6))
+    jp1 = dict(comps["JP1"], bbox=dict(comps["JP1"]["bbox"], y1=ef.MAIN_H + 1))
     assert wall_crossings("main", dict(comps, JP1=jp1)) == ["JP1"]
 
 

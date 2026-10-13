@@ -8,18 +8,13 @@ stops the build. Parts JLCPCB does not place are marked Assembly=hand.
 
 from pathlib import Path
 
-import yaml
+from product_spec import spec_path
 from skidl import KICAD9 as KICAD
 from skidl import Net, Part
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SPEC_PATH = REPO_ROOT / "hardware" / "product" / "spec.yaml"
+SPEC_PATH = spec_path()
 PROJECT_LIB = Path(__file__).resolve().parent / "lib" / "gateway.kicad_sym"
-
-
-def load_spec():
-    with open(SPEC_PATH, encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
 
 
 PLACE_BLOCK = "misc"
@@ -86,9 +81,12 @@ def part(lib, symbol, value="", footprint="", fields=None, ref=None):
     return p
 
 
-def src(mpn="", mfr="", lcsc="", source="", hand=False):
+def src(mpn="", mfr="", lcsc="", source="", hand=False, footprint_ref=""):
+    """Sourcing fields. `footprint_ref` is a JLCPCB/EasyEDA part number whose
+    footprint verifies ours pin for pin when the part itself is bought
+    elsewhere (hardware/scripts/jlc_parts.py)."""
     fields = {"Manufacturer": mfr, "Manufacturer_Part_Number": mpn, "LCSC": lcsc,
-              "Source": source}
+              "Source": source, "Footprint_Reference": footprint_ref}
     if hand:
         fields["Assembly"] = "hand"
     return fields

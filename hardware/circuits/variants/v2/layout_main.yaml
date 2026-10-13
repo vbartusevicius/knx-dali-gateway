@@ -1,0 +1,111 @@
+frame:
+  size: { x: 31.5, y: 76.5 }
+  copper_layers: 4
+  prune_ground_tracks: false
+  thickness: 1.6
+  min_drill: 0.2
+  min_track: 0.12
+  edge_clearance: 0.3
+  fine_pitch_power_pads: [U1]
+  plane_layers: [In1.Cu]
+  domains: [SELV-KNX, DALI, SELV-AUX]
+  domain_regions:
+    SELV-KNX: { x0: 0.0, y0: 0.0, x1: 31.5, y1: 39.0 }
+    SELV-AUX:
+      - { x0: 0.0, y0: 58.0, x1: 20.2, y1: 68.0 }
+      - { x0: 0.0, y0: 68.0, x1: 15.5, y1: 76.5 }
+    DALI:
+      - { x0: 0.0, y0: 39.0, x1: 31.5, y1: 58.0 }
+      - { x0: 20.2, y0: 58.0, x1: 31.5, y1: 68.0 }
+      - { x0: 15.5, y0: 68.0, x1: 31.5, y1: 76.5 }
+  isolators: [U3]
+  power_nets: [KNX_P, KNX_P_PROT, VFILT, +3V3, +3V3_TRX, +5V, VSW1, VDD1M, SW,
+               DA1, DA2, DALI_ISO15V, DALI_SUPPLY_SW, AUX_P, AUX_FUSED, N$5]
+  slots:
+    - { x0: 0.5, y0: 37.0, x1: 20.5, y1: 41.0 }
+  copper_keepout:
+    - { x0: 0.5, y0: 36.0, x1: 31.0, y1: 42.0 }
+    - { x0: 0.5, y0: 55.0, x1: 21.0, y1: 61.0 }
+    - { x0: 20.2, y0: 55.0, x1: 26.5, y1: 68.0 }
+    - { x0: 15.5, y0: 68.0, x1: 21.5, y1: 76.0 }
+  pours:
+    - { net: GND, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 0.5, x1: 31.0, y1: 35.5 } }
+    - { net: GNDD, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 42.5, x1: 31.0, y1: 54.5 } }
+    - { net: GNDD, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 27.0, y0: 54.6, x1: 31.0, y1: 73.4 } }
+    - { net: GNDA, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 61.5, x1: 20.2, y1: 66.0 } }
+    - { net: GNDA, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 66.1, x1: 15.0, y1: 76.0 } }
+
+case:
+  legs:
+    - { x: 3.0, y: 3.0 }
+    - { x: 28.5, y: 2.5 }
+    - { x: 18.0, y: 73.0 }
+    - { x: 28.0, y: 45.5 }
+    - { x: 1.8, y: 73.5 }
+  pegs:
+    - { x: 3.0, y: 3.0 }
+    - { x: 24.0, y: 65.0 }
+
+heights:
+  default: 2.0
+  C4: 12.0
+  U3: 10.7
+  J1: 9.9
+  J2: 10.3
+  J3: 10.3
+  J4: 7.5
+  J5: 8.5
+  J6: 8.5
+  JP1: 8.5
+  L1: 4.5
+  Q1: 2.4
+
+parts:
+  J1:  { x: 20.5, y: 7.25, rot: 0, block: knx_in, locked: true }
+  J2:  { x: 12.0, y: 74.75, rot: 180, block: aux_in, locked: true }
+  J3:  { x: 28.6, y: 74.75, rot: 180, block: dali_terminal, locked: true }
+  J4:  { x: 24.0, y: 28.3, rot: 0, block: int_ui, locked: true }
+  J5:  { x: 29.0, y: 56.75, rot: 0, block: int_bus, locked: true }
+  J6:  { x: 6.19, y: 33.4, rot: 90, block: int_logic, locked: true }
+  JP1: { x: 27.4, y: 66.0, rot: 0, block: dali_switch, locked: true }
+  U1:  { x: 11.0, y: 11.0, rot: 180, block: ncn5130 }
+  U2:  { x: 7.0, y: 25.0, rot: 0, block: buck5v }
+  U3:  { x: 19.24, y: 68.0, rot: 180, side: back, block: dcdc_iso, locked: true }
+  D1:  { x: 23.0, y: 13.0, rot: 0, block: knx_in }
+  D2:  { x: 23.0, y: 17.0, rot: 180, block: knx_in }
+  C1:  { x: 15.8, y: 10.6, rot: 270, block: ncn5130 }
+  C2:  { x: 18.5, y: 9.2, rot: 0, block: ncn5130 }
+  C3:  { x: 15.1, y: 12.0, rot: 90, side: back, block: ncn5130 }
+  C4:  { x: 26.0, y: 32.5, rot: 180, side: back, block: storage, locked: true }
+  C5:  { x: 15.4, y: 6.6, rot: 0, block: ncn5130 }
+  C6:  { x: 6.2, y: 7.9, rot: 270, block: ncn5130 }
+  C7:  { x: 4.9, y: 16.8, rot: 270, block: ncn5130 }
+  C8:  { x: 13.6, y: 3.4, rot: 270, block: ncn5130 }
+  C9:  { x: 6.9, y: 3.4, rot: 180, block: ncn5130 }
+  C10: { x: 8.6, y: 27.9, rot: 0, block: buck5v }
+  C11: { x: 3.6, y: 24.0, rot: 270, block: buck5v }
+  C12: { x: 19.2, y: 22.6, rot: 0, block: buck5v }
+  C13: { x: 19.2, y: 20.6, rot: 0, block: buck5v }
+  C14: { x: 16.0, y: 22.0, rot: 0, block: buck5v }
+  C15: { x: 12.2, y: 16.2, rot: 0, block: ncn5130 }
+  L1:  { x: 12.0, y: 20.6, rot: 90, side: back, block: ncn5130 }
+  L2:  { x: 11.8, y: 24.5, rot: 0, block: buck5v }
+  R1:  { x: 12.6, y: 5.6, rot: 0, side: back, block: ncn5130 }
+  R2:  { x: 9.0, y: 5.6, rot: 0, side: back, block: ncn5130 }
+  R3:  { x: 18.8, y: 3.4, rot: 180, side: back, block: ncn5130 }
+  R4:  { x: 7.2, y: 16.6, rot: 90, block: ncn5130 }
+  R5:  { x: 3.0, y: 29.0, rot: 90, block: buck5v }
+  R6:  { x: 4.6, y: 29.0, rot: 90, block: buck5v }
+  R7:  { x: 10.5, y: 30.2, rot: 0, block: buck5v }
+  R8:  { x: 14.0, y: 30.2, rot: 0, block: buck5v }
+  R9:  { x: 4.6, y: 11.2, rot: 0, block: ncn5130 }
+  Y1:  { x: 10.6, y: 3.9, rot: 180, block: ncn5130 }
+  Q1:  { x: 15.0, y: 48.0, rot: 0, block: dali_limit }
+  Q2:  { x: 22.0, y: 52.0, rot: 180, block: dali_limit }
+  R10: { x: 22.5, y: 47.0, rot: 0, block: dali_limit }
+  R11: { x: 6.5, y: 51.0, rot: 0, block: dali_limit }
+  C16: { x: 18.5, y: 61.5, rot: 0, block: dcdc_iso }
+  C17: { x: 7.0, y: 43.0, rot: 0, block: dali_limit }
+  F1:  { x: 4.5, y: 68.0, rot: 0, block: aux_fuse }
+  D3:  { x: 12.0, y: 63.0, rot: 0, block: aux_in }
+  D4:  { x: 12.0, y: 67.0, rot: 0, block: aux_in }

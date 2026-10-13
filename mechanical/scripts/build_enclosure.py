@@ -33,8 +33,11 @@ from enclosure_features import (
     SHOULDER_Z,
     SPEC,
     TOTAL_D,
+    VARIANT,
     WIDTH,
+    board_slab,
     button_holes,
+    horizontal_capacitor,
     led_windows,
     legs,
     oled_module,
@@ -88,6 +91,28 @@ def box(x0, x1, y0, y1, z0, z1):
 
 def cylinder(x, y, z0, z1, diameter):
     return cq.Workplane("XY").circle(diameter / 2).extrude(z1 - z0).translate((x, y, z0))
+
+
+def capacitor_body(bounds):
+    cx = (bounds["x0"] + bounds["x1"]) / 2
+    cz = (bounds["z0"] + bounds["z1"]) / 2
+    radius = (bounds["x1"] - bounds["x0"]) / 2
+    return (cq.Workplane("XZ").center(cx, cz).circle(radius)
+            .extrude(bounds["y1"] - bounds["y0"]).translate((0, bounds["y1"], 0)))
+
+
+def capacitor_cradles():
+    cap = horizontal_capacitor()
+    if cap is None:
+        return []
+    cx, cz = (cap["x0"] + cap["x1"]) / 2, (cap["z0"] + cap["z1"]) / 2
+    radius = (cap["x1"] - cap["x0"]) / 2
+    result = []
+    for y in (cap["y0"] + 4, cap["y1"] - 4):
+        body = box(cap["x0"] - 1.5, cap["x1"] + 1.5, y - 1, y + 1, WALL - 0.1, cz + 0.5)
+        cavity = cq.Workplane("XZ").center(cx, cz).circle(radius).extrude(4).translate((0, y + 2, 0))
+        result.append(body.cut(cavity))
+    return result
 
 
 def rail_edges():
@@ -195,7 +220,7 @@ def build_base():
         base = base.cut(box(slot["x0"], slot["x1"], HIDDEN_H - WALL - 1, HIDDEN_H + 1, slot["z0"], slot["z1"]))
     x0, x1, _ = knx_recess()
     base = base.cut(box(x0, x1, -1, WALL + 1, MAIN_Z, BASE_TOP_Z + 1))
-    for body in leg_bodies():
+    for body in leg_bodies() + capacitor_cradles():
         base = base.union(walls_clip(body))
     for tab in screw_tabs():
         outer, wall_in, _ = screw_axis_y(tab)
@@ -251,10 +276,17 @@ def snap_bodies():
 
 
 def lip_bodies():
-    """Locating lips on the inside of the base side walls."""
+    """Locating lips on the inside of the base side walls, interrupted where a
+    stacked board's edge passes through their height."""
     x_out = INNER_W / 2 - 0.15
-    return [box(*sorted((s * x_out, s * (x_out - LIP["thickness"]))), WALL + 1, HIDDEN_H - WALL - 1,
-                BASE_TOP_Z - LIP["depth"], BASE_TOP_Z) for s in (1, -1)]
+    z0 = BASE_TOP_Z - LIP["depth"]
+    lips = [box(*sorted((s * x_out, s * (x_out - LIP["thickness"]))), WALL + 1, HIDDEN_H - WALL - 1,
+                z0, BASE_TOP_Z) for s in (1, -1)]
+    for slab in (board_slab(b) for b in SPEC["variants"][VARIANT]["boards"] if b not in ("main", "ui")):
+        if slab["z0"] < BASE_TOP_Z and slab["z1"] > z0:
+            notch = box(-WIDTH / 2, WIDTH / 2, slab["y0"] - 0.5, slab["y1"] + 0.5, z0 - 1, BASE_TOP_Z + 1)
+            lips = [lip.cut(notch) for lip in lips]
+    return lips
 
 
 def shoulder_plate(side):

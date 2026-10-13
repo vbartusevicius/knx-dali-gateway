@@ -1,0 +1,70 @@
+frame:
+  size: { x: 31.5, y: 40.5 }
+  copper_layers: 4
+  prune_ground_tracks: false
+  thickness: 1.6
+  min_drill: 0.2
+  min_track: 0.12
+  edge_clearance: 0.3
+  fine_pitch_power_pads: [D1, D2, D3, U1]
+  plane_layers: [In1.Cu]
+  domains: [SELV-KNX]
+  domain_regions:
+    SELV-KNX: { x0: 0.0, y0: 0.0, x1: 31.5, y1: 40.5 }
+  isolators: []
+  power_nets: [+3V3, +5V, +5V_XIAO]
+  pours:
+    - { net: GND, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 0.5, x1: 31.0, y1: 40.0 } }
+
+# Winstar WEA012864D-03 drawing (p.3): board 27.3 x 27.3, glass 26.7 x 19.26
+# 0.3 from the left and 4.02 from the top edge, header pin 1 (VCC) 6.54 from
+# the left and 1.65 from the top, 2.54 pitch to the right.
+oled_module:
+  outline: { x: 2.1, y: 12.8, w: 27.3, h: 27.3 }
+  glass: { x: 2.4, y: 16.82, w: 26.7, h: 19.26 }
+
+case:
+  standoffs:
+    - { x: 2.0, y: 2.0 }
+    - { x: 29.5, y: 2.0 }
+    - { x: 0.5, y: 39.5 }
+    - { x: 31.0, y: 39.5 }
+
+zooms:
+  controls: { x0: 0.0, y0: 0.0, x1: 31.5, y1: 13.5 }
+
+heights:
+  default: 2.0
+  J1: 7.5
+  J2: 2.5
+  U2: 14.5      # 8.5 mm sockets + 2.5 mm header plastic + XIAO 3.5 mm (USB-C)
+  SW1: 7.0
+  SW2: 7.0
+  D1: 0.65
+  D2: 0.65
+  D3: 0.65
+
+parts:
+  J1:  { x: 20.0, y: 3.3, rot: 0, side: back, block: int_main, locked: true }
+  J2:  { x: 8.64, y: 38.45, rot: 90, block: oled, locked: true }
+  U1:  { x: 7.0, y: 15.3, rot: 0, block: mcu_power }
+  U2:  { x: 15.75, y: 26.7, rot: 0, side: back, block: mcu, locked: true }
+  U3:  { x: 16.0, y: 18.3, rot: 0, block: status_leds }
+  SW1: { x: 8.0, y: 8.8, rot: 0, block: btn_ladder, locked: true }
+  SW2: { x: 24.0, y: 8.8, rot: 0, block: btn_ladder, locked: true }
+  D1:  { x: 6.5, y: 3.5, rot: 0, block: status_leds, locked: true }
+  D2:  { x: 15.75, y: 3.5, rot: 0, block: status_leds, locked: true }
+  D3:  { x: 25.0, y: 3.5, rot: 0, block: status_leds, locked: true }
+  C1:  { x: 5.5, y: 17.8, rot: 0, block: mcu_power }
+  C2:  { x: 17.0, y: 14.3, rot: 0, block: btn_ladder }
+  C3:  { x: 20.5, y: 18.3, rot: 90, block: status_leds }
+  C4:  { x: 16.0, y: 21.3, rot: 0, block: status_leds }
+  C5:  { x: 6.5, y: 3.5, rot: 0, side: back, block: status_leds }
+  C6:  { x: 15.75, y: 6.7, rot: 0, block: status_leds }
+  C7:  { x: 29.0, y: 3.5, rot: 0, side: back, block: status_leds }
+  R1:  { x: 12.0, y: 23.3, rot: 0, block: mcu }
+  R2:  { x: 16.0, y: 23.3, rot: 0, block: mcu }
+  R3:  { x: 20.5, y: 14.3, rot: 0, block: btn_ladder }
+  R4:  { x: 14.0, y: 13.3, rot: 0, block: btn_ladder }
+  R5:  { x: 11.0, y: 13.3, rot: 0, block: btn_ladder }
+  R6:  { x: 27.5, y: 14.3, rot: 90, block: status_leds }

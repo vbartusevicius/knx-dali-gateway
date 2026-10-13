@@ -1,0 +1,174 @@
+active_variant: v2
+product:
+  revision: B
+  release: v2
+  status: draft-unvalidated
+
+din_envelope:
+  modules: 2
+  max_board_width_inside: 31.5
+  front_board_max: { width: 31.5, height: 40.5, depth: 15.0 }
+
+variants:
+  v2:
+    description: "2 DIN, main power/terminals + DALI interface + UI/controller"
+    modules: 2
+    boards: [main, interface, ui]
+
+boards:
+  main:
+    z: 18.0
+    horizontal_capacitor:
+      ref: C4
+      diameter: 10.0
+      length: 16.0
+      lead_drop: 7.0
+      bend_clearance: 3.0
+      direction: negative-y
+    max_outline: { width: 31.5, height: 76.5 }
+  ui:
+    z: 53.8
+    max_outline: { width: 31.5, height: 40.5 }
+  interface:
+    plane: parallel-to-front
+    thickness: 1.6
+    z: 30.6               # main top 18.0 + 8.5 socket + 2.5 header plastic + 1.6
+    y_offset: 33.6
+    carried_by: main      # plugged onto main J5/J6, no case retention of its own
+    max_outline: { width: 31.5, height: 27.5 }
+    isolation:
+      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
+  interconnects:
+    - from: main
+      to: ui
+      signals: [+5V, GND, +3V3, KNX_TXD, KNX_RXD, NCN_SAVEB, DALI_TX, DALI_RX, GND, GND]
+      refs: { main: J4, ui: J1 }
+      domain: SELV-KNX
+      type: cable
+      pins: 10
+      connector_pitch: 1.0
+    - from: main
+      to: interface
+      signals: [+3V3, GND, DALI_TX, DALI_RX]
+      refs: { main: J6, interface: J1 }
+      domain: SELV-KNX
+      type: board-to-board
+      pins: 4
+    - from: main
+      to: interface
+      signals: [DA1, DA2, GNDD]
+      refs: { main: J5, interface: J2 }
+      domain: DALI
+      type: board-to-board
+      pins: 3
+
+front_ui:
+  display:
+    geometry: hardware/circuits/variants/v2/layout_ui.yaml oled_module
+    part: Winstar WEA012864DWPP3N00003 (WEA012864D-03 drawing)
+
+enclosure:
+  screw_tabs:
+    - { x: -8.0, side: bottom }
+    - { x: 1.55, side: top }
+
+mcu:
+  board: ui
+
+# --- BEGIN GENERATED (hardware/scripts/gen_circuits.py) ---
+derived:
+  mcu_pins:
+    led_data:
+      pin: D0/GPIO0
+      net: LED_DATA
+      note: RMT, SK6805 chain via 5 V buffer on UI
+    button_ladder:
+      pin: D2/GPIO2
+      net: BTN_LADDER
+      note: 'ADC ladder: PRG/RST + FUNC on UI board'
+    led_dali:
+      pin: D3/GPIO21
+      net: LED_DALI
+      note: spare, unused on the UI board
+    i2c_sda:
+      pin: D4/GPIO22
+      net: I2C_SDA
+      note: OLED on UI board
+    i2c_scl:
+      pin: D5/GPIO23
+      net: I2C_SCL
+      note: OLED on UI board
+    knx_uart_tx:
+      pin: D6/GPIO16
+      net: KNX_RXD
+      note: MCU TX -> NCN5130 SDI/RXD
+    knx_uart_rx:
+      pin: D7/GPIO17
+      net: KNX_TXD
+      note: NCN5130 SDO/TXD -> MCU RX
+    dali_rx:
+      pin: D8/GPIO19
+      net: DALI_RX
+      note: RX optocoupler -> RMT RX
+    ncn_saveb:
+      pin: D9/GPIO20
+      net: NCN_SAVEB
+      note: NCN5130 SAVEB (open-collector)
+    dali_tx:
+      pin: D10/GPIO18
+      net: DALI_TX
+      note: RMT TX -> TX optocoupler
+  net_classes:
+    main:
+      SELV-KNX:
+      - GND
+      - +3V3_TRX
+      - +5V
+      - KNX_P
+      - KNX_P_PROT
+      - KNX_TXD
+      - KNX_RXD
+      - NCN_SAVEB
+      - VFILT
+      - CCP
+      - CAV
+      - CEQ1
+      - CEQ2
+      - VSW1
+      - VDD1M
+      - Net-*
+      KNX-Power:
+      - KNX_P
+      - KNX_P_PROT
+      - VFILT
+      SELV-AUX:
+      - GNDA
+      - AUX_P
+      - AUX_FUSED
+      DALI:
+      - GNDD
+      - DA1
+      - DA2
+      - DA_P
+      - DALI_GATE
+      - DALI_GATE_SW
+      - DALI_SENSE
+      - DALI_BOOT
+      - DALI_ISO15V
+      - DALI_SUPPLY_SW
+      - RX_LIM_IN
+    interface:
+      SELV-KNX:
+      - GND
+      - +3V3
+      - DALI_TX
+      - DALI_RX
+      DALI:
+      - GNDD
+      - DA1
+      - DA2
+      - DA_P
+    ui:
+      SELV-KNX:
+      - '*'
+# --- END GENERATED ---

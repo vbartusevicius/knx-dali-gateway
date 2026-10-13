@@ -31,11 +31,13 @@ COLOURS = {("ui", "OLED glass"): (0.02, 0.02, 0.05), ("ui", "OLED board"): (0.1,
 
 def board_plates():
     plates = []
-    for board, convert, (w, h), z0 in (("main", ef.main_to_enc, (ef.MAIN_W, ef.MAIN_H), be.MAIN_BOTTOM_Z),
-                                       ("ui", ef.ui_to_enc, (ef.UI_W, ef.UI_H), be.UI_BOARD_Z)):
-        (x0, y0), (x1, y1) = convert(0, 0), convert(w, h)
-        plate = box(x0, x1, y0, y1, z0, z0 + be.MAIN_THICK)
-        plates.append((plate, MAIN if board == "main" else UI))
+    for board in ef.SPEC["variants"][ef.VARIANT]["boards"]:
+        config = ef.SPEC["boards"][board]
+        w, h = config["max_outline"].values()
+        z0 = be.UI_BOARD_Z if board == "ui" else config["z"] - config["thickness"]
+        (x0, y0), (x1, y1) = ef.board_to_enc(board, 0, 0), ef.board_to_enc(board, w, h)
+        plate = box(x0, x1, y0, y1, z0, z0 + config["thickness"])
+        plates.append((plate, UI if board == "ui" else MAIN))
     return plates
 
 
@@ -44,7 +46,9 @@ def part_solids():
     for b in ef.part_boxes():
         ref = b["ref"]
         cx, cy = (b["x0"] + b["x1"]) / 2, (b["y0"] + b["y1"]) / 2
-        if b["board"] == "ui" and ref in LED_COLOURS:
+        if b.get("shape") == "horizontal_capacitor":
+            solids.append((be.capacitor_body(b), (0.35, 0.35, 0.38)))
+        elif b["board"] == "ui" and ref in LED_COLOURS:
             solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), LED_COLOURS[ref]))
         elif b["board"] == "ui" and ref in ("SW1", "SW2"):
             solids.append((box(cx - 3, cx + 3, cy - 3, cy + 3, b["z0"], b["z0"] + 3.5), PART))
@@ -59,7 +63,7 @@ def part_solids():
 
 def support_solids():
     bodies = (be.leg_bodies() + be.screw_tab_bodies() + be.peg_bodies() + be.standoff_bodies()
-              + be.snap_bodies() + be.baffle_bodies())
+              + be.snap_bodies() + be.baffle_bodies() + be.capacitor_cradles())
     return [(b, SUPPORT) for b in bodies]
 
 

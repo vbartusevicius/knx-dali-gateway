@@ -7,6 +7,7 @@
 product:
   name: KNX DALI Gateway
   revision: A
+  release: v1              # hardware/releases/<release>/
   status: draft-unvalidated
 
 active_variant: poc        # 3 DIN, 2 boards, 2-layer POC (see variants below)
@@ -113,6 +114,12 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
   #   SMD RGB LEDs on the board shine through a 0.6 mm skin of the front wall, one baffle tube each
   board_z: 53.8
   board_top_z: 55.4
+  oled:
+    header_gap: 3.13      # UI board top to module back; keeps the UI board where the 7 mm buttons need it
+    module_board: 1.0
+    panel: 1.37
+    header_plastic_max: 2.5
+    pin_tail: 6.0
   buttons:
     - { id: prg_rst, label: PRG/RST, actuator: tactile-PTS645SL70, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4,
         tap: reboot (ESP32 + KNX stack, configuration kept), hold_5s: KNX programming mode on/off }
@@ -124,7 +131,8 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
     - { id: knx, ref: D2, shows: "dim green idle, green traffic, red programming mode, red blinking no bus" }
     - { id: dali, ref: D3, shows: "dim green idle, green our frames, cyan other masters, amber gear fault, red no power, red blinking short, blue commissioning" }
   display:
-    type: oled-0.96in-ssd1306-i2c   # populated; module pins solder into the UI board; glass flush with the front
+    type: oled-0.96in-ssd1306-i2c   # populated; glass flush with the front
+    part: Winstar WEA012864DWPP3N00003 (WEA012864D-03 drawing)
     geometry: hardware/circuits/variants/poc/layout_ui.yaml oled_module
   labels_area: true
 

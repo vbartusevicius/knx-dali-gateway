@@ -7,21 +7,32 @@
   - SMD RGB LEDs on the board shining through a thin skin of the front wall,
     each inside its own baffle tube so no light reaches a neighbour's window
 
-Module stack above the UI board, from a typical 0.96" SSD1306 I2C module
-(no manufacturer drawing obtained; measure before printing): header spacer
-2.5 + module board 1.6 + OLED panel 1.4.
+The OLED module stack comes from the spec (front_ui.oled): Winstar
+WEA012864D-03 (drawing p.3), board 1.0 + glass 1.37, resting face down in the
+cover pocket; its pins are soldered from behind the UI board after the board
+has snapped in, so the header plastic only has to fit the gap and never sets
+the glass height.
 """
 
+import sys
 from dataclasses import dataclass
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hardware/circuits"))
+from product_spec import load_spec
 
 FRONT_OUTER_Z = 61.0
 WALL = 1.6
 FRONT_INNER_Z = FRONT_OUTER_Z - WALL
 BOARD_THICKNESS = 1.6
 
-OLED_HEADER_SPACER = 2.5
-OLED_MODULE_BOARD = 1.6
-OLED_PANEL = 1.4
+OLED = load_spec()["front_ui"]["oled"]
+OLED_MODULE_BOARD = OLED["module_board"]
+OLED_PANEL = OLED["panel"]
+OLED_HEADER_PLASTIC_MAX = OLED["header_plastic_max"]
+OLED_PIN_TAIL = OLED["pin_tail"]
+OLED_PIN_MIN_PROTRUSION = 1.0
+OLED_HEADER_SPACER = OLED["header_gap"]
 OLED_MODULE_STACK = OLED_HEADER_SPACER + OLED_MODULE_BOARD + OLED_PANEL
 OLED_GLASS_TARGET_Z = FRONT_OUTER_Z - 0.1
 OLED_GLASS_RANGE = (FRONT_OUTER_Z - 0.3, FRONT_OUTER_Z)
@@ -70,6 +81,12 @@ class UIStackup:
         lo, hi = OLED_GLASS_RANGE
         if not lo <= self.oled_glass_z <= hi:
             violations.append(f"OLED glass z={self.oled_glass_z:.2f} outside [{lo:.2f}, {hi:.2f}]")
+        if OLED_HEADER_SPACER < OLED_HEADER_PLASTIC_MAX + 0.3:
+            violations.append(f"OLED header gap {OLED_HEADER_SPACER:.2f} leaves no room for "
+                              f"{OLED_HEADER_PLASTIC_MAX} mm of header plastic")
+        pin_end = self.oled_board_top_z - OLED_MODULE_BOARD - OLED_HEADER_PLASTIC_MAX - OLED_PIN_TAIL
+        if pin_end > self.board_z - OLED_PIN_MIN_PROTRUSION:
+            violations.append(f"OLED pins end at z={pin_end:.2f}, not through the UI board")
         if self.pocket_depth > WALL - 0.8:
             violations.append(f"pocket {self.pocket_depth:.2f} leaves less than 0.8 mm of front wall")
         for name, cap_z in (("PRG/RST", self.prog_cap_z), ("FUNC", self.reset_cap_z)):

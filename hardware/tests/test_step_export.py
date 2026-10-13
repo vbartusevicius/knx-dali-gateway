@@ -12,14 +12,10 @@ from pathlib import Path
 
 import pcbnew
 import pytest
+from board_variant import BOARDS, layout_path
 
 REPO = Path("/work")
-
-
-def _board_path(board):
-    import yaml
-    spec = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
-    return REPO / "hardware/layout" / spec["active_variant"] / board / f"{board}.kicad_pcb"
+_board_path = layout_path
 
 
 CUSTOM_MODELS = {
@@ -27,14 +23,16 @@ CUSTOM_MODELS = {
     "Converter_DCDC_RECOM_REM3_DIP24",
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
     "Fuse_1812_4532Metric",
+    "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent",
 }
 
 MODEL_SIZES = {
-    "XIAO_ESP32C6_Header": (21.0, 17.8, 3.5),
+    "XIAO_ESP32C6_Header": (17.8, 22.0, 3.5),
     "Converter_DCDC_RECOM_REM3_DIP24": (31.8, 20.3, 10.7),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": (11.6, 9.1, 8.0),
     "Fuse_1812_4532Metric": (4.5, 3.2, 1.2),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": (8.55, 2.8, 9.9),
+    "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent": (10.0, 19.3, 12.0),
 }
 
 
@@ -91,7 +89,7 @@ def _export_courtyard_json(board):
     return out
 
 
-@pytest.mark.parametrize("board", ["main", "ui"])
+@pytest.mark.parametrize("board", BOARDS)
 def test_no_unresolved_3d_models(board):
     """kicad-cli pcb export step must not report any unresolved 3D models."""
     pcb = _board_path(board)
@@ -107,16 +105,14 @@ def test_no_unresolved_3d_models(board):
 
 def test_xiao_body_raised():
     """The XIAO body bottom must be ≥ 8 mm above the board (raised on headers)."""
-    pcb = _board_path("main")
-    b = pcbnew.LoadBoard(str(pcb))
-    fp = b.FindFootprintByReference("U7")
-    assert fp is not None, "U7 (XIAO) not found"
-    models = fp.Models()
-    assert len(models) > 0, "U7 has no 3D model"
+    xiao = [fp for board in BOARDS for fp in pcbnew.LoadBoard(str(_board_path(board))).Footprints()
+            if str(fp.GetFPID().GetLibItemName()) == "XIAO_ESP32C6_Header"]
+    assert len(xiao) == 1, "exactly one XIAO expected"
+    models = xiao[0].Models()
+    assert len(models) > 0, "the XIAO has no 3D model"
     for m in models:
-        z_offset = m.m_Offset.z
-        assert z_offset >= 8.0, (
-            f"U7 Z offset {z_offset:.1f} mm < 8.0 mm (not raised on headers)")
+        assert m.m_Offset.z == pytest.approx(11.0), \
+            f"XIAO Z offset {m.m_Offset.z:.1f} mm; socket 8.5 + header plastic 2.5 = 11.0"
 
 
 def test_negative_offset_board():

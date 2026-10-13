@@ -1,2 +1,2 @@
 Designator,Value,Manufacturer part,Notes
-J2,OLED,SSD1306 0.96in 128x64 I2C module,"module pins soldered straight into these holes; buy the GND,VCC,SCL,SDA pin order (some sellers swap GND/VCC)"
+J2,OLED,WEA012864DWPP3N00003,"Winstar WEA012864D-03 (white; L = yellow, B = sky blue), 27.3x27.3 mm, SSD1306 I2C, drawing WEA012864D-03 p.3; lay it face down in the cover pocket, push the UI board over its pins, then solder them from the back"

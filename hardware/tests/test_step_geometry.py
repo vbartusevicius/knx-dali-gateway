@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 import pytest
+from board_variant import BOARDS
 
 REPO = Path("/work")
 
@@ -58,7 +59,7 @@ def _find_solid_for_model(solids, model_size, expected_center, tol=5.0):
     return None
 
 
-@pytest.mark.parametrize("board", ["main", "ui"])
+@pytest.mark.parametrize("board", BOARDS)
 def test_custom_models_aligned_to_courtyard(board):
     """Every custom 3D model's world XY center must match its footprint's
     courtyard center ±0.5 mm, measured from the exported STEP geometry."""

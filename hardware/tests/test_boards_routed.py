@@ -3,19 +3,14 @@ project rules written next to them (layout.py sync/route)."""
 
 import json
 import subprocess
-from pathlib import Path
 
 import pytest
-import yaml
-
-REPO = Path(__file__).resolve().parents[2]
-VARIANT = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())["active_variant"]
-BOARDS = ("main", "ui")
+from board_variant import BOARDS, layout_path
 
 
 @pytest.fixture(scope="module", params=BOARDS)
 def drc(request, tmp_path_factory):
-    board = REPO / "hardware/layout" / VARIANT / request.param / f"{request.param}.kicad_pcb"
+    board = layout_path(request.param)
     report = tmp_path_factory.mktemp(request.param) / "drc.json"
     subprocess.run(["kicad-cli", "pcb", "drc", "--format", "json", "--severity-all",
                     "--output", str(report), str(board)],

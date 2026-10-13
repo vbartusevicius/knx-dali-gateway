@@ -804,18 +804,19 @@ def test_dali_rx_from_opto():
 
 def test_led_chain_is_buffered_to_5v_with_series_resistor():
     """LED_DATA (3.3 V) drives the 5 V buffer, whose output reaches the first
-    SK6805 through a series resistor; each LED feeds the next one."""
+    SK6805 through a series resistor; each LED feeds the next one. Pin numbers
+    from the SK6805-EC15 datasheet p.4: 1 DIN, 2 VDD, 3 DOUT, 4 GND."""
     ui = _parse_netlist("ui")
     assert ("U1", "2") in ui["LED_DATA"]
     assert ("U1", "5") in ui["+5V"]
     buffered = next(n for n, m in ui.items() if ("U1", "4") in m)
     resistor = next(ref for ref, _ in ui[buffered] if ref.startswith("R"))
     first = next(n for n, m in ui.items() if (resistor, "1") in m or (resistor, "2") in m if n != buffered)
-    assert ("D1", "3") in ui[first]
-    assert ("D1", "1") in ui["LED_CHAIN1"] and ("D2", "3") in ui["LED_CHAIN1"]
-    assert ("D2", "1") in ui["LED_CHAIN2"] and ("D3", "3") in ui["LED_CHAIN2"]
+    assert ("D1", "1") in ui[first]
+    assert ("D1", "3") in ui["LED_CHAIN1"] and ("D2", "1") in ui["LED_CHAIN1"]
+    assert ("D2", "3") in ui["LED_CHAIN2"] and ("D3", "1") in ui["LED_CHAIN2"]
     for led in ("D1", "D2", "D3"):
-        assert (led, "4") in ui["+5V"] and (led, "2") in ui["GND"]
+        assert (led, "2") in ui["+5V"] and (led, "4") in ui["GND"]
 
 
 def test_i2c_pullups_present():

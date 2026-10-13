@@ -111,9 +111,9 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb):
     # --- XIAO ESP32C6 on female headers (counter-clockwise pin map) ---
     block("mcu")
     u1 = part("gateway", "XIAO_ESP32C6", "XIAO ESP32C6", XIAO_FP,
-              src(mpn="Seeed XIAO ESP32C6", mfr="Seeed Studio", hand=True,
-                  source="Seeed wiki/schematic v1.0; plugs into 2x 1x7 female "
-                         "headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)"))
+              src(mpn="102010636", mfr="Seeed Studio", hand=True, footprint_ref="C9900124963",
+                  source="XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); "
+                         "plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)"))
     u1["1"] += led_prog        # D0/GPIO0
     u1["3"] += btn_ladder      # D2/GPIO2 (ADC)
     u1["4"] += led_dali        # D3/GPIO21

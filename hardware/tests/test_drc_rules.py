@@ -6,23 +6,41 @@ project rules."""
 import json
 import shutil
 import subprocess
-from pathlib import Path
 
 import pcbnew
 import pytest
+from board_variant import BOARDS, layout_path
 
-REPO = Path(__file__).resolve().parents[2]
+POWER_NET = {"main": "VFILT", "ui": "+3V3", "interface": "DA_P"}
 
 
-@pytest.mark.parametrize("board,net", [("main", "VFILT"), ("ui", "+3V3")])
-def test_project_rules_are_enforced(tmp_path, board, net):
-    src = REPO / f"hardware/layout/poc/{board}"
+def free_spot(pcb, length=2.0, margin=1.5):
+    """Start of a horizontal segment inside the board that no pad comes near,
+    since KiCad does not check the width of copper inside a pad."""
+    box = pcb.GetBoardEdgesBoundingBox()
+    pads = [p.GetBoundingBox() for p in pcb.GetPads()]
+    step = pcbnew.FromMM(0.5)
+    grow = pcbnew.FromMM(margin)
+    for y in range(box.GetY() + grow, box.GetBottom() - grow, step):
+        for x in range(box.GetX() + grow, box.GetRight() - grow - pcbnew.FromMM(length), step):
+            seg = pcbnew.BOX2I(pcbnew.VECTOR2I(x, y), pcbnew.VECTOR2L(pcbnew.FromMM(length), 0))
+            seg.Inflate(grow)
+            if not any(seg.Intersects(p) for p in pads):
+                return x, y
+    pytest.fail("no pad-free spot for the probe track")
+
+
+@pytest.mark.parametrize("board", BOARDS)
+def test_project_rules_are_enforced(tmp_path, board):
+    net = POWER_NET[board]
+    src = layout_path(board).parent
     for suffix in (".kicad_pcb", ".kicad_pro", ".kicad_dru"):
         shutil.copy(src / f"{board}{suffix}", tmp_path / f"{board}{suffix}")
     pcb = pcbnew.LoadBoard(str(tmp_path / f"{board}.kicad_pcb"))
+    x, y = free_spot(pcb)
     track = pcbnew.PCB_TRACK(pcb)
-    track.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(20), pcbnew.FromMM(-20)))
-    track.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(22), pcbnew.FromMM(-20)))
+    track.SetStart(pcbnew.VECTOR2I(x, y))
+    track.SetEnd(pcbnew.VECTOR2I(x + pcbnew.FromMM(2), y))
     track.SetWidth(pcbnew.FromMM(0.2))
     track.SetLayer(pcbnew.F_Cu)
     pcb.Add(track)

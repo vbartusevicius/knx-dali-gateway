@@ -19,6 +19,7 @@ R2512 = "Resistor_SMD:R_2512_6332Metric"
 C0603 = "Capacitor_SMD:C_0603_1608Metric"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 C_ELEC = "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm"
+C_ELEC_BENT = "gateway_fp:CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent"
 D_SMA = "Diode_SMD:D_SMA"
 D_SOD123 = "Diode_SMD:D_SOD-123"
 TSOT23_6 = "Package_TO_SOT_SMD:TSOT-23-6"
@@ -37,7 +38,7 @@ def cap(value, fields=None, footprint=C0603):
     return part("Device", "C", value, footprint, fields)
 
 
-def build(gnd):
+def build(gnd, *, horizontal_storage=False):
     """Build the KNX block. Returns dict with knx_txd, knx_rxd, saveb, v5."""
     knx_p = Net("KNX_P")
     knx_p_prot = Net("KNX_P_PROT")
@@ -165,9 +166,13 @@ def build(gnd):
     c_ceq[2] += ceq2
 
     # --- C4: VFILT storage (Table 6, 470µF/35V) ---
-    c_vfilt = part("Device", "C_Polarized", "470u 35V", C_ELEC,
-                   src(mpn="KMG35V470M10*16 LO", mfr="Chemi-Con", lcsc="C165500",
-                       source="NCN5130 Table 6 C4 470µF 35V storage; D10 L16 P5"))
+    storage_source = "NCN5130 Table 6 C4 470µF 35V storage; D10 L16 P5"
+    if horizontal_storage:
+        storage_source += ("; hand-fit lying down from the back: bend both leads 90 deg 3 mm from the body, "
+                           "body axis 7 mm below the board (2 mm air gap) in the base cradles, solder on the front")
+    c_vfilt = part("Device", "C_Polarized", "470u 35V", C_ELEC_BENT if horizontal_storage else C_ELEC,
+                   src(mpn="KMG35V470M10*16 LO", mfr="SamYoung", lcsc="C165500", hand=horizontal_storage,
+                       source=storage_source))
     c_vfilt.fields["Place"] = "ncn_left"
     c_vfilt[1] += vfilt
     c_vfilt[2] += gnd

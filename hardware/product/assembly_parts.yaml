@@ -8,8 +8,13 @@
 - item: XIAO sockets
   qty: 2
   part: PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
-  description: "1x7 female header, 2.54 mm, 8.5 mm tall, for U7"
+  description: "1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U7; the XIAO stays detachable"
   source: LCSC
+- item: KNX bus plug
+  qty: 1
+  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)
+  description: "red/black KNX bus connector mating the PST 1,0/2-5,75 pin strip (main J1); WAGO 243-211 is for 0.8 mm pins and does not fit"
+  source: Phoenix Contact distributors
 - item: DALI supply jumper caps
   qty: 2
   part: LCSC C100114

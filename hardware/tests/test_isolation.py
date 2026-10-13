@@ -1,26 +1,31 @@
-"""Isolation gate on the stored main-board layout.
+"""Isolation gate on every stored board that carries more than one domain.
 
 Measures the minimum distance between the copper of different isolation
 domains on the real geometry (pads, tracks, vias, filled pours). All copper
 layers are merged, so inner-layer spacing is held to the surface creepage
 requirement. Nets are assigned to domains by the board's own net classes;
-pads of the isolators (optocouplers U4/U5, converter U3) belong to the domain
-of their net, and only the distance between two pads of the same isolator is
-exempt, because the package body is the barrier there.
+pads of the isolators listed in the board's layout plan (optocouplers, the
+DALI converter) belong to the domain of their net, and only the distance
+between two pads of the same isolator is exempt, because the package body
+is the barrier there.
 """
 
 import json
-from pathlib import Path
 
 import pcbnew
 import pytest
+import yaml
+from board_variant import BOARDS, REPO, VARIANT, layout_path
 from shapely.affinity import translate
 from shapely.geometry import Polygon
-from shapely.ops import unary_union
+from shapely.ops import nearest_points, unary_union
 
-REPO = Path(__file__).resolve().parents[2]
-BOARD = REPO / "hardware/layout/poc/main/main.kicad_pcb"
-ISOLATORS = {"U3", "U4", "U5"}
+
+def frame(board):
+    return yaml.safe_load((REPO / f"hardware/circuits/variants/{VARIANT}/layout_{board}.yaml").read_text())["frame"]
+
+
+ISOLATED_BOARDS = [b for b in BOARDS if len(frame(b)["domains"]) > 1]
 DOMAIN_OF_CLASS = {"SELV-KNX": "KNX", "KNX-Power": "KNX", "DALI": "DALI",
                    "DALI-Power": "DALI", "SELV-AUX": "AUX", "AUX-Power": "AUX"}
 REQUIRED = {("DALI", "KNX"): 6.0, ("AUX", "DALI"): 6.0, ("AUX", "KNX"): 2.0}
@@ -45,13 +50,13 @@ def item_polygons(item, layer):
     return to_polygons(polyset)
 
 
-def net_domains():
-    project = json.loads(BOARD.with_suffix(".kicad_pro").read_text())
+def net_domains(board_name):
+    project = json.loads(layout_path(board_name, ".kicad_pro").read_text())
     return {p["pattern"]: DOMAIN_OF_CLASS[p["netclass"]]
             for p in project["net_settings"]["netclass_patterns"]}
 
 
-def collect_copper(board, domains):
+def collect_copper(board, domains, isolators):
     shared = {"KNX": [], "DALI": [], "AUX": []}
     isolator_pads = []
     for fp in board.Footprints():
@@ -60,7 +65,7 @@ def collect_copper(board, domains):
             if domain is None:
                 continue
             shapes = [p for layer in COPPER if pad.IsOnLayer(layer) for p in item_polygons(pad, layer)]
-            if fp.GetReference() in ISOLATORS:
+            if fp.GetReference() in isolators:
                 isolator_pads.append((fp.GetReference(), pad.GetNumber(), domain, unary_union(shapes)))
             else:
                 shared[domain].extend(shapes)
@@ -78,18 +83,25 @@ def collect_copper(board, domains):
     return {d: unary_union(p) for d, p in shared.items()}, isolator_pads
 
 
-@pytest.fixture(scope="module")
-def copper():
-    if not BOARD.exists():
-        pytest.skip(f"{BOARD} not found")
-    board = pcbnew.LoadBoard(str(BOARD))
+@pytest.fixture(scope="module", params=ISOLATED_BOARDS)
+def copper(request):
+    path = layout_path(request.param)
+    if not path.exists():
+        pytest.skip(f"{path} not found")
+    board = pcbnew.LoadBoard(str(path))
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
-    return collect_copper(board, net_domains())
+    plan = frame(request.param)
+    return (*collect_copper(board, net_domains(request.param), set(plan["isolators"])),
+            {DOMAIN_OF_CLASS[d] for d in plan["domains"]})
 
 
-def test_every_domain_has_copper(copper):
-    shared, _ = copper
-    assert all(not shared[d].is_empty for d in shared)
+def present(shared):
+    return {d for d, shape in shared.items() if not shape.is_empty}
+
+
+def test_every_planned_domain_has_copper(copper):
+    shared, _, planned = copper
+    assert present(shared) == planned
 
 
 def min_gap(shared, isolator_pads, pair):
@@ -106,13 +118,20 @@ def min_gap(shared, isolator_pads, pair):
 
 @pytest.mark.parametrize("pair", sorted(REQUIRED))
 def test_domain_spacing(copper, pair):
-    gap = min_gap(*copper, pair)
+    if not set(pair) <= present(copper[0]):
+        pytest.skip(f"no {pair} copper on this board")
+    gap = min_gap(*copper[:2], pair)
     print(f"\n  {pair[0]} <-> {pair[1]}: {gap:.2f} mm (required {REQUIRED[pair]} mm)")
     assert gap >= REQUIRED[pair]
 
 
 def test_spacing_check_catches_dali_copper_moved_towards_knx(copper):
-    shared, isolator_pads = copper
-    shifted = dict(shared, DALI=translate(shared["DALI"], yoff=1.0))
-    real = min_gap(shared, isolator_pads, ("DALI", "KNX"))
-    assert min_gap(shifted, isolator_pads, ("DALI", "KNX")) == pytest.approx(real - 1.0, abs=0.05)
+    shared, isolator_pads, _ = copper
+    dali, knx = nearest_points(shared["DALI"], shared["KNX"])
+    dx, dy = knx.x - dali.x, knx.y - dali.y
+    norm = (dx * dx + dy * dy) ** 0.5
+    shifted = dict(shared, DALI=translate(shared["DALI"], xoff=dx / norm, yoff=dy / norm))
+    no_isolators = []
+    real = min_gap(shared, no_isolators, ("DALI", "KNX"))
+    assert min_gap(shifted, no_isolators, ("DALI", "KNX")) == pytest.approx(real - 1.0, abs=0.05)
+    assert min_gap(shifted, isolator_pads, ("DALI", "KNX")) < min_gap(shared, isolator_pads, ("DALI", "KNX"))

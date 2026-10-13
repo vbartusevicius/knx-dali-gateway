@@ -22,27 +22,33 @@ certification is claimed.
 | `docker/`, `compose.yaml` | One container per tool; nothing but Docker and PlatformIO on the host |
 | `.github/workflows/` | Lint, board/enclosure verification, .knxprod build, integration lab |
 
-Hardware v1: 3 DIN modules, a 4-layer main board (KNX transceiver NCN5130,
-isolated DALI interface and bus supply, Seeed XIAO ESP32-C6) and a 2-layer UI
-board (0.96" OLED, two buttons, three RGB status LEDs).
+| Hardware | Width | Boards | Release |
+| --- | --- | --- | --- |
+| v1 | 3 DIN | 4-layer main (NCN5130 KNX, isolated DALI + supply, XIAO ESP32-C6), 2-layer UI | [`hardware/releases/v1/`](hardware/releases/v1/README.md) |
+| v2 | 2 DIN | 4-layer main (KNX, DALI supply, terminals), interface (isolated DALI, plugged onto main), UI (XIAO, Winstar OLED) | [`hardware/releases/v2/`](hardware/releases/v2/README.md) |
 
-## Ordering a v1 kit
+Both have a 0.96" OLED, two buttons and three RGB status LEDs on the front.
 
-Everything is in [`hardware/releases/v1/`](hardware/releases/v1/); its
-[README](hardware/releases/v1/README.md) has the assembly and first power-up
-steps.
+## Ordering a kit
 
-1. **PCBs and SMT assembly (JLCPCB)**, per board (`main/`, `ui/`):
-   - Gerbers: `<board>_gerbers.zip` (main 4 layers, ui 2 layers, both 1.6 mm).
-   - Assembly: `<board>_bom_jlc.csv` + `<board>_cpl_jlc.csv`.
+Everything is in `hardware/releases/<version>/`; its README has the part
+details, assembly and first power-up steps.
+
+1. **PCBs and SMT assembly (JLCPCB)**, per board folder (v1: `main/`, `ui/`;
+   v2: `main/`, `interface/`, `ui/`):
+   - Gerbers: `<board>_gerbers.zip` (1.6 mm; layer count in the release README).
+   - Assembly (both sides): `<board>_bom_jlc.csv` + `<board>_cpl_jlc.csv`.
    - `<board>_assembly_check.csv` shows each part was checked against JLCPCB's
      own footprint; in JLC's placement preview glance at the bottom-side parts.
 2. **Parts JLCPCB does not fit**: `<board>_hand_fit.csv` (KNX pin strip,
-   RECOM REM3 converter, XIAO ESP32-C6, OLED module) and
-   [`assembly_parts.csv`](hardware/releases/v1/assembly_parts.csv) (JST-SH
-   cable, XIAO sockets, jumper caps, two 2.5 x 10 mm thread-forming screws).
+   RECOM REM3 converter, XIAO ESP32-C6, OLED module; v2 also the lying-down
+   storage capacitor) and `assembly_parts.csv` (JST-SH cable, KNX bus plug,
+   XIAO sockets, jumper caps, two 2.5 x 10 mm thread-forming screws).
 3. **Enclosure**: print `enclosure/base.stl` and `enclosure/cover.stl` in
    PETG or ASA, light/translucent so the status LEDs show through the front.
+4. **Front legend (optional)**: `enclosure/front_legend.pdf` is a 1:1
+   print file (terminal names and polarity, buttons, LED rings) for UV/pad
+   printing on the cover or an adhesive label; cyan lines are guides only.
 
 ## Working on it
 
@@ -52,7 +58,7 @@ steps.
 | Integration lab | `simulation/run-tests.sh` |
 | ETS product (.knxprod, ETS 5.7 + 6) | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` ([how](knxprod/docs/knxprod-pipeline.md)) |
 | Hardware and enclosure checks | see `.github/workflows/hardware.yml` (eda and cad containers) |
-| New hardware release | `docker compose --profile hardware run --rm -T eda "python3 hardware/scripts/release.py <version>"` |
+| New hardware release | `docker compose --profile hardware run --rm -T [-e HARDWARE_VARIANT=v2] eda "python3 hardware/scripts/release.py"` |
 | Lint | `docker compose --profile lint run --rm lint check .`, `... cpp-lint gateway/scripts/check_cpp.sh` |
 | Board / STL viewers | `docker compose --profile viewers up` (:8082 KiCanvas, :8081 STL) |
 

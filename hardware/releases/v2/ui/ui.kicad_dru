@@ -1,0 +1,11 @@
+(version 1)
+(rule jlcpcb_minimum
+  (constraint track_width (min 0.12mm))
+  (constraint clearance (min 0.2mm))
+  (constraint hole_size (min 0.2mm)))
+(rule power_track_width
+  (constraint track_width (min 0.22mm))
+  (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
+(rule power_neck_down_at_fine_pitch_pins
+  (constraint track_width (min 0.15mm))
+  (condition "A.hasNetclass('KNX-Power') && (A.intersectsCourtyard('D1') || A.intersectsCourtyard('D2') || A.intersectsCourtyard('D3') || A.intersectsCourtyard('U1'))"))

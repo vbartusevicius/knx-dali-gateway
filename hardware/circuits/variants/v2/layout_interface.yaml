@@ -1,0 +1,53 @@
+frame:
+  size: { x: 31.5, y: 27.5 }
+  copper_layers: 4
+  prune_ground_tracks: false
+  thickness: 1.6
+  min_drill: 0.3
+  min_track: 0.15
+  edge_clearance: 0.3
+  plane_layers: [In1.Cu]
+  domains: [SELV-KNX, DALI]
+  domain_regions:
+    SELV-KNX: { x0: 0.0, y0: 0.0, x1: 31.5, y1: 11.5 }
+    DALI: { x0: 0.0, y0: 11.5, x1: 31.5, y1: 27.5 }
+  isolators: [U1, U2]
+  power_nets: [+3V3, DA1, DA2, DA_P, DALI_BOOT, DALI_SENSE]
+  slots:
+    - { x0: 4.5, y0: 9.5, x1: 11.5, y1: 13.5 }
+    - { x0: 18.5, y0: 9.5, x1: 25.5, y1: 13.5 }
+  copper_keepout:
+    - { x0: 0.5, y0: 8.5, x1: 31.0, y1: 14.5 }
+  pours:
+    - { net: GND, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 0.5, x1: 31.0, y1: 8.0 } }
+    - { net: GNDD, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 15.0, x1: 31.0, y1: 27.0 } }
+
+heights:
+  default: 2.0
+  J1: 2.5
+  J2: 2.5
+  D1: 2.5
+
+parts:
+  J1: { x: 6.19, y: 2.05, rot: 270, side: back, block: int_logic, locked: true }
+  J2: { x: 29.0, y: 25.4, rot: 180, side: back, block: int_bus, locked: true }
+  U1: { x: 22.0, y: 11.5, rot: 90, block: dali_tx_led, locked: true }
+  U2: { x: 8.0, y: 11.5, rot: -90, block: dali_rx, locked: true }
+  D1: { x: 7.0, y: 21.2, rot: 90, side: back, block: dali_bridge }
+  D2: { x: 17.0, y: 17.0, rot: 0, side: back, block: dali_bridge }
+  D3: { x: 23.5, y: 19.5, rot: 0, block: dali_tx }
+  D4: { x: 24.0, y: 23.5, rot: 0, block: dali_tx }
+  D5: { x: 14.0, y: 20.5, rot: 0, block: dali_rx }
+  Q1: { x: 18.0, y: 24.5, rot: 0, block: dali_tx }
+  Q2: { x: 13.8, y: 24.5, rot: 0, block: dali_tx }
+  Q3: { x: 4.0, y: 21.0, rot: 0, block: dali_rx }
+  Q4: { x: 8.2, y: 21.0, rot: 0, block: dali_rx }
+  C1: { x: 24.5, y: 19.0, rot: 0, side: back, block: dali_tx }
+  R1: { x: 27.5, y: 5.0, rot: 90, block: dali_tx_led }
+  R2: { x: 8.5, y: 4.6, rot: 0, block: dali_tx_led }
+  R3: { x: 18.0, y: 18.0, rot: 90, block: dali_tx }
+  R4: { x: 24.0, y: 23.5, rot: 0, side: back, block: dali_tx }
+  R5: { x: 17.5, y: 25.0, rot: 0, side: back, block: dali_tx }
+  R6: { x: 8.0, y: 25.0, rot: 0, block: dali_rx }
+  R7: { x: 12.8, y: 22.0, rot: 90, side: back, block: dali_rx }
+  R8: { x: 5.0, y: 4.6, rot: 0, block: dali_rx_selv }

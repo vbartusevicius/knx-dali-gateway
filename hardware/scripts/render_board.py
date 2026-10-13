@@ -5,7 +5,8 @@
 Reads the stored layout (hardware/layout/<variant>/<board>/<board>.kicad_pcb),
 runs KiCad DRC, and writes to hardware/build/<variant>/<board>/render/<label>/:
 top, bottom (mirrored, as seen from below), in1, in2 and overlay, each as
-.svg and .png, plus drc.json. Unrouted connections are red lines with red
+.svg (opening at SVG_ZOOM x real size), plus drc.json and raster zoom_*.png
+close-ups of the layout plan's zoom areas. Unrouted connections are red lines with red
 rings at both ends; DRC violations are red rings, and every pad involved
 in a violation or unrouted connection is filled red.
 """
@@ -20,9 +21,13 @@ import yaml
 from PIL import Image, ImageDraw, ImageFont
 
 REPO = Path("/work")
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+sys.path.insert(0, str(REPO / "hardware/circuits"))
+from product_spec import load_spec
+
+SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
 PX_PER_MM = 40
+SVG_ZOOM = 2.25
 MARGIN = 3.0
 HEADER = 4.0
 
@@ -112,9 +117,9 @@ class Canvas:
 
     def save(self, stem):
         svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="{:.1f}mm" height="{:.1f}mm" '
-               'viewBox="0 0 {:.3f} {:.3f}"><rect width="100%" height="100%" fill="{}"/>{}</svg>'.format(self.w, self.h, self.w, self.h, self.background, "".join(self.svg)))
+               'viewBox="0 0 {:.3f} {:.3f}"><rect width="100%" height="100%" fill="{}"/>{}</svg>'.format(
+                   self.w * SVG_ZOOM, self.h * SVG_ZOOM, self.w, self.h, self.background, "".join(self.svg)))
         stem.with_suffix(".svg").write_text(svg)
-        self.img.save(stem.with_suffix(".png"))
 
 
 def rgba(color, alpha):

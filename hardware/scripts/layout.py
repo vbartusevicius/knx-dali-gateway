@@ -34,18 +34,22 @@ import yaml
 from shapely.geometry import Polygon
 
 REPO = Path("/work")
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+sys.path.insert(0, str(REPO / "hardware/circuits"))
+from product_spec import load_spec
+
+SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
 LAYERS = {"F.Cu": pcbnew.F_Cu, "In1.Cu": pcbnew.In1_Cu,
           "In2.Cu": pcbnew.In2_Cu, "B.Cu": pcbnew.B_Cu}
 
 
 MODELS_3D = {
-    "XIAO_ESP32C6_Header": ("XIAO_ESP32C6.step", 8.5),
+    "XIAO_ESP32C6_Header": ("XIAO_ESP32C6.step", 11.0),  # 8.5 mm socket + 2.5 mm header plastic
     "Converter_DCDC_RECOM_REM3_DIP24": ("REM3_DIP24.step", 0),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": ("TerminalBlock_MaiXu_MX126-5.0-02P.step", 0),
     "Fuse_1812_4532Metric": ("Fuse_1812_4532Metric.step", 0),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": ("Phoenix_PST_1,0-2-5,75_R32.step", 0),
+    "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent": ("CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent.step", 0),
 }
 
 
@@ -335,7 +339,8 @@ POWER_CLASS = {"SELV-KNX": "KNX-Power", "DALI": "DALI-Power", "SELV-AUX": "AUX-P
 
 
 def domain_at(regions, x, y):
-    return next((d for d, r in regions.items()
+    return next((d for d, areas in regions.items()
+                 for r in (areas if isinstance(areas, list) else [areas])
                  if r["x0"] <= x <= r["x1"] and r["y0"] <= y <= r["y1"]), None)
 
 
@@ -389,12 +394,27 @@ def write_rules(board, plan, board_name, pcb_path):
     pro_path.write_text(json.dumps(project, indent=2))
 
 
+RAISED_BODIES = {"XIAO_ESP32C6_Header"}
+
+
+def body_box(fp):
+    """Courtyard box; for modules raised on sockets the courtyard is only the
+    pad field (parts may sit underneath), so the body is their Fab outline."""
+    fp.BuildCourtyardCaches()
+    bb = fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd).BBox()
+    if str(fp.GetFPID().GetLibItemName()) in RAISED_BODIES:
+        fab = pcbnew.B_Fab if fp.IsFlipped() else pcbnew.F_Fab
+        for item in fp.GraphicalItems():
+            if item.GetLayer() == fab and item.Type() == pcbnew.PCB_SHAPE_T:
+                bb.Merge(item.GetBoundingBox())
+    return bb
+
+
 def export_components(board, plan, out):
     heights = plan.get("heights", {})
     comps = []
     for fp in board.Footprints():
-        fp.BuildCourtyardCaches()
-        bb = fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd).BBox()
+        bb = body_box(fp)
         p = fp.GetPosition()
         fpid = str(fp.GetFPID().GetLibItemName())
         comps.append({
@@ -554,22 +574,46 @@ def unconnected(board):
     return board.GetConnectivity().GetUnconnectedCount(False)
 
 
+# Tracks taken off a board must outlive the process: once Python frees a
+# removed PCB_TRACK, KiCad 10's SWIG layer is corrupted for the rest of the run.
+_DETACHED = []
+
+
 def prune_ground_tracks(board):
     """Freerouting routes ground as an ordinary net; drop every ground track
     whose connection the pours already make."""
+    candidates = [t for t in board.GetTracks() if t.GetNetname() in GROUND_NETS and t.GetClass() != "PCB_VIA"]
+    _DETACHED.extend(candidates)
     baseline = unconnected(board)
     removed, changed = 0, True
     while changed:
         changed = False
-        for track in [t for t in board.GetTracks()
-                      if t.GetNetname() in GROUND_NETS and t.GetClass() != "PCB_VIA"]:
+        for track in list(candidates):
             board.Remove(track)
             if unconnected(board) > baseline:
                 board.Add(track)
             else:
+                candidates.remove(track)
                 removed += 1
                 changed = True
     return removed
+
+
+def widen_neckdown_stubs(board):
+    """Freerouting sometimes leaves a sub-0.1 mm neck-down segment between two
+    full-width tracks; restore it to its neighbours' width."""
+    traces = [t for t in board.GetTracks() if t.Type() == pcbnew.PCB_TRACE_T]
+    max_length = pcbnew.FromMM(0.1)
+    widened = 0
+    for track in [t for t in traces if t.GetLength() <= max_length]:
+        ends = {(p.x, p.y) for p in (track.GetStart(), track.GetEnd())}
+        width = min((t.GetWidth() for t in traces if t is not track and t.GetNetCode() == track.GetNetCode()
+                     and t.GetLayer() == track.GetLayer()
+                     and ends & {(p.x, p.y) for p in (t.GetStart(), t.GetEnd())}), default=0)
+        if track.GetWidth() < width:
+            track.SetWidth(width)
+            widened += 1
+    return widened
 
 
 def import_ses(board_name):
@@ -578,8 +622,10 @@ def import_ses(board_name):
     ses = build_dir(board_name) / f"{board_name}.ses"
     if not pcbnew.ImportSpecctraSES(board, str(ses)):
         sys.exit("SES import failed")
-    removed = prune_ground_tracks(board)
-    print(f"{board_name}: removed {removed} ground tracks the pours already cover")
+    widened = widen_neckdown_stubs(board)
+    removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
+    print(f"{board_name}: removed {removed} ground tracks the pours already cover, "
+          f"widened {widened} neck-down stubs")
     save(board, plan, board_name)
     print(f"{board_name}: imported {ses.relative_to(REPO)}")
 
@@ -610,6 +656,16 @@ def components(board_name):
     print(f"{board_name}: wrote {out.relative_to(REPO)}")
 
 
+def unroute(board_name):
+    plan = load_plan(board_name)
+    board = current_board(board_name, plan)
+    tracks = list(board.GetTracks())
+    for track in tracks:
+        board.Remove(track)
+    save(board, plan, board_name)
+    print(f"{board_name}: removed {len(tracks)} tracks/vias")
+
+
 def place(board_name, names):
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
@@ -628,6 +684,8 @@ if __name__ == "__main__":
         tidy_silk(name)
     elif command == "components":
         components(name)
+    elif command == "unroute":
+        unroute(name)
     elif command == "route":
         route(name, *(int(a) for a in args))
     elif command == "export-dsn":

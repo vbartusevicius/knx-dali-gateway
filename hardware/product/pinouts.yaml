@@ -1,0 +1,31 @@
+# Hand-fitted parts with no JLCPCB/EasyEDA footprint, keyed by manufacturer
+# part number. Pad centres (mm, top view, y up) and pin functions transcribed
+# from the cited manufacturer document. hardware/scripts/jlc_parts.py fits the
+# pads onto ours like a supplier footprint and checks the functions against
+# our symbol's pin names (`names`) or, for plain connectors whose symbol pins
+# carry no function, against the nets on our pads (`nets`; a list allows any).
+# Every part on a board must be covered here or by a JLCPCB/EasyEDA record.
+
+REM3-2415S/A:
+  source: >-
+    RECOM REM3 datasheet (LCSC copy of C6643363, p.6 "A" Pinning, Pin
+    Connections, Single): 1 CTRL (no pin without the CTRL option), 2 -Vin,
+    11 NC, 14 +Vout, 16 -Vout, 22 +Vin, 23 +Vin; DIP24, 2.54 mm pitch,
+    15.24 mm between rows, pins numbered anticlockwise from pin 1 (top view)
+  pads: {"2": [0, -2.54], "14": [15.24, -25.4], "16": [15.24, -20.32], "22": [15.24, -5.08], "23": [15.24, -2.54]}
+  names: {"2": -Vin, "14": +Vout, "16": -Vout, "22": +Vin, "23": +Vin}
+
+"1574200":
+  source: >-
+    Phoenix Contact 1574200 (PST 1,0/2-5,75 R32) data sheet: 2 positions,
+    5.75 mm pitch, 1.2 mm holes. The mating KNX plug PTS 0,5/2-PH-5,75 BKRD
+    carries KNX+ on the red side, pin 1.
+  pads: {"1": [0, 0], "2": [5.75, 0]}
+  nets: {"1": KNX_P, "2": GND}
+
+WEA012864DWPP3N00003:
+  source: >-
+    Winstar WEA012864D-03 specification p.3 (contour drawing, interface pin
+    function): 4-pin header P2.54, 1 VCC (2.8-5.2 V), 2 GND, 3 SCL, 4 SDA
+  pads: {"1": [0, 0], "2": [2.54, 0], "3": [5.08, 0], "4": [7.62, 0]}
+  nets: {"1": "+3V3", "2": GND, "3": I2C_SCL, "4": I2C_SDA}

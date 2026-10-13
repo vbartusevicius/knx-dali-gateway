@@ -1,0 +1,3 @@
+Designator,Value,Manufacturer part,Notes
+J2,OLED,WEA012864DWPP3N00003,"Winstar WEA012864D-03 (white; L = yellow, B = sky blue), 27.3x27.3 mm, SSD1306 I2C, drawing WEA012864D-03 p.3; lay it face down in the cover pocket, push the UI board over its pins, then solder them from the back"
+U2,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)

@@ -2,8 +2,8 @@
 
     python3 mechanical/scripts/fit_drawing.py
 
-Writes mechanical/build/<variant>/fit_front.svg/.png (front face with every
-opening over the part outlines of both boards) and fit_side.svg/.png (side
+Writes mechanical/build/<variant>/fit_front.svg (front face with every
+opening over the part outlines of all boards) and fit_side.svg (side
 section with board positions, part heights, the mated KNX plug and the support
 posts). All geometry comes from enclosure_features, the same source the
 CadQuery model uses, and from the layout height tables.
@@ -28,8 +28,11 @@ MAIN_THICK = SPEC["boards"]["main"]["thickness"]
 UI_BOTTOM_Z = SPEC["front_ui"]["board_z"]
 UI_THICK = SPEC["boards"]["ui"]["thickness"]
 PLUG_HEIGHT = 11.5
-LABELLED = {"main": {"J1", "J2", "J3", "J4", "JP1", "U7", "C4", "U3", "U1"},
-            "ui": {"SW1", "SW2", "D1", "D2", "D3", "J1", "J2"}}
+LABELLED = {"main": {"J1", "J2", "J3", "J4", "J5", "J6", "JP1", "U7", "C4", "U3", "U1"},
+            "ui": {"SW1", "SW2", "D1", "D2", "D3", "J1", "J2"},
+            "interface": {"J1", "J2", "U1", "U2"}}
+COLOURS = {"main": "#2e7d32", "ui": "#1565c0", "interface": "#ef6c00"}
+BOARDS = ef.SPEC["variants"][ef.VARIANT]["boards"]
 
 
 def heights(board):
@@ -37,8 +40,7 @@ def heights(board):
     return plan["heights"]
 
 
-def to_enc(board, x, y):
-    return ef.main_to_enc(x, y) if board == "main" else ef.ui_to_enc(x, y)
+to_enc = ef.board_to_enc
 
 
 def enc_box(board, comp):
@@ -57,10 +59,10 @@ def front_view():
     half = ef.WIDTH / 2
     rect(ax, -half, 0, ef.WIDTH, ef.HIDDEN_H, fill=False, lw=2, ec="black")
     rect(ax, -half, ef.FRONT_Y_START, ef.WIDTH, ef.FRONT_H, fill=True, fc="#f2f2f2", ec="black", lw=1.5)
-    for board, colour in (("main", "#2e7d32"), ("ui", "#1565c0")):
-        w, h = (ef.MAIN_W, ef.MAIN_H) if board == "main" else (ef.UI_W, ef.UI_H)
-        x0, y0 = to_enc(board, 0, 0)
-        rect(ax, x0, y0, w, h, fill=False, ec=colour, ls="--", lw=1)
+    for board in BOARDS:
+        colour, slab = COLOURS[board], ef.board_slab(board)
+        rect(ax, slab["x0"], slab["y0"], slab["x1"] - slab["x0"], slab["y1"] - slab["y0"],
+             fill=False, ec=colour, ls="--", lw=1)
         for ref, comp in ef.components(board).items():
             if board == "main" and ef.FRONT_Y_START < to_enc(board, *ef.bbox_centre(comp))[1] < ef.FRONT_Y_END \
                     and ref not in LABELLED[board]:
@@ -111,13 +113,11 @@ def side_view():
              (hi - WALL, ef.FRONT_Y_END - WALL), (hi - WALL, ef.HIDDEN_H - WALL),
              (WALL, ef.HIDDEN_H - WALL), (WALL, WALL)]
     ax.plot(*zip(*inner), color="grey", lw=0.8)
-    boards = (("main", MAIN_TOP_Z - MAIN_THICK, MAIN_THICK, "#2e7d32"),
-              ("ui", UI_BOTTOM_Z, UI_THICK, "#1565c0"))
-    for board, z0, thick, colour in boards:
+    for board in BOARDS:
+        colour, slab = COLOURS[board], ef.board_slab(board)
+        z0, thick = slab["z0"], slab["z1"] - slab["z0"]
         h_table = heights(board)
-        y0 = to_enc(board, 0, 0)[1]
-        span = ef.MAIN_H if board == "main" else ef.UI_H
-        rect(ax, z0, y0, thick, span, fc=colour, ec=colour)
+        rect(ax, z0, slab["y0"], thick, slab["y1"] - slab["y0"], fc=colour, ec=colour)
         for ref, comp in ef.components(board).items():
             _, y, _, bh = enc_box(board, comp)
             h = h_table.get(ref, h_table["default"])
@@ -161,7 +161,6 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, fig in (("fit_front", front_view()), ("fit_side", side_view())):
         fig.savefig(OUT / f"{name}.svg", bbox_inches="tight")
-        fig.savefig(OUT / f"{name}.png", dpi=200, bbox_inches="tight")
         print(f"{name} written")
 
 

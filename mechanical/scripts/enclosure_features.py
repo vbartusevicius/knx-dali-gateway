@@ -12,13 +12,18 @@ so a board point maps to the enclosure by a translation only.
 """
 
 import json
+import sys
+from functools import partial
 from pathlib import Path
 
 import yaml
 from ui_stackup import OLED_HEADER_SPACER, OLED_MODULE_BOARD, OLED_PANEL
 
 REPO = Path(__file__).resolve().parents[2]
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+sys.path.insert(0, str(REPO / "hardware/circuits"))
+from product_spec import load_spec
+
+SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
 
 DIN = SPEC["din_envelope"]
@@ -51,6 +56,47 @@ def main_to_enc(x, y):
 
 def ui_to_enc(x, y):
     return x - UI_W / 2, y + FRONT_Y_START + (FRONT_H - UI_H) / 2
+
+
+def board_to_enc(board, x, y):
+    if board == "main":
+        return main_to_enc(x, y)
+    if board == "ui":
+        return ui_to_enc(x, y)
+    config = SPEC["boards"][board]
+    return x - config["max_outline"]["width"] / 2, y + config["y_offset"]
+
+
+def board_slab(board):
+    config = SPEC["boards"][board]
+    top = SPEC["front_ui"]["board_top_z"] if board == "ui" else config["z"]
+    (x0, y0) = board_to_enc(board, 0, 0)
+    (x1, y1) = board_to_enc(board, config["max_outline"]["width"], config["max_outline"]["height"])
+    return {"board": board, "x0": x0, "x1": x1, "y0": y0, "y1": y1, "z0": top - config["thickness"], "z1": top}
+
+
+def interconnect_corridor(link):
+    """The space a board-to-board cable sweeps: the footprint of both
+    connectors, between their mating faces."""
+    ends = [next(p for p in part_boxes() if (p["board"], p["ref"]) == item) for item in link["refs"].items()]
+    faces = [b["z1"] if b["z0"] >= board_slab(b["board"])["z1"] - 0.01 else b["z0"] for b in ends]
+    return {"x0": min(b["x0"] for b in ends), "x1": max(b["x1"] for b in ends),
+            "y0": min(b["y0"] for b in ends), "y1": max(b["y1"] for b in ends),
+            "z0": min(faces), "z1": max(faces)}
+
+
+def horizontal_capacitor():
+    config = SPEC["boards"]["main"].get("horizontal_capacitor")
+    if not config:
+        return None
+    component = components("main")[config["ref"]]
+    cx = sum(x for x, _, _ in component["pads"]) / len(component["pads"])
+    cx, end_y = main_to_enc(cx, component["y"] - config["bend_clearance"])
+    radius = config["diameter"] / 2
+    centre_z = SPEC["boards"]["main"]["z"] - SPEC["boards"]["main"]["thickness"] - config["lead_drop"]
+    return {"board": "main", "ref": config["ref"], "shape": "horizontal_capacitor", "through_front": False,
+            "x0": cx - radius, "x1": cx + radius, "y0": end_y - config["length"], "y1": end_y,
+            "z0": centre_z - radius, "z1": centre_z + radius}
 
 
 def pad_points(comp):
@@ -185,7 +231,8 @@ SCREW_TAB_X = 4.25
 def screw_tabs():
     """Cover tabs behind the top and bottom walls; the two case screws enter
     from the wire sides (top and bottom faces) along y."""
-    return [{"x": SCREW_TAB_X, "side": "top"}, {"x": SCREW_TAB_X, "side": "bottom"}]
+    return SPEC["enclosure"].get("screw_tabs", [{"x": SCREW_TAB_X, "side": "top"},
+                                               {"x": SCREW_TAB_X, "side": "bottom"}])
 
 
 THROUGH_FRONT = {"SW1", "SW2"}
@@ -196,10 +243,16 @@ def part_boxes():
     its height, on the side it is mounted; J1 as the mated KNX plug."""
     stack_top = {"main": SPEC["boards"]["main"]["z"], "ui": SPEC["front_ui"]["board_top_z"]}
     boxes = []
-    for board, convert in (("main", main_to_enc), ("ui", ui_to_enc)):
-        top = stack_top[board]
+    horizontal = horizontal_capacitor()
+    boards = SPEC["variants"][VARIANT]["boards"]
+    for board in boards:
+        convert = partial(board_to_enc, board)
+        top = stack_top.get(board, SPEC["boards"][board]["z"])
         bottom = top - SPEC["boards"][board]["thickness"]
         for ref, c in components(board).items():
+            if horizontal and board == "main" and ref == horizontal["ref"]:
+                boxes.append(horizontal)
+                continue
             (x0, y0), (x1, y1) = convert(c["bbox"]["x0"], c["bbox"]["y0"]), convert(c["bbox"]["x1"], c["bbox"]["y1"])
             h = PLUG_HEIGHT if (board, ref) == ("main", "J1") else c["height"]
             z0, z1 = (bottom - h, bottom) if c["side"] == "back" else (top, top + h)

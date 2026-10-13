@@ -8,13 +8,10 @@ nets), so the pin-to-pad check runs on the netlist itself.
 
 import json
 import re
-from pathlib import Path
 
 import pcbnew
 import pytest
-
-REPO = Path(__file__).resolve().parents[2]
-BOARDS = ("main", "ui")
+from board_variant import BOARDS, SPEC, VARIANT, build_path, layout_path
 
 
 def sexpr(text):
@@ -40,7 +37,7 @@ def section(tree, name):
 
 
 def netlist(board):
-    tree = sexpr((REPO / f"hardware/build/poc/{board}/{board}.net").read_text())
+    tree = sexpr(build_path(board, f"{board}.net").read_text())
     parts = {field(c, "ref"): field(c, "footprint") for c in section(tree, "components")
              if not field(c, "ref").startswith("#")}
     pins = {}
@@ -52,7 +49,7 @@ def netlist(board):
 
 
 def layout(board):
-    path = REPO / f"hardware/layout/poc/{board}/{board}.kicad_pcb"
+    path = layout_path(board)
     if not path.exists():
         pytest.skip(f"{path} not found")
     return pcbnew.LoadBoard(str(path))
@@ -82,27 +79,34 @@ def test_board_matches_netlist(board):
 
 @pytest.mark.parametrize("board", BOARDS)
 def test_every_part_is_sourced(board):
-    parts = json.loads((REPO / f"hardware/build/poc/{board}/parts.json").read_text())
+    parts = json.loads(build_path(board, "parts.json").read_text())
     unsourced = [p["ref"] for p in parts
                  if p["assembly"] == "jlc" and not p["lcsc"].startswith("C")
                  or p["assembly"] == "hand" and not p["mpn"]]
     assert not unsourced, f"parts without an LCSC number or hand-fit MPN: {unsourced}"
 
 
-def test_ui_cable_connects_matching_nets_pin_for_pin():
-    """The JST SH jumper is wired 1:1, so main J4 pin n and UI J1 pin n must
-    carry the same signal."""
-    _, main_pins = netlist("main")
-    _, ui_pins = netlist("ui")
-    main_side = {pin: net for (ref, pin), net in main_pins.items() if ref == "J4"}
-    ui_side = {pin: net for (ref, pin), net in ui_pins.items() if ref == "J1"}
-    assert len(main_side) == len(ui_side) == 10
-    assert main_side == ui_side
+LINKS = [link for link in SPEC["boards"].get("interconnects", []) if "refs" in link]
+if VARIANT == "poc":
+    LINKS = [{"refs": {"main": "J4", "ui": "J1"}, "pins": 10}]
+
+
+@pytest.mark.parametrize("link", LINKS, ids=lambda link: "-".join(f"{b}.{r}" for b, r in link["refs"].items()))
+def test_board_links_connect_matching_nets_pin_for_pin(link):
+    """Board-to-board cables are wired 1:1, so pin n carries the same net on
+    both connectors, and the spec lists those nets."""
+    sides = [{pin: net for (ref, pin), net in netlist(board)[1].items() if ref == conn}
+             for board, conn in link["refs"].items()]
+    assert len(sides[0]) == len(sides[1]) == link["pins"]
+    assert sides[0] == sides[1]
+    if "signals" in link:
+        assert [sides[0][str(i + 1)] for i in range(link["pins"])] == link["signals"]
 
 
 UNUSED_ON_UI = {"LED_DALI"}
 
 
+@pytest.mark.skipif(VARIANT != "poc", reason="the spare LED_DALI wire exists only on the poc cable")
 def test_main_board_led_lines_end_unused_on_the_ui_board():
     """The status LEDs are one addressable chain on LED_DATA; the spare
     LED_DALI wire arrives on the cable and touches nothing else there."""

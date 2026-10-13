@@ -75,7 +75,7 @@ def test_terminal_faces_open_in_the_top_wall(solids):
 def test_jp1_stays_covered(solids):
     jp1 = ef.components("main")["JP1"]
     x, y = ef.main_to_enc(jp1["x"], jp1["y"])
-    assert solid_at(solids, x, y, ef.SHOULDER_Z["top"] - be.WALL / 2)
+    assert not clear_line(solids, x, y, be.MAIN_Z, be.TOTAL_D + 1, steps=200)
 
 
 def test_front_wall_is_solid_between_openings(solids):
@@ -186,8 +186,9 @@ def test_rail_channel_matches_ts35(solids):
 
 
 def test_back_is_at_most_5mm_deep(solids):
-    assert not solid_at(solids, 20, 5, -be.BACK_DEPTH - 0.2)
-    assert solid_at(solids, 20, 5, -be.BACK_DEPTH + 0.2)
+    x = ef.WIDTH / 2 - 2
+    assert not solid_at(solids, x, 5, -be.BACK_DEPTH - 0.2)
+    assert solid_at(solids, x, 5, -be.BACK_DEPTH + 0.2)
 
 
 def test_hook_and_latch_reach_behind_the_rail_lips(solids):

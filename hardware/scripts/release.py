@@ -1,6 +1,8 @@
 """Package a fabrication release from the stored layouts (`eda` container).
 
-    python3 hardware/scripts/release.py <version>
+    [HARDWARE_VARIANT=<variant>] python3 hardware/scripts/release.py [<version>]
+
+<version> defaults to the variant's product.release (poc -> v1, v2 -> v2).
 
 Writes hardware/releases/<version>/<board>/ for every board: KiCad sources,
 Gerbers and drill files (one zip for upload), JLCPCB BOM and placement files
@@ -25,8 +27,18 @@ import pcbnew
 import yaml
 
 REPO = Path("/work")
-VARIANT = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())["active_variant"]
-BOARDS = ("main", "ui")
+sys.path.insert(0, str(REPO / "hardware/circuits"))
+from product_spec import load_spec
+
+SPEC = load_spec()
+VARIANT = SPEC["active_variant"]
+BOARDS = tuple(SPEC["variants"][VARIANT]["boards"])
+RELEASE = SPEC["product"]["release"]
+
+
+def assembly_parts_path():
+    variant_list = REPO / "hardware/circuits/variants" / VARIANT / "assembly_parts.yaml"
+    return variant_list if variant_list.exists() else REPO / "hardware/product/assembly_parts.yaml"
 
 
 def run(*cmd):
@@ -76,6 +88,7 @@ def gerbers(board, out):
 
 
 def assembly_files(board, out, checks):
+    checks = [c for c in checks if c.assembly == "jlc"]
     by_ref = {p["ref"]: p for p in parts(board)}
     groups = {}
     for p in by_ref.values():
@@ -159,14 +172,14 @@ def main(version):
     with open(root / "assembly_parts.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["Item", "Qty", "Part", "Description", "Source"])
-        for p in yaml.safe_load((REPO / "hardware/product/assembly_parts.yaml").read_text()):
+        for p in yaml.safe_load(assembly_parts_path().read_text()):
             w.writerow([p["item"], p["qty"], p["part"], p["description"], p["source"]])
     enclosure = REPO / "mechanical/build" / VARIANT
     if enclosure.exists():
         shutil.copytree(enclosure, root / "enclosure", dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("*.svg"))
+                        ignore=shutil.ignore_patterns("fit_*.png", "front_legend.png"))
     return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1]))
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else RELEASE))

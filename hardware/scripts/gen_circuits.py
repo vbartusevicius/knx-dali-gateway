@@ -13,6 +13,7 @@ Also rewrites the derived section of hardware/product/spec.yaml
 """
 
 import builtins
+import importlib
 import io
 import json
 import os
@@ -28,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "circuits"))
 os.chdir(Path(__file__).resolve().parents[1] / "build")
 
 import common
+from product_spec import load_spec
 from skidl import (
     ERC,
     KICAD9,
@@ -47,7 +49,6 @@ def generate_board(variant, name, build_fn, net_classes):
     set_default_tool(KICAD9)
     bdir = BUILD / variant / name
     bdir.mkdir(parents=True, exist_ok=True)
-    common.load_spec()
     import skidl as skidl_mod
     skidl_mod.config.backup_lib_file_name = str(BUILD / "gen_circuits_sklib.py")
     import logging
@@ -75,6 +76,8 @@ def generate_board(variant, name, build_fn, net_classes):
             "mfr": p.fields.get("Manufacturer", ""),
             "assembly": p.fields.get("Assembly", "jlc"),
             "source": p.fields.get("Source", ""),
+            "footprint_ref": p.fields.get("Footprint_Reference", ""),
+            "pins": {str(pin.num): pin.name for pin in p.pins},
         }
         for p in builtins.default_circuit.parts if not p.ref.startswith("#")
     ]
@@ -102,21 +105,17 @@ def write_derived(net_classes_by_board):
 
 
 def main():
-    spec = common.load_spec()
+    spec = load_spec()
     variant = spec["active_variant"]
     BUILD.mkdir(parents=True, exist_ok=True)
 
     # import the variant's board modules
     pkg = f"variants.{variant}"
-    main_mod = __import__(f"{pkg}.main", fromlist=["main"])
-    ui_mod = __import__(f"{pkg}.ui", fromlist=["ui"])
-
-    logs = {}
-    logs["main"] = generate_board(variant, "main", main_mod.build,
-                                   main_mod.NET_CLASSES)
-    logs["ui"] = generate_board(variant, "ui", ui_mod.build,
-                                ui_mod.NET_CLASSES)
-    write_derived({"main": main_mod.NET_CLASSES, "ui": ui_mod.NET_CLASSES})
+    modules = {name: importlib.import_module(f"{pkg}.{name}")
+               for name in spec["variants"][variant]["boards"]}
+    logs = {name: generate_board(variant, name, module.build, module.NET_CLASSES)
+            for name, module in modules.items()}
+    write_derived({name: module.NET_CLASSES for name, module in modules.items()})
 
     erc_errors = 0
     netlist_errors = 0
@@ -148,7 +147,7 @@ def draw_schematic(board, timeout_s=600):
     state behind. Usage: python3 gen_circuits.py --schematic <board>
     """
     import subprocess
-    spec = common.load_spec()
+    spec = load_spec()
     variant = spec["active_variant"]
     bdir = BUILD / variant / board
     script = (

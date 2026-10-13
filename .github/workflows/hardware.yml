@@ -14,9 +14,15 @@ on:
 jobs:
   boards-and-enclosure:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: poc, boards: "main ui" }
+          - { variant: v2, boards: "main interface ui" }
     env:
-      EDA: docker compose --profile hardware run --rm -T eda
-      CAD: docker compose --profile hardware run --rm -T cad
+      EDA: docker compose --profile hardware run --rm -T -e HARDWARE_VARIANT=${{ matrix.variant }} eda
+      CAD: docker compose --profile hardware run --rm -T -e HARDWARE_VARIANT=${{ matrix.variant }} cad
     steps:
       - uses: actions/checkout@v4
 
@@ -30,18 +36,18 @@ jobs:
         run: git diff --exit-code
 
       - name: Export part data from the committed boards
-        run: $EDA "cd hardware/scripts && python3 layout.py main components && python3 layout.py ui components"
+        run: $EDA "cd hardware/scripts && for b in ${{ matrix.boards }}; do python3 layout.py \$b components; done"
 
       - name: Board tests (netlist match, DRC, routing, isolation, parts) and fit tests
-        run: $EDA "python3 -m pytest hardware/tests mechanical/tests/test_fit.py mechanical/tests/test_ui_stackup.py --ignore=hardware/tests/test_step_geometry.py -q"
+        run: $EDA "python3 -m pytest hardware/tests mechanical/tests/test_fit.py mechanical/tests/test_ui_stackup.py mechanical/tests/test_board_stack.py --ignore=hardware/tests/test_step_geometry.py -q"
 
       - name: Build the enclosure and probe it with the boards
-        run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py hardware/tests/test_step_geometry.py -q"
+        run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py -q"
 
-      - name: Renders and fit drawings for review
-        run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py"
+      - name: Renders, fit drawings and front legend for review
+        run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py && python3 front_legend.py"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: enclosure-review
+          name: enclosure-review-${{ matrix.variant }}
           path: mechanical/build/

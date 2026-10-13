@@ -37,14 +37,33 @@ container: `python3 hardware/scripts/jlc_parts.py snapshot`, then commit it.
    Pin 1 / polarity marks to look for: Q1-Q6 and U1/U2/U6 pin 1, the D1-D9
    cathode bands, the D5 bridge's + corner, C4's minus stripe.
 
+## Front legend (optional print)
+
+`enclosure/front_legend.pdf` (also `.svg`) is the cover's front view at 1:1:
+terminal names and polarity (KNX + -; DALI DA DA; DALI PSU 24-30VDC + -),
+PRG/RST and FUNC, LED names and rings. Black = print; cyan =
+face edges and openings for positioning only, not printed. Three flat faces
+get printed: bottom shoulder (KNX), front (display, buttons, LEDs), top
+shoulder (screws). FDM printing services do not list printing on plastic, so
+either ask the printing service for UV/pad printing with this file (custom
+quote) or have it printed as an adhesive polyester label and cut it along the
+cyan face edges and openings.
+
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
 - Main J1: Phoenix 1574200 KNX pin strip (Mouser 651-1574200).
 - Main U3: RECOM REM3-2415S/A isolated converter (DIP-24, A pinning).
-- Main U7: Seeed XIAO ESP32C6 on two 1x7 female headers, 8.5 mm (LCSC C54876729).
+- Main U7: Seeed XIAO ESP32C6 **Pre-Soldered (SKU 102010636)**, detachable in
+  two 1x7 female headers, 8.5 mm (LCSC C54876729) soldered to the main board.
+  The bare XIAO (113991254) ships without pin headers. Module height above the
+  board: 11 mm. Mount it USB end towards the top (DALI) edge; the silkscreen
+  marks USB, D0, 5V.
 - Main JP1: two 2.54 mm jumper caps (LCSC C100114).
-- UI J2: 0.96" SSD1306 I2C OLED module with pin order GND, VCC, SCL, SDA.
+- UI J2: Winstar **WEA012864DWPP3N00003** (WEA012864D-03, 0.96" 128x64
+  SSD1306 I2C, white), pin order VCC, GND, SCL, SDA. Generic modules differ
+  in size, glass position and pin order; do not substitute.
 - UI to main: 10-pin 1.0 mm JST-SH cable, pin 1 to pin 1.
+- KNX bus plug: Phoenix PTS 0,5/2-PH-5,75 BKRD (WAGO 243-211 is for 0.8 mm pins).
 
 ## DALI supply jumpers (JP1)
 
@@ -65,17 +84,19 @@ Do not connect USB and KNX at the same time unless the laptop is isolated
 ## Verified for this release
 
 - KiCad DRC with the project rules: 0 errors, 0 unrouted, both boards.
-- Isolation measured on the copper of all layers: DALI-KNX 6.60 mm,
-  DALI-AUX 6.82 mm, KNX-AUX 7.00 mm (required 6 / 6 / 2 mm).
-- Every symbol pin maps to a footprint pad; every polarised part's pin order
-  was checked against its datasheet (SCT2400, BC847/857, MJD45H11, IRLML0060,
-  TLP383, LM66100, REM3, NCN5130, SMAJ TVS, LEDs).
-- Every JLC part checked against JLCPCB's part record and EasyEDA footprint
-  (manufacturer part, value, voltage rating, stock, pin-for-pin landing);
-  D5 (DF06S: datasheet pins 1 +, 2 ~, 3 -, 4 ~) and SW1/SW2 (PTS645: 1-2 and
-  3-4 are the contacts) use the cited pad maps in
-  `hardware/product/jlc_pad_maps.yaml`. 19 parts need a JLCPCB rotation other
-  than KiCad's; the placement file carries the fitted values.
+- Isolation measured on the copper of all layers: DALI-KNX 6.77 mm,
+  DALI-AUX 6.82 mm, KNX-AUX 5.69 mm (required 6 / 6 / 2 mm); a 4 mm isolation
+  slot under each DALI optocoupler (U4, U5), between its pin rows.
+- Every part on both boards, hand-fitted ones included, checked against a
+  supplier or manufacturer reference: JLCPCB's EasyEDA footprint must land pin
+  for pin on ours and our symbol's pin names must match JLCPCB's symbol (XIAO
+  via Seeed's JLCPCB entry C9900124963); the REM3 converter, Phoenix KNX pin
+  strip and Winstar OLED have no JLCPCB record and are checked against the
+  pinouts cited from their datasheets (`hardware/product/pinouts.yaml`).
+- JLC-assembled parts also checked for manufacturer part, value, voltage
+  rating and stock; D5 (DF06S) and SW1/SW2 (PTS645) use the cited pad maps in
+  `hardware/product/jlc_pad_maps.yaml`. The placement file carries the fitted
+  rotations and centres.
 - Enclosure (two printed parts, `enclosure/`), probed as assembled: no case
   material inside any part volume or either board, every opening clear,
   every support touching its board, rail channel per EN 60715, at least 2 mm
@@ -87,19 +108,19 @@ Do not connect USB and KNX at the same time unless the laptop is isolated
 Off-board parts are in `assembly_parts.csv` (UI cable, XIAO sockets, jumper
 caps, two case screws, printed parts).
 
-1. UI board: solder the OLED module onto J2 on its 2.5 mm header spacer and
-   trim the pins flush with the module board (the module sits in a pocket
-   behind the front wall).
-2. Main board: fit the XIAO sockets and the XIAO, both JP1 caps if the gateway
-   should power the DALI line.
-3. Drop the main board into the base onto its five legs.
-4. Plug the 10-pin cable into main J4 and UI J1 (1:1, either way round). Both
+1. Main board: fit the XIAO sockets, the XIAO (headers soldered to it) and
+   both JP1 caps if the gateway should power the DALI line.
+2. Drop the main board into the base onto its five legs.
+3. Plug the 10-pin cable into main J4 and UI J1 (1:1, either way round). Both
    connectors are top-entry, so the cable runs straight between the boards.
-5. Snap the UI board into the cover from behind, front first: its edges push
-   the four sprung hooks in the side walls outwards, and they spring back
-   behind the board once it rests against the four standoffs. To take it out,
-   press the hooks outwards.
-6. Close the cover over the base (its pegs hold the main board down) and fit
+4. OLED: lay the module face down into the cover's pocket (glass through the
+   window). Snap the UI board into the cover from behind, over the module's
+   four pins: its edges push the four sprung hooks outwards, and they spring
+   back behind the board once it rests against the four standoffs. Then solder
+   the four OLED pins from the back of the UI board; the pocket, not the
+   header, sets the glass flush with the front. To take the board out, press
+   the hooks outwards.
+5. Close the cover over the base (its pegs hold the main board down) and fit
    the two 2.5 x 10 thread-forming screws from the top and bottom faces, the
    sides the wires come from, into the cover's screw tabs. Opening: the same
    two screws.
@@ -143,11 +164,10 @@ shoulder; JP1 stays under the cover (`enclosure/renders/iso.png`,
 
 ## Assumptions to check before printing the case
 
-- OLED module geometry (board 27.3 x 27.8 mm, glass 26.7 x 19.3 mm, stack 5.5 mm
-  above the UI board): taken from typical modules, no manufacturer drawing.
-  Measure the module you buy; the values are in
-  `hardware/circuits/variants/poc/layout_ui.yaml` (`oled_module`) and
-  `mechanical/scripts/ui_stackup.py`.
+- OLED module geometry comes from the Winstar WEA012864D-03 drawing (board
+  27.3 x 27.3 mm +-0.5, glass 26.7 x 19.26 mm, 2.37 mm thick); the pocket has
+  0.5 mm side clearance. Values in `hardware/circuits/variants/poc/layout_ui.yaml`
+  (`oled_module`) and `hardware/product/spec.yaml` (`front_ui.oled`).
 - DALI/AUX terminals: rotated so their wire openings face the top wall
   (MaiXu MX126 drawing). Confirm on the first board before printing.
 - The UI snap hooks (0.5 mm overlap, 6 mm wide tongues), the cover lip, the screw pilot (2.2 mm) and the rail latch
