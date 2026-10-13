@@ -135,7 +135,7 @@ services:
       context: .
       dockerfile: docker/kicanvas/Dockerfile
     volumes:
-      - ./hardware/layout/poc:/pcb:ro
+      - ./hardware/layout/v1:/pcb:ro
     ports: ["8082:80"]
 
 networks:

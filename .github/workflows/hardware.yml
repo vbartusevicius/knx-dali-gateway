@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { variant: poc, boards: "main ui" }
+          - { variant: v1, boards: "main ui" }
           - { variant: v2, boards: "main interface ui" }
     env:
       EDA: docker compose --profile hardware run --rm -T -e HARDWARE_VARIANT=${{ matrix.variant }} eda
@@ -45,7 +45,7 @@ jobs:
         run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py -q"
 
       - name: Renders, fit drawings and front legend for review
-        run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py && python3 front_legend.py"
+        run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py && python3 front_legend.py && python3 legend_color_model.py"
 
       - uses: actions/upload-artifact@v4
         with:

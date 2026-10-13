@@ -10,7 +10,7 @@ product:
   release: v1              # hardware/releases/<release>/
   status: draft-unvalidated
 
-active_variant: poc        # 3 DIN, 2 boards, 2-layer POC (see variants below)
+active_variant: v1         # 3 DIN, 2 boards, 2-layer POC (see variants below)
 
 # Envelope per user measurement (authoritative — see hardware/docs/din-envelope.svg
 # and hardware/docs/variants.md). Per module: 18 mm wide. Hidden part under
@@ -44,7 +44,7 @@ enclosure:
   parts: [base, cover]
 
 variants:
-  poc:
+  v1:
     description: "3 DIN, 2 boards, 2 layers — proof of concept"
     modules: 3
     boards: [main, ui]
@@ -94,7 +94,7 @@ terminals:
     poles: 2
     pitch: 5.0
     type: screw
-    labels: [AUX+, AUX-]  # 24 V or 30 V; powers only the internal DALI supply
+    labels: [AUX+, AUX-]  # 20-32 V (24 V PSU or MDT 30 V); powers only the internal DALI supply
   dali_supply_switch:
     board: main
     shoulder: top
@@ -133,7 +133,7 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
   display:
     type: oled-0.96in-ssd1306-i2c   # populated; glass flush with the front
     part: Winstar WEA012864DWPP3N00003 (WEA012864D-03 drawing)
-    geometry: hardware/circuits/variants/poc/layout_ui.yaml oled_module
+    geometry: hardware/circuits/variants/v1/layout_ui.yaml oled_module
   labels_area: true
 
 mcu:

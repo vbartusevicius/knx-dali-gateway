@@ -1,8 +1,11 @@
 """Package a fabrication release from the stored layouts (`eda` container).
 
-    [HARDWARE_VARIANT=<variant>] python3 hardware/scripts/release.py [<version>]
+    [HARDWARE_VARIANT=<variant>] python3 hardware/scripts/release.py [<version> [<board>...]]
 
-<version> defaults to the variant's product.release (poc -> v1, v2 -> v2).
+Naming boards re-releases only those (the others' folders stay as they are);
+the assembly parts list and the enclosure are always refreshed.
+
+<version> defaults to the variant's product.release (v1 -> v1, v2 -> v2).
 
 Writes hardware/releases/<version>/<board>/ for every board: KiCad sources,
 Gerbers and drill files (one zip for upload), JLCPCB BOM and placement files
@@ -154,11 +157,11 @@ def release_board(board, root):
     return [], placement
 
 
-def main(version):
+def main(version, boards=BOARDS):
     root = REPO / "hardware/releases" / version
     root.mkdir(parents=True, exist_ok=True)
     failed = False
-    for board in BOARDS:
+    for board in boards:
         problems, (turned, bottom) = release_board(board, root)
         if problems:
             failed = True
@@ -182,4 +185,4 @@ def main(version):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else RELEASE))
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else RELEASE, tuple(sys.argv[2:]) or BOARDS))

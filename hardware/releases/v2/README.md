@@ -36,15 +36,26 @@ JST-SH jumper.
 
 ## Front legend (optional print)
 
-`enclosure/front_legend.pdf` (also `.svg`) is the cover's front view at 1:1:
-terminal names and polarity (KNX + -; DALI DA DA; DALI PSU 24-30VDC + -),
-PRG/RST and FUNC, LED names and rings. Black = print; cyan =
-face edges and openings for positioning only, not printed. Three flat faces
-get printed: bottom shoulder (KNX), front (display, buttons, LEDs), top
-shoulder (screws). FDM printing services do not list printing on plastic, so
-either ask the printing service for UV/pad printing with this file (custom
-quote) or have it printed as an adhesive polyester label and cut it along the
-cyan face edges and openings.
+Three flat faces carry the legend: bottom shoulder (KNX + -), front (PRG/RST,
+FUNC, LED names and rings) and top shoulder (- + "PSU 20-32V" and DA DA "BUS", enclosed by one bracket
+with DALI in its bar: this input feeds only the internal DALI bus supply,
+not the gateway). 20-32 V keeps margin to the REM3 start-up (18 V max plus
+the SS16 reverse-polarity drop) and to the 33 V PTC/TVS limit; a 24 V
+supply or the MDT STC-1280.01 30 V output are both inside.
+
+- `enclosure/front_legend.pdf` (also `.svg`): the front view at 1:1, black =
+  print, cyan = face edges and openings for positioning only. For UV/pad
+  printing on an FDM cover (custom quote) or an adhesive polyester label cut
+  along the cyan lines.
+- `enclosure/cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
+  the cover for full-colour resin printing (JLC3DP "Full-Color Resin", WJP).
+  Upload either one instead of `cover.stl` and select full-colour printing.
+  The legend is a separate black body 0.3 mm deep, flush with the faces; the
+  cover is light grey. WJP resin is rigid and JLC3DP recommends walls >= 1 mm
+  (snap features >= 2 mm): the cover's 0.6 mm LED skins, 0.8 mm baffles and the
+  sprung snap tongues are below that, and opaque white resin passes less LED
+  light than translucent PETG. Ask for their review, or print the cover in
+  PETG and use the PDF instead.
 
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 

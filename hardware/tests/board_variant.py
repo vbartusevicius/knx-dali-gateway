@@ -1,4 +1,4 @@
-"""The hardware variant under test (HARDWARE_VARIANT, default poc) and the
+"""The hardware variant under test (HARDWARE_VARIANT, default v1) and the
 paths of its stored boards and generated netlists."""
 
 import sys

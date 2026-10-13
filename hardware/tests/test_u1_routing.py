@@ -20,7 +20,7 @@ REPO = Path(__file__).resolve().parents[2]
 
 @pytest.fixture(scope="module")
 def board():
-    return pcbnew.LoadBoard(str(REPO / "hardware/layout/poc/main/main.kicad_pcb"))
+    return pcbnew.LoadBoard(str(REPO / "hardware/layout/v1/main/main.kicad_pcb"))
 
 
 def pad(board, ref, number):

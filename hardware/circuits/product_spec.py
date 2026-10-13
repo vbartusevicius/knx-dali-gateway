@@ -9,8 +9,8 @@ BASE_PATH = REPO / "hardware/product/spec.yaml"
 
 
 def spec_path():
-    variant = os.environ.get("HARDWARE_VARIANT", "poc")
-    if variant == "poc":
+    variant = os.environ.get("HARDWARE_VARIANT", "v1")
+    if variant == "v1":
         return BASE_PATH
     if not variant.isidentifier():
         raise ValueError(f"Invalid hardware variant: {variant}")

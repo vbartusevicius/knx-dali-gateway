@@ -87,7 +87,7 @@ def test_every_part_is_sourced(board):
 
 
 LINKS = [link for link in SPEC["boards"].get("interconnects", []) if "refs" in link]
-if VARIANT == "poc":
+if VARIANT == "v1":
     LINKS = [{"refs": {"main": "J4", "ui": "J1"}, "pins": 10}]
 
 
@@ -106,7 +106,7 @@ def test_board_links_connect_matching_nets_pin_for_pin(link):
 UNUSED_ON_UI = {"LED_DALI"}
 
 
-@pytest.mark.skipif(VARIANT != "poc", reason="the spare LED_DALI wire exists only on the poc cable")
+@pytest.mark.skipif(VARIANT != "v1", reason="the spare LED_DALI wire exists only on the v1 cable")
 def test_main_board_led_lines_end_unused_on_the_ui_board():
     """The status LEDs are one addressable chain on LED_DATA; the spare
     LED_DALI wire arrives on the cable and touches nothing else there."""

@@ -42,6 +42,12 @@ RING_LINE = 0.4
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
 
+SUPPLY_LABEL = "PSU 20-32V"
+ROW_PITCH = 1.5
+BRACKET_LINE = 0.3
+BRACKET_CLEARANCE = 1.2
+BRACKET_TITLE_GAP = 0.8
+TITLE_CLEARANCE = 1.4
 LINE_SPACING = 1.3
 SIGN_REFERENCE = "+"
 
@@ -145,17 +151,54 @@ def union(boxes):
     return min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)
 
 
+def dali_terminals(terminals=None, main=None):
+    """Top shoulder in fixed rows: pin names under the screws, the pair names
+    (DALI bus supply input, bus) centred under each pair, and one bracket
+    around both pairs with DALI set into its bar, so the supply reads as the
+    DALI bus supply, not the device's power. Returns the labels and the
+    bracket's strokes as boxes."""
+    terminals = terminals or ef.SPEC["terminals"]
+    main = main or ef.components("main")
+    radius = be.SCREW_HOLE / 2
+    labels, names = [], []
+    for ref, key, name in (("J2", "aux_dc", SUPPLY_LABEL), ("J3", "dali", "BUS")):
+        screws = [ef.main_to_enc(px, py) for px, py, _ in sorted(main[ref]["pads"], key=lambda p: int(p[2]))]
+        hole_y = screws[0][1]
+        pin_y = hole_y - radius - GAP - LABEL_H / 2
+        pins = [lb.replace("AUX", "").replace("-", "\u2212") or lb for lb in terminals[key]["labels"]]
+        labels += [Label(pin, x, pin_y, LABEL_H) for (x, _), pin in zip(screws, pins)]
+        names.append(Label(name, sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H))
+    labels += names
+    text = union([lb.box() for lb in labels])
+    left, right = text[0] - BRACKET_CLEARANCE, text[2] + BRACKET_CLEARANCE
+    bar = text[1] - BRACKET_CLEARANCE
+    title = Label("DALI", (left + right) / 2, bar, LABEL_H)
+    above = [lb.box() for lb in labels if lb.box()[0] < title.box()[2] and title.box()[0] < lb.box()[2]]
+    if above:
+        bar = min(bar, min(b[1] for b in above) - TITLE_CLEARANCE - (title.box()[3] - title.box()[1]) / 2)
+        title = Label("DALI", (left + right) / 2, bar, LABEL_H)
+    leg_top = union([n.box() for n in names])[3]
+    gap0, gap1 = title.box()[0] - BRACKET_TITLE_GAP, title.box()[2] + BRACKET_TITLE_GAP
+    half = BRACKET_LINE / 2
+    strokes = [(left - half, bar - half, gap0, bar + half), (gap1, bar - half, right + half, bar + half),
+               (left - half, bar - half, left + half, leg_top), (right - half, bar - half, right + half, leg_top)]
+    return [*labels, title], strokes
+
+
+def stroke_path(boxes):
+    return MplPath.make_compound_path(*(MplPath.unit_rectangle().transformed(
+        Affine2D().scale(x1 - x0, y1 - y0).translate(x0, y0)) for x0, y0, x1, y1 in boxes))
+
+
+def marks():
+    """Printed shapes other than text."""
+    return [stroke_path(dali_terminals()[1])]
+
+
 def labels():
     terminals = ef.SPEC["terminals"]
     main = ef.components("main")
-    placed = []
-    for ref, key, title in (("J3", "dali", "DALI"), ("J2", "aux_dc", "DALI PSU\n24-30VDC")):
-        screws = [dict(zip(("x", "y"), ef.main_to_enc(px, py)))
-                  for px, py, _ in sorted(main[ref]["pads"], key=lambda p: int(p[2]))]
-        boxes = [hole_box(h, be.SCREW_HOLE) for h in screws]
-        pins = [lb.replace("AUX", "") or lb for lb in terminals[key]["labels"]]
-        pin_labels = [place(pin.replace("-", "\u2212"), b, LABEL_H, placed) for pin, b in zip(pins, boxes)]
-        place(title, union(boxes + [lb.box() for lb in pin_labels]), TITLE_H, placed)
+    placed, _ = dali_terminals(terminals, main)
     x0, x1, y1 = be.knx_recess()
     knx_pins = sorted(main["J1"]["pads"], key=lambda p: int(p[2]))
     for (px, _, _), text in zip(knx_pins, ("+", "\u2212")):
@@ -196,6 +239,8 @@ def draw(ax, placed):
                             ec=INK, lw=RING_LINE * 72 / 25.4, gid="print-led-ring"))
     for label in placed:
         ax.add_patch(PathPatch(label.path(), fc=INK, ec="none", gid="print-text"))
+    for mark in marks():
+        ax.add_patch(PathPatch(mark, fc=INK, ec="none", gid="print-bracket"))
 
 
 def render(placed):

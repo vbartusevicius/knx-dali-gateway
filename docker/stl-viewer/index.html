@@ -69,7 +69,7 @@ const list = document.getElementById('files');
 // Scan the enclosure build output for STL files
 async function collectStls() {
   const stls = [];
-  for (const dir of ['build/poc']) {
+  for (const dir of ['build/v1', 'build/v2']) {
     try {
       const r = await fetch('/models/' + dir + '/');
       if (!r.ok) continue;

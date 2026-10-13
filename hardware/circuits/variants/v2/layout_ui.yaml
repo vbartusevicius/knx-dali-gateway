@@ -50,16 +50,16 @@ parts:
   U1:  { x: 7.0, y: 15.3, rot: 0, block: mcu_power }
   U2:  { x: 15.75, y: 26.7, rot: 0, side: back, block: mcu, locked: true }
   U3:  { x: 16.0, y: 18.3, rot: 0, block: status_leds }
-  SW1: { x: 8.0, y: 8.8, rot: 0, block: btn_ladder, locked: true }
-  SW2: { x: 24.0, y: 8.8, rot: 0, block: btn_ladder, locked: true }
-  D1:  { x: 6.5, y: 3.5, rot: 0, block: status_leds, locked: true }
+  SW1: { x: 7.75, y: 8.8, rot: 0, block: btn_ladder, locked: true }
+  SW2: { x: 23.75, y: 8.8, rot: 0, block: btn_ladder, locked: true }
+  D1:  { x: 7.75, y: 3.5, rot: 0, block: status_leds, locked: true }
   D2:  { x: 15.75, y: 3.5, rot: 0, block: status_leds, locked: true }
-  D3:  { x: 25.0, y: 3.5, rot: 0, block: status_leds, locked: true }
+  D3:  { x: 23.75, y: 3.5, rot: 0, block: status_leds, locked: true }
   C1:  { x: 5.5, y: 17.8, rot: 0, block: mcu_power }
   C2:  { x: 17.0, y: 14.3, rot: 0, block: btn_ladder }
   C3:  { x: 20.5, y: 18.3, rot: 90, block: status_leds }
   C4:  { x: 16.0, y: 21.3, rot: 0, block: status_leds }
-  C5:  { x: 6.5, y: 3.5, rot: 0, side: back, block: status_leds }
+  C5:  { x: 7.75, y: 3.5, rot: 0, side: back, block: status_leds }
   C6:  { x: 15.75, y: 6.7, rot: 0, block: status_leds }
   C7:  { x: 29.0, y: 3.5, rot: 0, side: back, block: status_leds }
   R1:  { x: 12.0, y: 23.3, rot: 0, block: mcu }
