@@ -299,7 +299,8 @@ def our_pads(fp):
 
 def check_pinout(check, fp, part, pinout):
     """Hand-fitted part without a JLCPCB record: the cited manufacturer pinout."""
-    theirs = [(n, x, y) for n, (x, y) in pinout["pads"].items()]
+    theirs = [(n, x, y) for n, pts in pinout["pads"].items()
+              for x, y in (pts if isinstance(pts[0], list) else [pts])]
     check.jlc_footprint = "pinouts.yaml"
     check.placement = fit(our_pads(fp), theirs, fp.IsFlipped())
     if check.placement is None:

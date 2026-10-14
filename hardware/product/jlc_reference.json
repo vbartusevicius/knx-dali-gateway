@@ -1290,6 +1290,51 @@
         "3": "3"
       }
     },
+    "C2932690": {
+      "record": {
+        "componentModelEn": "KH-2.54PH90-1X5P-L13.8",
+        "componentBrandEn": "Shenzhen Kinghelm Elec",
+        "componentSpecificationEn": "Push-Pull,P=2.54mm",
+        "dataManualUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2201121530_Shenzhen-Kinghelm-Elec-KH-2-54PH90-1X5P-L13-8_C2932690.pdf",
+        "componentLibraryType": "expand",
+        "attributes": []
+      },
+      "footprint": "HDR-TH_5P-P2.54-H-M-W10.4-N",
+      "pads": [
+        [
+          "1",
+          -5.08,
+          -0.0
+        ],
+        [
+          "2",
+          -2.54,
+          -0.0
+        ],
+        [
+          "3",
+          0.0,
+          -0.0
+        ],
+        [
+          "4",
+          2.54,
+          -0.0
+        ],
+        [
+          "5",
+          5.08,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5"
+      }
+    },
     "C3002263": {
       "record": {
         "componentModelEn": "TLP383(D4BLLTL,E",
@@ -1510,6 +1555,81 @@
         "4": "AC"
       }
     },
+    "C48532769": {
+      "record": {
+        "componentModelEn": "KH-FPC0.5-H1.2SMT-8P-QCHF",
+        "componentBrandEn": "Shenzhen Kinghelm Elec",
+        "componentSpecificationEn": "SMD,P=0.5mm,Surface Mount，Right Angle",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2504231158_Shenzhen-Kinghelm-Elec-KH-FPC0-5-H1-2SMT-8P-QCHF_C48532769.pdf",
+        "componentLibraryType": "expand",
+        "attributes": []
+      },
+      "footprint": "FPC-SMD_8P-P0.50_KH-FPC0.5-H1.2SMT-8P-QCHF",
+      "pads": [
+        [
+          "9",
+          3.6997639999999503,
+          -0.8500110000000268
+        ],
+        [
+          "1",
+          -1.7503140000000195,
+          0.8500110000000268
+        ],
+        [
+          "2",
+          -1.2501880000000065,
+          0.8500110000000268
+        ],
+        [
+          "3",
+          -0.7503160000000453,
+          0.8500110000000268
+        ],
+        [
+          "4",
+          -0.25019000000003233,
+          0.8500110000000268
+        ],
+        [
+          "5",
+          0.24968200000004437,
+          0.8500110000000268
+        ],
+        [
+          "6",
+          0.7498080000000573,
+          0.8500110000000268
+        ],
+        [
+          "7",
+          1.2496800000000186,
+          0.8500110000000268
+        ],
+        [
+          "8",
+          1.7498060000000315,
+          0.8500110000000268
+        ],
+        [
+          "10",
+          -3.6997639999999503,
+          -0.8500110000000268
+        ]
+      ],
+      "pin_names": {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8",
+        "9": "9",
+        "10": "10"
+      }
+    },
     "C48580717": {
       "record": {
         "componentModelEn": "MJD45H11",
@@ -1543,6 +1663,44 @@
         "2": "C"
       }
     },
+    "C48970703": {
+      "record": {
+        "componentModelEn": "RYRVT35V470UF10*10",
+        "componentBrandEn": "Honor Elec",
+        "componentSpecificationEn": "SMD,D10xL10.2mm",
+        "dataManualUrl": "",
+        "componentLibraryType": "expand",
+        "attributes": [
+          {
+            "attribute_name_en": "Voltage Rating",
+            "component_code": "C48970703",
+            "attribute_value_name": "35V"
+          },
+          {
+            "attribute_name_en": "Capacitance",
+            "component_code": "C48970703",
+            "attribute_value_name": "470uF"
+          }
+        ]
+      },
+      "footprint": "CAP-SMD_BD10.0-L10.3-W10.3-LS11.2-FD_2",
+      "pads": [
+        [
+          "2",
+          4.300092999999933,
+          -0.0
+        ],
+        [
+          "1",
+          -4.300093000000048,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "1": "1",
+        "2": "2"
+      }
+    },
     "C49257": {
       "record": {
         "componentModelEn": "2.54-1*3PPin",
@@ -1574,6 +1732,51 @@
         "3": "3",
         "1": "1",
         "2": "2"
+      }
+    },
+    "C50950": {
+      "record": {
+        "componentModelEn": "2.54-1*5PFemale",
+        "componentBrandEn": "BOOMELE(Boom Precision Elec)",
+        "componentSpecificationEn": "Plugin,P=2.54mm",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2411141354_BOOMELE-Boom-Precision-Elec-2-54-1-5P_C50950.pdf",
+        "componentLibraryType": "expand",
+        "attributes": []
+      },
+      "footprint": "HDR-TH_5P-P2.54-V-F",
+      "pads": [
+        [
+          "5",
+          5.08,
+          -0.0
+        ],
+        [
+          "4",
+          2.54,
+          -0.0
+        ],
+        [
+          "3",
+          0.0,
+          -0.0
+        ],
+        [
+          "2",
+          -2.54,
+          -0.0
+        ],
+        [
+          "1",
+          -5.08,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5"
       }
     },
     "C513000": {
@@ -2005,6 +2208,39 @@
         "1": "G",
         "2": "S",
         "3": "D"
+      }
+    },
+    "C720477": {
+      "record": {
+        "componentModelEn": "TS-1088-AR02016",
+        "componentBrandEn": "XUNPU",
+        "componentSpecificationEn": "SMD,4x3mm",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2304140030_XUNPU-TS-1088-AR02016_C720477.pdf",
+        "componentLibraryType": "base",
+        "attributes": [
+          {
+            "attribute_name_en": "Voltage Rating",
+            "component_code": "C720477",
+            "attribute_value_name": "12V"
+          }
+        ]
+      },
+      "footprint": "SW-SMD_L3.9-W3.0-P4.45",
+      "pads": [
+        [
+          "1",
+          -2.184907999999965,
+          -0.0
+        ],
+        [
+          "2",
+          2.184907999999965,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "2": "2",
+        "1": "1"
       }
     },
     "C72599": {

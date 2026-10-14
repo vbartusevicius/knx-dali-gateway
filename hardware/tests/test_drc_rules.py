@@ -9,16 +9,18 @@ import subprocess
 
 import pcbnew
 import pytest
-from board_variant import BOARDS, layout_path
-
-POWER_NET = {"main": "VFILT", "ui": "+3V3", "interface": "DA_P"}
+from board_variant import BOARDS, layout_path, layout_plan
 
 
-def free_spot(pcb, length=2.0, margin=1.5):
-    """Start of a horizontal segment inside the board that no pad comes near,
-    since KiCad does not check the width of copper inside a pad."""
+def free_spot(pcb, fine_pitch=(), length=2.0, margin=0.8):
+    """Start of a horizontal segment inside the board that no pad or fine-pitch
+    neck-down courtyard comes near."""
     box = pcb.GetBoardEdgesBoundingBox()
-    pads = [p.GetBoundingBox() for p in pcb.GetPads()]
+    for fp in pcb.Footprints():
+        fp.BuildCourtyardCaches()
+    pads = [p.GetBoundingBox() for p in pcb.GetPads()] + [
+        fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd).BBox()
+        for fp in pcb.Footprints() if fp.GetReference() in fine_pitch]
     step = pcbnew.FromMM(0.5)
     grow = pcbnew.FromMM(margin)
     for y in range(box.GetY() + grow, box.GetBottom() - grow, step):
@@ -32,12 +34,15 @@ def free_spot(pcb, length=2.0, margin=1.5):
 
 @pytest.mark.parametrize("board", BOARDS)
 def test_project_rules_are_enforced(tmp_path, board):
-    net = POWER_NET[board]
+    nets = layout_plan(board)["frame"]["power_nets"]
+    if not nets:
+        pytest.skip("board has no power-class nets")
+    net = nets[0]
     src = layout_path(board).parent
     for suffix in (".kicad_pcb", ".kicad_pro", ".kicad_dru"):
         shutil.copy(src / f"{board}{suffix}", tmp_path / f"{board}{suffix}")
     pcb = pcbnew.LoadBoard(str(tmp_path / f"{board}.kicad_pcb"))
-    x, y = free_spot(pcb)
+    x, y = free_spot(pcb, set(layout_plan(board)["frame"].get("fine_pitch_power_pads", [])))
     track = pcbnew.PCB_TRACK(pcb)
     track.SetStart(pcbnew.VECTOR2I(x, y))
     track.SetEnd(pcbnew.VECTOR2I(x + pcbnew.FromMM(2), y))

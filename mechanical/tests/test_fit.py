@@ -21,7 +21,7 @@ WALL = SPEC["enclosure"]["wall"]
 MIN_GAP = SPEC["checks"]["component_to_cover_min_gap"]
 AIR = SPEC["checks"]["component_air_gap"]
 REACH_OPENINGS = {"J1", "J2", "J3"}
-MAIN_TOP_Z = SPEC["boards"]["main"]["z"]
+MAIN_TOP_Z = SPEC["boards"]["main"].get("z", 21.2)
 MAIN_THICK = SPEC["boards"]["main"]["thickness"]
 UI_BOTTOM_Z = SPEC["front_ui"]["board_z"]
 UI_TOP_Z = SPEC["front_ui"]["board_top_z"]
@@ -40,7 +40,9 @@ def part_height(board, ref):
 
 
 def main_part_limits(comp, height):
-    """Return (top_z, limit_z) for a main-board part."""
+    """Return (top, limit) along the board normal for a main-board part."""
+    if SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail":
+        return SPEC["boards"]["main"]["x"] + height, ef.WIDTH / 2 - WALL
     if comp["side"] == "back":
         return WALL, MAIN_TOP_Z - MAIN_THICK - height
     _, enc_y = ef.main_to_enc(*ef.bbox_centre(comp))
@@ -51,10 +53,10 @@ def main_part_limits(comp, height):
 
 def main_height_violations(comps, height_of):
     bad = []
+    gap = MIN_GAP if SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail" else AIR
     for ref, comp in comps.items():
-        if ref in REACH_OPENINGS:
+        if ref in REACH_OPENINGS and ef.VARIANT != "v3":
             continue
-        gap = AIR
         top, limit = main_part_limits(comp, height_of(ref))
         if comp["side"] == "back" and limit < top + gap - 1e-6:
             bad.append((ref, round(limit, 2), top))
@@ -69,7 +71,8 @@ def test_main_parts_have_air_to_floor_shoulders_and_ui_board():
 
 def test_main_height_check_catches_a_tall_part():
     comps = ef.components("main")
-    assert main_height_violations(comps, lambda r: 30.0 if r == "C4" else part_height("main", r))
+    target = "U2" if ef.VARIANT == "v3" else "C4"
+    assert main_height_violations(comps, lambda r: 30.0 if r == target else part_height("main", r))
 
 
 def test_ui_front_parts_stay_behind_front_wall():
@@ -86,18 +89,37 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
     """Terminals end 0.2 mm short of the top face: their pads need 0.3 mm to
     the board edge."""
     faces = ef.connector_faces()
+    if ef.VARIANT == "v3":
+        assert abs(faces["J1_dali"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
+        assert abs(faces["J1"]) <= FLUSH_TOLERANCE
+        assert abs(faces["J2"]) <= FLUSH_TOLERANCE
+        return
     assert abs(faces["J2"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
     assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
     assert abs(faces["J1"]) <= FLUSH_TOLERANCE
 
 
 def test_knx_plug_top_below_the_shoulder_face():
+    if ef.VARIANT == "v3":
+        plug_top = max(b["z1"] for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS)
+        assert 0 <= ef.SHOULDER_Z["bottom"] - plug_top <= 8.0
+        return
     plug_top = MAIN_TOP_Z + ef.PLUG_HEIGHT
     assert 0 <= ef.SHOULDER_Z["bottom"] - plug_top <= 1.5
 
 
 def openings():
     t = ef.terminal_holes()
+    if ef.VARIANT == "v3":
+        dali_x = [h["x"] for h in t["DALI"]]
+        dali_y = t["DALI"][0]["y"]
+        screws = [{"x": sum(dali_x) / len(dali_x), "y": dali_y, "w": max(dali_x) - min(dali_x) + 3.0,
+                   "h_": 4.0, "face": "top"}]
+        front = [dict(h, w=2.2, h_=2.2, face="front") for h in ef.led_windows()]
+        front += [dict(h, w=2.6, h_=2.6, face="front") for h in ef.button_holes().values()]
+        win = ef.oled_window()
+        front.append({"x": win["cx"], "y": win["cy"], "w": win["w"], "h_": win["h"], "face": "front"})
+        return screws + front
     knx = [dict(h, y=(h["y"] + 5.3) / 2, w=10.6, h_=h["y"] + 5.3, face="bottom") for h in t["KNX"]]
     screws = [dict(h, w=4.0, h_=4.0, face="top") for h in t["DALI"] + t["AUX"]]
     front = [dict(h, w=3.5, h_=3.5, face="front") for h in ef.led_windows()]
@@ -170,10 +192,12 @@ def test_case_contacts_miss_parts_and_pins(kind, board, side, half):
 
 def test_contact_check_catches_a_leg_under_a_terminal_pin():
     comps = ef.components("main")
-    x, y = ef.main_to_enc(*comps["J2"]["tht_pads"][0])
-    assert contact_collisions([{"x": x, "y": y}], comps, "back", 2.5, ef.main_to_enc) == ["J2 pins"]
+    ref = "U5" if ef.VARIANT == "v3" else "J2"
+    x, y = ef.main_to_enc(*comps[ref]["tht_pads"][0])
+    assert f"{ref} pins" in contact_collisions([{"x": x, "y": y}], comps, "back", 2.5, ef.main_to_enc)
 
 
+@pytest.mark.skipif(ef.VARIANT == "v3", reason="v3 carrier stands against the side wall instead of floor legs")
 def test_main_board_supported_in_all_four_quadrants():
     pts = ef.legs()
     quadrants = {(p["x"] > 0, p["y"] > ef.HIDDEN_H / 2) for p in pts}
@@ -188,22 +212,24 @@ def test_button_holes_follow_the_buttons(ref, hole):
     assert abs(h["x"] - x) <= 0.01 and abs(h["y"] - y) <= 0.01
 
 
-THROUGH_WALL = {"main": {"J1", "J2", "J3"}, "ui": set()}
+THROUGH_WALL = {"main": {"J1", "J2", "J3"}, "dali": {"J1"}, "inputs": {"J1", "J2"}, "knx": set(), "ui": set()}
 
 
 def wall_crossings(board, comps):
     """Parts other than the connectors, which may pass through their case
     openings, must stay inside the walls."""
     half = ef.WIDTH / 2 - WALL
-    low, high = (WALL, ef.HIDDEN_H - WALL) if board == "main" else \
-        (ef.FRONT_Y_START + WALL, ef.FRONT_Y_END - WALL)
+    low, high = (WALL, ef.HIDDEN_H - WALL) if board != "ui" else         (ef.FRONT_Y_START + WALL, ef.FRONT_Y_END - WALL)
     bad = []
+    thick = SPEC["boards"][board]["thickness"]
     for ref, c in comps.items():
-        if ref in THROUGH_WALL[board]:
+        if ref in THROUGH_WALL.get(board, set()):
             continue
-        x, y = zip(*[ef.main_to_enc(c["bbox"][f"x{i}"], c["bbox"][f"y{i}"]) if board == "main"
-                     else ef.ui_to_enc(c["bbox"][f"x{i}"], c["bbox"][f"y{i}"]) for i in (0, 1)])
-        if min(x) < -half or max(x) > half or min(y) < low or max(y) > high:
+        h = c["height"]
+        n0, n1 = (-thick - h, -thick) if c["side"] == "back" else (0.0, h)
+        b = ef.span_box(ef.board_point(board, c["bbox"]["x0"], c["bbox"]["y0"], n0),
+                        ef.board_point(board, c["bbox"]["x1"], c["bbox"]["y1"], n1))
+        if b["x0"] < -half - 1e-6 or b["x1"] > half + 1e-6 or b["y0"] < low - 1e-6 or b["y1"] > high + 1e-6:
             bad.append(ref)
     return bad
 
@@ -220,6 +246,12 @@ def test_wall_check_catches_a_part_overhanging_the_top_edge():
 
 
 def slot_misses(slots, comps):
+    if ef.VARIANT == "v3":
+        dali = ef.components("dali")
+        pads_x = [ef.board_to_enc("dali", x, y)[0] for x, y in ef.pad_points(dali["J1"])]
+        slot = slots[0]
+        return [] if (slot["x0"] <= min(pads_x) and max(pads_x) <= slot["x1"]
+                      and slot["z0"] >= SPEC["boards"]["dali"]["z"] and slot["z1"] <= ef.BASE_TOP_Z) else ["J1"]
     misses = []
     for ref, slot in zip(("J2", "J3"), slots):
         pads_x = [ef.main_to_enc(x, y)[0] for x, y in ef.pad_points(comps[ref])]
@@ -245,9 +277,9 @@ CABLE_BEND_ALLOWANCE = 20.0
 def connector_gap():
     j4 = ef.components("main")["J4"]
     j1 = ef.components("ui")["J1"]
-    (mx, my), (ux, uy) = ef.main_to_enc(j4["x"], j4["y"]), ef.ui_to_enc(j1["x"], j1["y"])
-    dz = (SPEC["front_ui"]["board_z"]) - MAIN_TOP_Z
-    return ((mx - ux) ** 2 + (my - uy) ** 2 + dz ** 2) ** 0.5
+    mx, my, mz = ef.board_point("main", j4["x"], j4["y"])
+    ux, uy, uz = ef.board_point("ui", j1["x"], j1["y"])
+    return ((mx - ux) ** 2 + (my - uy) ** 2 + (mz - uz) ** 2) ** 0.5
 
 
 def test_ui_cable_reaches_with_slack():

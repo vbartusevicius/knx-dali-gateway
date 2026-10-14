@@ -68,6 +68,7 @@ DPAK = "Package_TO_SOT_SMD:TO-252-2"
 FUSE1812 = "Fuse:Fuse_1812_4532Metric"
 TERM_5MM = "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm"
 DCDC_REM3 = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24"
+DCDC_REM3_CTRL = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24_CTRL"
 JUMPER_2X2 = "Connector_PinHeader_2.54mm:PinHeader_2x02_P2.54mm_Vertical"
 
 
@@ -79,8 +80,13 @@ def cap(value, fields=None, footprint=C0603):
     return part("Device", "C", value, footprint, fields)
 
 
-def build(gnd, v3, *, include_interface=True):
-    """Build the DALI block. Returns (dali_tx, dali_rx)."""
+def build(gnd, v3, *, include_interface=True, terminals=True, input_stage=True, bus_side=True, supply_off=None):
+    """Build the DALI block. terminals=False leaves the AUX and DALI terminals
+    to other boards (AUX_IN/GNDA and DA1/DA2 are returned for the headers).
+    input_stage=False leaves the AUX fuse/diode/TVS there too (AUX_P arrives
+    on a header). bus_side=False leaves the limiter and the supply jumpers to the
+    DALI board (DALI_ISO15V/GNDD go there). supply_off (a 3.3 V logic net on the KNX side) selects the REM3 /CTRL
+    version and switches the isolated supply off through an optocoupler."""
     gndd = power("GNDD")
     gnda = power("GNDA")
     power_flag(gnda)
@@ -98,27 +104,11 @@ def build(gnd, v3, *, include_interface=True):
 
     # --- AUX input protection ---
     block("aux_in")
-    j2 = part("Connector", "Screw_Terminal_01x02", "AUX", TERM_5MM,
-              src(mpn="MX126-5.0-02P-GN01-Cu-S-A", mfr="MaiXu", lcsc="C5188434",
-                  source="spec.yaml terminals.aux_dc"), ref="J2")
-    f1 = part("Device", "Polyfuse", "1.1A", FUSE1812,
-              src(mpn="1812L110/33MR", mfr="Littelfuse", lcsc="C142747",
-                  source="AUX PTC 1812 1.1A hold 33V; REM3 input protection"))
-    f1.fields["Place"] = "aux_fuse"
-    j2[1] += f1[1]
-    f1[2] += aux_fused
-    j2[2] += gnda
-    d_aux_rev = part("Device", "D_Schottky", "SS16", D_SMA,
-                     src(mpn="SS16", mfr="MDD", lcsc="C2481",
-                         source="AUX reverse polarity; 60V 1A Schottky SMA"))
-    d_aux_rev["A"] += aux_fused
-    d_aux_rev["K"] += aux_p
-    d_aux_tvs = part("Device", "D_Zener", "SMAJ33A", D_SMA,
-                     src(mpn="SMAJ33A", mfr="Littelfuse", lcsc="C113966",
-                         source="AUX TVS, unidirectional; V_RWM=33V V_BR=36.7V "
-                                "V_C=53.3V; residual risk: REM3 36V max"))
-    d_aux_tvs["K"] += aux_p
-    d_aux_tvs["A"] += gnda
+    if terminals:
+        j2 = part("Connector", "Screw_Terminal_01x02", "AUX", TERM_5MM,
+                  src(mpn="MX126-5.0-02P-GN01-Cu-S-A", mfr="MaiXu", lcsc="C5188434",
+                      source="spec.yaml terminals.aux_dc"), ref="J2")
+    aux_in = aux_protection(gnda, aux_fused, aux_p, j2 if terminals else None) if input_stage else None
 
     # --- Isolated DC-DC: RECOM REM3-2415S/A (15V output, reinforced) ---
     block("dcdc_iso")
@@ -127,11 +117,18 @@ def build(gnd, v3, *, include_interface=True):
                    footprint=C0805)
     c_aux_in[1] += aux_p
     c_aux_in[2] += gnda
-    u3 = part("gateway", "REM3_DCDC", "REM3-2415S/A 24V->15V 3W iso",
-              DCDC_REM3,
-              src(mpn="REM3-2415S/A", mfr="RECOM", hand=True,
-                  source="RECOM REM3 datasheet: 18-36V in, 15V 200mA out, "
-                         "5kVAC reinforced 2MOPP, DIP-24 A-pinning"))
+    if supply_off is not None:
+        u3 = part("gateway", "REM3_DCDC_CTRL", "REM3-2415S/A/CTRL 24V->15V 3W iso", DCDC_REM3_CTRL,
+                  src(mpn="REM3-2415S/A/CTRL", mfr="RECOM", hand=True,
+                      source="RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, "
+                             "5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"))
+        supply_off_switch(gnd, gnda, aux_p, u3["CTRL"], supply_off)
+    else:
+        u3 = part("gateway", "REM3_DCDC", "REM3-2415S/A 24V->15V 3W iso",
+                  DCDC_REM3,
+                  src(mpn="REM3-2415S/A", mfr="RECOM", hand=True,
+                      source="RECOM REM3 datasheet: 18-36V in, 15V 200mA out, "
+                             "5kVAC reinforced 2MOPP, DIP-24 A-pinning"))
     u3["+Vin"] += aux_p
     u3["-Vin"] += gnda
     u3["+Vout"] += iso15
@@ -143,6 +140,26 @@ def build(gnd, v3, *, include_interface=True):
     c_iso_out[2] += gndd
     c_iso_out.fields["Place"] = "dali_tx"
 
+    if bus_side:
+        limiter_and_switch(gndd, iso15, sw_in, da1, da2)
+
+    # --- DALI terminal + bridge rectifier ---
+    block("dali_terminal")
+    if terminals:
+        j3 = part("Connector", "Screw_Terminal_01x02", "DALI", TERM_5MM,
+                  src(mpn="MX126-5.0-02P-GN01-Cu-S-A", mfr="MaiXu", lcsc="C5188434",
+                      source="spec.yaml terminals.dali"), ref="J3")
+        j3[1] += da1
+        j3[2] += da2
+
+    nets = {"da1": da1, "da2": da2, "gndd": gndd, "aux_in": aux_in, "aux_p": aux_p, "gnda": gnda, "iso15": iso15}
+    if not include_interface:
+        return nets
+    return {**nets, **build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx)}
+
+
+def limiter_and_switch(gndd, iso15, sw_in, da1, da2):
+    """Current limiter after the isolated supply and the internal-supply jumpers."""
     # --- Two-transistor current limiter (~180 mA, high-side PNP) ---
     # Q_pass MJD45H11 PNP (not Darlington): E=iso15 (via R_sense), C=sw_in
     # R_sense 3R3: iso15 -> Q_pass.E
@@ -181,17 +198,60 @@ def build(gnd, v3, *, include_interface=True):
     jp1[3] += gndd
     jp1[4] += da2
 
-    # --- DALI terminal + bridge rectifier ---
-    block("dali_terminal")
-    j3 = part("Connector", "Screw_Terminal_01x02", "DALI", TERM_5MM,
-              src(mpn="MX126-5.0-02P-GN01-Cu-S-A", mfr="MaiXu", lcsc="C5188434",
-                  source="spec.yaml terminals.dali"), ref="J3")
-    j3[1] += da1
-    j3[2] += da2
 
-    if not include_interface:
-        return {"da1": da1, "da2": da2, "gndd": gndd}
-    return build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx)
+def aux_protection(gnda, aux_fused, aux_p, terminal=None):
+    """AUX input: PTC, reverse-polarity Schottky, TVS. With a terminal on this
+    board its pin 1 feeds the PTC; otherwise the PTC input is AUX_IN."""
+    f1 = part("Device", "Polyfuse", "1.1A", FUSE1812,
+              src(mpn="1812L110/33MR", mfr="Littelfuse", lcsc="C142747",
+                  source="AUX PTC 1812 1.1A hold 33V; REM3 input protection"))
+    f1.fields["Place"] = "aux_fuse"
+    if terminal is not None:
+        terminal[1] += f1[1]
+        aux_in = f1[1].net
+    else:
+        aux_in = Net("AUX_IN")
+        f1[1] += aux_in
+    f1[2] += aux_fused
+    if terminal is not None:
+        terminal[2] += gnda
+    d_aux_rev = part("Device", "D_Schottky", "SS16", D_SMA,
+                     src(mpn="SS16", mfr="MDD", lcsc="C2481",
+                         source="AUX reverse polarity; 60V 1A Schottky SMA"))
+    d_aux_rev["A"] += aux_fused
+    d_aux_rev["K"] += aux_p
+    d_aux_tvs = part("Device", "D_Zener", "SMAJ33A", D_SMA,
+                     src(mpn="SMAJ33A", mfr="Littelfuse", lcsc="C113966",
+                         source="AUX TVS, unidirectional; V_RWM=33V V_BR=36.7V "
+                                "V_C=53.3V; residual risk: REM3 36V max"))
+    d_aux_tvs["K"] += aux_p
+    d_aux_tvs["A"] += gnda
+    return aux_in
+
+
+def supply_off_switch(gnd, gnda, aux_p, ctrl, supply_off):
+    """REM3 CTRL (RECOM datasheet, referred to -Vin): open or 0-1.2 V = on,
+    2.2-12 V = off, -0.5..1 mA. The optocoupler closes AUX_P -> 10k -> CTRL with
+    a 5.6 V zener to -Vin: 1.4 mA (20 V) to 2.6 mA (32 V) holds CTRL at about
+    5.6 V. Unpowered or idle, CTRL stays open: the supply defaults on."""
+    block("dali_supply_off")
+    opto = part("gateway", "TLP383", "TLP383", SO6L,
+                src(mpn="TLP383(D4BLLTL,E", mfr="Toshiba", lcsc="C3002263",
+                    source="DALI supply off: KNX-side GPIO to the AUX-side CTRL; BL rank CTR >= 200 %"))
+    r_led = res("330R", src(source="opto LED from 3.3 V GPIO: (3.3-1.2)/330R = 6.4 mA; CTR >= 200 % "
+                                   "covers the 2.6 mA collector current"))
+    r_ctrl = res("10k", src(source="CTRL feed from AUX_P: (20..32 V - 5.6 V)/10k = 1.4..2.6 mA"))
+    clamp = part("Device", "D_Zener", "5V6", D_SOD123,
+                 src(mpn="MMSZ5V6T1G", mfr="onsemi", lcsc="C236111",
+                     source="CTRL clamp 5.6 V, inside the 2.2-12 V off range"))
+    supply_off += r_led[1]
+    r_led[2] += opto["A"]
+    opto["K"] += gnd
+    r_ctrl[1] += aux_p
+    r_ctrl[2] += opto["C"]
+    opto["E"] += ctrl
+    clamp["K"] += ctrl
+    clamp["A"] += gnda
 
 
 def build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx):

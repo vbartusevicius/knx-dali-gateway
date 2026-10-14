@@ -24,10 +24,20 @@ D_SMA = "Diode_SMD:D_SMA"
 D_SOD123 = "Diode_SMD:D_SOD-123"
 TSOT23_6 = "Package_TO_SOT_SMD:TSOT-23-6"
 QFN40 = "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm_ThermalVias"
+QFN40_NO_VIAS = "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm"
 XTAL3225 = "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm"
 L_INDUCTOR = "Inductor_SMD:L_Wuerth_7440604_8x8mm"
 L_0805 = "Inductor_SMD:L_0805_2012Metric"
 HDR_KNX = "gateway_fp:Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm"
+C_ELEC_SMD = "Capacitor_SMD:CP_Elec_10x10"
+
+
+def knx_pin_strip(value, ref):
+    """Phoenix PST 1,0/2-5,75 pin strip for a KNX-style plug (red/black bus or
+    yellow/white auxiliary voltage)."""
+    return part("Connector", "Conn_01x02_Pin", value, HDR_KNX,
+                src(mpn="1574200", mfr="Phoenix Contact", hand=True,
+                    source="Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"), ref=ref)
 
 
 def res(value, fields=None, footprint=R0603):
@@ -38,26 +48,8 @@ def cap(value, fields=None, footprint=C0603):
     return part("Device", "C", value, footprint, fields)
 
 
-def build(gnd, *, horizontal_storage=False):
-    """Build the KNX block. Returns dict with knx_txd, knx_rxd, saveb, v5."""
-    knx_p = Net("KNX_P")
-    knx_p_prot = Net("KNX_P_PROT")
-    v3t = Net("+3V3_TRX")
-    vfilt = Net("VFILT")
-    v5 = Net("+5V")
-    knx_txd = Net("KNX_TXD")
-    knx_rxd = Net("KNX_RXD")
-    saveb = Net("NCN_SAVEB")
-    for n in (knx_p, knx_p_prot, v5):
-        power_flag(n)
-
-    # --- KNX bus terminal + TVS + reverse polarity (Figure 12) ---
-    block("knx_in")
-    j1 = part("Connector", "Conn_01x02_Pin", "KNX bus terminal pins", HDR_KNX,
-              src(mpn="1574200", mfr="Phoenix Contact", hand=True,
-                  source="Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"), ref="J1")
-    j1[1] += knx_p
-    j1[2] += gnd
+def input_protection(gnd, knx_p, knx_p_prot):
+    """NCN5130 Figure 12 bus input: TVS across the bus, then the reverse-polarity diode."""
     d_tvs = part("Device", "D_TVS", "SMAJ40CA", D_SMA,
                  src(mpn="SMAJ40CA", mfr="MDD", lcsc="C113970",
                      source="NCN5130 Table 6: D2 TVS; SMAJ40CA equiv to 1SMA40CA; "
@@ -71,9 +63,37 @@ def build(gnd, *, horizontal_storage=False):
     d_rev["A"] += knx_p
     d_rev["K"] += knx_p_prot
 
+
+def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, input_stage=True, buck=True,
+          thermal_vias=True):
+    """Build the KNX block. Returns dict with knx_p, knx_p_prot, knx_txd, knx_rxd, saveb, v5.
+    terminal=False leaves the KNX pin strip to another board; input_stage=False
+    also leaves the bus protection there (KNX_P_PROT arrives on a header);
+    buck=False leaves the 5 V buck to another board (VFILT leaves on a header);
+    thermal_vias=False keeps the exposed pad's vias out of the other side."""
+    knx_p = Net("KNX_P")
+    knx_p_prot = Net("KNX_P_PROT")
+    v3t = Net("+3V3_TRX")
+    vfilt = Net("VFILT")
+    v5 = Net("+5V")
+    knx_txd = Net("KNX_TXD")
+    knx_rxd = Net("KNX_RXD")
+    saveb = Net("NCN_SAVEB")
+    for n in (knx_p, knx_p_prot, v5):
+        power_flag(n)
+
+    # --- KNX bus terminal + TVS + reverse polarity (Figure 12) ---
+    block("knx_in")
+    if terminal:
+        j1 = knx_pin_strip("KNX bus terminal pins", "J1")
+        j1[1] += knx_p
+        j1[2] += gnd
+    if input_stage:
+        input_protection(gnd, knx_p, knx_p_prot)
+
     # --- U1 NCN5130 (Figure 12, 9-bit UART 19200 bps) ---
     block("ncn5130")
-    u1 = part("gateway", "NCN5130", "NCN5130MNTWG", QFN40,
+    u1 = part("gateway", "NCN5130", "NCN5130MNTWG", QFN40 if thermal_vias else QFN40_NO_VIAS,
               src(mpn="NCN5130MNTWG", mfr="onsemi", lcsc="C513000",
                   source="onsemi NCN5130 datasheet Figure 12"))
     ccp = Net("CCP")
@@ -170,9 +190,15 @@ def build(gnd, *, horizontal_storage=False):
     if horizontal_storage:
         storage_source += ("; hand-fit lying down from the back: bend both leads 90 deg 3 mm from the body, "
                            "body axis 7 mm below the board (2 mm air gap) in the base cradles, solder on the front")
-    c_vfilt = part("Device", "C_Polarized", "470u 35V", C_ELEC_BENT if horizontal_storage else C_ELEC,
-                   src(mpn="KMG35V470M10*16 LO", mfr="SamYoung", lcsc="C165500", hand=horizontal_storage,
-                       source=storage_source))
+    if smd_storage:
+        c_vfilt = part("Device", "C_Polarized", "470u 35V", C_ELEC_SMD,
+                       src(mpn="RYRVT35V470UF10*10", mfr="Honor Elec", lcsc="C48970703",
+                           source="NCN5130 Table 6 C4 470µF 35V storage; SMD D10 x 10.2 mm for the 1-module "
+                                  "case (286 mA ripple at 120 Hz, 105 C 2000 h)"))
+    else:
+        c_vfilt = part("Device", "C_Polarized", "470u 35V", C_ELEC_BENT if horizontal_storage else C_ELEC,
+                       src(mpn="KMG35V470M10*16 LO", mfr="SamYoung", lcsc="C165500", hand=horizontal_storage,
+                           source=storage_source))
     c_vfilt.fields["Place"] = "ncn_left"
     c_vfilt[1] += vfilt
     c_vfilt[2] += gnd
@@ -234,6 +260,40 @@ def build(gnd, *, horizontal_storage=False):
     c9[1] += xtal2
     c9[2] += gnd
 
+    if buck:
+        buck_5v(gnd, vfilt, v5, sw)
+
+    # --- KNX_RXD series resistor (prevents USB-powered XIAO back-powering NCN) ---
+    r_knx_rxd = res("1k", src(source="Series R in KNX_RXD near NCN; "
+                                "isolates USB-powered XIAO from unpowered NCN I/O"))
+    r_knx_rxd.fields["Place"] = "ncn_right"
+    r_knx_rxd[1] += knx_rxd
+    r_knx_rxd[2] += u1["SDI/RXD"]
+
+    block("ncn5130")
+    c_vin = cap("1u 50V",
+                src(mpn="CL21B105KBFNNNE", mfr="Samsung", lcsc="C28323",
+                    source="DC1 switching-loop decoupling at VIN/VSS1; "
+                           "storage C4 sits off-chip"),
+                footprint=C0805)
+    c_vin.fields["Place"] = "ncn_bottom"
+    c_vin[1] += vfilt
+    c_vin[2] += gnd
+
+    return {"knx_p": knx_p, "knx_p_prot": knx_p_prot, "knx_txd": knx_txd, "knx_rxd": knx_rxd, "saveb": saveb,
+            "v5": v5, "vfilt": vfilt}
+
+
+NET_CLASSES = {
+    "SELV-KNX": ["GND", "+3V3_TRX", "+5V", "KNX_P", "KNX_P_PROT", "KNX_TXD",
+                 "KNX_RXD", "NCN_SAVEB", "VFILT", "CCP", "CAV", "CEQ1",
+                 "CEQ2", "VSW1", "VDD1M", "Net-*"],
+    "KNX-Power": ["KNX_P", "KNX_P_PROT", "VFILT"],
+}
+
+
+def buck_5v(gnd, vfilt, v5, sw):
+    """SCT2400 5 V buck from VFILT, with its EN undervoltage divider."""
     # --- 5V buck: VFILT -> +5V (SCT2400, >=40V input) ---
     block("buck5v")
     u2 = part("gateway", "SCT2400", "SCT2400TVBR", TSOT23_6,
@@ -286,31 +346,3 @@ def build(gnd, *, horizontal_storage=False):
         c.fields["Place"] = "buck5v"
         c[1] += v5
         c[2] += gnd
-
-    # --- KNX_RXD series resistor (prevents USB-powered XIAO back-powering NCN) ---
-    r_knx_rxd = res("1k", src(source="Series R in KNX_RXD near NCN; "
-                                "isolates USB-powered XIAO from unpowered NCN I/O"))
-    r_knx_rxd.fields["Place"] = "ncn_right"
-    r_knx_rxd[1] += knx_rxd
-    r_knx_rxd[2] += u1["SDI/RXD"]
-
-    block("ncn5130")
-    c_vin = cap("1u 50V",
-                src(mpn="CL21B105KBFNNNE", mfr="Samsung", lcsc="C28323",
-                    source="DC1 switching-loop decoupling at VIN/VSS1; "
-                           "storage C4 sits off-chip"),
-                footprint=C0805)
-    c_vin.fields["Place"] = "ncn_bottom"
-    c_vin[1] += vfilt
-    c_vin[2] += gnd
-
-    return {"knx_txd": knx_txd, "knx_rxd": knx_rxd, "saveb": saveb,
-            "v5": v5}
-
-
-NET_CLASSES = {
-    "SELV-KNX": ["GND", "+3V3_TRX", "+5V", "KNX_P", "KNX_P_PROT", "KNX_TXD",
-                 "KNX_RXD", "NCN_SAVEB", "VFILT", "CCP", "CAV", "CEQ1",
-                 "CEQ2", "VSW1", "VDD1M", "Net-*"],
-    "KNX-Power": ["KNX_P", "KNX_P_PROT", "VFILT"],
-}

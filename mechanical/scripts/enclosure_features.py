@@ -13,7 +13,7 @@ so a board point maps to the enclosure by a translation only.
 
 import json
 import sys
-from functools import partial
+from itertools import pairwise
 from pathlib import Path
 
 import yaml
@@ -58,21 +58,58 @@ def ui_to_enc(x, y):
     return x - UI_W / 2, y + FRONT_Y_START + (FRONT_H - UI_H) / 2
 
 
-def board_to_enc(board, x, y):
-    if board == "main":
-        return main_to_enc(x, y)
-    if board == "ui":
-        return ui_to_enc(x, y)
+def board_point(board, x, y, n=0.0):
+    """Board point (x, y) plus offset n along the front-side normal (+n = front,
+    -n = back), in enclosure (x, y, z) coordinates."""
     config = SPEC["boards"][board]
-    return x - config["max_outline"]["width"] / 2, y + config["y_offset"]
+    plane = config.get("plane", "parallel-to-front")
+    if plane == "perpendicular-to-rail":
+        return config["x"] + n, y + config["y_offset"], config["z_front"] - x
+    if plane == "horizontal":
+        return y + config["x0"], config["y"] + n, x + config["z0"]
+    top = SPEC["front_ui"]["board_top_z"] if board == "ui" else config["z"]
+    if board == "main":
+        ex, ey = main_to_enc(x, y)
+    elif board == "ui":
+        ex, ey = ui_to_enc(x, y)
+    else:
+        x0 = config.get("x0", -config["max_outline"]["width"] / 2)
+        ex, ey = x + x0, y + config["y_offset"]
+    return ex, ey, top + n
+
+
+def board_to_enc(board, x, y):
+    ex, ey, _ = board_point(board, x, y)
+    return ex, ey
+
+
+def span_box(a, b, **extra):
+    return {**extra, "x0": min(a[0], b[0]), "x1": max(a[0], b[0]),
+            "y0": min(a[1], b[1]), "y1": max(a[1], b[1]), "z0": min(a[2], b[2]), "z1": max(a[2], b[2])}
 
 
 def board_slab(board):
     config = SPEC["boards"][board]
-    top = SPEC["front_ui"]["board_top_z"] if board == "ui" else config["z"]
-    (x0, y0) = board_to_enc(board, 0, 0)
-    (x1, y1) = board_to_enc(board, config["max_outline"]["width"], config["max_outline"]["height"])
-    return {"board": board, "x0": x0, "x1": x1, "y0": y0, "y1": y1, "z0": top - config["thickness"], "z1": top}
+    w, h = config["max_outline"]["width"], config["max_outline"]["height"]
+    return span_box(board_point(board, 0, 0, -config["thickness"]), board_point(board, w, h, 0.0), board=board)
+
+
+def board_slabs(board):
+    """Axis-aligned slabs covering the board: two for the notched V3 carrier,
+    one for rectangular boards."""
+    config = SPEC["boards"][board]
+    outline = layout_plan(board)["frame"].get("outline")
+    if not outline:
+        return [board_slab(board)]
+    xs = sorted({x for x, _ in outline})
+    edges = list(zip(outline, outline[1:] + outline[:1]))
+    rects = []
+    for x0, x1 in pairwise(xs):
+        ys = [ay for (ax, ay), (bx, by) in edges if ay == by and min(ax, bx) <= x0 and max(ax, bx) >= x1]
+        rects.append((x0, min(ys), x1, max(ys)))
+    t = config["thickness"]
+    return [span_box(board_point(board, x0, y0, -t), board_point(board, x1, y1, 0.0), board=board)
+            for x0, y0, x1, y1 in rects]
 
 
 def interconnect_corridor(link):
@@ -109,8 +146,16 @@ def bbox_centre(comp):
 
 
 def terminal_holes():
-    """KNX: one opening centred on the mated plug body. DALI and AUX: one
-    screwdriver hole per screw; MX126 screws sit straight above their pins."""
+    """KNX: one opening centred on the mated plug body (on inputs in v3, main in
+    v1/v2). DALI and AUX: one hole per pole on v1/v2, one lever opening on the
+    WAGO terminal in v3."""
+    if VARIANT == "v3":
+        main = components("main")
+        dali = components("dali")["J1"]
+        pads = sorted(pad_points(dali))
+        return {"KNX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J1"]))))],
+                "AUX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J2"]))))],
+                "DALI": [dict(zip(("x", "y"), board_to_enc("dali", px, py + 2.5))) for px, py in pads[1::2]]}
     main = components("main")
     holes = {"KNX": [dict(zip(("x", "y"), main_to_enc(*bbox_centre(main["J1"]))))]}
     for name, ref in (("AUX", "J2"), ("DALI", "J3")):
@@ -122,6 +167,13 @@ def terminal_holes():
 def wire_entries():
     """Openings in the top wall that the terminals' wire-entry faces sit in,
     flush with the outside."""
+    if VARIANT == "v3":
+        dali = components("dali")["J1"]
+        b = dali["bbox"]
+        z0 = SPEC["boards"]["dali"]["z"]
+        x0, _ = board_to_enc("dali", b["x0"], 0)
+        x1, _ = board_to_enc("dali", b["x1"], 0)
+        return [{"ref": "J1", "x0": x0, "x1": x1, "z0": z0, "z1": z0 + dali["height"]}]
     main = components("main")
     z0 = SPEC["boards"]["main"]["z"]
     slots = []
@@ -139,10 +191,13 @@ def layout_plan(board):
 
 PLUG_HEIGHT = 11.5
 BODY_MARGIN = 0.5
-_MAIN_HEIGHTS = layout_plan("main")["heights"]
-_MAIN_Z = SPEC["boards"]["main"]["z"]
-_TALLEST_CONNECTOR = max(PLUG_HEIGHT, _MAIN_HEIGHTS["J2"], _MAIN_HEIGHTS["J3"])
-SHOULDER_Z = dict.fromkeys(("bottom", "top"), round(_MAIN_Z + _TALLEST_CONNECTOR + 1.3, 2))
+if "shoulder_z" in SPEC["enclosure"]:
+    SHOULDER_Z = dict.fromkeys(("bottom", "top"), SPEC["enclosure"]["shoulder_z"])
+else:
+    _MAIN_HEIGHTS = layout_plan("main")["heights"]
+    _MAIN_Z = SPEC["boards"]["main"]["z"]
+    _TALLEST_CONNECTOR = max(PLUG_HEIGHT, _MAIN_HEIGHTS["J2"], _MAIN_HEIGHTS["J3"])
+    SHOULDER_Z = dict.fromkeys(("bottom", "top"), round(_MAIN_Z + _TALLEST_CONNECTOR + 1.3, 2))
 HIDDEN_D = max(SHOULDER_Z.values())
 BASE_TOP_Z = min(SHOULDER_Z.values()) - WALL
 
@@ -156,8 +211,14 @@ TERMINAL_PIN_TO_WIRE_FACE = 3.8
 
 def connector_faces():
     """Outer faces of the connector bodies at the case's top and bottom faces:
-    the terminals' wire-entry faces (MaiXu MX126 drawing: 3.8 mm from the pin
-    row) and the KNX plug's underside (courtyard edge minus its margin)."""
+    the terminals' wire-entry faces and the KNX plug's underside."""
+    if VARIANT == "v3":
+        main = components("main")
+        dali = components("dali")["J1"]
+        pin_y = max(y for _, y, _ in dali["pads"])
+        return {"J1_dali": board_to_enc("dali", 0, pin_y + 7.88)[1],
+                "J1": board_point("main", 0, main["J1"]["bbox"]["y0"] - 0.5)[1],
+                "J2": board_point("main", 0, main["J2"]["bbox"]["y0"] - 0.5)[1]}
     main = components("main")
     faces = {ref: main_to_enc(0, max(y for _, y, _ in main[ref]["pads"]) + TERMINAL_PIN_TO_WIRE_FACE)[1]
              for ref in ("J2", "J3")}
@@ -167,7 +228,7 @@ def connector_faces():
 
 def case_points(board, kind):
     convert = main_to_enc if board == "main" else ui_to_enc
-    return [dict(zip(("x", "y"), convert(p["x"], p["y"]))) for p in layout_plan(board)["case"][kind]]
+    return [dict(zip(("x", "y"), convert(p["x"], p["y"]))) for p in layout_plan(board).get("case", {}).get(kind, [])]
 
 
 def legs():
@@ -238,27 +299,28 @@ def screw_tabs():
 THROUGH_FRONT = {"SW1", "SW2"}
 
 
+PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT == "v3" else {("main", "J1")}
+
+
 def part_boxes():
     """Every part as a box in enclosure coordinates: courtyard outline times
-    its height, on the side it is mounted; J1 as the mated KNX plug."""
-    stack_top = {"main": SPEC["boards"]["main"]["z"], "ui": SPEC["front_ui"]["board_top_z"]}
+    its height, on the side it is mounted; KNX/AUX strips as mated plugs."""
     boxes = []
     horizontal = horizontal_capacitor()
-    boards = SPEC["variants"][VARIANT]["boards"]
-    for board in boards:
-        convert = partial(board_to_enc, board)
-        top = stack_top.get(board, SPEC["boards"][board]["z"])
-        bottom = top - SPEC["boards"][board]["thickness"]
+    for board in SPEC["variants"][VARIANT]["boards"]:
+        thick = SPEC["boards"][board]["thickness"]
         for ref, c in components(board).items():
             if horizontal and board == "main" and ref == horizontal["ref"]:
                 boxes.append(horizontal)
                 continue
-            (x0, y0), (x1, y1) = convert(c["bbox"]["x0"], c["bbox"]["y0"]), convert(c["bbox"]["x1"], c["bbox"]["y1"])
-            h = PLUG_HEIGHT if (board, ref) == ("main", "J1") else c["height"]
-            z0, z1 = (bottom - h, bottom) if c["side"] == "back" else (top, top + h)
-            boxes.append({"board": board, "ref": ref, "x0": x0, "x1": x1, "y0": y0, "y1": y1, "z0": z0, "z1": z1,
-                          "through_front": board == "ui" and ref in THROUGH_FRONT})
-    top = stack_top["ui"]
+            plug = (board, ref) in PLUG_REFS
+            h = PLUG_HEIGHT if plug else c["height"]
+            base = 3.9 if plug else 0.0
+            n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)
+            b = c["bbox"]
+            boxes.append(span_box(board_point(board, b["x0"], b["y0"], n0), board_point(board, b["x1"], b["y1"], n1),
+                                  board=board, ref=ref, through_front=board == "ui" and ref in THROUGH_FRONT))
+    top = SPEC["front_ui"]["board_top_z"]
     module_z = top + OLED_HEADER_SPACER
     for ref, key, z0, z1, through in (("OLED board", "outline", module_z, module_z + OLED_MODULE_BOARD, False),
                                       ("OLED glass", "glass", module_z + OLED_MODULE_BOARD,

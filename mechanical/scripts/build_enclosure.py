@@ -35,8 +35,10 @@ from enclosure_features import (
     TOTAL_D,
     VARIANT,
     WIDTH,
+    board_point,
     board_slab,
     button_holes,
+    components,
     horizontal_capacitor,
     led_windows,
     legs,
@@ -52,7 +54,7 @@ from enclosure_features import (
 from ui_stackup import compute_ui_stackup
 
 WALL = SPEC["enclosure"]["wall"]
-MAIN_Z = SPEC["boards"]["main"]["z"]
+MAIN_Z = SPEC["boards"]["main"].get("z", 21.2)
 MAIN_THICK = SPEC["boards"]["main"]["thickness"]
 MAIN_BOTTOM_Z = MAIN_Z - MAIN_THICK
 STACK = compute_ui_stackup()
@@ -67,13 +69,14 @@ FRONT_INNER_Z = TOTAL_D - WALL
 LEG_SIZE = 5.0
 PEG_DIAMETER = 3.0
 STANDOFF_DIAMETER = 3.0
-LED_WINDOW = 3.0
-BAFFLE_WALL = 0.8
-BUTTON_HOLE = 4.0
+LED_WINDOW = 2.2 if VARIANT == "v3" else 3.0
+BAFFLE_WALL = 0.4 if VARIANT == "v3" else 0.8
+BUTTON_HOLE = 2.6 if VARIANT == "v3" else 4.0
 KNX_OPENING = 10.6
-SCREW_HOLE = 4.0
+SCREW_HOLE = 3.2 if VARIANT == "v3" else 4.0
 CASE_SCREW = {"pilot": 2.2, "clearance": 2.8, "depth": 8.5, "z": BASE_TOP_Z - 2.0}
-SCREW_TAB = {"width": 6.0, "depth": 8.5, "z0": MAIN_Z + 2.0 + SPEC["checks"]["component_air_gap"]}
+SCREW_TAB = {"width": 4.0 if VARIANT == "v3" else 6.0, "depth": 8.5,
+             "z0": 39.85 if VARIANT == "v3" else MAIN_Z + 2.0 + SPEC["checks"]["component_air_gap"]}
 LIP = {"thickness": 1.2, "depth": 2.0}
 SNAP = {"overlap": 0.5, "width": 6.0, "slot": 0.5, "hook_height": 1.8, "free_end_below_board": 1.8,
         "y": (FRONT_Y_START + 12, FRONT_Y_END - 12)}
@@ -81,8 +84,9 @@ SNAP = {"overlap": 0.5, "width": 6.0, "slot": 0.5, "hook_height": 1.8, "free_end
 RAIL = {"centre": HIDDEN_H / 2, "slot": 35.4, "lip": 1.0, "clearance": 0.1}
 BACK_DEPTH = 5.0
 HOOK_REACH = 1.5
-LATCH = {"half_width": 5.0, "gap": 0.4, "tab_bottom": -6.0, "beam": 0.8, "beam_ys": (9.0, 13.0),
-         "beam_reach": 16.0, "hole": (4.0, 2.0), "hole_y": -4.0, "travel": 2.0}
+LATCH = {"half_width": min(5.0, WIDTH / 2 - 4.5), "gap": 0.4, "tab_bottom": -6.0, "beam": 0.8,
+         "beam_ys": (9.0, 11.4), "beam_reach": min(16.0, WIDTH / 2 - 1.5), "hole": (4.0, 2.0),
+         "hole_y": -4.0, "travel": 2.0}
 
 
 def box(x0, x1, y0, y1, z0, z1):
@@ -131,34 +135,41 @@ def rail_blocks():
     low, high = rail_edges()
     back = -BACK_DEPTH
     blocks = box(-WIDTH / 2, WIDTH / 2, 0, low, back, 0).union(box(-WIDTH / 2, WIDTH / 2, high, HIDDEN_H, back, 0))
-    hook = box(-15, 15, high - HOOK_REACH, high, *lip_z())
+    reach = min(15.0, WIDTH / 2 - 1.0)
+    hook = box(-reach, reach, high - HOOK_REACH, high, *lip_z())
     return blocks.union(hook)
 
 
 def latch_parts():
     """Sliding latch under the rail's bottom lip. A bar carries the lip at its
     top; its lower end is a tab sticking out below the case with a hole facing
-    the front. Two pairs of thin beams (a parallelogram flexure) let the bar
-    slide down and spring it back. Pressing the device onto the rail, the
-    lip's lead-in pushes the bar down; to remove it, put a flat screwdriver
-    into the tab's hole from the front and pull it down."""
+    the front. Two S-shaped meander flexure springs (one on each side of the
+    bar) let the bar slide down and spring it back."""
     low, _ = rail_edges()
     back = -BACK_DEPTH
     w, g, b = LATCH["half_width"], LATCH["gap"], LATCH["beam"]
     reach = LATCH["beam_reach"]
     y0, y1 = LATCH["beam_ys"]
+    y2 = y1 + (y1 - y0)
     pocket = box(-w - g, w + g, LATCH["tab_bottom"] - 1, low + 1, back - 1, 0).union(
-        box(-reach - g, reach + g, y0 - LATCH["travel"], y1 + b + g, back - 1, 0))
+        box(-reach - g, reach + g, y0 - LATCH["travel"], y2 + b + g, back - 1, 0))
     bar_z = (back, -g)
     bar = box(-w, w, LATCH["tab_bottom"], low - g, *bar_z)
     lip = box(-w, w, low - g, low + HOOK_REACH, *lip_z())
     lip = lip.edges("|X and <Z and >Y").chamfer(1.0)
-    beams = [box(-reach - g - 0.5, reach + g + 0.5, y, y + b, *bar_z) for y in LATCH["beam_ys"]]
+    latch = bar.union(lip)
+    for s in (-1, 1):
+        # 3-leg S-meander spring: bar at y0 -> outer turn -> middle leg at y1 ->
+        # inner turn -> wall at y2
+        leg1 = box(*sorted((s * w, s * (reach - g))), y0, y0 + b, *bar_z)
+        turn1 = box(*sorted((s * (reach - g - b), s * (reach - g))), y0, y1 + b, *bar_z)
+        leg2 = box(*sorted((s * (w + g), s * (reach - g))), y1, y1 + b, *bar_z)
+        turn2 = box(*sorted((s * (w + g), s * (w + g + b))), y1, y2 + b, *bar_z)
+        leg3 = box(*sorted((s * (w + g), s * (reach + g + 0.5))), y2, y2 + b, *bar_z)
+        for seg in (leg1, turn1, leg2, turn2, leg3):
+            latch = latch.union(seg)
     hole_w, hole_h = LATCH["hole"]
     hole = box(-hole_w / 2, hole_w / 2, LATCH["hole_y"] - hole_h / 2, LATCH["hole_y"] + hole_h / 2, back - 1, 1)
-    latch = bar.union(lip)
-    for beam in beams:
-        latch = latch.union(beam)
     return pocket, latch.cut(hole)
 
 
@@ -187,7 +198,11 @@ def screw_tab_bodies():
         _, wall_in, end = screw_axis_y(tab)
         half = SCREW_TAB["width"] / 2
         body = box(tab["x"] - half, tab["x"] + half, *sorted((wall_in, end)), SCREW_TAB["z0"], plate_inner(tab))
-        bodies.append(body.cut(screw_cylinder(tab, CASE_SCREW["pilot"], wall_in, end)))
+        body = body.cut(screw_cylinder(tab, CASE_SCREW["pilot"], wall_in, end))
+        if tab["side"] == "top":
+            for hole in terminal_holes()["DALI"]:
+                body = body.cut(cylinder(hole["x"], hole["y"], SCREW_TAB["z0"] - 1, SHOULDER_Z["top"] + 1, SCREW_HOLE))
+        bodies.append(body)
     return bodies
 
 
@@ -205,6 +220,28 @@ def knx_recess():
     return knx["x"] - half, knx["x"] + half, knx["y"] + half
 
 
+def knx_pin_centres(board="main", ref="J1"):
+    return [board_point(board, px, py) for px, py, _ in components(board)[ref]["pads"]]
+
+
+def dovetail_xy(x_wall, y_mid, z0, z1, neck=2.6, flare=3.5, depth=1.1):
+    """30-deg 'half-butterfly' dovetail keyway on the +x wall of a front-facing
+    KNX pocket (WAGO 243-211 drawing: 2.5 mm neck widening at 30 deg to 3.4 mm,
+    3.0 mm below the top of the 10 mm side wall — not in the corner)."""
+    pts = [(x_wall - 0.1, y_mid - neck / 2), (x_wall + depth, y_mid - flare / 2),
+           (x_wall + depth, y_mid + flare / 2), (x_wall - 0.1, y_mid + neck / 2)]
+    return cq.Workplane("XY", origin=(0, 0, z0)).polyline(pts).close().extrude(z1 - z0)
+
+
+def dovetail_zy(z_wall, y_mid, x0, x1, neck=2.6, flare=3.5, depth=1.1):
+    """30-deg 'half-butterfly' dovetail keyway on the -z (+) wall of a right-
+    facing V3 KNX/AUX pocket, extruded along +x."""
+    pts = [(z_wall + 0.1, y_mid - neck / 2), (z_wall - depth, y_mid - flare / 2),
+           (z_wall - depth, y_mid + flare / 2), (z_wall + 0.1, y_mid + neck / 2)]
+    return (cq.Workplane("YZ", origin=(x0, 0, 0)).polyline([(y, z) for z, y in pts]).close()
+            .extrude(x1 - x0))
+
+
 def walls_clip(solid):
     """Keep only what lies inside the outer envelope."""
     return solid.intersect(box(-WIDTH / 2, WIDTH / 2, 0, HIDDEN_H, -BACK_DEPTH, BASE_TOP_Z))
@@ -218,8 +255,24 @@ def build_base():
     base = base.cut(pocket).union(latch)
     for slot in wire_entries():
         base = base.cut(box(slot["x0"], slot["x1"], HIDDEN_H - WALL - 1, HIDDEN_H + 1, slot["z0"], slot["z1"]))
-    x0, x1, _ = knx_recess()
-    base = base.cut(box(x0, x1, -1, WALL + 1, MAIN_Z, BASE_TOP_Z + 1))
+    x0, x1, _y1 = knx_recess()
+    if VARIANT == "v3":
+        # J1 (KNX red/black, front) and J2 (AUX yellow/white, rear) sit on main
+        # (x = -5.7) with their pins pointing +x to the right (turned 90 deg to
+        # the right) and their 4+4 wire holes facing straight down (-y). A solid
+        # inner wall at x = -2.8..-1.8 seals the PCB and the 2.8 mm PST 1,0
+        # plastic strips; only the 4 metal pins poke through 2.2 mm holes, and
+        # each pocket has a 30-deg half-butterfly dovetail on its -z (+) wall
+        # 3.3 mm below the pocket roof (not in the corner).
+        base = base.union(box(-2.8, WIDTH / 2, 0.0, 12.6, 14.8, 39.8))
+        for ref, z_lo, z_hi in (("J2", 16.3, 26.8), ("J1", 29.3, 39.8)):
+            base = base.cut(box(-1.8, WIDTH / 2 + 1, -1, 11.4, z_lo, z_hi))
+            base = base.cut(dovetail_zy(z_lo, 8.2, -1.8, WIDTH / 2 + 1))
+            for _, py, pz in knx_pin_centres("main", ref):
+                base = base.cut(cq.Workplane("YZ", origin=(-3.2, 0, 0)).center(py, pz)
+                                .circle(1.1).extrude(2.0))
+    else:
+        base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
     for body in leg_bodies() + capacitor_cradles():
         base = base.union(walls_clip(body))
     for tab in screw_tabs():
@@ -236,7 +289,8 @@ def peg_bodies():
 
 
 def standoff_bodies():
-    return [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, FRONT_INNER_Z, STANDOFF_DIAMETER) for p in standoffs()]
+    z1 = FRONT_INNER_Z + STACK.pocket_depth + 0.1
+    return [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
 
 
 def baffle_bodies():
@@ -280,8 +334,9 @@ def lip_bodies():
     stacked board's edge passes through their height."""
     x_out = INNER_W / 2 - 0.15
     z0 = BASE_TOP_Z - LIP["depth"]
+    sides = (1,) if VARIANT == "v3" else (1, -1)
     lips = [box(*sorted((s * x_out, s * (x_out - LIP["thickness"]))), WALL + 1, HIDDEN_H - WALL - 1,
-                z0, BASE_TOP_Z) for s in (1, -1)]
+                z0, BASE_TOP_Z) for s in sides]
     for slab in (board_slab(b) for b in SPEC["variants"][VARIANT]["boards"] if b not in ("main", "ui")):
         if slab["z0"] < BASE_TOP_Z and slab["z1"] > z0:
             notch = box(-WIDTH / 2, WIDTH / 2, slab["y0"] - 0.5, slab["y1"] + 0.5, z0 - 1, BASE_TOP_Z + 1)
@@ -307,9 +362,22 @@ def build_cover():
         cover = cover.union(body)
     for slot, tongue in snap_geometry():
         cover = cover.cut(slot).union(tongue)
-    x0, x1, y1 = knx_recess()
-    cover = cover.cut(box(x0, x1, -1, y1, BASE_TOP_Z - 1, SHOULDER_Z["bottom"] + 1))
-    for name in ("DALI", "AUX"):
+    if VARIANT != "v3":
+        # Crafted inverted-L pocket on the cover: reaches down to z = MAIN_Z + 2.8
+        # with a 1.0 mm floor over the PST 1,0 plastic strip, two 2.2 mm holes for
+        # the protruding KNX pins, 1.2 mm side/top walls protecting the board, and
+        # a coding notch on the right (+) wall for the red half's key tab.
+        x0, x1, y1 = knx_recess()
+        pins = knx_pin_centres("main", "J1")
+        pins[0][1]
+        x_hi = min(x1 + 1.8, INNER_W / 2 - 0.2)
+        pocket = box(x0 - 1.2, x_hi, 0.0, y1 + 1.2, MAIN_Z + 2.8, SHOULDER_Z["bottom"])
+        cover = cover.union(pocket)
+        cover = cover.cut(box(x0, x1, -1, y1, MAIN_Z + 3.8, SHOULDER_Z["bottom"] + 1))
+        cover = cover.cut(dovetail_xy(x1, y1 - 3.3, MAIN_Z + 3.8, SHOULDER_Z["bottom"] + 1))
+        for px, py_p, _ in pins:
+            cover = cover.cut(cylinder(px, py_p, MAIN_Z + 2.0, MAIN_Z + 4.5, 2.2))
+    for name in ("DALI",) if VARIANT == "v3" else ("DALI", "AUX"):
         for hole in terminal_holes()[name]:
             cover = cover.cut(cylinder(hole["x"], hole["y"], BASE_TOP_Z - 1, SHOULDER_Z["top"] + 1, SCREW_HOLE))
     front = (FRONT_INNER_Z - 1, TOTAL_D + 1)
@@ -321,9 +389,12 @@ def build_cover():
     cover = cover.cut(box(win["cx"] - win["w"] / 2, win["cx"] + win["w"] / 2,
                           win["cy"] - win["h"] / 2, win["cy"] + win["h"] / 2, *front))
     margin = 0.5
-    return cover.cut(box(module["cx"] - module["w"] / 2 - margin, module["cx"] + module["w"] / 2 + margin,
-                         module["cy"] - module["h"] / 2 - margin, module["cy"] + module["h"] / 2 + margin,
-                         FRONT_INNER_Z - 1, FRONT_INNER_Z + STACK.pocket_depth))
+    pocket = box(module["cx"] - module["w"] / 2 - margin, module["cx"] + module["w"] / 2 + margin,
+                 module["cy"] - module["h"] / 2 - margin, module["cy"] + module["h"] / 2 + margin,
+                 FRONT_INNER_Z - 1, FRONT_INNER_Z + STACK.pocket_depth)
+    for body in standoff_bodies():
+        pocket = pocket.cut(body)
+    return cover.cut(pocket)
 
 
 def export_parts(out_dir):

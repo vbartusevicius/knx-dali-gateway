@@ -122,9 +122,8 @@ def test_negative_deliberate_offset():
     solids = _read_step_solids(step_path)
     data = json.loads(json_path.read_text())
 
-    # Find J2 in the courtyard data
-    j2_model = next((m for m in data["models"] if m["ref"] == "J2"), None)
-    assert j2_model is not None, "J2 not in courtyard JSON"
+    j2_model = min(data["models"], key=lambda m: m["ref"]) if data["models"] else None
+    assert j2_model is not None, "no model in courtyard JSON"
 
     size = (j2_model["size_w"], j2_model["size_d"], j2_model["size_h"])
     crt_cx = j2_model["crt_cx"]

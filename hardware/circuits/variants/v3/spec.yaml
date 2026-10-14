@@ -1,0 +1,258 @@
+active_variant: v3
+product:
+  revision: C
+  release: v3
+  status: draft-unvalidated
+
+din_envelope:
+  modules: 1
+  max_board_width_inside: 13.8
+  front_board_max: { width: 13.8, height: 40.5, depth: 15.0 }
+
+variants:
+  v3:
+    description: "1 DIN, carrier along the side wall + KNX board + DALI board + UI"
+    modules: 1
+    boards: [main, knx, dali, ui]
+
+terminals:
+  dali:
+    board: dali
+    shoulder: top
+    poles: 2
+    pitch: 3.5
+    type: lever push-in (WAGO 2601-1102)
+    labels: [DA, DA]
+  aux_dc:
+    board: main
+    shoulder: bottom
+    poles: 2
+    pitch: 5.75
+    type: knx-style plug, yellow/white (Phoenix PTS 0,5/2-PH-5,75 GY35YE)
+    labels: [AUX+, AUX-]  # 20-32 V; powers only the internal DALI supply
+  knx:
+    board: main
+    shoulder: bottom
+    type: knx-bus-terminal-pins   # red/black plug (Phoenix PTS 0,5/2-PH-5,75 BKRD)
+    labels: [KNX+, KNX-]
+
+boards:
+  main:
+    plane: perpendicular-to-rail   # board x = 41.9 - enc_z, board y = enc_y - 2.1, front faces +enc_x
+    thickness: 1.2
+    x: -5.7                        # front face (back face at -6.9)
+    y_offset: 2.1
+    z_front: 41.9
+    max_outline: { width: 39.8, height: 76.8 }
+    isolation:
+      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
+      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [REM3] }
+      - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, bridged_by: [supply-off optocoupler] }
+  knx:
+    plane: horizontal              # board x = enc_z - 2.1, board y = enc_x - (-5.1), top faces +enc_y
+    thickness: 1.2
+    x0: -5.1
+    y: 15.6                        # top face (bottom face at 16.2)
+    z0: 2.1
+    max_outline: { width: 28.4, height: 12.0 }
+  dali:
+    plane: parallel-to-front
+    thickness: 1.2
+    x0: -5.1
+    y_offset: 33.2
+    z: 27.6                        # front face (back face at 26.4)
+    max_outline: { width: 12.0, height: 45.7 }
+    isolation:
+      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
+  ui:
+    plane: parallel-to-front
+    thickness: 1.6
+    z: 55.4
+    max_outline: { width: 13.8, height: 40.5 }
+  interconnects:
+    - from: main
+      to: ui
+      signals: [+3V3, GND, BTN_LADDER, LED_DATA, +5V, I2C_SDA, I2C_SCL, GND]
+      refs: { main: J3, ui: J1 }
+      domain: SELV-KNX
+      type: ffc
+      pins: 8
+    - from: main
+      to: knx
+      signals: [KNX_P_PROT, GND, VFILT, VFILT, GND, KNX_TXD, KNX_RXD, NCN_SAVEB]
+      refs: { main: J4, knx: J1 }
+      domain: SELV-KNX
+      type: ffc
+      pins: 8
+    - from: main
+      to: dali
+      signals: [+3V3, GND, DALI_TX, GND, DALI_RX, GND, null, null]
+      refs: { main: J5, dali: J2 }
+      domain: SELV-KNX
+      type: ffc
+      pins: 8
+    - from: main
+      to: dali
+      signals: [DA1, DA1, DA2, DA2, GNDD, GNDD, null, null]
+      refs: { main: J6, dali: J3 }
+      domain: DALI
+      type: ffc
+      pins: 8
+
+front_ui:
+  board_z: 53.79
+  board_top_z: 55.39
+  oled:
+    header_gap: 3.10
+    module_board: 1.0
+    panel: 1.41
+    header_plastic_max: 2.5
+    pin_tail: 6.0
+  buttons:
+    - { id: prg_rst, label: PRG/RST, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
+    - { id: func, label: FUNC, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
+  display:
+    type: oled-0.91in-ssd1306-i2c
+    part: Winstar WEA012832FWPP3N00000 (WEA012832F drawing p.3)
+    geometry: hardware/circuits/variants/v3/layout_ui.yaml oled_module
+
+enclosure:
+  shoulder_z: 44.0
+  screw_tabs:
+    - { x: 0.0, side: bottom }
+    - { x: -3.2, side: top }
+
+mcu:
+  board: main
+  mounting: "2 x 7 female 2.54 mm headers, 5.0 mm height (+ 2.5 mm pin header plastic + 3.5 mm XIAO = 11.0 mm); 5 V buck and passives underneath"
+
+# --- BEGIN GENERATED (hardware/scripts/gen_circuits.py) ---
+derived:
+  mcu_pins:
+    led_data:
+      pin: D0/GPIO0
+      net: LED_DATA
+      note: RMT, SK6805 chain via 5 V buffer on UI
+    button_ladder:
+      pin: D2/GPIO2
+      net: BTN_LADDER
+      note: 'ADC ladder: PRG/RST + FUNC on UI board'
+    led_dali:
+      pin: D3/GPIO21
+      net: LED_DALI
+      note: spare, unused on the UI board
+    i2c_sda:
+      pin: D4/GPIO22
+      net: I2C_SDA
+      note: OLED on UI board
+    i2c_scl:
+      pin: D5/GPIO23
+      net: I2C_SCL
+      note: OLED on UI board
+    knx_uart_tx:
+      pin: D6/GPIO16
+      net: KNX_RXD
+      note: MCU TX -> NCN5130 SDI/RXD
+    knx_uart_rx:
+      pin: D7/GPIO17
+      net: KNX_TXD
+      note: NCN5130 SDO/TXD -> MCU RX
+    dali_rx:
+      pin: D8/GPIO19
+      net: DALI_RX
+      note: RX optocoupler -> RMT RX
+    ncn_saveb:
+      pin: D9/GPIO20
+      net: NCN_SAVEB
+      note: NCN5130 SAVEB (open-collector)
+    dali_tx:
+      pin: D10/GPIO18
+      net: DALI_TX
+      note: RMT TX -> TX optocoupler
+  net_classes:
+    main:
+      SELV-KNX:
+      - GND
+      - +3V3
+      - +5V_XIAO
+      - BTN_LADDER
+      - LED_DATA
+      - LED_DALI
+      - I2C_SDA
+      - I2C_SCL
+      - KNX_TXD
+      - KNX_RXD
+      - DALI_TX
+      - DALI_RX
+      - NCN_SAVEB
+      - DALI_SUPPLY_OFF
+      - BUCK5_SW
+      - Net-*
+      KNX-Power:
+      - KNX_P
+      - KNX_P_PROT
+      - VFILT
+      - +5V
+      SELV-AUX:
+      - GNDA
+      - AUX_IN
+      - AUX_FUSED
+      - AUX_P
+      DALI:
+      - GNDD
+      - DA1
+      - DA2
+      - DALI_ISO15V
+      - DALI_SUPPLY_SW
+    knx:
+      SELV-KNX:
+      - GND
+      - +3V3_TRX
+      - +5V
+      - KNX_P
+      - KNX_P_PROT
+      - KNX_TXD
+      - KNX_RXD
+      - NCN_SAVEB
+      - VFILT
+      - CCP
+      - CAV
+      - CEQ1
+      - CEQ2
+      - VSW1
+      - VDD1M
+      - Net-*
+      KNX-Power:
+      - KNX_P
+      - KNX_P_PROT
+      - VFILT
+    dali:
+      SELV-KNX:
+      - GND
+      - +3V3
+      - DALI_TX
+      - DALI_RX
+      DALI:
+      - GNDD
+      - DA1
+      - DA2
+      - DA_P
+      - DALI_GATE
+      - DALI_GATE_SW
+      - DALI_SENSE
+      - DALI_BOOT
+      - RX_LIM_IN
+    ui:
+      SELV-KNX:
+      - GND
+      - +3V3
+      - +5V
+      - BTN_LADDER
+      - LED_DATA
+      - LED_DALI
+      - LED_CHAIN1
+      - LED_CHAIN2
+      - I2C_SDA
+      - I2C_SCL
+      - Net-*
+# --- END GENERATED ---

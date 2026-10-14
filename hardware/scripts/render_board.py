@@ -192,12 +192,14 @@ def draw_pads(canvas, board, layer, flagged, color=PAD):
 
 
 def draw_silk(canvas, board, layer):
+    items = list(board.GetDrawings())
     for fp in board.Footprints():
-        for item in list(fp.GraphicalItems()) + [fp.Reference()]:
-            if item.GetLayer() != layer or (item == fp.Reference() and not item.IsVisible()):
-                continue
-            for rings in silk_shapes(item, layer):
-                canvas.shape(rings, SILK)
+        items += list(fp.GraphicalItems()) + [fp.Reference()]
+    for item in items:
+        if item.GetLayer() != layer or (hasattr(item, "IsVisible") and not item.IsVisible()):
+            continue
+        for rings in silk_shapes(item, layer):
+            canvas.shape(rings, SILK)
 
 
 def silk_shapes(item, layer):

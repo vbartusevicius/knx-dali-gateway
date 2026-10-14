@@ -94,13 +94,16 @@ if VARIANT == "v1":
 @pytest.mark.parametrize("link", LINKS, ids=lambda link: "-".join(f"{b}.{r}" for b, r in link["refs"].items()))
 def test_board_links_connect_matching_nets_pin_for_pin(link):
     """Board-to-board cables are wired 1:1, so pin n carries the same net on
-    both connectors, and the spec lists those nets."""
+    both connectors, and the spec lists those nets (null = pin left open on
+    both sides, e.g. for creepage)."""
     sides = [{pin: net for (ref, pin), net in netlist(board)[1].items() if ref == conn}
              for board, conn in link["refs"].items()]
-    assert len(sides[0]) == len(sides[1]) == link["pins"]
+    connected = sum(1 for s in link.get("signals", [None] * link["pins"]) if s is not None) \
+        if "signals" in link else link["pins"]
+    assert len(sides[0]) == len(sides[1]) == connected
     assert sides[0] == sides[1]
     if "signals" in link:
-        assert [sides[0][str(i + 1)] for i in range(link["pins"])] == link["signals"]
+        assert [sides[0].get(str(i + 1)) for i in range(link["pins"])] == link["signals"]
 
 
 UNUSED_ON_UI = {"LED_DALI"}

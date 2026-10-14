@@ -18,10 +18,12 @@ REM3-2415S/A:
 "1574200":
   source: >-
     Phoenix Contact 1574200 (PST 1,0/2-5,75 R32) data sheet: 2 positions,
-    5.75 mm pitch, 1.2 mm holes. The mating KNX plug PTS 0,5/2-PH-5,75 BKRD
-    carries KNX+ on the red side, pin 1.
-  pads: {"1": [0, 0], "2": [5.75, 0]}
-  nets: {"1": KNX_P, "2": GND}
+    5.75 mm pitch, 1.2 mm holes. With the mating KNX plug PTS 0,5/2-PH-5,75
+    BKRD oriented so its 4 wire-entry holes face the bottom edge (-y), the
+    black (-) half sits on the left [0, 0] (pin 2) and the red (+) half with
+    its coding tab sits on the right [5.75, 0] (pin 1).
+  pads: {"2": [0, 0], "1": [5.75, 0]}
+  nets: {"1": [KNX_P, AUX_IN], "2": [GND, GNDA]}
 
 WEA012864DWPP3N00003:
   source: >-
@@ -29,3 +31,28 @@ WEA012864DWPP3N00003:
     function): 4-pin header P2.54, 1 VCC (2.8-5.2 V), 2 GND, 3 SCL, 4 SDA
   pads: {"1": [0, 0], "2": [2.54, 0], "3": [5.08, 0], "4": [7.62, 0]}
   nets: {"1": "+3V3", "2": GND, "3": I2C_SCL, "4": I2C_SDA}
+
+REM3-2415S/A/CTRL:
+  source: >-
+    RECOM REM3 datasheet (LCSC copy of C6643363, p.6 "A" Pinning, Pin
+    Connections, Single): 1 CTRL (fitted with the /CTRL option), 2 -Vin,
+    11 NC, 14 +Vout, 16 -Vout, 22 +Vin, 23 +Vin; DIP24, 2.54 mm pitch,
+    15.24 mm between rows, pin 1 marked (top view); remote on/off referred
+    to -Vin: open or 0-1.2 V on, 2.2-12 V off
+  pads: {"1": [0, 0], "2": [0, -2.54], "14": [15.24, -25.4], "16": [15.24, -20.32], "22": [15.24, -5.08], "23": [15.24, -2.54]}
+  names: {"1": CTRL, "2": -Vin, "14": +Vout, "16": -Vout, "22": +Vin, "23": +Vin}
+
+WEA012832FWPP3N00000:
+  source: >-
+    Winstar WEA012832F specification p.3 (contour drawing, interface pin
+    function): 4 pins P2.54, 1 GND, 2 VIN (2.8-3.3 V), 3 SCL, 4 SDA
+  pads: {"1": [0, 0], "2": [2.54, 0], "3": [5.08, 0], "4": [7.62, 0]}
+  nets: {"1": GND, "2": "+3V3", "3": I2C_SCL, "4": I2C_SDA}
+
+2601-1102:
+  source: >-
+    WAGO 2601-1102 data sheet: 2 poles, 3.5 mm pin spacing, two solder pins
+    per pole 5.0 mm apart, 1 x 0.5 mm in 1.2 mm holes; pole 1 = DA1, pole 2 =
+    DA2 (DALI is not polarised)
+  pads: {"1": [[0, 0], [0, -5.0]], "2": [[3.5, 0], [3.5, -5.0]]}
+  nets: {"1": [DA1, DA2], "2": [DA1, DA2]}

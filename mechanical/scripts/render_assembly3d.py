@@ -32,11 +32,10 @@ COLOURS = {("ui", "OLED glass"): (0.02, 0.02, 0.05), ("ui", "OLED board"): (0.1,
 def board_plates():
     plates = []
     for board in ef.SPEC["variants"][ef.VARIANT]["boards"]:
-        config = ef.SPEC["boards"][board]
-        w, h = config["max_outline"].values()
-        z0 = be.UI_BOARD_Z if board == "ui" else config["z"] - config["thickness"]
-        (x0, y0), (x1, y1) = ef.board_to_enc(board, 0, 0), ef.board_to_enc(board, w, h)
-        plate = box(x0, x1, y0, y1, z0, z0 + config["thickness"])
+        slabs = ef.board_slabs(board)
+        plate = box(slabs[0]["x0"], slabs[0]["x1"], slabs[0]["y0"], slabs[0]["y1"], slabs[0]["z0"], slabs[0]["z1"])
+        for s in slabs[1:]:
+            plate = plate.union(box(s["x0"], s["x1"], s["y0"], s["y1"], s["z0"], s["z1"]))
         plates.append((plate, UI if board == "ui" else MAIN))
     return plates
 
@@ -51,10 +50,38 @@ def part_solids():
         elif b["board"] == "ui" and ref in LED_COLOURS:
             solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), LED_COLOURS[ref]))
         elif b["board"] == "ui" and ref in ("SW1", "SW2"):
-            solids.append((box(cx - 3, cx + 3, cy - 3, cy + 3, b["z0"], b["z0"] + 3.5), PART))
-            solids.append((cylinder(cx, cy, b["z0"] + 3.5, b["z1"], 3.5), (0.1, 0.1, 0.1)))
-        elif b["board"] == "main" and ref == "J1":
-            solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), PLUG))
+            base_h = 1.4 if ef.VARIANT == "v3" else 3.5
+            cap_d = 2.2 if ef.VARIANT == "v3" else 3.5
+            solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z0"] + base_h), PART))
+            solids.append((cylinder(cx, cy, b["z0"] + base_h, be.STACK.prog_cap_z, cap_d), (0.1, 0.1, 0.1)))
+        elif (b["board"], ref) in ef.PLUG_REFS:
+            board = b["board"]
+            for px, py, _ in ef.components(board)[ref]["pads"]:
+                ex, ey, ez = ef.board_point(board, px, py)
+                if ef.VARIANT == "v3":
+                    pin = cq.Workplane("YZ", origin=(ex, 0, 0)).center(ey, ez).circle(0.5).extrude(9.9)
+                else:
+                    pin = cylinder(ex, ey, ez, ez + 9.9, 1.0)
+                solids.append((pin, (0.85, 0.72, 0.25)))
+            neg_col = (0.15, 0.15, 0.17) if ref == "J1" else (0.90, 0.90, 0.92)
+            pos_col = PLUG if ref == "J1" else (0.95, 0.80, 0.10)
+            if ef.VARIANT == "v3":
+                # Turned 90 deg to the right: pins along +x, wire holes down (-y),
+                # Black/White (-) at front (+z), Red/Yellow (+ with 30-deg half-
+                # butterfly dovetail) at rear (-z)
+                mz = (b["z0"] + b["z1"]) / 2
+                pos_body = box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], mz).union(
+                    be.dovetail_zy(b["z0"], b["y1"] - 3.15, b["x0"], b["x1"], neck=2.4, flare=3.2, depth=0.95))
+                neg_body = box(b["x0"], b["x1"], b["y0"], b["y1"], mz, b["z1"])
+                solids.append((neg_body, neg_col))
+                solids.append((pos_body, pos_col))
+            else:
+                mx = (b["x0"] + b["x1"]) / 2
+                neg_body = box(b["x0"], mx, b["y0"], b["y1"], b["z0"], b["z1"])
+                pos_body = box(mx, b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]).union(
+                    be.dovetail_xy(b["x1"], b["y1"] - 3.15, b["z0"], b["z1"], neck=2.4, flare=3.2, depth=0.95))
+                solids.append((neg_body, neg_col))
+                solids.append((pos_body, pos_col))
         else:
             colour = COLOURS.get((b["board"], ref), PART)
             solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), colour))
@@ -155,7 +182,7 @@ def part_boxes_matching(boxes, parts):
     refs = {(b["board"], b["ref"]) for b in boxes}
     owners = []
     for b in ef.part_boxes():
-        count = 2 if b["board"] == "ui" and b["ref"] in ("SW1", "SW2") else 1
+        count = 4 if (b["board"], b["ref"]) in ef.PLUG_REFS else (2 if b["board"] == "ui" and b["ref"] in ("SW1", "SW2") else 1)
         owners += [(b["board"], b["ref"]) in refs] * count
     return owners
 
@@ -189,10 +216,18 @@ def main():
     render("section", section, (220, 40.5, 25))
     render("back", [(base, CASE, 1.0)], (60, -60, -200), focal=(0, 40.5, 0))
     latch = base.intersect(box(-25, 25, -10, 30, -10, 4))
-    render("latch", [(latch, CASE, 1.0)], (40, -70, 80), focal=(0, 8, -2), zoom=1.3)
-    recess = [(s.intersect(box(5, 30, -2, 22, 15, 40)), c, op)
-              for s, c, op in [(base, CASE, 1.0), (cover, CASE, 1.0)] + boards + parts]
-    render("knx_recess", recess, (60, -50, 90), focal=(18, 8, 28), zoom=1.2)
+    render("latch", [(latch, CASE, 1.0)], (35, -55, -85), focal=(0, 8, -2.5), zoom=1.35)
+    rx0, rx1, _ = be.knx_recess()
+    rcx = (rx0 + rx1) / 2
+    rbox = box(-9, 9, -2, 20, 12, 44) if ef.VARIANT == "v3" else box(rx0 - 4, rx1 + 4, -2, 20, 10, 44)
+    recess_items = [(base.intersect(rbox), CASE, 1.0), (cover.intersect(rbox), CASE, 1.0)]
+    plug_cols = (PLUG, (0.15, 0.15, 0.17), (0.90, 0.90, 0.92), (0.95, 0.80, 0.10))
+    for s, c, _ in boards + parts:
+        op = 0.35 if c in plug_cols else 1.0
+        recess_items.append((s.intersect(rbox), c, op))
+    cam = (65, -35, 55) if ef.VARIANT == "v3" else (rcx + 38, -48, 78)
+    foc = (0, 7, 28) if ef.VARIANT == "v3" else (rcx, 6, 28)
+    render("knx_recess", recess_items, cam, focal=foc, zoom=1.25)
     main_layer = [b for b in boards if b[1] == MAIN] + [p for p in parts if p[0].val().BoundingBox().zmax < 45] \
         + [(s, SUPPORT, 1.0) for s in be.leg_bodies()]
     ui_layer = [b for b in boards if b[1] == UI] + [p for p in parts if p[0].val().BoundingBox().zmin > 45]

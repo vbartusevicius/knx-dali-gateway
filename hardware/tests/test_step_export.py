@@ -21,6 +21,7 @@ _board_path = layout_path
 CUSTOM_MODELS = {
     "XIAO_ESP32C6_Header",
     "Converter_DCDC_RECOM_REM3_DIP24",
+    "Converter_DCDC_RECOM_REM3_DIP24_CTRL",
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
     "Fuse_1812_4532Metric",
     "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent",
@@ -29,6 +30,7 @@ CUSTOM_MODELS = {
 MODEL_SIZES = {
     "XIAO_ESP32C6_Header": (17.8, 22.0, 3.5),
     "Converter_DCDC_RECOM_REM3_DIP24": (31.8, 20.3, 10.7),
+    "Converter_DCDC_RECOM_REM3_DIP24_CTRL": (31.8, 20.3, 10.7),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": (11.6, 9.1, 8.0),
     "Fuse_1812_4532Metric": (4.5, 3.2, 1.2),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": (8.55, 2.8, 9.9),
@@ -119,10 +121,9 @@ def test_negative_offset_board():
     """Create a deliberately-offset board for the CAD-side negative test."""
     pcb = _board_path("main")
     b = pcbnew.LoadBoard(str(pcb))
-    fp = b.FindFootprintByReference("J2")
-    assert fp is not None, "J2 not found"
+    fp = next((f for f in sorted(b.Footprints(), key=lambda f: f.GetReference()) if len(f.Models()) > 0), None)
+    assert fp is not None, "no footprint on main has a 3D model"
     models = fp.Models()
-    assert len(models) > 0, "J2 has no 3D model"
     orig = models[0].m_Offset
     models[0].m_Offset = pcbnew.VECTOR3D(orig.x + 5.0, orig.y, orig.z)
     tmp_pcb = REPO / "hardware/build/test/negative_test.kicad_pcb"

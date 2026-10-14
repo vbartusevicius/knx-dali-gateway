@@ -19,3 +19,9 @@ def layout_path(board, suffix=".kicad_pcb"):
 
 def build_path(board, name):
     return REPO / "hardware/build" / VARIANT / board / name
+
+
+def layout_plan(board):
+    import yaml
+
+    return yaml.safe_load((REPO / "hardware/circuits/variants" / VARIANT / f"layout_{board}.yaml").read_text())

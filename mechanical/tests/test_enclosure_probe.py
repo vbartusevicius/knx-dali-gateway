@@ -59,8 +59,10 @@ def test_each_led_sits_in_a_closed_baffle(solids):
 
 def test_shoulder_openings_clear(solids):
     holes = [h for name in ("KNX", "DALI", "AUX") for h in ef.terminal_holes()[name]]
-    blocked = [h for h in holes if not clear_line(solids, h["x"], h["y"], be.MAIN_Z + 10.5,
-                                                  ef.SHOULDER_Z[ef.shoulder_of(h["y"])] + 1)]
+    z0 = 27.5 if ef.VARIANT == "v3" else be.MAIN_Z + 10.5
+    blocked = [h for h in holes if not (clear_line_y(solids, 2.0, -1, 11.0, h["z"]) if "z" in h
+                                        else clear_line(solids, h["x"], h["y"], z0,
+                                                        ef.SHOULDER_Z[ef.shoulder_of(h["y"])] + 1))]
     assert not blocked
 
 
@@ -74,8 +76,8 @@ def test_terminal_faces_open_in_the_top_wall(solids):
 
 def test_jp1_stays_covered(solids):
     jp1 = ef.components("main")["JP1"]
-    x, y = ef.main_to_enc(jp1["x"], jp1["y"])
-    assert not clear_line(solids, x, y, be.MAIN_Z, be.TOTAL_D + 1, steps=200)
+    x, y, z = ef.board_point("main", jp1["x"], jp1["y"])
+    assert not clear_line(solids, x, y, z if ef.VARIANT == "v3" else be.MAIN_Z, be.TOTAL_D + 1, steps=200)
 
 
 def test_front_wall_is_solid_between_openings(solids):
@@ -133,19 +135,15 @@ def board_volume_hits(solids, x0, x1, y0, y1, z0, z1, n=9):
 
 
 def test_no_material_inside_the_boards(solids):
-    main_y0 = (ef.HIDDEN_H - ef.MAIN_H) / 2
-    assert not board_volume_hits(solids, -ef.MAIN_W / 2, ef.MAIN_W / 2, main_y0, main_y0 + ef.MAIN_H,
-                                 be.MAIN_BOTTOM_Z, be.MAIN_Z)
-    ui_y0 = ef.FRONT_Y_START + (ef.FRONT_H - ef.UI_H) / 2
-    assert not board_volume_hits(solids, -ef.UI_W / 2, ef.UI_W / 2, ui_y0, ui_y0 + ef.UI_H,
-                                 be.UI_BOARD_Z, be.UI_BOARD_TOP_Z)
+    for board in ef.SPEC["variants"][ef.VARIANT]["boards"]:
+        for s in ef.board_slabs(board):
+            assert not board_volume_hits(solids, s["x0"], s["x1"], s["y0"], s["y1"], s["z0"], s["z1"]), board
 
 
 def test_main_board_drops_into_the_base(solids):
     base = solids[:1]
-    y0 = (ef.HIDDEN_H - ef.MAIN_H) / 2
-    assert not board_volume_hits(base, -ef.MAIN_W / 2, ef.MAIN_W / 2, y0, y0 + ef.MAIN_H, be.MAIN_Z, ef.HIDDEN_D,
-                                 n=15)
+    for s in ef.board_slabs("main"):
+        assert not board_volume_hits(base, s["x0"], s["x1"], s["y0"], s["y1"], s["z1"], ef.HIDDEN_D, n=15)
 
 
 def box_points(b, n=3):
@@ -171,8 +169,9 @@ def test_case_misses_every_part(solids):
 
 
 def test_part_collision_is_detected(solids):
-    plug = next(b for b in ef.part_boxes() if (b["board"], b["ref"]) == ("main", "J1"))
-    assert part_hits(solids, [dict(plug, x0=plug["x0"] + 4, x1=plug["x1"] + 4)]) == ["J1"]
+    plug = next(b for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS and b["ref"] == "J1")
+    shifted = dict(plug, x0=plug["x0"] - 2, x1=plug["x1"] - 2) if ef.VARIANT == "v3" else         dict(plug, x0=plug["x0"] + 4, x1=plug["x1"] + 4)
+    assert part_hits(solids, [shifted]) == ["J1"]
 
 
 def test_rail_channel_matches_ts35(solids):
@@ -211,9 +210,10 @@ def test_latch_slides_on_its_flexures(solids):
     assert not solid_at(solids, w + g / 2, 16, z)
     assert not solid_at(solids, w + g / 2, -2, z)
     y_beam = l["beam_ys"][0]
-    assert solid_at(solids, w + 4, y_beam + b / 2, z)
-    assert not solid_at(solids, w + 4, (l["beam_ys"][0] + l["beam_ys"][1]) / 2, z)
-    assert not solid_at(solids, w + 4, y_beam - l["travel"] / 2, z)
+    x_beam = (w + l["beam_reach"]) / 2
+    assert solid_at(solids, x_beam, y_beam + b / 2, z)
+    assert not solid_at(solids, x_beam, (l["beam_ys"][0] + l["beam_ys"][1]) / 2, z)
+    assert not solid_at(solids, x_beam, y_beam - l["travel"] / 2, z)
 
 
 def test_latch_tab_sticks_out_below_the_case_with_a_front_facing_hole(solids):
@@ -240,6 +240,11 @@ def test_each_printed_part_is_one_piece(solids):
 def test_knx_recess_is_open_to_front_and_bottom(solids):
     x0, x1, y1 = be.knx_recess()
     x = (x0 + x1) / 2
+    if ef.VARIANT == "v3":
+        for h in ef.terminal_holes()["KNX"] + ef.terminal_holes()["AUX"]:
+            assert not solid_at(solids, 2.0, be.WALL / 2, h["z"])
+            assert not solid_at(solids, be.WIDTH / 2 - be.WALL / 2, 6.0, h["z"])
+        return
     assert not solid_at(solids, x, be.WALL / 2, ef.BASE_TOP_Z - 1)
     assert not solid_at(solids, x, y1 - 1, ef.SHOULDER_Z["bottom"] - be.WALL / 2)
 

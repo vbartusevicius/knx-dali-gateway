@@ -92,7 +92,10 @@ WINSTAR_OLED = {"mpn": "WEA012864DWPP3N00003", "mfr": "Winstar", "pins": ("VCC",
                           "over its pins, then solder them from the back"}
 
 
-def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED):
+BUTTON_PTS645 = {"footprint": TACT_6X6, "mpn": "PTS645SL70SMTR92LFS", "mfr": "C&K", "lcsc": "C285485"}
+
+
+def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED, button=BUTTON_PTS645):
     """Create button ladder, LEDs, and OLED header on the UI board."""
     block("btn_ladder")
     r_pull = res("10k", src(source="Ladder pull-up; no-button = 3V3"))
@@ -101,15 +104,15 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
     c_ladder = cap("100n 50V", src(source="Ladder debounce/filter cap"))
     c_ladder[1] += btn_ladder
     c_ladder[2] += gnd
-    sw1 = part("Switch", "SW_Push", "PRG/RST", TACT_6X6,
-               src(mpn="PTS645SL70SMTR92LFS", mfr="C&K", lcsc="C285485",
+    sw1 = part("Switch", "SW_Push", "PRG/RST", button["footprint"],
+               src(mpn=button["mpn"], mfr=button["mfr"], lcsc=button["lcsc"],
                    source="tap: reboot; hold 5 s: KNX programming mode"))
     r_prog = res("20k", src(source="PRG/RST ladder: 3V3*20k/30k=2.2V"))
     sw1[1] += btn_ladder
     sw1[2] += r_prog[1]
     r_prog[2] += gnd
-    sw2 = part("Switch", "SW_Push", "FUNC", TACT_6X6,
-               src(mpn="PTS645SL70SMTR92LFS", mfr="C&K", lcsc="C285485",
+    sw2 = part("Switch", "SW_Push", "FUNC", button["footprint"],
+               src(mpn=button["mpn"], mfr=button["mfr"], lcsc=button["lcsc"],
                    source="tap: display page / wake; hold 5 s: WiFi setup"))
     r_reset = res("10k", src(source="FUNC ladder: 3V3*10k/20k=1.65V; both 1.32V"))
     sw2[1] += btn_ladder

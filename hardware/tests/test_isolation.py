@@ -127,6 +127,8 @@ def test_domain_spacing(copper, pair):
 
 def test_spacing_check_catches_dali_copper_moved_towards_knx(copper):
     shared, isolator_pads, _ = copper
+    if not {"DALI", "KNX"} <= present(shared):
+        pytest.skip("board does not carry both DALI and KNX copper")
     dali, knx = nearest_points(shared["DALI"], shared["KNX"])
     dx, dy = knx.x - dali.x, knx.y - dali.y
     norm = (dx * dx + dy * dy) ** 0.5

@@ -73,7 +73,7 @@ def cap(value, fields=None, footprint=C0603):
     return part("Device", "C", value, footprint, fields)
 
 
-def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb):
+def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_supply_off=None):
     """Build the MCU block.
 
     Args:
@@ -82,6 +82,7 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb):
         knx_txd, knx_rxd: NCN5130 UART signals
         dali_tx, dali_rx: DALI logic signals
         saveb: NCN5130 SAVEB signal
+        dali_supply_off: optional D1/GPIO1 output, high switches the isolated DALI supply off (v3)
 
     Returns dict of UI-board signals: btn_ladder, led_prog (LED_DATA),
         led_dali, sda, scl, v3 (XIAO 3V3 output for logic)
@@ -115,6 +116,8 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb):
                   source="XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); "
                          "plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)"))
     u1["1"] += led_prog        # D0/GPIO0
+    if dali_supply_off is not None:
+        u1["2"] += dali_supply_off  # D1/GPIO1
     u1["3"] += btn_ladder      # D2/GPIO2 (ADC)
     u1["4"] += led_dali        # D3/GPIO21
     u1["5"] += sda             # D4/GPIO22

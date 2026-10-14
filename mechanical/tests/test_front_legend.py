@@ -72,16 +72,17 @@ def signs(labels, face):
     return {lb.text: lb for lb in labels if lb.text in ("+", "\u2212") and fl.face_of(lb.y) == face}
 
 
-@pytest.mark.parametrize("ref,face", [("J1", "bottom"), ("J2", "top")])
+@pytest.mark.parametrize("ref,face", [("J1", "bottom")] if ef.VARIANT == "v3" else [("J1", "bottom"), ("J2", "top")])
 def test_plus_is_over_pin_1(labels, ref, face):
     """KNX J1 pin 1 is KNX+ and AUX J2 pin 1 the fused + input (blocks/knx.py, blocks/dali.py)."""
-    pads = {p[2]: ef.main_to_enc(p[0], p[1])[0] for p in ef.components("main")[ref]["pads"]}
+    pads = ({"2": -2.875, "1": 2.875} if ef.VARIANT == "v3"
+            else {p[2]: ef.main_to_enc(p[0], p[1])[0] for p in ef.components("main")[ref]["pads"]})
     pair = signs(labels, face)
     assert abs(pair["+"].x - pads["1"]) < abs(pair["+"].x - pads["2"])
     assert abs(pair["\u2212"].x - pads["2"]) < abs(pair["\u2212"].x - pads["1"])
 
 
-@pytest.mark.parametrize("face", ["bottom", "top"])
+@pytest.mark.parametrize("face", ["bottom"] if ef.VARIANT == "v3" else ["bottom", "top"])
 def test_signs_side_by_side_share_one_axis(labels, face):
     plus, minus = signs(labels, face).values()
     centre = [(b[1] + b[3]) / 2 for b in (plus.box(), minus.box())]

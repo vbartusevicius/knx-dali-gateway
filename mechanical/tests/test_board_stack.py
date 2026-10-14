@@ -21,13 +21,15 @@ def overlaps(a, b, margin=0.0):
 
 
 def test_boards_do_not_overlap():
-    slabs = [ef.board_slab(b) for b in BOARDS]
-    assert not [(a["board"], b["board"]) for i, a in enumerate(slabs) for b in slabs[i + 1:] if overlaps(a, b)]
+    slabs = [s for b in BOARDS for s in ef.board_slabs(b)]
+    assert not [(a["board"], b["board"]) for i, a in enumerate(slabs) for b in slabs[i + 1:]
+                if a["board"] != b["board"] and overlaps(a, b)]
 
 
 def test_parts_clear_other_boards():
     hits = [(p["board"], p["ref"], board) for p in ef.part_boxes() for board in BOARDS
-            if board != p["board"] and overlaps(p, ef.board_slab(board), CLEARANCE)]
+            for slab in ef.board_slabs(board)
+            if board != p["board"] and overlaps(p, slab, CLEARANCE)]
     assert not hits
 
 
@@ -81,5 +83,5 @@ def test_parts_under_the_oled_clear_the_module():
 @pytest.mark.parametrize("link", LINKS, ids=lambda link: "-".join(link["refs"]))
 def test_link_path_crosses_no_other_board(link):
     corridor = ef.interconnect_corridor(link)
-    blocking = [b for b in BOARDS if b not in link["refs"] and overlaps(corridor, ef.board_slab(b))]
+    blocking = [b for b in BOARDS for slab in ef.board_slabs(b) if b not in link["refs"] and overlaps(corridor, slab)]
     assert not blocking

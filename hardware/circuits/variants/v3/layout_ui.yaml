@@ -1,0 +1,67 @@
+# V3 UI board, 4 layers, 1.6 mm, inside the 1-DIN front protrusion (13.8 x
+# 40.5 mm). Front: Winstar WEA012832F 0.91" 128x32 I2C OLED mounted vertically
+# (35.8 x 12.0 mm, 4-pin header at the top: 1 GND, 2 VIN, 3 SCL, 4 SDA), the
+# two TS-1088 tact switches below the display, and the three SK6805-EC15 RGB
+# LEDs in a horizontal row below the buttons. Back: 8-pin 0.5 mm FFC J1 to the
+# carrier, 5 V level-shifter U1 and ladder passives in the upper half (above
+# the XIAO). Pure SELV-KNX.
+
+frame:
+  size: { x: 13.8, y: 40.5 }
+  copper_layers: 4
+  thickness: 1.6
+  min_drill: 0.2
+  min_track: 0.12
+  edge_clearance: 0.3
+  silk_inside: true
+  fine_pitch_power_pads: [D1, D2, D3, U1, J1]
+  plane_layers: [In1.Cu]
+  domains: [SELV-KNX]
+  domain_regions:
+    SELV-KNX: { x0: 0.0, y0: 0.0, x1: 13.8, y1: 40.5 }
+  isolators: []
+  power_nets: [+3V3, +5V]
+  pours:
+    - { net: GND, layers: [In1.Cu], region: { x0: 0.4, y0: 0.35, x1: 13.4, y1: 40.0 } }
+
+oled_module:
+  # WEA012832F drawing p.3 (35.8 x 12.0 mm, pins at 1.25 mm from the pin end,
+  # glass 30.0 x 11.5 starting 5.02 mm from the pin end), rotated 90 deg so the
+  # pins sit at the top of the UI board (y 40.0) and the module runs down to y 5.45
+  outline: { x: 0.9,  y: 4.7,  w: 12.0, h: 35.8 }
+  glass:   { x: 1.15, y: 5.48, w: 11.5, h: 30.0 }
+
+case:
+  standoffs:
+    - { x: 6.9,  y: 35.8 }
+
+heights:
+  default: 1.2
+  SW1: 2.0
+  SW2: 2.0
+  J2: 2.41
+
+parts:
+  # Front: OLED 4-pin row at the top, two buttons below the display (y 4.05),
+  # and the three RGB LEDs in a horizontal row below the buttons (y 1.15)
+  J2:  { x: 3.09,  y: 39.25, rot: 90,  block: oled, locked: true }
+  SW1: { x: 3.4,   y: 3.98,  rot: 0,   block: btn_ladder, locked: true }
+  SW2: { x: 10.4,  y: 3.98,  rot: 0,   block: btn_ladder, locked: true }
+  D1:  { x: 2.8,   y: 1.08,  rot: 0,   block: leds, locked: true }
+  D2:  { x: 6.9,   y: 1.08,  rot: 0,   block: leds, locked: true }
+  D3:  { x: 11.0,  y: 1.08,  rot: 0,   block: leds, locked: true }
+
+  # Back (all at y >= 19.5 = enc y >= 39.35, above the XIAO at enc y <= 38.45):
+  # FFC to the carrier and the LED buffer + ladder passives behind the OLED
+  J1:  { x: 6.9,   y: 32.0,  rot: 180, side: back, block: int_main, locked: true }
+  U1:  { x: 6.9,   y: 24.4,  rot: 0,   side: back, block: leds }
+  C2:  { x: 3.2,   y: 24.4,  rot: 90,  side: back, block: leds }
+  C3:  { x: 10.6,  y: 24.4,  rot: 90,  side: back, block: leds }
+  R4:  { x: 6.9,   y: 27.6,  rot: 0,   side: back, block: leds }
+  C4:  { x: 3.0,   y: 20.6,  rot: 0,   side: back, block: leds }
+  C5:  { x: 6.9,   y: 20.6,  rot: 0,   side: back, block: leds }
+  C6:  { x: 10.8,  y: 20.6,  rot: 0,   side: back, block: leds }
+  R1:  { x: 6.9,   y: 35.6,  rot: 0,   side: back, block: btn_ladder }
+  C1:  { x: 10.8,  y: 35.6,  rot: 0,   side: back, block: btn_ladder }
+  R2:  { x: 3.0,   y: 35.6,  rot: 0,   side: back, block: btn_ladder }
+  R3:  { x: 6.9,   y: 37.2,  rot: 0,   side: back, block: btn_ladder }

@@ -29,7 +29,7 @@ from matplotlib.transforms import Affine2D
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "mechanical/build" / ef.VARIANT
 LABEL_H = 1.8
-LED_LABEL_H = (1.4, 1.2, 1.0)
+LED_LABEL_H = (1.4, 1.2, 1.0, 0.85)
 TITLE_H = 2.2
 GAP = 0.8
 EDGE = 1.0
@@ -37,8 +37,8 @@ LABEL_SPACING = 0.3
 LED_LABEL_SPACING = 1.5
 INK = "#000000"
 GUIDE = "#00acc1"
-LED_RING = 0.8
-RING_LINE = 0.4
+LED_RING = 0.25 if ef.VARIANT == "v3" else 0.8
+RING_LINE = 0.25 if ef.VARIANT == "v3" else 0.4
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
 
@@ -91,6 +91,8 @@ def openings():
     """Every opening in the front view as a box, with its kind for drawing."""
     items = []
     for name, holes in ef.terminal_holes().items():
+        if name in ("KNX", "AUX") and ef.VARIANT == "v3":
+            continue
         if name == "KNX":
             x0, x1, y1 = be.knx_recess()
             items.append(("rect", x0, 0.0, x1, y1))
@@ -158,16 +160,23 @@ def dali_terminals(terminals=None, main=None):
     DALI bus supply, not the device's power. Returns the labels and the
     bracket's strokes as boxes."""
     terminals = terminals or ef.SPEC["terminals"]
-    main = main or ef.components("main")
-    radius = be.SCREW_HOLE / 2
-    labels, names = [], []
-    for ref, key, name in (("J2", "aux_dc", SUPPLY_LABEL), ("J3", "dali", "BUS")):
-        screws = [ef.main_to_enc(px, py) for px, py, _ in sorted(main[ref]["pads"], key=lambda p: int(p[2]))]
-        hole_y = screws[0][1]
-        pin_y = hole_y - radius - GAP - LABEL_H / 2
-        pins = [lb.replace("AUX", "").replace("-", "\u2212") or lb for lb in terminals[key]["labels"]]
-        labels += [Label(pin, x, pin_y, LABEL_H) for (x, _), pin in zip(screws, pins)]
-        names.append(Label(name, sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H))
+    if ef.VARIANT == "v3" and main is None:
+        radius = be.SCREW_HOLE / 2
+        screws = [(h["x"], h["y"]) for h in ef.terminal_holes()["DALI"]]
+        pin_y = screws[0][1] - radius - GAP - LABEL_H / 2
+        labels = [Label("DA", x, pin_y, LABEL_H) for x, _ in screws]
+        names = [Label("BUS", sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H)]
+    else:
+        main = main or ef.components("main")
+        radius = be.SCREW_HOLE / 2
+        labels, names = [], []
+        for ref, key, name in (("J2", "aux_dc", SUPPLY_LABEL), ("J3", "dali", "BUS")):
+            screws = [ef.main_to_enc(px, py) for px, py, _ in sorted(main[ref]["pads"], key=lambda p: int(p[2]))]
+            hole_y = screws[0][1]
+            pin_y = hole_y - radius - GAP - LABEL_H / 2
+            pins = [lb.replace("AUX", "").replace("-", "\u2212") or lb for lb in terminals[key]["labels"]]
+            labels += [Label(pin, x, pin_y, LABEL_H) for (x, _), pin in zip(screws, pins)]
+            names.append(Label(name, sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H))
     labels += names
     text = union([lb.box() for lb in labels])
     left, right = text[0] - BRACKET_CLEARANCE, text[2] + BRACKET_CLEARANCE
@@ -195,7 +204,22 @@ def marks():
     return [stroke_path(dali_terminals()[1])]
 
 
+def v3_labels():
+    placed, _ = dali_terminals()
+    for x, text in ((-2.875, "\u2212"), (2.875, "+")):
+        placed.append(Label(text, x, 3.0, TITLE_H))
+    placed.append(Label("KNX", 0.0, 6.8, TITLE_H))
+    placed.append(Label(SUPPLY_LABEL, 0.0, 11.0, LABEL_H))
+    placed.append(Label("PRG/RST", -4.4, 60.0, 1.4))
+    placed.append(Label("FUNC", 4.4, 60.0, 1.4))
+    for text, x in (("STATUS", -5.2), ("KNX", 0.4), ("DALI", 5.6)):
+        placed.append(Label(text, x, 57.3, 0.85))
+    return placed
+
+
 def labels():
+    if ef.VARIANT == "v3":
+        return v3_labels()
     terminals = ef.SPEC["terminals"]
     main = ef.components("main")
     placed, _ = dali_terminals(terminals, main)

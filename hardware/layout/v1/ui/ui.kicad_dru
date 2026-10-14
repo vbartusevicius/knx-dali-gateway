@@ -8,4 +8,7 @@
   (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
 (rule power_neck_down_at_fine_pitch_pins
   (constraint track_width (min 0.15mm))
-  (condition "A.hasNetclass('KNX-Power') && (A.intersectsCourtyard('D1') || A.intersectsCourtyard('D2') || A.intersectsCourtyard('D3'))"))
+  (condition "(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && (A.intersectsCourtyard('D1') || A.intersectsCourtyard('D2') || A.intersectsCourtyard('D3'))"))
+(rule neck_down_at_fine_pitch_pins
+  (constraint track_width (min 0.1mm))
+  (condition "A.intersectsCourtyard('D1') || A.intersectsCourtyard('D2') || A.intersectsCourtyard('D3')"))

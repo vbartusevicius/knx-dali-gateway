@@ -46,6 +46,7 @@ LAYERS = {"F.Cu": pcbnew.F_Cu, "In1.Cu": pcbnew.In1_Cu,
 MODELS_3D = {
     "XIAO_ESP32C6_Header": ("XIAO_ESP32C6.step", 11.0),  # 8.5 mm socket + 2.5 mm header plastic
     "Converter_DCDC_RECOM_REM3_DIP24": ("REM3_DIP24.step", 0),
+    "Converter_DCDC_RECOM_REM3_DIP24_CTRL": ("REM3_DIP24.step", 0),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": ("TerminalBlock_MaiXu_MX126-5.0-02P.step", 0),
     "Fuse_1812_4532Metric": ("Fuse_1812_4532Metric.step", 0),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": ("Phoenix_PST_1,0-2-5,75_R32.step", 0),
@@ -245,9 +246,20 @@ def add_pour(board, net, layer, region, priority=0):
     board.Add(zone)
 
 
+def silk_rect(board, x0, y0, x1, y1):
+    corners = rect_points({"x0": x0, "y0": y0, "x1": x1, "y1": y1})
+    for a, b in zip(corners, corners[1:] + corners[:1]):
+        seg = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_SEGMENT)
+        seg.SetLayer(pcbnew.F_SilkS)
+        seg.SetWidth(pcbnew.FromMM(0.12))
+        seg.SetStart(pos(*a))
+        seg.SetEnd(pos(*b))
+        board.Add(seg)
+
+
 def clear_frame(board):
     for item in list(board.GetDrawings()):
-        if item.GetLayer() == pcbnew.Edge_Cuts:
+        if item.GetLayer() in (pcbnew.Edge_Cuts, pcbnew.F_SilkS):
             board.Remove(item)
     for zone in zones(board):
         board.RemoveNative(zone)
@@ -267,13 +279,16 @@ def apply_frame(board, plan):
     settings.m_MinThroughDrill = pcbnew.FromMM(frame["min_drill"])
     settings.m_TrackMinWidth = pcbnew.FromMM(frame["min_track"])
     settings.m_CopperEdgeClearance = pcbnew.FromMM(frame["edge_clearance"])
-    corners = rect_points({"x0": 0, "y0": 0, "x1": w, "y1": h})
+    corners = [tuple(p) for p in frame["outline"]] if "outline" in frame else \
+        rect_points({"x0": 0, "y0": 0, "x1": w, "y1": h})
     for a, b in zip(corners, corners[1:] + corners[:1]):
         edge_seg(board, *a, *b)
     for slot in frame.get("slots", []):
         corners = rect_points(slot)
         for a, b in zip(corners, corners[1:] + corners[:1]):
             edge_seg(board, *a, *b)
+    for r in plan.get("oled_module", {}).values():
+        silk_rect(board, r["x"], r["y"], r["x"] + r["w"], r["y"] + r["h"])
     for layer in frame.get("plane_layers", []):
         board.SetLayerType(LAYERS[layer], pcbnew.LT_POWER)
     all_copper = [LAYERS[n] for n in LAYERS if board.IsLayerEnabled(LAYERS[n])]
@@ -327,13 +342,28 @@ DRU_4LAYER = """\
 
 
 def neck_down_rule(refs):
-    """Power tracks may neck to 0.15 mm where they enter fine-pitch pads."""
+    """Power tracks may neck to 0.15 mm, others to 0.1 mm (JLC 4-layer minimum
+    0.09 mm) where they enter fine-pitch pads."""
     if not refs:
         return ""
     courtyards = " || ".join(f"A.intersectsCourtyard('{r}')" for r in refs)
     return ("(rule power_neck_down_at_fine_pitch_pins\n"
             "  (constraint track_width (min 0.15mm))\n"
-            f"  (condition \"A.hasNetclass('KNX-Power') && ({courtyards})\"))\n")
+            f"  (condition \"(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && ({courtyards})\"))\n"
+            "(rule neck_down_at_fine_pitch_pins\n"
+            "  (constraint track_width (min 0.1mm))\n"
+            f"  (condition \"{courtyards}\"))\n")
+
+def raised_module_rule(refs):
+    """Parts may sit under a module raised on sockets (the courtyard covers its
+    pad field); pad clearances still apply."""
+    if not refs:
+        return ""
+    either = " || ".join(f"A.Reference == '{r}' || B.Reference == '{r}'" for r in refs)
+    return ("(rule parts_under_raised_modules\n"
+            "  (constraint courtyard_clearance (min -100mm))\n"
+            f"  (condition \"{either}\"))\n")
+
 
 POWER_CLASS = {"SELV-KNX": "KNX-Power", "DALI": "DALI-Power", "SELV-AUX": "AUX-Power"}
 
@@ -384,8 +414,9 @@ def project_net_settings(classes):
 def write_rules(board, plan, board_name, pcb_path):
     frame = plan["frame"]
     dru = dru_rules(frame["domains"], sorted(frame.get("isolators", [])),
-                    SPEC["boards"][board_name].get("isolation"),
-                    DRU_4LAYER + neck_down_rule(frame.get("fine_pitch_power_pads", [])))
+                    SPEC["boards"].get(board_name, {}).get("isolation"),
+                    DRU_4LAYER + neck_down_rule(frame.get("fine_pitch_power_pads", []))
+                    + raised_module_rule(frame.get("raised_modules", [])))
     pcb_path.with_suffix(".kicad_dru").write_text(dru)
     pro_path = pcb_path.with_suffix(".kicad_pro")
     project = json.loads(pro_path.read_text())
@@ -446,11 +477,86 @@ def save(board, plan, board_name, hidden_refs=()):
         ref.SetTextThickness(pcbnew.FromMM(0.12))
         if fp.GetReference() in hidden_refs:
             ref.SetVisible(False)
+    if plan["frame"].get("silk_inside"):
+        place_references_inside(board, plan["frame"])
     add_3d_models(board)
     fill_zones(board)
     board.Save(str(path))
     write_rules(board, plan, board_name, path)
     export_components(board, plan, build_dir(board_name) / f"components_{board_name}.json")
+
+
+def outline_polygon(frame):
+    """Board outline in mm as pcbnew stores it (plan y up -> pcbnew y down)."""
+    if "outline" in frame:
+        return Polygon([(x, -y) for x, y in frame["outline"]])
+    w, h = frame["size"]["x"], frame["size"]["y"]
+    return Polygon([(0, 0), (w, 0), (w, -h), (0, -h)])
+
+
+def mm_box(box, grow=0.0):
+    return (pcbnew.ToMM(box.GetLeft()) - grow, pcbnew.ToMM(box.GetTop()) - grow,
+            pcbnew.ToMM(box.GetRight()) + grow, pcbnew.ToMM(box.GetBottom()) + grow)
+
+
+def boxes_overlap(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def silk_edges(item, grow=0.1):
+    """Outline artwork as thin boxes along its edges, so a reference can sit
+    inside a large part's outline without counting as an overlap."""
+    x0, y0, x1, y1 = mm_box(item.GetBoundingBox(), grow)
+    if not isinstance(item, pcbnew.PCB_SHAPE) or item.GetShape() not in (pcbnew.SHAPE_T_RECT, pcbnew.SHAPE_T_POLY):
+        return [(x0, y0, x1, y1)]
+    w = 2 * grow + pcbnew.ToMM(item.GetWidth())
+    return [(x0, y0, x1, y0 + w), (x0, y1 - w, x1, y1), (x0, y0, x0 + w, y1), (x1 - w, y0, x1, y1)]
+
+
+def place_references_inside(board, frame):
+    """Put every reference designator on the board, horizontal, next to (or for
+    large parts on) its footprint, off all pads and other references on that
+    side and off the footprints' outline artwork; hide it if no spot fits
+    (frame "silk_inside": true)."""
+    inside = outline_polygon(frame).buffer(-0.2)
+    pads = {False: [], True: []}
+    for item in board.GetDrawings():
+        if item.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS):
+            pads[item.GetLayer() == pcbnew.B_SilkS].extend(silk_edges(item))
+    for fp in board.Footprints():
+        for pad in fp.Pads():
+            for back in (False, True):
+                if pad.IsOnLayer(pcbnew.B_Cu if back else pcbnew.F_Cu):
+                    pads[back].append(mm_box(pad.GetBoundingBox(), 0.15))
+        for item in fp.GraphicalItems():
+            if item.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS):
+                pads[item.GetLayer() == pcbnew.B_SilkS].extend(silk_edges(item))
+    taken = {False: [], True: []}
+
+    def area(fp):
+        x0, y0, x1, y1 = mm_box(fp.GetBoundingBox(False, False))
+        return (x1 - x0) * (y1 - y0)
+
+    for fp in sorted(board.Footprints(), key=area, reverse=True):
+        ref = fp.Reference()
+        ref.SetVisible(True)
+        back = fp.IsFlipped()
+        ref.SetTextAngle(pcbnew.EDA_ANGLE(0, pcbnew.DEGREES_T))
+        x0, y0, x1, y1 = mm_box(fp.GetBoundingBox(False, False))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        tx0, ty0, tx1, ty1 = mm_box(ref.GetBoundingBox())
+        dx, dy = (tx1 - tx0) / 2 + 0.2, (ty1 - ty0) / 2 + 0.2
+        spots = [(cx, y0 - dy), (cx, y1 + dy), (x0 - dx, cy), (x1 + dx, cy), (cx, cy)]
+        spots += [(x, y) for x in (x0 - dx, x1 + dx) for y in (y0 - dy, y1 + dy)]
+        for x, y in spots:
+            ref.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+            box = mm_box(ref.GetBoundingBox(), 0.05)
+            fits = inside.contains(Polygon([(box[0], box[1]), (box[2], box[1]), (box[2], box[3]), (box[0], box[3])]))
+            if fits and not any(boxes_overlap(box, other) for other in pads[back] + taken[back]):
+                taken[back].append(box)
+                break
+        else:
+            ref.SetVisible(False)
 
 
 def current_board(board_name, plan):
@@ -469,7 +575,113 @@ def current_board(board_name, plan):
         placed = place_parts(board, plan, list(plan["parts"]))
         print(f"{board_name}: new layout, placed {len(placed)} planned parts")
     apply_frame(board, plan)
+    add_pad_ties(board, plan)
+    add_pad_escapes(board, plan)
     return board
+
+
+CLEARANCE = pcbnew.FromMM(0.2)
+
+
+def tie_clears(fp, pad, anchor, start, end, width, clearance):
+    """True if a straight tie keeps the clearance to every other-net pad of the
+    footprint (corner pins of a QFN pass too close to the neighbouring row)."""
+    half = width // 2 + clearance
+    x0, x1 = sorted((start.x, end.x))
+    y0, y1 = sorted((start.y, end.y))
+    for other in fp.Pads():
+        if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(pcbnew.F_Cu) or not other.GetNumber():
+            continue
+        box = other.GetBoundingBox()
+        if box.GetLeft() < x1 + half and box.GetRight() > x0 - half and \
+                box.GetTop() < y1 + half and box.GetBottom() > y0 - half:
+            return False
+    return True
+
+
+def add_pad_ties(board, plan):
+    """Join each pad that shares the net of an exposed pad straight into that pad,
+    along the pin's own axis and at the pin's width (plan "pad_ties": {ref: pad}).
+    Locked, so the router keeps them and never necks these joins down."""
+    for ref, anchor_number in plan.get("pad_ties", {}).items():
+        fp = board.FindFootprintByReference(ref)
+        anchor = next(p for p in fp.Pads() if p.GetNumber() == str(anchor_number))
+        box = anchor.GetBoundingBox()
+        existing = {((t.GetStart().x, t.GetStart().y), (t.GetEnd().x, t.GetEnd().y)) for t in board.GetTracks()}
+        for pad in fp.Pads():
+            if pad is anchor or pad.GetNetCode() != anchor.GetNetCode():
+                continue
+            start = pad.GetPosition()
+            end = pcbnew.VECTOR2I(min(max(start.x, box.GetLeft()), box.GetRight()),
+                                  min(max(start.y, box.GetTop()), box.GetBottom()))
+            width = min(pad.GetSize().x, pad.GetSize().y)
+            if ((start.x, start.y), (end.x, end.y)) in existing or \
+                    not tie_clears(fp, pad, anchor, start, end, width, CLEARANCE):
+                continue
+            tie = pcbnew.PCB_TRACK(board)
+            tie.SetStart(start)
+            tie.SetEnd(end)
+            tie.SetWidth(width)
+            tie.SetLayer(pcbnew.F_Cu)
+            board.Add(tie)
+            tie.SetNet(anchor.GetNet())
+            tie.SetLocked(True)
+
+
+def stub_clears(board, pad, start, end, width, clearance):
+    """True if a straight stub keeps the clearance to every other-net copper pad."""
+    half = width // 2 + clearance
+    x0, x1 = sorted((start.x, end.x))
+    y0, y1 = sorted((start.y, end.y))
+    for fp in board.Footprints():
+        for other in fp.Pads():
+            if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(pcbnew.F_Cu) or not other.GetNumber():
+                continue
+            box = other.GetBoundingBox()
+            if box.GetLeft() < x1 + half and box.GetRight() > x0 - half and \
+                    box.GetTop() < y1 + half and box.GetBottom() > y0 - half:
+                return False
+    return True
+
+
+def add_pad_escapes(board, plan):
+    """Fan each connected pin of a fine-pitch footprint out along its own axis, at
+    pin width, a short way past the pin row (plan "pad_escapes": {ref: {length: mm,
+    skip: [pins]}}),
+    so the router joins a full-width stub instead of necking down between pins.
+    Locked; pins already tied into an exposed pad and stubs that would come too
+    close to other copper are skipped."""
+    existing = {(t.GetStart().x, t.GetStart().y) for t in board.GetTracks()}
+    for ref, escape in plan.get("pad_escapes", {}).items():
+        length, skip = escape["length"], {str(n) for n in escape.get("skip", [])}
+        fp = board.FindFootprintByReference(ref)
+        centre = fp.GetPosition()
+        for pad in fp.Pads():
+            start = pad.GetPosition()
+            if not pad.GetNetCode() or not pad.GetNumber() or pad.GetNumber() in skip or \
+                    (start.x, start.y) in existing:
+                continue
+            box = pad.GetBoundingBox()
+            if box.GetWidth() == box.GetHeight():
+                continue
+            reach = pcbnew.FromMM(length)
+            if box.GetWidth() > box.GetHeight():
+                edge = box.GetRight() if start.x > centre.x else box.GetLeft()
+                end = pcbnew.VECTOR2I(edge + (reach if start.x > centre.x else -reach), start.y)
+            else:
+                edge = box.GetBottom() if start.y > centre.y else box.GetTop()
+                end = pcbnew.VECTOR2I(start.x, edge + (reach if start.y > centre.y else -reach))
+            width = min(box.GetWidth(), box.GetHeight())
+            if not stub_clears(board, pad, start, end, width, CLEARANCE):
+                continue
+            stub = pcbnew.PCB_TRACK(board)
+            stub.SetStart(start)
+            stub.SetEnd(end)
+            stub.SetWidth(width)
+            stub.SetLayer(pcbnew.F_Cu)
+            board.Add(stub)
+            stub.SetNet(pad.GetNet())
+            stub.SetLocked(True)
 
 
 def sync(board_name):

@@ -23,15 +23,19 @@ REPO = Path(__file__).resolve().parents[2]
 SPEC = ef.SPEC
 OUT = REPO / "mechanical/build" / ef.VARIANT
 WALL = SPEC["enclosure"]["wall"]
-MAIN_TOP_Z = SPEC["boards"]["main"]["z"]
+MAIN_TOP_Z = SPEC["boards"]["main"].get("z", 21.2)
 MAIN_THICK = SPEC["boards"]["main"]["thickness"]
 UI_BOTTOM_Z = SPEC["front_ui"]["board_z"]
 UI_THICK = SPEC["boards"]["ui"]["thickness"]
 PLUG_HEIGHT = 11.5
-LABELLED = {"main": {"J1", "J2", "J3", "J4", "J5", "J6", "JP1", "U7", "C4", "U3", "U1"},
+LABELLED = {"main": {"J1", "J2", "J3", "J4", "J5", "J6", "JP1", "U7", "U5", "C4", "U3", "U2", "U1"},
             "ui": {"SW1", "SW2", "D1", "D2", "D3", "J1", "J2"},
-            "interface": {"J1", "J2", "U1", "U2"}}
-COLOURS = {"main": "#2e7d32", "ui": "#1565c0", "interface": "#ef6c00"}
+            "interface": {"J1", "J2", "U1", "U2"},
+            "knx": {"U1", "C4", "L1", "J1"},
+            "dali": {"J1", "J2", "J3", "U1", "U2", "D1"},
+            "inputs": {"J1", "J2", "J3", "F1"}}
+COLOURS = {"main": "#2e7d32", "ui": "#1565c0", "interface": "#ef6c00",
+           "knx": "#6a1b9a", "dali": "#ef6c00", "inputs": "#c62828"}
 BOARDS = ef.SPEC["variants"][ef.VARIANT]["boards"]
 
 
@@ -59,16 +63,20 @@ def front_view():
     half = ef.WIDTH / 2
     rect(ax, -half, 0, ef.WIDTH, ef.HIDDEN_H, fill=False, lw=2, ec="black")
     rect(ax, -half, ef.FRONT_Y_START, ef.WIDTH, ef.FRONT_H, fill=True, fc="#f2f2f2", ec="black", lw=1.5)
+    boxes = ef.part_boxes()
     for board in BOARDS:
-        colour, slab = COLOURS[board], ef.board_slab(board)
-        rect(ax, slab["x0"], slab["y0"], slab["x1"] - slab["x0"], slab["y1"] - slab["y0"],
-             fill=False, ec=colour, ls="--", lw=1)
-        for ref, comp in ef.components(board).items():
-            if board == "main" and ef.FRONT_Y_START < to_enc(board, *ef.bbox_centre(comp))[1] < ef.FRONT_Y_END \
-                    and ref not in LABELLED[board]:
+        colour = COLOURS[board]
+        for slab in ef.board_slabs(board):
+            rect(ax, slab["x0"], slab["y0"], slab["x1"] - slab["x0"], slab["y1"] - slab["y0"],
+                 fill=False, ec=colour, ls="--", lw=1)
+        comps = ef.components(board)
+        for b in [p for p in boxes if p["board"] == board and p["ref"] in comps]:
+            ref = b["ref"]
+            x, y, bw, bh = b["x0"], b["y0"], b["x1"] - b["x0"], b["x1"] - b["y0"]
+            bh = b["y1"] - b["y0"]
+            if board == "main" and ef.FRONT_Y_START < y + bh / 2 < ef.FRONT_Y_END and ref not in LABELLED[board]:
                 continue
-            x, y, bw, bh = enc_box(board, comp)
-            back = comp["side"] == "back"
+            back = comps[ref]["side"] == "back"
             rect(ax, x, y, bw, bh, fill=False, ec=colour, lw=0.6, ls=":" if back else "-")
             if ref in LABELLED[board]:
                 ax.text(x + bw / 2, y + bh / 2, f"{board}:{ref}", fontsize=6, ha="center",
@@ -113,22 +121,20 @@ def side_view():
              (hi - WALL, ef.FRONT_Y_END - WALL), (hi - WALL, ef.HIDDEN_H - WALL),
              (WALL, ef.HIDDEN_H - WALL), (WALL, WALL)]
     ax.plot(*zip(*inner), color="grey", lw=0.8)
+    boxes = ef.part_boxes()
     for board in BOARDS:
-        colour, slab = COLOURS[board], ef.board_slab(board)
-        z0, thick = slab["z0"], slab["z1"] - slab["z0"]
-        h_table = heights(board)
-        rect(ax, z0, slab["y0"], thick, slab["y1"] - slab["y0"], fc=colour, ec=colour)
-        for ref, comp in ef.components(board).items():
-            _, y, _, bh = enc_box(board, comp)
-            h = h_table.get(ref, h_table["default"])
-            z = z0 - h if comp["side"] == "back" else z0 + thick
-            rect(ax, z, y, h, bh, fill=True, fc=colour, alpha=0.18, ec=colour, lw=0.5)
-            if ref in LABELLED[board] or h >= 5:
-                ax.text(z + h / 2, y + bh / 2, ref, fontsize=5.5, ha="center", va="center", color=colour)
-    j1 = ef.components("main")["J1"]
-    _, y, _, bh = enc_box("main", j1)
-    rect(ax, MAIN_TOP_Z, y, PLUG_HEIGHT, bh, fc="#c62828", alpha=0.35, ec="#c62828")
-    ax.text(MAIN_TOP_Z + PLUG_HEIGHT / 2, y - 1.5, "mated KNX plug", fontsize=6, ha="center", color="#c62828")
+        colour = COLOURS[board]
+        for slab in ef.board_slabs(board):
+            rect(ax, slab["z0"], slab["y0"], slab["z1"] - slab["z0"], slab["y1"] - slab["y0"], fc=colour, ec=colour)
+        comps = ef.components(board)
+        for b in [p for p in boxes if p["board"] == board and p["ref"] in comps]:
+            ref = b["ref"]
+            z, y, bw, bh = b["z0"], b["y0"], b["z1"] - b["z0"], b["y1"] - b["y0"]
+            plug = (board, ref) in ef.PLUG_REFS
+            fc = "#c62828" if plug else colour
+            rect(ax, z, y, bw, bh, fill=True, fc=fc, alpha=0.35 if plug else 0.18, ec=fc, lw=0.5)
+            if ref in LABELLED[board] or bw >= 5 or plug:
+                ax.text(z + bw / 2, y + bh / 2, ref, fontsize=5.5, ha="center", va="center", color=fc)
     for p in ef.legs():
         rect(ax, WALL, p["y"] - 2.5, MAIN_TOP_Z - MAIN_THICK - WALL, 5, fc="#6a1b9a", alpha=0.35, ec="#6a1b9a")
     for p in ef.pegs():
