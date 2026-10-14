@@ -47,7 +47,7 @@ supply or the MDT STC-1280.01 30 V output are both inside.
   print, cyan = face edges and openings for positioning only. For UV/pad
   printing on an FDM cover (custom quote) or an adhesive polyester label cut
   along the cyan lines.
-- `enclosure/cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
+- `enclosure/cover_embossed.stl (raised embossed text) or cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
   the cover for full-colour resin printing (JLC3DP "Full-Color Resin", WJP).
   Upload either one instead of `cover.stl` and select full-colour printing.
   The legend is a separate black body 0.3 mm deep, flush with the faces; the
@@ -60,7 +60,7 @@ supply or the MDT STC-1280.01 30 V output are both inside.
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
 - Main J1: Phoenix 1574200 KNX pin strip.
-- Main U3: RECOM REM3-2415S/A (DIP-24, A pinning).
+- Main U3: RECOM REM3-2415S/A/CTRL (DIP-24, A pinning with pin 1 CTRL; no minimum load required).
 - Main C4: 470 uF 35 V, D10 x 16 (SamYoung KMG35V470M10*16 LO, LCSC C165500), **lying down
   on the back**: bend both leads 90 deg 3 mm from the body, insert from the
   back so the body axis is 7 mm below the board (2 mm air gap) and runs

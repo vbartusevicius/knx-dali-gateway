@@ -1,10 +1,13 @@
-"""Renders and assembly STEP of case, boards and parts (VTK, offscreen).
+"""Renders and assembly STEP of case, boards and semi-realistic 3D components (VTK, offscreen).
 
     python3 mechanical/scripts/render_assembly3d.py
 
-Parts are the same volumes the collision tests use (enclosure_features
-.part_boxes), so the pictures show what the tests check. Supports (legs,
-screw tabs, pegs, standoffs, UI snap tongues) are purple, the KNX plug red.
+Component volumes come from enclosure_features.part_boxes (the same boxes the
+collision tests check), rendered with realistic package geometry and materials
+(aluminium electrolytic cans, XIAO sockets + PCB + RF shield + USB-C, green
+KF142R push-in terminal with orange push-buttons, white SO-6L optocouplers with
+leads, DPAK with heatsink tab, ceramic caps with silver end caps, resistors,
+diodes with cathode bands, ZIF FFC connectors with latches, etc.).
 Writes mechanical/build/<variant>/assembly.step and renders/*.png.
 """
 
@@ -22,11 +25,22 @@ from build_enclosure import box, cylinder
 
 OUT = REPO / "mechanical/build" / ef.VARIANT
 RENDERS = OUT / "renders"
-CASE, MAIN, UI, PART, SUPPORT, PLUG = ((0.82, 0.82, 0.84), (0.1, 0.5, 0.2), (0.12, 0.3, 0.7),
-                                       (0.22, 0.22, 0.24), (0.6, 0.2, 0.8), (0.85, 0.15, 0.15))
-LED_COLOURS = {"D1": (0.1, 0.85, 0.2), "D2": (0.1, 0.85, 0.2), "D3": (0.1, 0.85, 0.2)}
-COLOURS = {("ui", "OLED glass"): (0.02, 0.02, 0.05), ("ui", "OLED board"): (0.1, 0.2, 0.5),
-           ("main", "J2"): (0.15, 0.6, 0.3), ("main", "J3"): (0.15, 0.6, 0.3), ("main", "U7"): (0.05, 0.05, 0.05)}
+
+CASE = (0.82, 0.82, 0.84)
+MAIN = (0.10, 0.48, 0.20)
+UI = (0.12, 0.30, 0.68)
+PART = (0.18, 0.18, 0.20)
+SUPPORT = (0.60, 0.20, 0.80)
+PLUG = (0.85, 0.15, 0.15)
+SILVER = (0.78, 0.80, 0.82)
+ALU = (0.82, 0.84, 0.87)
+GOLD = (0.85, 0.72, 0.25)
+COPPER = (0.78, 0.48, 0.25)
+CERAMIC = (0.72, 0.54, 0.32)
+IVORY = (0.92, 0.90, 0.84)
+GREEN_TERM = (0.12, 0.58, 0.28)
+ORANGE_BTN = (0.95, 0.45, 0.10)
+BLUE_CAP = (0.15, 0.38, 0.78)
 
 
 def board_plates():
@@ -40,51 +54,209 @@ def board_plates():
     return plates
 
 
+def two_terminal_smd(x0, x1, y0, y1, z0, z1, body_rgb, band_rgb=None):
+    """SMD two-terminal passive or diode: silver end caps + coloured middle body
+    (plus an optional cathode band on one side)."""
+    dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
+    items = []
+    # Long axis is whichever of y or z (on perpendicular main) or x or y (on parallel boards) is longest
+    if dy >= max(dx, dz):
+        cap = min(0.45, dy * 0.24)
+        items.append((box(x0, x1, y0, y0 + cap, z0, z1), SILVER))
+        items.append((box(x0, x1, y1 - cap, y1, z0, z1), SILVER))
+        items.append((box(x0, x1, y0 + cap, y1 - cap, z0, z1), body_rgb))
+        if band_rgb:
+            bw = (y1 - y0) * 0.14
+            items.append((box(x0 - 0.02, x1 + 0.02, y0 + cap + 0.15, y0 + cap + 0.15 + bw, z0 - 0.02, z1 + 0.02), band_rgb))
+    elif dz >= max(dx, dy):
+        cap = min(0.45, dz * 0.24)
+        items.append((box(x0, x1, y0, y1, z0, z0 + cap), SILVER))
+        items.append((box(x0, x1, y0, y1, z1 - cap, z1), SILVER))
+        items.append((box(x0, x1, y0, y1, z0 + cap, z1 - cap), body_rgb))
+        if band_rgb:
+            bw = (z1 - z0) * 0.14
+            items.append((box(x0 - 0.02, x1 + 0.02, y0 - 0.02, y1 + 0.02, z0 + cap + 0.15, z0 + cap + 0.15 + bw), band_rgb))
+    else:
+        cap = min(0.45, dx * 0.24)
+        items.append((box(x0, x0 + cap, y0, y1, z0, z1), SILVER))
+        items.append((box(x1 - cap, x1, y0, y1, z0, z1), SILVER))
+        items.append((box(x0 + cap, x1 - cap, y0, y1, z0, z1), body_rgb))
+        if band_rgb:
+            bw = (x1 - x0) * 0.14
+            items.append((box(x0 + cap + 0.15, x0 + cap + 0.15 + bw, y0 - 0.02, y1 + 0.02, z0 - 0.02, z1 + 0.02), band_rgb))
+    return items
+
+
+def realistic_part(b, comp):
+    """Build semi-realistic multi-colour 3D solids for a component box `b`."""
+    board, ref = b["board"], b["ref"]
+    x0, x1, y0, y1, z0, z1 = b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]
+    cx, cy, cz = (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2
+    fp = comp["footprint"] if comp else ""
+    perp = ef.SPEC["boards"][board].get("plane") == "perpendicular-to-rail"
+
+    if b.get("shape") == "horizontal_capacitor":
+        return [(be.capacitor_body(b), ALU)]
+    if ref == "OLED glass":
+        return [(box(x0, x1, y0, y1, z0, z1), (0.04, 0.06, 0.10))]
+    if ref == "OLED board":
+        return [(box(x0, x1, y0, y1, z0, z1), (0.15, 0.35, 0.22))]
+    if board == "ui" and ref in ("D1", "D2", "D3"):
+        # White PLCC-4 body + glowing green RGB lens
+        return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0, z0 + 0.55), IVORY),
+                (cylinder(cx, cy, z0 + 0.50, z0 + 0.68, 1.1), (0.10, 0.90, 0.25))]
+    if board == "ui" and ref in ("SW1", "SW2"):
+        base_h = 1.4 if ef.VARIANT == "v3" else 3.5
+        cap_d = 2.2 if ef.VARIANT == "v3" else 3.5
+        return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0, z0 + base_h * 0.75), PART),
+                (box(x0 + 0.3, x1 - 0.3, y0 + 0.3, y1 - 0.3, z0 + base_h * 0.75, z0 + base_h), SILVER),
+                (cylinder(cx, cy, z0 + base_h, be.STACK.prog_cap_z, cap_d), (0.10, 0.10, 0.12))]
+    if (board, ref) in ef.PLUG_REFS:
+        items = []
+        for px, py, _ in ef.components(board)[ref]["pads"]:
+            ex, ey, ez = ef.board_point(board, px, py)
+            pin = cq.Workplane("YZ", origin=(ex, 0, 0)).center(ey, ez).circle(0.5).extrude(9.9) if perp                 else cylinder(ex, ey, ez, ez + 9.9, 1.0)
+            items.append((pin, GOLD))
+        neg_col = (0.15, 0.15, 0.17) if ref == "J1" else (0.90, 0.90, 0.92)
+        pos_col = PLUG if ref == "J1" else (0.95, 0.80, 0.10)
+        if perp:
+            mz = (z0 + z1) / 2
+            pos_body = box(x0, x1, y0, y1, z0, mz).union(
+                be.dovetail_zy(z0, y1 - 3.15, x0, x1, neck=2.4, flare=3.2, depth=0.95, sign=-1))
+            neg_body = box(x0, x1, y0, y1, mz, z1)
+        else:
+            mx = (x0 + x1) / 2
+            neg_body = box(x0, mx, y0, y1, z0, z1)
+            pos_body = box(mx, x1, y0, y1, z0, z1).union(
+                be.dovetail_xy(x1, y1 - 3.15, z0, z1, neck=2.4, flare=3.2, depth=0.95))
+        return [*items, (neg_body, neg_col), (pos_body, pos_col)]
+
+    # KF142R-5.08-2P / MX126 terminal block
+    if "KF142R" in fp or "MX126" in fp:
+        if perp:
+            housing = box(x0, x1, y0, y1 - 0.8, z0 + 0.5, z1 - 0.5)
+            btns = [box(x0 + 1.5, x0 + 4.5, y1 - 1.8, y1, z - 0.9, z + 0.9) for z in (cz - 2.54, cz + 2.54)]
+            holes = [cq.Workplane("XZ").center((x0 + x1) / 2 + 1.5, z).circle(1.3).extrude(4.0).translate((0, y1, 0))
+                     for z in (cz - 2.54, cz + 2.54)]
+            for h in holes:
+                housing = housing.cut(h)
+            return [(housing, GREEN_TERM)] + [(bt, ORANGE_BTN) for bt in btns]
+        return [(box(x0, x1, y0, y1, z0, z1), GREEN_TERM)]
+
+    # SMD 470 uF electrolytic capacitor (CP_Elec_10x10): black base + silver cylindrical can
+    if "CP_Elec" in fp:
+        if perp:
+            base_plate = box(x0, x0 + 1.8, y0 + 0.6, y1 - 0.6, z0 + 0.6, z1 - 0.6)
+            can = cq.Workplane("YZ", origin=(x0 + 1.8, 0, 0)).center(cy, cz).circle(4.9).extrude(x1 - x0 - 2.0)
+            mark = box(x1 - 0.3, x1 - 0.1, cy - 3.5, cy + 3.5, z0 + 1.2, cz - 1.5)
+            return [(base_plate, PART), (can, ALU), (mark, PART)]
+        base_plate = box(x0 + 0.6, x1 - 0.6, y0 + 0.6, y1 - 0.6, z0, z0 + 1.8)
+        can = cylinder(cx, cy, z0 + 1.8, z1 - 0.2, 9.8)
+        return [(base_plate, PART), (can, ALU)]
+
+    # XIAO ESP32-C6 on female sockets: black socket strips + green XIAO PCB + silver RF shield + USB-C
+    if "XIAO_ESP32C6" in fp:
+        if perp:
+            sock1 = box(x0, x0 + 7.5, y0 + 0.6, y0 + 3.1, z0 + 1.8, z1 - 1.8)
+            sock2 = box(x0, x0 + 7.5, y1 - 3.1, y1 - 0.6, z0 + 1.8, z1 - 1.8)
+            pcb = box(x0 + 7.5, x0 + 8.9, y0 + 0.4, y1 - 0.4, z0 + 0.8, z1 - 0.8)
+            shield = box(x0 + 8.9, x0 + 10.6, cy - 5.2, cy + 5.2, cz - 4.5, cz + 5.5)
+            usbc = box(x0 + 8.5, x1, cy - 4.5, cy + 4.5, z1 - 7.5, z1 - 0.2)
+            return [(sock1, PART), (sock2, PART), (pcb, (0.08, 0.32, 0.16)), (shield, SILVER), (usbc, ALU)]
+        pcb = box(x0 + 0.5, x1 - 0.5, y0 + 0.5, y1 - 0.5, z1 - 3.5, z1 - 2.1)
+        shield = box(cx - 5.2, cx + 5.2, cy - 5.2, cy + 5.2, z1 - 2.1, z1 - 0.3)
+        return [(box(x0 + 0.5, x0 + 3.0, y0 + 1.5, y1 - 1.5, z0, z1 - 3.5), PART),
+                (box(x1 - 3.0, x1 - 0.5, y0 + 1.5, y1 - 1.5, z0, z1 - 3.5), PART),
+                (pcb, (0.08, 0.32, 0.16)), (shield, SILVER)]
+
+    # REM3 DIP-24 isolated DC-DC converter: matte black module + silver pins + top label
+    if "REM3" in fp:
+        if perp:
+            body = box(x0 + 0.4, x1, y0 + 0.4, y1 - 0.4, z0 + 0.4, z1 - 0.4)
+            lbl = box(x1 - 0.05, x1 + 0.02, y0 + 3.0, y1 - 3.0, z0 + 3.0, z1 - 3.0)
+            return [(body, (0.12, 0.12, 0.14)), (lbl, (0.28, 0.28, 0.32))]
+        return [(box(x0 + 0.4, x1 - 0.4, y0 + 0.4, y1 - 0.4, z0, z1), (0.12, 0.12, 0.14))]
+
+    # 2x2 supply jumper JP1: black base + gold pins + blue jumper caps
+    if "PinHeader_2x02" in fp:
+        if perp:
+            base_h = box(x0, x0 + 2.5, y0 + 0.5, y1 - 0.5, z0 + 0.5, z1 - 0.5)
+            cap1 = box(x0 + 2.5, x1 - 0.5, cy + 0.2, y1 - 0.6, z0 + 0.6, z1 - 0.6)
+            cap2 = box(x0 + 2.5, x1 - 0.5, y0 + 0.6, cy - 0.2, z0 + 0.6, z1 - 0.6)
+            return [(base_h, PART), (cap1, BLUE_CAP), (cap2, BLUE_CAP)]
+        return [(box(x0 + 0.5, x1 - 0.5, y0 + 0.5, y1 - 0.5, z0, z0 + 2.5), PART),
+                (box(x0 + 0.6, x1 - 0.6, y0 + 0.6, cy - 0.2, z0 + 2.5, z1 - 0.5), BLUE_CAP),
+                (box(x0 + 0.6, x1 - 0.6, cy + 0.2, y1 - 0.6, z0 + 2.5, z1 - 0.5), BLUE_CAP)]
+
+    # SO-6L optocouplers (TLP383): ivory body + silver gull-wing leads
+    if "SO-6L" in fp:
+        if perp:
+            if y1 - y0 > z1 - z0:
+                leads = box(x0, x0 + 0.5, y0 + 0.4, y1 - 0.4, z0 + 0.3, z1 - 0.3)
+                body = box(x0 + 0.2, x1, y0 + 2.0, y1 - 2.0, z0 + 0.3, z1 - 0.3)
+            else:
+                leads = box(x0, x0 + 0.5, y0 + 0.3, y1 - 0.3, z0 + 0.4, z1 - 0.4)
+                body = box(x0 + 0.2, x1, y0 + 0.3, y1 - 0.3, z0 + 2.0, z1 - 2.0)
+            return [(leads, SILVER), (body, IVORY)]
+        return [(box(x0 + 0.4, x1 - 0.4, y0 + 0.4, y1 - 0.4, z0, z0 + 0.4), SILVER),
+                (box(x0 + 1.5, x1 - 1.5, y0 + 0.4, y1 - 0.4, z0 + 0.2, z1), IVORY)]
+
+    # TO-252 DPAK pass transistor (MJD45H11): copper heatsink tab + black body + silver leads
+    if "TO-252" in fp:
+        if perp:
+            tab = box(x0, x0 + 0.5, y0 + 0.5, y1 - 0.5, z0 + 0.5, cz + 1.5)
+            body = box(x0 + 0.3, x1, y0 + 0.7, y1 - 0.7, z0 + 1.5, cz + 2.5)
+            leads = box(x0, x0 + 0.6, y0 + 1.0, y1 - 1.0, cz + 2.5, z1 - 0.5)
+            return [(tab, COPPER), (body, PART), (leads, SILVER)]
+        return [(box(x0 + 0.4, x1 - 0.4, y0 + 0.4, y1 - 0.4, z0, z0 + 0.5), COPPER),
+                (box(x0 + 1.2, x1 - 1.2, y0 + 0.6, y1 - 0.6, z0 + 0.3, z1), PART)]
+
+    # ZIF / FFC / JST connectors: ivory body + dark flip latch
+    if "FPC_" in fp or "JST_SH" in fp:
+        return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0, z1), IVORY),
+                (box(x0 + 0.3, x1 - 0.3, cy - 0.6, cy + 0.6, z0 - 0.05, z1 + 0.05), (0.28, 0.22, 0.18))]
+
+    # Shielded power inductors (L1, L2): dark ferrite core + silver base pads
+    if fp.startswith("L_"):
+        return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0 + 0.2, z1 - 0.2), (0.25, 0.26, 0.28)),
+                (box(x0 + 0.1, x1 - 0.1, y0 + 0.3, y1 - 0.3, z0, z0 + 0.3), SILVER)]
+
+    # Crystal (Y1, 3225): gold ceramic base + silver metal lid
+    if "Crystal" in fp:
+        return [(box(x0 + 0.1, x1 - 0.1, y0 + 0.2, y1 - 0.2, z0 + 0.2, z1 - 0.2), GOLD),
+                (box(x0, x1, y0 + 0.35, y1 - 0.35, z0 + 0.35, z1 - 0.35), SILVER)]
+
+    # QFN-40 (NCN5130) / SOT / TSOT / SC-70 / Bridge ICs
+    if any(k in fp for k in ("QFN", "SOT", "TSOT", "Diode_Bridge")):
+        return [(box(x0, x1, y0 + 0.15, y1 - 0.15, z0 + 0.15, z1 - 0.15), SILVER),
+                (box(x0, x1, y0 + 0.45, y1 - 0.45, z0 + 0.45, z1 - 0.45), (0.14, 0.14, 0.16))]
+
+    # PTC Fuse 1812 (F1): gold end caps + dark green body
+    if "Fuse_" in fp:
+        return two_terminal_smd(x0, x1, y0, y1, z0, z1, (0.12, 0.38, 0.22))
+
+    # SMD Diodes (SMA / SOD-123): black body + silver cathode band + silver terminals
+    if fp.startswith("D_"):
+        return two_terminal_smd(x0, x1, y0, y1, z0, z1, (0.14, 0.14, 0.16), band_rgb=SILVER)
+
+    # SMD Resistors: silver end caps + black resistive film
+    if fp.startswith("R_"):
+        return two_terminal_smd(x0, x1, y0, y1, z0, z1, (0.15, 0.15, 0.18))
+
+    # SMD Ceramic Capacitors: silver end caps + tan ceramic body
+    if fp.startswith("C_"):
+        return two_terminal_smd(x0, x1, y0, y1, z0, z1, CERAMIC)
+
+    return [(box(x0, x1, y0, y1, z0, z1), PART)]
+
+
 def part_solids():
+    by_board = {b: ef.components(b) for b in ef.SPEC["variants"][ef.VARIANT]["boards"]}
     solids = []
     for b in ef.part_boxes():
-        ref = b["ref"]
-        cx, cy = (b["x0"] + b["x1"]) / 2, (b["y0"] + b["y1"]) / 2
-        if b.get("shape") == "horizontal_capacitor":
-            solids.append((be.capacitor_body(b), (0.35, 0.35, 0.38)))
-        elif b["board"] == "ui" and ref in LED_COLOURS:
-            solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), LED_COLOURS[ref]))
-        elif b["board"] == "ui" and ref in ("SW1", "SW2"):
-            base_h = 1.4 if ef.VARIANT == "v3" else 3.5
-            cap_d = 2.2 if ef.VARIANT == "v3" else 3.5
-            solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z0"] + base_h), PART))
-            solids.append((cylinder(cx, cy, b["z0"] + base_h, be.STACK.prog_cap_z, cap_d), (0.1, 0.1, 0.1)))
-        elif (b["board"], ref) in ef.PLUG_REFS:
-            board = b["board"]
-            for px, py, _ in ef.components(board)[ref]["pads"]:
-                ex, ey, ez = ef.board_point(board, px, py)
-                if ef.VARIANT == "v3":
-                    pin = cq.Workplane("YZ", origin=(ex, 0, 0)).center(ey, ez).circle(0.5).extrude(9.9)
-                else:
-                    pin = cylinder(ex, ey, ez, ez + 9.9, 1.0)
-                solids.append((pin, (0.85, 0.72, 0.25)))
-            neg_col = (0.15, 0.15, 0.17) if ref == "J1" else (0.90, 0.90, 0.92)
-            pos_col = PLUG if ref == "J1" else (0.95, 0.80, 0.10)
-            if ef.VARIANT == "v3":
-                # Turned 90 deg to the right: pins along +x, wire holes down (-y),
-                # Black/White (-) at front (+z), Red/Yellow (+ with 30-deg half-
-                # butterfly dovetail) at rear (-z)
-                mz = (b["z0"] + b["z1"]) / 2
-                pos_body = box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], mz).union(
-                    be.dovetail_zy(b["z0"], b["y1"] - 3.15, b["x0"], b["x1"], neck=2.4, flare=3.2, depth=0.95))
-                neg_body = box(b["x0"], b["x1"], b["y0"], b["y1"], mz, b["z1"])
-                solids.append((neg_body, neg_col))
-                solids.append((pos_body, pos_col))
-            else:
-                mx = (b["x0"] + b["x1"]) / 2
-                neg_body = box(b["x0"], mx, b["y0"], b["y1"], b["z0"], b["z1"])
-                pos_body = box(mx, b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]).union(
-                    be.dovetail_xy(b["x1"], b["y1"] - 3.15, b["z0"], b["z1"], neck=2.4, flare=3.2, depth=0.95))
-                solids.append((neg_body, neg_col))
-                solids.append((pos_body, pos_col))
-        else:
-            colour = COLOURS.get((b["board"], ref), PART)
-            solids.append((box(b["x0"], b["x1"], b["y0"], b["y1"], b["z0"], b["z1"]), colour))
+        comp = by_board.get(b["board"], {}).get(b["ref"])
+        for shape, rgb in realistic_part(b, comp):
+            solids.append((shape, rgb, b["board"], b["ref"]))
     return solids
 
 
@@ -160,31 +332,29 @@ def render(name, items, position, focal=(0, 40.5, 25), up=(0, 1, 0), zoom=1.0, l
     print(f"{name}.png saved")
 
 
-def board_views(plates, parts):
-    """Top and bottom of each board with its parts, every part labelled."""
-    for board, plate in zip(("main", "ui"), plates):
+def board_views(plates, full_parts):
+    """Top and bottom of each board with its realistic 3D parts, every part labelled."""
+    boards_list = ef.SPEC["variants"][ef.VARIANT]["boards"]
+    for board, plate in zip(boards_list, plates):
         boxes = [b for b in ef.part_boxes() if b["board"] == board]
-        mine = [(s, c, 1.0) for (s, c), b in zip(parts, part_boxes_matching(boxes, parts)) if b]
+        mine = [(s, c, 1.0) for s, c, b_name, _ in full_parts if b_name == board]
         bb = plate[0].val().BoundingBox()
-        cx, cy = (bb.xmin + bb.xmax) / 2, (bb.ymin + bb.ymax) / 2
-        for side, dz in (("top", 1), ("bottom", -1)):
-            on_side = [b for b in boxes if (b["z0"] >= bb.zmax - 0.01) == (side == "top")]
-            labels = [(b["ref"], ((b["x0"] + b["x1"]) / 2, (b["y0"] + b["y1"]) / 2,
-                                  b["z1"] + 0.5 if side == "top" else b["z0"] - 0.5)) for b in on_side]
-            render(f"{board}_{side}", [(plate[0], plate[1], 1.0)] + mine,
-                   (cx, cy, (bb.zmax if side == "top" else bb.zmin) + dz * 250), focal=(cx, cy, bb.zmin),
-                   zoom=1.0, labels=labels)
-
-
-def part_boxes_matching(boxes, parts):
-    """Which entries of `parts` (built from all part boxes in order) belong to
-    the given boxes; LEDs and buttons produce more than one solid."""
-    refs = {(b["board"], b["ref"]) for b in boxes}
-    owners = []
-    for b in ef.part_boxes():
-        count = 4 if (b["board"], b["ref"]) in ef.PLUG_REFS else (2 if b["board"] == "ui" and b["ref"] in ("SW1", "SW2") else 1)
-        owners += [(b["board"], b["ref"]) in refs] * count
-    return owners
+        cx, cy, cz = (bb.xmin + bb.xmax) / 2, (bb.ymin + bb.ymax) / 2, (bb.zmin + bb.zmax) / 2
+        perp = ef.SPEC["boards"][board].get("plane") == "perpendicular-to-rail"
+        for side, d in (("top", 1), ("bottom", -1)):
+            if perp:
+                on_side = [b for b in boxes if (b["x0"] >= bb.xmax - 0.01) == (side == "top")]
+                labels = [(b["ref"], (b["x1"] + 0.5 if side == "top" else b["x0"] - 0.5,
+                                      (b["y0"] + b["y1"]) / 2, (b["z0"] + b["z1"]) / 2)) for b in on_side]
+                cam = ((bb.xmax if side == "top" else bb.xmin) + d * 250, cy, cz)
+                foc = (cx, cy, cz)
+            else:
+                on_side = [b for b in boxes if (b["z0"] >= bb.zmax - 0.01) == (side == "top")]
+                labels = [(b["ref"], ((b["x0"] + b["x1"]) / 2, (b["y0"] + b["y1"]) / 2,
+                                      b["z1"] + 0.5 if side == "top" else b["z0"] - 0.5)) for b in on_side]
+                cam = (cx, cy, (bb.zmax if side == "top" else bb.zmin) + d * 250)
+                foc = (cx, cy, bb.zmin)
+            render(f"{board}_{side}", [(plate[0], plate[1], 1.0)] + mine, cam, focal=foc, zoom=1.0, labels=labels)
 
 
 def shifted(items, dz):
@@ -201,7 +371,8 @@ def main():
     cq.exporters.export(assembly, str(OUT / "assembly.step"), cq.exporters.ExportTypes.STEP)
     print("assembly.step saved")
 
-    parts = [(s, c, 1.0) for s, c in part_solids()]
+    full_parts = part_solids()
+    parts = [(s, c, 1.0) for s, c, _, _ in full_parts]
     supports = [(s, c, 1.0) for s, c in support_solids()]
     boards = [(s, c, 1.0) for s, c in plates]
     inside = boards + parts + supports
@@ -209,32 +380,15 @@ def main():
     render("front", [(base, CASE, 1.0), (cover, CASE, 1.0)] + inside, (0, 40.5, 300), zoom=1.1)
     render("iso", [(base, CASE, 1.0), (cover, CASE, 1.0)] + inside, iso)
     render("inside", [(base, CASE, 0.12), (cover, CASE, 0.12)] + inside, iso)
-    render("supports", [(base, CASE, 0.08), (cover, CASE, 0.08)] + [(s, c, 0.35) for s, c, _ in boards]
-           + supports, iso)
     keep = box(-40, 0, -20, 100, -20, 80)
-    section = [(s.intersect(keep), c, op) for s, c, op in [(base, CASE, 1.0), (cover, CASE, 1.0)] + inside]
+    section = [(base.intersect(keep), CASE, 1.0), (cover.intersect(keep), CASE, 1.0)] + inside
     render("section", section, (220, 40.5, 25))
     render("back", [(base, CASE, 1.0)], (60, -60, -200), focal=(0, 40.5, 0))
-    latch = base.intersect(box(-25, 25, -10, 30, -10, 4))
-    render("latch", [(latch, CASE, 1.0)], (35, -55, -85), focal=(0, 8, -2.5), zoom=1.35)
-    rx0, rx1, _ = be.knx_recess()
-    rcx = (rx0 + rx1) / 2
-    rbox = box(-9, 9, -2, 20, 12, 44) if ef.VARIANT == "v3" else box(rx0 - 4, rx1 + 4, -2, 20, 10, 44)
-    recess_items = [(base.intersect(rbox), CASE, 1.0), (cover.intersect(rbox), CASE, 1.0)]
-    plug_cols = (PLUG, (0.15, 0.15, 0.17), (0.90, 0.90, 0.92), (0.95, 0.80, 0.10))
-    for s, c, _ in boards + parts:
-        op = 0.35 if c in plug_cols else 1.0
-        recess_items.append((s.intersect(rbox), c, op))
-    cam = (65, -35, 55) if ef.VARIANT == "v3" else (rcx + 38, -48, 78)
-    foc = (0, 7, 28) if ef.VARIANT == "v3" else (rcx, 6, 28)
-    render("knx_recess", recess_items, cam, focal=foc, zoom=1.25)
-    main_layer = [b for b in boards if b[1] == MAIN] + [p for p in parts if p[0].val().BoundingBox().zmax < 45] \
-        + [(s, SUPPORT, 1.0) for s in be.leg_bodies()]
-    ui_layer = [b for b in boards if b[1] == UI] + [p for p in parts if p[0].val().BoundingBox().zmin > 45]
-    exploded = ([(base, CASE, 1.0)] + shifted(main_layer, 0) + shifted(ui_layer, 40)
-                + shifted([(cover, CASE, 1.0)], 80))
-    render("exploded", exploded, (230, 160, 260), focal=(0, 40.5, 60))
-    board_views(plates, part_solids())
+    main_layer = [b for b in boards if b[1] == MAIN] + [p for p in parts if p[0].val().BoundingBox().zmax < 45]         + [s for s in supports if s[0].val().BoundingBox().zmax < 45]
+    ui_layer = [b for b in boards if b[1] == UI] + [p for p in parts if p[0].val().BoundingBox().zmax >= 45]         + [s for s in supports if s[0].val().BoundingBox().zmax >= 45]
+    exploded = shifted([(base, CASE, 1.0)], -35) + main_layer + shifted(ui_layer, 25) + shifted([(cover, CASE, 0.35)], 55)
+    render("exploded", exploded, (190, 140, 220), focal=(0, 40.5, 25))
+    board_views(plates, full_parts)
 
 
 if __name__ == "__main__":

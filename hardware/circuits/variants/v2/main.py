@@ -14,15 +14,15 @@ def build():
     power_flag(gnd)
     v3 = Net("+3V3")
     power_flag(v3)
-    dali_tx, dali_rx = Net("DALI_TX"), Net("DALI_RX")
+    dali_tx, dali_rx, supply_off = Net("DALI_TX"), Net("DALI_RX"), Net("DALI_SUPPLY_OFF")
     knx_nets = knx.build(gnd, horizontal_storage=True)
-    dali_nets = dali.build(gnd, v3, include_interface=False)
+    dali_nets = dali.build(gnd, v3, include_interface=False, supply_off=supply_off)
     block("int_ui")
     connector = part("Connector", "Conn_01x10_Pin", "Controller cable", JST_SH10,
                      src(mpn="BM10B-SRSS-TB(LF)(SN)", mfr="JST", lcsc="C160396",
                          source="V2 main-to-UI/controller, pin 1 to pin 1"), ref="J4")
     pins = [knx_nets["v5"], gnd, v3, knx_nets["knx_txd"], knx_nets["knx_rxd"],
-            knx_nets["saveb"], dali_tx, dali_rx, gnd, gnd]
+            knx_nets["saveb"], dali_tx, dali_rx, supply_off, gnd]
     for i, net in enumerate(pins, start=1):
         connector[i] += net
     block("int_logic")

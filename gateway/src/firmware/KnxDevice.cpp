@@ -1,12 +1,14 @@
 #include "firmware/KnxDevice.hpp"
 
 #include <driver/gpio.h>
+#include <esp_adc/adc_cali_scheme.h>
 #include <esp_log.h>
 #include <esp_system.h>
 #include <esp_task_wdt.h>
 #include <esp_timer.h>
 #include <led_strip.h>
 
+#include "device/ButtonLadder.hpp"
 #include "device/StatusLeds.hpp"
 #include "firmware/Application.hpp"
 
@@ -19,15 +21,18 @@ std::uint32_t now_ms() {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
 }
 
-// The LED driver handle lives at file scope; the DevKit strip is one pixel,
-// which shows what the product's KNX LED would.
-led_strip_handle_t prog_led_strip = nullptr;
+// 3-pixel SK6805-EC15 chain on D0/GPIO0: pixel 0 = D1 (STATUS), pixel 1 = D2
+// (KNX), pixel 2 = D3 (DALI).
+led_strip_handle_t status_strip = nullptr;
 
-void show(device::Rgb colour) {
-    if (prog_led_strip) {
-        led_strip_set_pixel(prog_led_strip, 0, colour.r, colour.g, colour.b);
-        led_strip_refresh(prog_led_strip);
+void show(const device::LedColours& colours) {
+    if (!status_strip) {
+        return;
     }
+    for (std::size_t i = 0; i < colours.size(); ++i) {
+        led_strip_set_pixel(status_strip, i, colours[i].r, colours[i].g, colours[i].b);
+    }
+    led_strip_refresh(status_strip);
 }
 
 }
@@ -55,32 +60,82 @@ KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEve
       },
       app_(knx_, hooks_) {
     led_strip_config_t strip_config = {};
-    strip_config.strip_gpio_num = board::prog_led;
-    strip_config.max_leds = 1;
+    strip_config.strip_gpio_num = board::led_data;
+    strip_config.max_leds = board::led_count;
     strip_config.led_model = LED_MODEL_WS2812;
     strip_config.color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB;
     led_strip_rmt_config_t rmt_config = {};
     rmt_config.clk_src = RMT_CLK_SRC_DEFAULT;
     rmt_config.resolution_hz = 10 * 1000 * 1000;
     rmt_config.mem_block_symbols = 48;
-    if (led_strip_new_rmt_device(&strip_config, &rmt_config, &prog_led_strip) != ESP_OK) {
-        ESP_LOGW(log_tag, "prog LED unavailable; programming mode will not light the LED");
+    if (led_strip_new_rmt_device(&strip_config, &rmt_config, &status_strip) != ESP_OK) {
+        ESP_LOGW(log_tag, "status LED strip unavailable");
     }
 }
 
-void KnxDevice::run() {
-    platform_.knxUartPins(static_cast<std::int8_t>(board::knx_rx), static_cast<std::int8_t>(board::knx_tx));
-    platform_.knxUartBaudRate(board::knx_baud);
-    app_.start();
+void KnxDevice::init_button_adc() {
+    const adc_oneshot_unit_init_cfg_t unit_cfg = {
+        .unit_id = board::button_adc_unit,
+        .clk_src = ADC_DIGI_CLK_SRC_DEFAULT,
+        .ulp_mode = ADC_ULP_MODE_DISABLE,
+    };
+    if (adc_oneshot_new_unit(&unit_cfg, &adc_) != ESP_OK) {
+        ESP_LOGW(log_tag, "button ladder ADC unavailable");
+        return;
+    }
+    const adc_oneshot_chan_cfg_t chan_cfg = {
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+    };
+    adc_oneshot_config_channel(adc_, board::button_adc_channel, &chan_cfg);
+    const adc_cali_curve_fitting_config_t cali_cfg = {
+        .unit_id = board::button_adc_unit,
+        .chan = board::button_adc_channel,
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+    };
+    adc_cali_create_scheme_curve_fitting(&cali_cfg, &adc_cali_);
+}
 
-    const gpio_config_t button = {
-        .pin_bit_mask = 1ULL << board::prog_button,
+device::Buttons KnxDevice::read_buttons() {
+    if (!adc_) {
+        return {};
+    }
+    int raw = 0;
+    if (adc_oneshot_read(adc_, board::button_adc_channel, &raw) != ESP_OK) {
+        return {};
+    }
+    int mv = (raw * 3300) / 4095;
+    if (adc_cali_) {
+        adc_cali_raw_to_voltage(adc_cali_, raw, &mv);
+    }
+    return device::classify_ladder(static_cast<std::uint16_t>(mv < 0 ? 0 : mv));
+}
+
+void KnxDevice::run() {
+    const gpio_config_t supply_ctrl = {
+        .pin_bit_mask = 1ULL << board::dali_supply_off,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&supply_ctrl);
+    gpio_set_level(board::dali_supply_off, 0);
+
+    const gpio_config_t saveb_in = {
+        .pin_bit_mask = 1ULL << board::ncn_saveb,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    gpio_config(&button);
+    gpio_config(&saveb_in);
+
+    init_button_adc();
+    platform_.knxUartPins(static_cast<std::int8_t>(board::knx_rx), static_cast<std::int8_t>(board::knx_tx));
+    platform_.knxUartBaudRate(board::knx_baud);
+    app_.start();
     esp_task_wdt_add(nullptr);
 
     for (;;) {
@@ -108,9 +163,7 @@ commissioning::InputSnapshot KnxDevice::drain_input_snapshots() {
 }
 
 void KnxDevice::handle_button(std::uint32_t now) {
-    // DevKit: the BOOT button (active low) stands in for PRG/RST; FUNC is absent.
-    const device::Buttons pressed{gpio_get_level(board::prog_button) == 0, false};
-    switch (panel_.sample(pressed, now)) {
+    switch (panel_.sample(read_buttons(), now)) {
     case device::Gesture::Reboot:
         ESP_LOGW(log_tag, "PRG/RST tapped: reboot");
         esp_restart();
@@ -131,13 +184,20 @@ void KnxDevice::handle_button(std::uint32_t now) {
 
 void KnxDevice::update_led(std::uint32_t now) {
     device::DeviceStatus status;
+    status.knx_bus_ok = gpio_get_level(board::ncn_saveb) != 0;
     status.knx_prog_mode = knx_.progMode();
+    for (const auto byte : latest_snapshot_.faulty) {
+        if (byte != 0) {
+            status.dali = device::DaliState::GearFault;
+            break;
+        }
+    }
     status.hint = panel_.hint();
-    const auto colour = device::led_colours(status, now)[device::knx_led];
-    if (!led_written_ || !(colour == shown_)) {
+    const auto colours = device::led_colours(status, now);
+    if (!led_written_ || !(colours == shown_)) {
         led_written_ = true;
-        shown_ = colour;
-        show(colour);
+        shown_ = colours;
+        show(colours);
     }
 }
 

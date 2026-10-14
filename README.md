@@ -8,7 +8,7 @@ depends on them.
 **Status:** prototype. Nothing has run on real hardware yet; no KNX or DALI
 certification is claimed.
 
-![Gateway](hardware/releases/v1/enclosure/renders/iso.png)
+![Gateway](hardware/releases/v3/enclosure/renders/exploded.png)
 
 ## What is in the repo
 

@@ -1,20 +1,24 @@
 # V3 UI board, 4 layers, 1.6 mm, inside the 1-DIN front protrusion (13.8 x
-# 40.5 mm). Front: Winstar WEA012832F 0.91" 128x32 I2C OLED mounted vertically
-# (35.8 x 12.0 mm, 4-pin header at the top: 1 GND, 2 VIN, 3 SCL, 4 SDA), the
-# two TS-1088 tact switches below the display, and the three SK6805-EC15 RGB
-# LEDs in a horizontal row below the buttons. Back: 8-pin 0.5 mm FFC J1 to the
-# carrier, 5 V level-shifter U1 and ladder passives in the upper half (above
-# the XIAO). Pure SELV-KNX.
+# 40.5 mm, with a 1.0 x 7.4 mm cutout at the top edge x 3.2..10.6, y 39.5..40.5
+# for the OLED flex cable). Front: Crystalfontz CFAL12832D-B 0.91" 128x32 I2C
+# OLED panel (30.0 x 11.5 mm, y 9.5..39.5, supported on double-sided foam tape
+# over the cover cradle), two Omron B3U-1000P compact-pad switches at y 6.0
+# rotated 90 deg and aligned at x 2.8 and x 11.0 directly above D1 and D3, and
+# the three SK6805-EC15 RGB LEDs in a horizontal row below the buttons at y 2.0.
+# Back: 12-pin 0.5 mm ZIF FPC connector J2 at y 21.2 (rot 180, mouth facing up
+# to match the 25.0 mm CFAL12832D-B flex cable after the 5.6 mm bend through
+# the top cutout), 8-pin FFC J1 to main below J2, and the 5 V buffer + passives.
 
 frame:
   size: { x: 13.8, y: 40.5 }
+  outline: [[0.0, 0.0], [13.8, 0.0], [13.8, 40.5], [10.6, 40.5], [10.6, 39.5], [3.2, 39.5], [3.2, 40.5], [0.0, 40.5]]
   copper_layers: 4
   thickness: 1.6
   min_drill: 0.2
   min_track: 0.12
   edge_clearance: 0.3
   silk_inside: true
-  fine_pitch_power_pads: [D1, D2, D3, U1, J1]
+  fine_pitch_power_pads: [D1, D2, D3, U1, J1, J2]
   plane_layers: [In1.Cu]
   domains: [SELV-KNX]
   domain_regions:
@@ -22,46 +26,50 @@ frame:
   isolators: []
   power_nets: [+3V3, +5V]
   pours:
-    - { net: GND, layers: [In1.Cu], region: { x0: 0.4, y0: 0.35, x1: 13.4, y1: 40.0 } }
+    - { net: GND, layers: [In1.Cu], region: { x0: 0.4, y0: 0.35, x1: 13.4, y1: 39.1 } }
 
 oled_module:
-  # WEA012832F drawing p.3 (35.8 x 12.0 mm, pins at 1.25 mm from the pin end,
-  # glass 30.0 x 11.5 starting 5.02 mm from the pin end), rotated 90 deg so the
-  # pins sit at the top of the UI board (y 40.0) and the module runs down to y 5.45
-  outline: { x: 0.9,  y: 4.7,  w: 12.0, h: 35.8 }
-  glass:   { x: 1.15, y: 5.48, w: 11.5, h: 30.0 }
+  # Crystalfontz CFAL12832D-B drawing p.5: panel 30.0 x 11.5 mm (y 9.5..39.5,
+  # right up to the 1.0 mm top cable cutout), viewing area 24.384 x 7.584 mm
+  outline: { x: 1.15, y: 9.5,  w: 11.5, h: 30.0 }
+  glass:   { x: 3.11, y: 13.0, w: 7.58, h: 24.4 }
 
 case:
   standoffs:
-    - { x: 6.9,  y: 35.8 }
+    - { x: 1.6,  y: 38.8 }
+    - { x: 12.2, y: 38.8 }
 
 heights:
   default: 1.2
-  SW1: 2.0
-  SW2: 2.0
-  J2: 2.41
+  SW1: 1.6
+  SW2: 1.6
+  J1: 1.2
+  J2: 2.0
 
 parts:
-  # Front: OLED 4-pin row at the top, two buttons below the display (y 4.05),
-  # and the three RGB LEDs in a horizontal row below the buttons (y 1.15)
-  J2:  { x: 3.09,  y: 39.25, rot: 90,  block: oled, locked: true }
-  SW1: { x: 3.4,   y: 3.98,  rot: 0,   block: btn_ladder, locked: true }
-  SW2: { x: 10.4,  y: 3.98,  rot: 0,   block: btn_ladder, locked: true }
-  D1:  { x: 2.8,   y: 1.08,  rot: 0,   block: leds, locked: true }
-  D2:  { x: 6.9,   y: 1.08,  rot: 0,   block: leds, locked: true }
-  D3:  { x: 11.0,  y: 1.08,  rot: 0,   block: leds, locked: true }
+  # Front: SW1 and SW2 rotated 90 deg and aligned at x 2.8 and x 11.0 with D1
+  # and D3; D1, D2, D3 in a horizontal row below the buttons at y 2.0
+  SW1: { x: 2.8,   y: 6.0,   rot: 90,  block: btn_ladder, locked: true }
+  SW2: { x: 11.0,  y: 6.0,   rot: 90,  block: btn_ladder, locked: true }
+  D1:  { x: 2.8,   y: 2.0,   rot: 0,   block: leds, locked: true }
+  D2:  { x: 6.9,   y: 2.0,   rot: 0,   block: leds, locked: true }
+  D3:  { x: 11.0,  y: 2.0,   rot: 0,   block: leds, locked: true }
 
-  # Back (all at y >= 19.5 = enc y >= 39.35, above the XIAO at enc y <= 38.45):
-  # FFC to the carrier and the LED buffer + ladder passives behind the OLED
-  J1:  { x: 6.9,   y: 32.0,  rot: 180, side: back, block: int_main, locked: true }
-  U1:  { x: 6.9,   y: 24.4,  rot: 0,   side: back, block: leds }
-  C2:  { x: 3.2,   y: 24.4,  rot: 90,  side: back, block: leds }
-  C3:  { x: 10.6,  y: 24.4,  rot: 90,  side: back, block: leds }
-  R4:  { x: 6.9,   y: 27.6,  rot: 0,   side: back, block: leds }
-  C4:  { x: 3.0,   y: 20.6,  rot: 0,   side: back, block: leds }
-  C5:  { x: 6.9,   y: 20.6,  rot: 0,   side: back, block: leds }
-  C6:  { x: 10.8,  y: 20.6,  rot: 0,   side: back, block: leds }
-  R1:  { x: 6.9,   y: 35.6,  rot: 0,   side: back, block: btn_ladder }
-  C1:  { x: 10.8,  y: 35.6,  rot: 0,   side: back, block: btn_ladder }
-  R2:  { x: 3.0,   y: 35.6,  rot: 0,   side: back, block: btn_ladder }
-  R3:  { x: 6.9,   y: 37.2,  rot: 0,   side: back, block: btn_ladder }
+  # Back: J2 at y 21.2 (rot 180, mouth facing up) so the 25.0 mm OLED flex tail
+  # bends through the y 39.5 top cutout and lands straight in J2; the middle of
+  # y 24..34 is kept clear for the flex cable's component area
+  J2:  { x: 6.9,   y: 21.2,  rot: 180, side: back, block: oled, locked: true }
+  R5:  { x: 2.0,   y: 28.0,  rot: 90,  side: back, block: oled }
+  C7:  { x: 11.8,  y: 28.0,  rot: 90,  side: back, block: oled }
+  J1:  { x: 6.9,   y: 14.8,  rot: 180, side: back, block: int_main, locked: true }
+  U1:  { x: 6.9,   y: 9.2,   rot: 0,   side: back, block: leds }
+  C2:  { x: 2.8,   y: 9.2,   rot: 90,  side: back, block: leds }
+  C3:  { x: 11.0,  y: 9.2,   rot: 90,  side: back, block: leds }
+  R4:  { x: 6.9,   y: 6.0,   rot: 0,   side: back, block: leds }
+  C4:  { x: 2.8,   y: 34.8,  rot: 0,   side: back, block: leds }
+  C5:  { x: 6.9,   y: 34.8,  rot: 0,   side: back, block: leds }
+  C6:  { x: 11.0,  y: 34.8,  rot: 0,   side: back, block: leds }
+  R1:  { x: 6.9,   y: 37.2,  rot: 0,   side: back, block: btn_ladder }
+  C1:  { x: 11.0,  y: 37.2,  rot: 0,   side: back, block: btn_ladder }
+  R2:  { x: 2.8,   y: 37.2,  rot: 0,   side: back, block: btn_ladder }
+  R3:  { x: 11.0,  y: 6.0,   rot: 0,   side: back, block: btn_ladder }

@@ -1,24 +1,45 @@
-# Parts that belong to the assembly but sit on neither board's BOM.
-# Copied by hardware/scripts/release.py into the release as assembly_parts.csv.
+# Parts not placed by JLCPCB (hand-soldered THT modules/connectors, cables,
+# mating plugs, screws and printed enclosure parts). Copied by
+# hardware/scripts/release.py into the release as assembly_parts.csv.
+- item: MCU module (hand-fitted into sockets)
+  qty: 1
+  part: Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)
+  description: "ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two 1x7 female sockets (main U8 on V1, ui U3 on V2)"
+  source: Seeed Studio / Digi-Key / Mouser
+- item: XIAO sockets (hand-soldered)
+  qty: 2
+  part: PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
+  description: "1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U8 (V1) or ui U3 (V2); the XIAO stays detachable"
+  source: LCSC
+- item: Isolated DALI DC-DC converter (hand-soldered)
+  qty: 1
+  part: RECOM REM3-2415S/A/CTRL
+  description: "24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24 A-pinning with pin 1 CTRL (main U3)"
+  source: Digi-Key / Mouser / TME
+- item: OLED display module (hand-soldered)
+  qty: 1
+  part: Winstar WEA012864DWPP3N00003
+  description: "0.96 in 128x64 SSD1306 I2C OLED module, 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into ui J2"
+  source: Digi-Key / Mouser / TME
+- item: KNX PCB pin strip (hand-soldered)
+  qty: 1
+  part: Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)
+  description: "2-pin 5.75 mm pitch Ø 1.0 mm pin strip soldered into main J1"
+  source: Phoenix Contact / Digi-Key / Mouser
+- item: KNX bus plug (red/black)
+  qty: 1
+  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)
+  description: "red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip (main J1)"
+  source: Phoenix Contact / Digi-Key / Mouser
 - item: Main-to-UI cable
   qty: 1
   part: JST A10SR10SR30K102A
-  description: "SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 to UI J1"
-  source: Digi-Key / Mouser (not stocked at LCSC); any 1:1 SH 10P cable of 80-150 mm works
-- item: XIAO sockets
-  qty: 2
-  part: PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
-  description: "1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U7; the XIAO stays detachable"
-  source: LCSC
-- item: KNX bus plug
-  qty: 1
-  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)
-  description: "red/black KNX bus connector mating the PST 1,0/2-5,75 pin strip (main J1); WAGO 243-211 is for 0.8 mm pins and does not fit"
-  source: Phoenix Contact distributors
+  description: "SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 to UI J1 (80-120 mm relaxed loop)"
+  source: Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works
 - item: DALI supply jumper caps
   qty: 2
   part: LCSC C100114
-  description: "2.54 mm closed jumper cap, 3 A; both on JP1 = internal DALI supply on"
+  description: "2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on"
   source: LCSC
 - item: Case screws
   qty: 2
@@ -32,6 +53,6 @@
   source: printed
 - item: Case cover
   qty: 1
-  part: enclosure/cover.stl
-  description: "PETG or ASA, 0.2 mm layers, front face down"
+  part: enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)
+  description: "PETG or ASA, 0.2 mm layers, front face down (cover.stl debossed, cover_embossed.stl raised text, cover_color.3mf multi-colour inlay)"
   source: printed

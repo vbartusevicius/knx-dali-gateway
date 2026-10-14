@@ -453,6 +453,10 @@
       {
         "netclass": "SELV-KNX",
         "pattern": "N$4"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_RES"
       }
     ]
   },

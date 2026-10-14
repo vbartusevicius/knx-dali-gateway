@@ -424,6 +424,10 @@
       },
       {
         "netclass": "SELV-KNX",
+        "pattern": "DALI_SUPPLY_OFF"
+      },
+      {
+        "netclass": "SELV-KNX",
         "pattern": "DALI_TX"
       },
       {
@@ -453,10 +457,6 @@
       {
         "netclass": "SELV-KNX",
         "pattern": "LED_CHAIN2"
-      },
-      {
-        "netclass": "SELV-KNX",
-        "pattern": "LED_DALI"
       },
       {
         "netclass": "SELV-KNX",

@@ -98,7 +98,7 @@ XIAO_PIN_MAP = {
 }
 
 
-XIAO_REF = "U7"  # XIAO ESP32C6 (U6=LM66100, U7=XIAO in current ref sequence)
+XIAO_REF = "U8"  # XIAO ESP32C6 (U6=LM66100, U7=XIAO in current ref sequence)
 
 
 def _net_members(net_name):
@@ -240,7 +240,7 @@ def test_ncn5130_saveb():
     """SAVEB (pin 36) → XIAO D9 with pull-up."""
     saveb_members = _net_members("NCN_SAVEB")
     assert ("U1", NCN5130_PINS["SAVEB"]) in saveb_members
-    assert ("U7", XIAO_PIN_MAP["D9"]) in saveb_members, "XIAO D9 not on NCN_SAVEB"
+    assert (XIAO_REF, XIAO_PIN_MAP["D9"]) in saveb_members, "XIAO D9 not on NCN_SAVEB"
 
 
 def test_ncn5130_xclkc_gnd():
@@ -313,34 +313,34 @@ def test_xiao_pin_map():
     1=D0, 2=D1, 3=D2, 4=D3, 5=D4, 6=D5, 7=D6, 8=D7,
     9=D8, 10=D9, 11=D10, 12=3V3, 13=GND, 14=5V. No pad 15."""
     # 5V on pin 14
-    assert ("U7", XIAO_PIN_MAP["5V"]) in _net_members("+5V_XIAO")
+    assert (XIAO_REF, XIAO_PIN_MAP["5V"]) in _net_members("+5V_XIAO")
     # GND on pin 13
-    assert ("U7", XIAO_PIN_MAP["GND"]) in _net_members("GND")
+    assert (XIAO_REF, XIAO_PIN_MAP["GND"]) in _net_members("GND")
     # 3V3 on pin 12 (net may be +3V3 or +3V3_1 after SKiDL merge)
     v3_nets = _net_members("+3V3") or _net_members("+3V3_1")
-    assert ("U7", XIAO_PIN_MAP["3V3"]) in v3_nets, \
+    assert (XIAO_REF, XIAO_PIN_MAP["3V3"]) in v3_nets, \
         "XIAO 3V3 not on +3V3 or +3V3_1"
     # D0=LED_DATA (RGB LED chain), D1 spare and unconnected, D3=LED_DALI (spare wire)
-    assert ("U7", XIAO_PIN_MAP["D0"]) in _net_members("LED_DATA")
-    assert not any(("U7", XIAO_PIN_MAP["D1"]) in members for members in _parse_netlist("main").values())
-    assert ("U7", XIAO_PIN_MAP["D3"]) in _net_members("LED_DALI")
+    assert (XIAO_REF, XIAO_PIN_MAP["D0"]) in _net_members("LED_DATA")
+    assert (XIAO_REF, XIAO_PIN_MAP["D1"]) in _net_members("DALI_SUPPLY_OFF")
+    assert not any((XIAO_REF, XIAO_PIN_MAP["D3"]) in members for members in _parse_netlist("main").values())
     # D2=BTN_LADDER (ADC)
-    assert ("U7", XIAO_PIN_MAP["D2"]) in _net_members("BTN_LADDER")
+    assert (XIAO_REF, XIAO_PIN_MAP["D2"]) in _net_members("BTN_LADDER")
     # D6=KNX_RXD (MCU TX), D7=KNX_TXD (MCU RX)
-    assert ("U7", XIAO_PIN_MAP["D6"]) in _net_members("KNX_RXD")
-    assert ("U7", XIAO_PIN_MAP["D7"]) in _net_members("KNX_TXD")
+    assert (XIAO_REF, XIAO_PIN_MAP["D6"]) in _net_members("KNX_RXD")
+    assert (XIAO_REF, XIAO_PIN_MAP["D7"]) in _net_members("KNX_TXD")
     # D8=DALI_RX, D9=NCN_SAVEB (tested above), D10=DALI_TX
-    assert ("U7", XIAO_PIN_MAP["D8"]) in _net_members("DALI_RX")
-    assert ("U7", XIAO_PIN_MAP["D10"]) in _net_members("DALI_TX")
+    assert (XIAO_REF, XIAO_PIN_MAP["D8"]) in _net_members("DALI_RX")
+    assert (XIAO_REF, XIAO_PIN_MAP["D10"]) in _net_members("DALI_TX")
     # D4=SDA, D5=SCL
-    assert ("U7", XIAO_PIN_MAP["D4"]) in _net_members("I2C_SDA")
-    assert ("U7", XIAO_PIN_MAP["D5"]) in _net_members("I2C_SCL")
+    assert (XIAO_REF, XIAO_PIN_MAP["D4"]) in _net_members("I2C_SDA")
+    assert (XIAO_REF, XIAO_PIN_MAP["D5"]) in _net_members("I2C_SCL")
 
 
 def test_xiao_no_pad15():
     """No pad 15 (EN) on XIAO — EN is not on the castellated header."""
     en_members = _net_members("EN")
-    assert ("U7", "15") not in en_members, "XIAO pad 15 should not exist"
+    assert (XIAO_REF, "15") not in en_members, "XIAO pad 15 should not exist"
 
 
 # ---------------------------------------------------------------------------
@@ -470,7 +470,7 @@ def test_dali_rx_polarity():
     Record for firmware: inverted (bus high = logic low)."""
     # U5 pin 6 (opto transistor output) on DALI_RX
     dali_rx_members = _net_members("DALI_RX")
-    assert ("U5", "6") in dali_rx_members, "U5 pin 6 not on DALI_RX"
+    assert ("U6", "6") in dali_rx_members, "U5 pin 6 not on DALI_RX"
     # Pull-up resistor present
     r_found = any(ref.startswith("R") for ref, _ in dali_rx_members)
     assert r_found, "No pull-up on DALI_RX"
@@ -636,7 +636,7 @@ def test_no_domain_bridge_except_isolators():
     gnd_refs = _refs_on_net("GND")
     gndd_refs = _refs_on_net("GNDD")
     gnda_refs = _refs_on_net("GNDA")
-    optos = {"U4", "U5", "U3"}
+    optos = {"U3", "U4", "U5", "U6"}
     gnd_only = gnd_refs - optos
     gndd_only = gndd_refs - optos
     gnda_only = gnda_refs - optos
@@ -764,7 +764,7 @@ def test_knx_uart_crossing():
     """KNX UART: XIAO D6→R series→NCN SDI/RXD, NCN SDO/TXD→XIAO D7.
     The 1k series R in KNX_RXD prevents USB-powered XIAO from back-powering NCN."""
     # XIAO D6 on KNX_RXD (MCU side of series R)
-    assert ("U7", XIAO_PIN_MAP["D6"]) in _net_members("KNX_RXD")
+    assert (XIAO_REF, XIAO_PIN_MAP["D6"]) in _net_members("KNX_RXD")
     # Series resistor on KNX_RXD
     knx_rxd_members = _net_members("KNX_RXD")
     r_refs = {ref for ref, _ in knx_rxd_members if ref.startswith("R")}
@@ -782,14 +782,14 @@ def test_knx_uart_crossing():
     else:
         pytest.fail("NCN SDI/RXD pin not found on any net")
     # NCN SDO/TXD → XIAO D7 (no series R on TXD)
-    assert ("U7", XIAO_PIN_MAP["D7"]) in _net_members("KNX_TXD")
+    assert (XIAO_REF, XIAO_PIN_MAP["D7"]) in _net_members("KNX_TXD")
     assert ("U1", NCN5130_PINS["SDO/TXD"]) in _net_members("KNX_TXD")
 
 
 def test_dali_tx_drives_opto_led():
     """DALI_TX drives TX opto LED through resistor."""
     dali_tx_members = _net_members("DALI_TX")
-    assert ("U7", XIAO_PIN_MAP["D10"]) in dali_tx_members
+    assert (XIAO_REF, XIAO_PIN_MAP["D10"]) in dali_tx_members
     r_found = any(ref.startswith("R") for ref, _ in dali_tx_members)
     assert r_found, "No series resistor on DALI_TX"
 
@@ -797,7 +797,7 @@ def test_dali_tx_drives_opto_led():
 def test_dali_rx_from_opto():
     """DALI_RX from RX opto transistor with pull-up."""
     dali_rx_members = _net_members("DALI_RX")
-    assert ("U5", "6") in dali_rx_members
+    assert ("U6", "6") in dali_rx_members
     r_found = any(ref.startswith("R") for ref, _ in dali_rx_members)
     assert r_found, "No pull-up on DALI_RX"
 
@@ -832,8 +832,8 @@ def test_xiao_pin_map_matches_spec():
     mcu_pins = SPEC.get("derived", {}).get("mcu_pins", {})
     pin_map = {
         "led_data": XIAO_PIN_MAP["D0"],
+        "dali_supply_off": XIAO_PIN_MAP["D1"],
         "button_ladder": XIAO_PIN_MAP["D2"],
-        "led_dali": XIAO_PIN_MAP["D3"],
         "i2c_sda": XIAO_PIN_MAP["D4"],
         "i2c_scl": XIAO_PIN_MAP["D5"],
         "knx_uart_tx": XIAO_PIN_MAP["D6"],
@@ -845,5 +845,5 @@ def test_xiao_pin_map_matches_spec():
     for func, pin_num in pin_map.items():
         spec_net = mcu_pins.get(func, {}).get("net")
         if spec_net and spec_net in NETS:
-            assert ("U7", pin_num) in _net_members(spec_net), \
+            assert (XIAO_REF, pin_num) in _net_members(spec_net), \
                 f"XIAO pin {pin_num} ({func}) not on {spec_net}"

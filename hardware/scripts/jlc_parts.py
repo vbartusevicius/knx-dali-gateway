@@ -45,8 +45,9 @@ _FRESH = set()
 
 def fetch(url, path, attempts=6, *, refresh=False):
     """Cached GET; both services answer 403 when asked too fast, so wait and
-    retry. A refresh downloads each URL once per process (boards share parts)."""
-    if (refresh and url not in _FRESH) or not path.exists():
+    retry. A refresh downloads each URL once per hour (boards share parts)."""
+    fresh = path.parent == CACHE and path.exists()
+    if (refresh and url not in _FRESH and not fresh) or not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         for attempt in range(attempts):
             try:

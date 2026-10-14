@@ -17,12 +17,11 @@ def build():
     scl = Net("I2C_SCL")
     v5 = Net("+5V")
     led_data = Net("LED_DATA")
-    led_dali = Net("LED_DALI")
     for n in (v3, v5):
         power_flag(n)
 
     signals = {"v3": v3, "v5": v5, "gnd": gnd, "btn_ladder": btn_ladder,
-               "led_data": led_data, "led_dali": led_dali, "sda": sda, "scl": scl}
+               "led_data": led_data, "sda": sda, "scl": scl}
 
     ui.build_interconnect_side(signals)
     ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl)

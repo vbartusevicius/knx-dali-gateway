@@ -19,8 +19,12 @@ PARTS = {
     "XIAO_ESP32C6": (17.8, 22.0, 3.5),  # 21 mm board + 1 mm USB-C overhang, along the pin rows
     "REM3_DIP24": (31.8, 20.3, 10.7),
     "TerminalBlock_MaiXu_MX126-5.0-02P": (11.6, 9.1, 8.0),
+    "TerminalBlock_Kefa_KF142R-5.08-2P": (11.7, 14.2, 11.1),
     "Fuse_1812_4532Metric": (4.5, 3.2, 1.2),
     "Phoenix_PST_1,0-2-5,75_R32": (8.55, 2.8, 9.9),
+    "LED_SK6805-EC15_1.5x1.5mm": (1.5, 1.5, 0.65),
+    "FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P": (8.9, 4.2, 1.2),
+    "FPC_XUNPU_FPC-05F-12PH20": (10.6, 4.5, 2.0),
 }
 
 

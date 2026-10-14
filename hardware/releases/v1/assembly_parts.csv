@@ -1,8 +1,12 @@
 Item,Qty,Part,Description,Source
-Main-to-UI cable,1,JST A10SR10SR30K102A,"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 to UI J1",Digi-Key / Mouser (not stocked at LCSC); any 1:1 SH 10P cable of 80-150 mm works
-XIAO sockets,2,PM2.54-1x7PZZ-H8.5 (LCSC C54876729),"1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U7; the XIAO stays detachable",LCSC
-KNX bus plug,1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)","red/black KNX bus connector mating the PST 1,0/2-5,75 pin strip (main J1); WAGO 243-211 is for 0.8 mm pins and does not fit",Phoenix Contact distributors
-DALI supply jumper caps,2,LCSC C100114,"2.54 mm closed jumper cap, 3 A; both on JP1 = internal DALI supply on",LCSC
+MCU module (hand-fitted into sockets),1,Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636),"ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two 1x7 female sockets (main U8 on V1, ui U3 on V2)",Seeed Studio / Digi-Key / Mouser
+XIAO sockets (hand-soldered),2,PM2.54-1x7PZZ-H8.5 (LCSC C54876729),"1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U8 (V1) or ui U3 (V2); the XIAO stays detachable",LCSC
+Isolated DALI DC-DC converter (hand-soldered),1,RECOM REM3-2415S/A/CTRL,"24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24 A-pinning with pin 1 CTRL (main U3)",Digi-Key / Mouser / TME
+OLED display module (hand-soldered),1,Winstar WEA012864DWPP3N00003,"0.96 in 128x64 SSD1306 I2C OLED module, 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into ui J2",Digi-Key / Mouser / TME
+KNX PCB pin strip (hand-soldered),1,"Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",2-pin 5.75 mm pitch Ø 1.0 mm pin strip soldered into main J1,Phoenix Contact / Digi-Key / Mouser
+KNX bus plug (red/black),1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)","red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip (main J1)",Phoenix Contact / Digi-Key / Mouser
+Main-to-UI cable,1,JST A10SR10SR30K102A,"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 to UI J1 (80-120 mm relaxed loop)",Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works
+DALI supply jumper caps,2,LCSC C100114,"2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",LCSC
 Case screws,2,"2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot),any
 Case base,1,enclosure/base.stl,"PETG or ASA, 0.2 mm layers, rail channel face down",printed
-Case cover,1,enclosure/cover.stl,"PETG or ASA, 0.2 mm layers, front face down",printed
+Case cover,1,enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf),"PETG or ASA, 0.2 mm layers, front face down (cover.stl debossed, cover_embossed.stl raised text, cover_color.3mf multi-colour inlay)",printed

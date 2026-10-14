@@ -109,10 +109,3 @@ def test_board_links_connect_matching_nets_pin_for_pin(link):
 UNUSED_ON_UI = {"LED_DALI"}
 
 
-@pytest.mark.skipif(VARIANT != "v1", reason="the spare LED_DALI wire exists only on the v1 cable")
-def test_main_board_led_lines_end_unused_on_the_ui_board():
-    """The status LEDs are one addressable chain on LED_DATA; the spare
-    LED_DALI wire arrives on the cable and touches nothing else there."""
-    _, ui_pins = netlist("ui")
-    users = {net: [k for k, n in ui_pins.items() if n == net] for net in UNUSED_ON_UI}
-    assert all(refs == [("J1", refs[0][1])] for refs in users.values()), users

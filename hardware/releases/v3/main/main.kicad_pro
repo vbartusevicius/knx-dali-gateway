@@ -407,6 +407,10 @@
         "pattern": "+3V3"
       },
       {
+        "netclass": "SELV-KNX",
+        "pattern": "+3V3_TRX"
+      },
+      {
         "netclass": "KNX-Power",
         "pattern": "+5V"
       },
@@ -432,7 +436,19 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "BUCK5_SW"
+        "pattern": "CAV"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CCP"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CEQ1"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CEQ2"
       },
       {
         "netclass": "DALI-Power",
@@ -444,11 +460,27 @@
       },
       {
         "netclass": "DALI-Power",
+        "pattern": "DALI_BOOT"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "DALI_GATE"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "DALI_GATE_SW"
+      },
+      {
+        "netclass": "DALI-Power",
         "pattern": "DALI_ISO15V"
       },
       {
         "netclass": "SELV-KNX",
         "pattern": "DALI_RX"
+      },
+      {
+        "netclass": "DALI-Power",
+        "pattern": "DALI_SENSE"
       },
       {
         "netclass": "SELV-KNX",
@@ -461,6 +493,14 @@
       {
         "netclass": "SELV-KNX",
         "pattern": "DALI_TX"
+      },
+      {
+        "netclass": "DALI-Power",
+        "pattern": "DA_P"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "FANIN"
       },
       {
         "netclass": "SELV-KNX",
@@ -500,15 +540,27 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "LED_DALI"
-      },
-      {
-        "netclass": "SELV-KNX",
         "pattern": "LED_DATA"
       },
       {
         "netclass": "SELV-KNX",
         "pattern": "N$1"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "N$10"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$11"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$12"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$13"
       },
       {
         "netclass": "SELV-KNX",
@@ -523,7 +575,7 @@
         "pattern": "N$4"
       },
       {
-        "netclass": "SELV-AUX",
+        "netclass": "SELV-KNX",
         "pattern": "N$5"
       },
       {
@@ -531,7 +583,7 @@
         "pattern": "N$6"
       },
       {
-        "netclass": "DALI",
+        "netclass": "SELV-AUX",
         "pattern": "N$7"
       },
       {
@@ -539,12 +591,44 @@
         "pattern": "N$8"
       },
       {
+        "netclass": "DALI",
+        "pattern": "N$9"
+      },
+      {
         "netclass": "SELV-KNX",
         "pattern": "NCN_SAVEB"
       },
       {
+        "netclass": "DALI",
+        "pattern": "RX_LIM_IN"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "SW"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "TX0"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "VDD1M"
+      },
+      {
         "netclass": "KNX-Power",
         "pattern": "VFILT"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "VSW1"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "XTAL1"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "XTAL2"
       }
     ]
   },

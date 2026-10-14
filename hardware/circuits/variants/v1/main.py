@@ -33,17 +33,17 @@ def build():
     # KNX block: NCN5130 + storage + 5V buck
     knx_nets = knx.build(gnd)
 
-    # DALI block: interface + isolated DC-DC + current limiter
-    # v3 = XIAO 3V3 output for RX opto MCU-side pull-up
-    dali_nets = dali.build(gnd, v3)
+    supply_off = Net("DALI_SUPPLY_OFF")
+
+    # DALI block: interface + isolated DC-DC (REM3-2415S/A/CTRL) + current limiter
+    dali_nets = dali.build(gnd, v3, supply_off=supply_off)
 
     # MCU block: XIAO on headers, LM66100 ideal diode (5V feed)
-    # XIAO 3V3 pin outputs v3 for our logic (optos, LEDs, OLED, pull-ups)
     mcu_nets = mcu_xiao.build(
         gnd, v3, knx_nets["v5"],
         knx_nets["knx_txd"], knx_nets["knx_rxd"],
         dali_nets["dali_tx"], dali_nets["dali_rx"],
-        knx_nets["saveb"])
+        knx_nets["saveb"], dali_supply_off=supply_off)
 
     # 10-pin interconnect to UI board
     block("int_ui")
@@ -52,7 +52,7 @@ def build():
                      source="spec.yaml boards.interconnects main->ui"), ref="J4")
     pins = [mcu_nets["v3"], gnd, gnd,
             mcu_nets["btn_ladder"], gnd,
-            mcu_nets["led_prog"], knx_nets["v5"], mcu_nets["led_dali"],
+            mcu_nets["led_prog"], knx_nets["v5"], gnd,
             mcu_nets["sda"], mcu_nets["scl"]]
     for i, net_ in enumerate(pins, start=1):
         j_int[i] += net_

@@ -19,7 +19,7 @@ Pin map (XIAO GPIO -> function):
   D0/GPIO0   = LED_DATA (addressable RGB LED chain on the UI board)
   D1/GPIO1   = spare (its cable wire now carries +5V to the UI board LEDs)
   D2/GPIO2   = ADC ladder (PROG + RESET buttons, on UI board)
-  D3/GPIO21  = LED_DALI (yellow, on UI board)
+  D3/GPIO21  = NC (unconnected spare GPIO)
   D4/GPIO22  = I2C SDA (OLED, on UI board)
   D5/GPIO23  = I2C SCL (OLED, on UI board)
   D6/GPIO16  = KNX UART TX (MCU -> NCN5130 SDI/RXD)
@@ -45,9 +45,10 @@ XIAO_FP = "gateway_fp:XIAO_ESP32C6_Header"
 
 MCU_PINS = {
     "led_data": {"pin": "D0/GPIO0", "net": "LED_DATA", "note": "RMT, SK6805 chain via 5 V buffer on UI"},
+    "dali_supply_off": {"pin": "D1/GPIO1", "net": "DALI_SUPPLY_OFF",
+                        "note": "high switches the isolated DALI supply off via the CTRL optocoupler"},
     "button_ladder": {"pin": "D2/GPIO2", "net": "BTN_LADDER",
                       "note": "ADC ladder: PRG/RST + FUNC on UI board"},
-    "led_dali": {"pin": "D3/GPIO21", "net": "LED_DALI", "note": "spare, unused on the UI board"},
     "i2c_sda": {"pin": "D4/GPIO22", "net": "I2C_SDA",
                 "note": "OLED on UI board"},
     "i2c_scl": {"pin": "D5/GPIO23", "net": "I2C_SCL",
@@ -92,7 +93,6 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
     sda = Net("I2C_SDA")
     scl = Net("I2C_SCL")
     led_prog = Net("LED_DATA")
-    led_dali = Net("LED_DALI")
 
     # --- LM66100 ideal diode (SC70-6): v5_knx -> v5 (XIAO 5V pin) ---
     # CE tied to GND for always-on (active-low); ST (status) NC.
@@ -119,7 +119,7 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
     if dali_supply_off is not None:
         u1["2"] += dali_supply_off  # D1/GPIO1
     u1["3"] += btn_ladder      # D2/GPIO2 (ADC)
-    u1["4"] += led_dali        # D3/GPIO21
+    u1["4"] += NC              # D3/GPIO21 (spare, unconnected)
     u1["5"] += sda             # D4/GPIO22
     u1["6"] += scl             # D5/GPIO23
     u1["7"] += knx_rxd         # D6/GPIO16 — MCU TX -> NCN5130
@@ -138,12 +138,12 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
         r[2] += net_
 
     return {"v3": v3, "btn_ladder": btn_ladder,
-            "led_prog": led_prog, "led_dali": led_dali,
+            "led_prog": led_prog,
             "sda": sda, "scl": scl}
 
 
 NET_CLASSES = {
     "SELV-KNX": ["GND", "+3V3", "+5V_XIAO", "BTN_LADDER", "LED_DATA",
-                 "LED_DALI", "I2C_SDA", "I2C_SCL", "KNX_TXD",
-                 "KNX_RXD", "DALI_TX", "DALI_RX", "NCN_SAVEB", "Net-*"],
+                 "I2C_SDA", "I2C_SCL", "KNX_TXD",
+                 "KNX_RXD", "DALI_TX", "DALI_RX", "NCN_SAVEB", "DALI_SUPPLY_OFF", "Net-*"],
 }

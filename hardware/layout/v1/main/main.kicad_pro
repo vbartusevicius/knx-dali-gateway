@@ -479,6 +479,10 @@
         "pattern": "DALI_SENSE"
       },
       {
+        "netclass": "SELV-KNX",
+        "pattern": "DALI_SUPPLY_OFF"
+      },
+      {
         "netclass": "DALI-Power",
         "pattern": "DALI_SUPPLY_SW"
       },
@@ -532,10 +536,6 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "LED_DALI"
-      },
-      {
-        "netclass": "SELV-KNX",
         "pattern": "LED_DATA"
       },
       {
@@ -547,8 +547,20 @@
         "pattern": "N$10"
       },
       {
-        "netclass": "DALI",
+        "netclass": "SELV-KNX",
         "pattern": "N$11"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$12"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$13"
+      },
+      {
+        "netclass": "DALI",
+        "pattern": "N$14"
       },
       {
         "netclass": "SELV-KNX",
@@ -563,19 +575,19 @@
         "pattern": "N$4"
       },
       {
-        "netclass": "AUX-Power",
+        "netclass": "SELV-AUX",
         "pattern": "N$5"
       },
       {
-        "netclass": "DALI",
+        "netclass": "SELV-KNX",
         "pattern": "N$6"
       },
       {
-        "netclass": "DALI",
+        "netclass": "SELV-AUX",
         "pattern": "N$7"
       },
       {
-        "netclass": "SELV-KNX",
+        "netclass": "SELV-AUX",
         "pattern": "N$8"
       },
       {

@@ -189,17 +189,41 @@ def plate_inner(tab):
     return SHOULDER_Z[tab["side"]] - WALL
 
 
+def shoulder_snap_bodies():
+    """On V3 (where J1 and J3 occupy the front of the top and bottom shoulders),
+    two snap-click tongues on the left side (x = -6.9..-4.5, clear of J1 and J3)
+    click into keeper pockets on the inner faces of the top and bottom base walls."""
+    if screw_tabs():
+        return []
+    bodies = []
+    for y_wall, d in ((WALL, 1), (HIDDEN_H - WALL, -1)):
+        y0, y1 = sorted((y_wall, y_wall + d * 1.1))
+        yb0, yb1 = sorted((y_wall - d * 0.5, y_wall + d * 1.1))
+        tongue = box(-6.9, -4.5, y0, y1, 39.0, SHOULDER_Z["top"] - WALL)
+        barb = box(-6.9, -4.5, yb0, yb1, 39.0, 40.2)
+        bodies.append(tongue.union(barb))
+    return bodies
+
+
+def shoulder_snap_keepers():
+    """Matching keeper recesses on the inner faces of the top and bottom base walls."""
+    if screw_tabs():
+        return []
+    return [box(-7.0, -4.4, WALL - 0.6, WALL + 0.1, 38.9, 40.4),
+            box(-7.0, -4.4, HIDDEN_H - WALL - 0.1, HIDDEN_H - WALL + 0.6, 38.9, 40.4)]
+
+
 def screw_tab_bodies():
     """Tabs hanging from the shoulder plates behind the top and bottom walls,
     ending above the board's low parts with air to spare; they take the case
     screws."""
-    bodies = []
+    bodies = list(shoulder_snap_bodies())
     for tab in screw_tabs():
         _, wall_in, end = screw_axis_y(tab)
         half = SCREW_TAB["width"] / 2
         body = box(tab["x"] - half, tab["x"] + half, *sorted((wall_in, end)), SCREW_TAB["z0"], plate_inner(tab))
         body = body.cut(screw_cylinder(tab, CASE_SCREW["pilot"], wall_in, end))
-        if tab["side"] == "top":
+        if tab["side"] == "top" and VARIANT != "v3":
             for hole in terminal_holes()["DALI"]:
                 body = body.cut(cylinder(hole["x"], hole["y"], SCREW_TAB["z0"] - 1, SHOULDER_Z["top"] + 1, SCREW_HOLE))
         bodies.append(body)
@@ -233,11 +257,11 @@ def dovetail_xy(x_wall, y_mid, z0, z1, neck=2.6, flare=3.5, depth=1.1):
     return cq.Workplane("XY", origin=(0, 0, z0)).polyline(pts).close().extrude(z1 - z0)
 
 
-def dovetail_zy(z_wall, y_mid, x0, x1, neck=2.6, flare=3.5, depth=1.1):
-    """30-deg 'half-butterfly' dovetail keyway on the -z (+) wall of a right-
-    facing V3 KNX/AUX pocket, extruded along +x."""
-    pts = [(z_wall + 0.1, y_mid - neck / 2), (z_wall - depth, y_mid - flare / 2),
-           (z_wall - depth, y_mid + flare / 2), (z_wall + 0.1, y_mid + neck / 2)]
+def dovetail_zy(z_wall, y_mid, x0, x1, neck=2.6, flare=3.5, depth=1.1, sign=-1):
+    """30-deg 'half-butterfly' dovetail keyway on a z_wall (sign=-1 for -z wall,
+    sign=+1 for +z wall) of a right-facing V3 pocket, extruded along +x."""
+    pts = [(z_wall - sign * 0.1, y_mid - neck / 2), (z_wall + sign * depth, y_mid - flare / 2),
+           (z_wall + sign * depth, y_mid + flare / 2), (z_wall - sign * 0.1, y_mid + neck / 2)]
     return (cq.Workplane("YZ", origin=(x0, 0, 0)).polyline([(y, z) for z, y in pts]).close()
             .extrude(x1 - x0))
 
@@ -264,17 +288,25 @@ def build_base():
         # plastic strips; only the 4 metal pins poke through 2.2 mm holes, and
         # each pocket has a 30-deg half-butterfly dovetail on its -z (+) wall
         # 3.3 mm below the pocket roof (not in the corner).
-        base = base.union(box(-2.8, WIDTH / 2, 0.0, 12.6, 14.8, 39.8))
+        # Bottom pockets for J2 (AUX, rear) and J1 (KNX, front), and top pocket
+        # for J3 (DALI, top-front): solid inner wall at x = -1.3..-0.3 covers the
+        # 2.8 mm PST 1,0 plastic strips on main (x = -4.2); only the metal pins
+        # poke through 2.2 mm holes, and each pocket has a 30-deg half-butterfly
+        # dovetail keyway on its + wall.
+        base = base.union(box(-1.3, WIDTH / 2, 0.0, 12.2, 14.8, 39.8))
         for ref, z_lo, z_hi in (("J2", 16.3, 26.8), ("J1", 29.3, 39.8)):
-            base = base.cut(box(-1.8, WIDTH / 2 + 1, -1, 11.4, z_lo, z_hi))
-            base = base.cut(dovetail_zy(z_lo, 8.2, -1.8, WIDTH / 2 + 1))
+            base = base.cut(box(-0.3, WIDTH / 2 + 1, -1, 11.2, z_lo, z_hi))
+            base = base.cut(dovetail_zy(z_lo, 8.0, -0.3, WIDTH / 2 + 1, sign=-1))
             for _, py, pz in knx_pin_centres("main", ref):
-                base = base.cut(cq.Workplane("YZ", origin=(-3.2, 0, 0)).center(py, pz)
-                                .circle(1.1).extrude(2.0))
+                base = base.cut(cq.Workplane("YZ", origin=(-1.6, 0, 0)).center(py, pz)
+                                .circle(1.1).extrude(1.6))
+
     else:
         base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
     for body in leg_bodies() + capacitor_cradles():
         base = base.union(walls_clip(body))
+    for keeper in shoulder_snap_keepers():
+        base = base.cut(keeper)
     for tab in screw_tabs():
         outer, wall_in, _ = screw_axis_y(tab)
         overshoot = 1 if tab["side"] == "top" else -1
@@ -290,7 +322,15 @@ def peg_bodies():
 
 def standoff_bodies():
     z1 = FRONT_INNER_Z + STACK.pocket_depth + 0.1
-    return [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
+    bodies = [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
+    if VARIANT == "v3":
+        # Two vertical support rails behind the left/right edges of the CFAL12832D-B
+        # OLED panel, stopping 1.5 mm behind the panel back for 1-2 layers of 1 mm
+        # double-sided foam tape while leaving the centre clear for the flex tail.
+        z_tape = STACK.oled_glass_z - STACK.oled["panel"] - STACK.oled["module_board"] - 1.5 if hasattr(STACK, "oled") else FRONT_INNER_Z - 1.5
+        for sx in (-4.6, 4.6):
+            bodies.append(box(sx - 0.8, sx + 0.8, 30.0, 56.0, z_tape, z1))
+    return bodies
 
 
 def baffle_bodies():
@@ -377,9 +417,10 @@ def build_cover():
         cover = cover.cut(dovetail_xy(x1, y1 - 3.3, MAIN_Z + 3.8, SHOULDER_Z["bottom"] + 1))
         for px, py_p, _ in pins:
             cover = cover.cut(cylinder(px, py_p, MAIN_Z + 2.0, MAIN_Z + 4.5, 2.2))
-    for name in ("DALI",) if VARIANT == "v3" else ("DALI", "AUX"):
-        for hole in terminal_holes()[name]:
-            cover = cover.cut(cylinder(hole["x"], hole["y"], BASE_TOP_Z - 1, SHOULDER_Z["top"] + 1, SCREW_HOLE))
+    if VARIANT != "v3":
+        for name in ("DALI", "AUX"):
+            for hole in terminal_holes()[name]:
+                cover = cover.cut(cylinder(hole["x"], hole["y"], BASE_TOP_Z - 1, SHOULDER_Z["top"] + 1, SCREW_HOLE))
     front = (FRONT_INNER_Z - 1, TOTAL_D + 1)
     for w in led_windows():
         cover = cover.cut(cylinder(w["x"], w["y"], FRONT_INNER_Z - 1, TOTAL_D - STACK.led_skin_mm, LED_WINDOW))

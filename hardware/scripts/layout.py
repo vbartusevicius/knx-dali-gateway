@@ -45,12 +45,15 @@ LAYERS = {"F.Cu": pcbnew.F_Cu, "In1.Cu": pcbnew.In1_Cu,
 
 MODELS_3D = {
     "XIAO_ESP32C6_Header": ("XIAO_ESP32C6.step", 11.0),  # 8.5 mm socket + 2.5 mm header plastic
-    "Converter_DCDC_RECOM_REM3_DIP24": ("REM3_DIP24.step", 0),
     "Converter_DCDC_RECOM_REM3_DIP24_CTRL": ("REM3_DIP24.step", 0),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": ("TerminalBlock_MaiXu_MX126-5.0-02P.step", 0),
+    "TerminalBlock_Kefa_KF142R-5.08-2P": ("TerminalBlock_Kefa_KF142R-5.08-2P.step", 0),
     "Fuse_1812_4532Metric": ("Fuse_1812_4532Metric.step", 0),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": ("Phoenix_PST_1,0-2-5,75_R32.step", 0),
     "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent": ("CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent.step", 0),
+    "LED_SK6805-EC15_1.5x1.5mm": ("LED_SK6805-EC15_1.5x1.5mm.step", 0),
+    "FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P": ("FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P.step", 0),
+    "FPC_XUNPU_FPC-05F-12PH20": ("FPC_XUNPU_FPC-05F-12PH20.step", 0),
 }
 
 
@@ -586,11 +589,12 @@ CLEARANCE = pcbnew.FromMM(0.2)
 def tie_clears(fp, pad, anchor, start, end, width, clearance):
     """True if a straight tie keeps the clearance to every other-net pad of the
     footprint (corner pins of a QFN pass too close to the neighbouring row)."""
+    layer = pcbnew.B_Cu if fp.IsFlipped() else pcbnew.F_Cu
     half = width // 2 + clearance
     x0, x1 = sorted((start.x, end.x))
     y0, y1 = sorted((start.y, end.y))
     for other in fp.Pads():
-        if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(pcbnew.F_Cu) or not other.GetNumber():
+        if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(layer) or not other.GetNumber():
             continue
         box = other.GetBoundingBox()
         if box.GetLeft() < x1 + half and box.GetRight() > x0 - half and \
@@ -622,20 +626,20 @@ def add_pad_ties(board, plan):
             tie.SetStart(start)
             tie.SetEnd(end)
             tie.SetWidth(width)
-            tie.SetLayer(pcbnew.F_Cu)
+            tie.SetLayer(pcbnew.B_Cu if fp.IsFlipped() else pcbnew.F_Cu)
             board.Add(tie)
             tie.SetNet(anchor.GetNet())
             tie.SetLocked(True)
 
 
-def stub_clears(board, pad, start, end, width, clearance):
+def stub_clears(board, pad, start, end, width, clearance, layer):
     """True if a straight stub keeps the clearance to every other-net copper pad."""
     half = width // 2 + clearance
     x0, x1 = sorted((start.x, end.x))
     y0, y1 = sorted((start.y, end.y))
     for fp in board.Footprints():
         for other in fp.Pads():
-            if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(pcbnew.F_Cu) or not other.GetNumber():
+            if other.GetNetCode() == pad.GetNetCode() or not other.IsOnLayer(layer) or not other.GetNumber():
                 continue
             box = other.GetBoundingBox()
             if box.GetLeft() < x1 + half and box.GetRight() > x0 - half and \
@@ -672,13 +676,14 @@ def add_pad_escapes(board, plan):
                 edge = box.GetBottom() if start.y > centre.y else box.GetTop()
                 end = pcbnew.VECTOR2I(start.x, edge + (reach if start.y > centre.y else -reach))
             width = min(box.GetWidth(), box.GetHeight())
-            if not stub_clears(board, pad, start, end, width, CLEARANCE):
+            layer = pcbnew.B_Cu if fp.IsFlipped() else pcbnew.F_Cu
+            if not stub_clears(board, pad, start, end, width, CLEARANCE, layer):
                 continue
             stub = pcbnew.PCB_TRACK(board)
             stub.SetStart(start)
             stub.SetEnd(end)
             stub.SetWidth(width)
-            stub.SetLayer(pcbnew.F_Cu)
+            stub.SetLayer(layer)
             board.Add(stub)
             stub.SetNet(pad.GetNet())
             stub.SetLocked(True)

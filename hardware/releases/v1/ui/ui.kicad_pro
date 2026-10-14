@@ -436,10 +436,6 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "LED_DALI"
-      },
-      {
-        "netclass": "SELV-KNX",
         "pattern": "LED_DATA"
       },
       {

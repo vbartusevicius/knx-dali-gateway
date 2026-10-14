@@ -33,7 +33,7 @@ boards:
     plane: parallel-to-front
     thickness: 1.6
     z: 30.6               # main top 18.0 + 8.5 socket + 2.5 header plastic + 1.6
-    y_offset: 33.6
+    y_offset: 28.6
     carried_by: main      # plugged onto main J5/J6, no case retention of its own
     max_outline: { width: 31.5, height: 27.5 }
     isolation:
@@ -41,7 +41,7 @@ boards:
   interconnects:
     - from: main
       to: ui
-      signals: [+5V, GND, +3V3, KNX_TXD, KNX_RXD, NCN_SAVEB, DALI_TX, DALI_RX, GND, GND]
+      signals: [+5V, GND, +3V3, KNX_TXD, KNX_RXD, NCN_SAVEB, DALI_TX, DALI_RX, DALI_SUPPLY_OFF, GND]
       refs: { main: J4, ui: J1 }
       domain: SELV-KNX
       type: cable
@@ -82,14 +82,14 @@ derived:
       pin: D0/GPIO0
       net: LED_DATA
       note: RMT, SK6805 chain via 5 V buffer on UI
+    dali_supply_off:
+      pin: D1/GPIO1
+      net: DALI_SUPPLY_OFF
+      note: high switches the isolated DALI supply off via the CTRL optocoupler
     button_ladder:
       pin: D2/GPIO2
       net: BTN_LADDER
       note: 'ADC ladder: PRG/RST + FUNC on UI board'
-    led_dali:
-      pin: D3/GPIO21
-      net: LED_DALI
-      note: spare, unused on the UI board
     i2c_sda:
       pin: D4/GPIO22
       net: I2C_SDA

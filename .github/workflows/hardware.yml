@@ -20,7 +20,7 @@ jobs:
         include:
           - { variant: v1, boards: "main ui" }
           - { variant: v2, boards: "main interface ui" }
-          - { variant: v3, boards: "main knx dali ui" }
+          - { variant: v3, boards: "main ui" }
     env:
       EDA: docker compose --profile hardware run --rm -T -e HARDWARE_VARIANT=${{ matrix.variant }} eda
       CAD: docker compose --profile hardware run --rm -T -e HARDWARE_VARIANT=${{ matrix.variant }} cad

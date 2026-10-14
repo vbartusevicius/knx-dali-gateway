@@ -1,6 +1,8 @@
 #pragma once
 
 #include <esp32_idf_platform.h>
+#include <esp_adc/adc_cali.h>
+#include <esp_adc/adc_oneshot.h>
 #include <knx/bau07B0.h>
 #include <knx_facade.h>
 
@@ -15,10 +17,10 @@
 
 namespace gateway::firmware {
 
-// ESP-IDF half of the KNX device: UART pins, WS2812 status LED, front-panel
-// button sampling and the task loop. Everything that talks to the thelsing stack
-// (object callbacks, statuses, function properties, parameters) lives in the
-// portable knxstack::KnxApplication.
+// ESP-IDF half of the KNX device: UART pins to the NCN5130, 3-LED SK6805-EC15
+// status chain (D1 STATUS, D2 KNX, D3 DALI), ADC button ladder sampling
+// (SW1 PRG/RST, SW2 FUNC) and the task loop. Everything that talks to the
+// thelsing stack lives in the portable knxstack::KnxApplication.
 class KnxDevice final {
 public:
     KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
@@ -28,6 +30,8 @@ public:
     void run();
 
 private:
+    void init_button_adc();
+    device::Buttons read_buttons();
     void handle_button(std::uint32_t now_ms);
     void update_led(std::uint32_t now_ms);
     commissioning::Snapshot drain_snapshots();
@@ -47,8 +51,10 @@ private:
     commissioning::InputSnapshot latest_input_snapshot_{};
     knxstack::KnxApplication<Facade>::Hooks hooks_{};
     knxstack::KnxApplication<Facade> app_;
+    adc_oneshot_unit_handle_t adc_ = nullptr;
+    adc_cali_handle_t adc_cali_ = nullptr;
     device::FrontPanel panel_;
-    device::Rgb shown_{};
+    device::LedColours shown_{};
     bool led_written_ = false;
 };
 

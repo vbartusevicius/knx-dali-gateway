@@ -151,11 +151,9 @@ def terminal_holes():
     WAGO terminal in v3."""
     if VARIANT == "v3":
         main = components("main")
-        dali = components("dali")["J1"]
-        pads = sorted(pad_points(dali))
         return {"KNX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J1"]))))],
                 "AUX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J2"]))))],
-                "DALI": [dict(zip(("x", "y"), board_to_enc("dali", px, py + 2.5))) for px, py in pads[1::2]]}
+                "DALI": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J3"]))))]}
     main = components("main")
     holes = {"KNX": [dict(zip(("x", "y"), main_to_enc(*bbox_centre(main["J1"]))))]}
     for name, ref in (("AUX", "J2"), ("DALI", "J3")):
@@ -168,12 +166,8 @@ def wire_entries():
     """Openings in the top wall that the terminals' wire-entry faces sit in,
     flush with the outside."""
     if VARIANT == "v3":
-        dali = components("dali")["J1"]
-        b = dali["bbox"]
-        z0 = SPEC["boards"]["dali"]["z"]
-        x0, _ = board_to_enc("dali", b["x0"], 0)
-        x1, _ = board_to_enc("dali", b["x1"], 0)
-        return [{"ref": "J1", "x0": x0, "x1": x1, "z0": z0, "z1": z0 + dali["height"]}]
+        j3 = next(p for p in part_boxes() if (p["board"], p["ref"]) == ("main", "J3"))
+        return [{"ref": "J3", "x0": j3["x0"], "x1": j3["x1"], "z0": j3["z0"], "z1": j3["z1"]}]
     main = components("main")
     z0 = SPEC["boards"]["main"]["z"]
     slots = []
@@ -214,11 +208,9 @@ def connector_faces():
     the terminals' wire-entry faces and the KNX plug's underside."""
     if VARIANT == "v3":
         main = components("main")
-        dali = components("dali")["J1"]
-        pin_y = max(y for _, y, _ in dali["pads"])
-        return {"J1_dali": board_to_enc("dali", 0, pin_y + 7.88)[1],
-                "J1": board_point("main", 0, main["J1"]["bbox"]["y0"] - 0.5)[1],
-                "J2": board_point("main", 0, main["J2"]["bbox"]["y0"] - 0.5)[1]}
+        return {"J3": board_point("main", 0, main["J3"]["y"] + 8.40)[1],
+                "J1": board_point("main", 0, main["J1"]["bbox"]["y0"] + BODY_MARGIN)[1],
+                "J2": board_point("main", 0, main["J2"]["bbox"]["y0"] + BODY_MARGIN)[1]}
     main = components("main")
     faces = {ref: main_to_enc(0, max(y for _, y, _ in main[ref]["pads"]) + TERMINAL_PIN_TO_WIRE_FACE)[1]
              for ref in ("J2", "J3")}
@@ -318,7 +310,9 @@ def part_boxes():
             base = 3.9 if plug else 0.0
             n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)
             b = c["bbox"]
-            boxes.append(span_box(board_point(board, b["x0"], b["y0"], n0), board_point(board, b["x1"], b["y1"], n1),
+            m = BODY_MARGIN if plug and VARIANT == "v3" else 0.0
+            boxes.append(span_box(board_point(board, b["x0"], b["y0"] + m, n0),
+                                  board_point(board, b["x1"], b["y1"] - m, n1),
                                   board=board, ref=ref, through_front=board == "ui" and ref in THROUGH_FRONT))
     top = SPEC["front_ui"]["board_top_z"]
     module_z = top + OLED_HEADER_SPACER

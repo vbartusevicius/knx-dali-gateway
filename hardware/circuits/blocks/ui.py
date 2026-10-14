@@ -80,7 +80,7 @@ def build_interconnect_side(signals):
                   source="spec.yaml boards.interconnects main->ui"))
     pins = [signals["v3"], signals["gnd"], signals["gnd"],
             signals["btn_ladder"], signals["gnd"],
-            signals["led_data"], signals["v5"], signals["led_dali"],
+            signals["led_data"], signals["v5"], signals["gnd"],
             signals["sda"], signals["scl"]]
     for i, net_ in enumerate(pins, start=1):
         j1[i] += net_
@@ -122,14 +122,28 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
     status_leds(gnd, v5, led_data)
 
     block("oled")
-    j3 = part("Connector", "Conn_01x04_Pin", "OLED", HDR_4,
-              src(mpn=oled["mpn"], mfr=oled.get("mfr", ""), hand=True, source=oled["source"]), ref="J2")
+    n_pins = len(oled["pins"])
+    if "lcsc" in oled:
+        j3 = part("Connector", f"Conn_01x{n_pins:02d}_Socket", "OLED ZIF", oled["footprint"],
+                  src(mpn=oled["mpn"], mfr=oled["mfr"], lcsc=oled["lcsc"], source=oled["source"]), ref="J2")
+    else:
+        j3 = part("Connector", f"Conn_01x{n_pins:02d}_Pin", "OLED", HDR_4,
+                  src(mpn=oled["mpn"], mfr=oled.get("mfr", ""), hand=True, source=oled["source"]), ref="J2")
     nets = {"GND": gnd, "VCC": v3, "SCL": scl, "SDA": sda}
+    if "RES" in oled["pins"]:
+        oled_res = Net("OLED_RES")
+        r_res = res("10k", src(source="CFAL12832D-B RES# pull-up"))
+        c_res = cap("100n 50V", src(source="CFAL12832D-B RES# RC power-on reset"))
+        r_res[1] += v3
+        r_res[2] += oled_res
+        c_res[1] += oled_res
+        c_res[2] += gnd
+        nets["RES"] = oled_res
     for i, name in enumerate(oled["pins"], start=1):
         j3[i] += nets[name]
 
 
 NET_CLASSES = {
-    "SELV-KNX": ["GND", "+3V3", "+5V", "BTN_LADDER", "LED_DATA", "LED_DALI",
+    "SELV-KNX": ["GND", "+3V3", "+5V", "BTN_LADDER", "LED_DATA", 
                  "LED_CHAIN1", "LED_CHAIN2", "I2C_SDA", "I2C_SCL", "Net-*"],
 }

@@ -59,9 +59,10 @@ def test_each_led_sits_in_a_closed_baffle(solids):
 
 def test_shoulder_openings_clear(solids):
     holes = [h for name in ("KNX", "DALI", "AUX") for h in ef.terminal_holes()[name]]
-    z0 = 27.5 if ef.VARIANT == "v3" else be.MAIN_Z + 10.5
-    blocked = [h for h in holes if not (clear_line_y(solids, 2.0, -1, 11.0, h["z"]) if "z" in h
-                                        else clear_line(solids, h["x"], h["y"], z0,
+    blocked = [h for h in holes if not ((clear_line_y(solids, 2.0, 71.0, ef.HIDDEN_H + 1, h["z"])
+                                         if h["y"] > ef.HIDDEN_H / 2
+                                         else clear_line_y(solids, 2.0, -1, 10.0, h["z"])) if "z" in h
+                                        else clear_line(solids, h["x"], h["y"], be.MAIN_Z + 10.5,
                                                         ef.SHOULDER_Z[ef.shoulder_of(h["y"])] + 1))]
     assert not blocked
 

@@ -50,7 +50,7 @@ supply or the MDT STC-1280.01 30 V output are both inside.
   print, cyan = face edges and openings for positioning only. For UV/pad
   printing on an FDM cover (custom quote) or an adhesive polyester label cut
   along the cyan lines.
-- `enclosure/cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
+- `enclosure/cover_embossed.stl (raised embossed text) or cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
   the cover for full-colour resin printing (JLC3DP "Full-Color Resin", WJP).
   Upload either one instead of `cover.stl` and select full-colour printing.
   The legend is a separate black body 0.3 mm deep, flush with the faces; the
@@ -63,7 +63,7 @@ supply or the MDT STC-1280.01 30 V output are both inside.
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
 - Main J1: Phoenix 1574200 KNX pin strip (Mouser 651-1574200).
-- Main U3: RECOM REM3-2415S/A isolated converter (DIP-24, A pinning).
+- Main U3: RECOM REM3-2415S/A/CTRL isolated converter (DIP-24, A pinning).
 - Main U7: Seeed XIAO ESP32C6 **Pre-Soldered (SKU 102010636)**, detachable in
   two 1x7 female headers, 8.5 mm (LCSC C54876729) soldered to the main board.
   The bare XIAO (113991254) ships without pin headers. Module height above the

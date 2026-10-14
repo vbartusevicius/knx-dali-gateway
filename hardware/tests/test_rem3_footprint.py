@@ -12,7 +12,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 FP_PATH = (REPO / "hardware/circuits/lib/gateway_fp.pretty"
-           / "Converter_DCDC_RECOM_REM3_DIP24.kicad_mod")
+           / "Converter_DCDC_RECOM_REM3_DIP24_CTRL.kicad_mod")
 
 
 def _parse_footprint():
@@ -46,7 +46,7 @@ def _parse_footprint():
 def test_footprint_has_5_pads():
     """The REM3-2415S/A has only 5 pins: 2, 14, 16, 22, 23."""
     pads, _ = _parse_footprint()
-    assert set(pads.keys()) == {2, 14, 16, 22, 23}, \
+    assert set(pads.keys()) == {1, 2, 14, 16, 22, 23}, \
         f"Expected pins {{2,14,16,22,23}}, got {set(pads.keys())}"
 
 
@@ -73,7 +73,7 @@ def test_input_output_creepage():
     The minimum is pin 23 vs pin 16: 17.78 - 1.6 = 16.18mm >= 6mm.
     """
     pads, _ = _parse_footprint()
-    input_pins = [2, 22, 23]
+    input_pins = [1, 2, 22, 23]
     output_pins = [14, 16]
     min_edge_dist = 1e9
     for ip in input_pins:

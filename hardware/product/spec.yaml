@@ -167,14 +167,14 @@ derived:
       pin: D0/GPIO0
       net: LED_DATA
       note: RMT, SK6805 chain via 5 V buffer on UI
+    dali_supply_off:
+      pin: D1/GPIO1
+      net: DALI_SUPPLY_OFF
+      note: high switches the isolated DALI supply off via the CTRL optocoupler
     button_ladder:
       pin: D2/GPIO2
       net: BTN_LADDER
       note: 'ADC ladder: PRG/RST + FUNC on UI board'
-    led_dali:
-      pin: D3/GPIO21
-      net: LED_DALI
-      note: spare, unused on the UI board
     i2c_sda:
       pin: D4/GPIO22
       net: I2C_SDA
@@ -211,7 +211,6 @@ derived:
       - +5V_XIAO
       - BTN_LADDER
       - LED_DATA
-      - LED_DALI
       - I2C_SDA
       - I2C_SCL
       - KNX_TXD
@@ -219,6 +218,7 @@ derived:
       - DALI_TX
       - DALI_RX
       - NCN_SAVEB
+      - DALI_SUPPLY_OFF
       - Net-*
       KNX-Power:
       - KNX_P
@@ -247,7 +247,6 @@ derived:
       - +5V
       - BTN_LADDER
       - LED_DATA
-      - LED_DALI
       - LED_CHAIN1
       - LED_CHAIN2
       - I2C_SDA

@@ -1,5 +1,5 @@
 Designator,Value,Manufacturer part,Notes
-J1,KNX bus (red/black),1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
+J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
 J2,AUX 20-32 V (yellow/white),1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
-U2,REM3-2415S/A/CTRL 24V->15V 3W iso,REM3-2415S/A/CTRL,"RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, 5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"
-U5,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
+U3,REM3-2415S/A/CTRL 24V->15V 3W iso,REM3-2415S/A/CTRL,"RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, 5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"
+U8,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)

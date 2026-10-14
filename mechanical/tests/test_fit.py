@@ -42,6 +42,8 @@ def part_height(board, ref):
 def main_part_limits(comp, height):
     """Return (top, limit) along the board normal for a main-board part."""
     if SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail":
+        if comp["side"] == "back":
+            return -ef.WIDTH / 2 + WALL, SPEC["boards"]["main"]["x"] - MAIN_THICK - height
         return SPEC["boards"]["main"]["x"] + height, ef.WIDTH / 2 - WALL
     if comp["side"] == "back":
         return WALL, MAIN_TOP_Z - MAIN_THICK - height
@@ -71,7 +73,7 @@ def test_main_parts_have_air_to_floor_shoulders_and_ui_board():
 
 def test_main_height_check_catches_a_tall_part():
     comps = ef.components("main")
-    target = "U2" if ef.VARIANT == "v3" else "C4"
+    target = "C4"
     assert main_height_violations(comps, lambda r: 30.0 if r == target else part_height("main", r))
 
 
@@ -90,7 +92,7 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
     the board edge."""
     faces = ef.connector_faces()
     if ef.VARIANT == "v3":
-        assert abs(faces["J1_dali"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
+        assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
         assert abs(faces["J1"]) <= FLUSH_TOLERANCE
         assert abs(faces["J2"]) <= FLUSH_TOLERANCE
         return
@@ -111,10 +113,7 @@ def test_knx_plug_top_below_the_shoulder_face():
 def openings():
     t = ef.terminal_holes()
     if ef.VARIANT == "v3":
-        dali_x = [h["x"] for h in t["DALI"]]
-        dali_y = t["DALI"][0]["y"]
-        screws = [{"x": sum(dali_x) / len(dali_x), "y": dali_y, "w": max(dali_x) - min(dali_x) + 3.0,
-                   "h_": 4.0, "face": "top"}]
+        screws = []
         front = [dict(h, w=2.2, h_=2.2, face="front") for h in ef.led_windows()]
         front += [dict(h, w=2.6, h_=2.6, face="front") for h in ef.button_holes().values()]
         win = ef.oled_window()
@@ -158,7 +157,7 @@ def test_openings_sit_on_their_faces_without_overlap():
 
 def test_opening_check_catches_a_knx_opening_outside_the_shoulder():
     items = openings()
-    items[0] = dict(items[0], y=ef.SHOULDER_H + 3)
+    items[0] = dict(items[0], y=FACES[items[0]["face"]][1] + 3)
     assert opening_violations(items)
 
 
@@ -192,7 +191,7 @@ def test_case_contacts_miss_parts_and_pins(kind, board, side, half):
 
 def test_contact_check_catches_a_leg_under_a_terminal_pin():
     comps = ef.components("main")
-    ref = "U5" if ef.VARIANT == "v3" else "J2"
+    ref = "J2"
     x, y = ef.main_to_enc(*comps[ref]["tht_pads"][0])
     assert f"{ref} pins" in contact_collisions([{"x": x, "y": y}], comps, "back", 2.5, ef.main_to_enc)
 
@@ -247,11 +246,10 @@ def test_wall_check_catches_a_part_overhanging_the_top_edge():
 
 def slot_misses(slots, comps):
     if ef.VARIANT == "v3":
-        dali = ef.components("dali")
-        pads_x = [ef.board_to_enc("dali", x, y)[0] for x, y in ef.pad_points(dali["J1"])]
+        pads_z = [ef.board_point("main", x, y)[2] for x, y in ef.pad_points(comps["J3"])]
         slot = slots[0]
-        return [] if (slot["x0"] <= min(pads_x) and max(pads_x) <= slot["x1"]
-                      and slot["z0"] >= SPEC["boards"]["dali"]["z"] and slot["z1"] <= ef.BASE_TOP_Z) else ["J1"]
+        return [] if (slot["z0"] <= min(pads_z) and max(pads_z) <= slot["z1"]
+                      and slot["x0"] >= SPEC["boards"]["main"]["x"] and slot["x1"] <= ef.WIDTH / 2) else ["J3"]
     misses = []
     for ref, slot in zip(("J2", "J3"), slots):
         pads_x = [ef.main_to_enc(x, y)[0] for x, y in ef.pad_points(comps[ref])]

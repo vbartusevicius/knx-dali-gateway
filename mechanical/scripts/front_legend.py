@@ -91,7 +91,7 @@ def openings():
     """Every opening in the front view as a box, with its kind for drawing."""
     items = []
     for name, holes in ef.terminal_holes().items():
-        if name in ("KNX", "AUX") and ef.VARIANT == "v3":
+        if ef.VARIANT == "v3":
             continue
         if name == "KNX":
             x0, x1, y1 = be.knx_recess()
@@ -161,11 +161,7 @@ def dali_terminals(terminals=None, main=None):
     bracket's strokes as boxes."""
     terminals = terminals or ef.SPEC["terminals"]
     if ef.VARIANT == "v3" and main is None:
-        radius = be.SCREW_HOLE / 2
-        screws = [(h["x"], h["y"]) for h in ef.terminal_holes()["DALI"]]
-        pin_y = screws[0][1] - radius - GAP - LABEL_H / 2
-        labels = [Label("DA", x, pin_y, LABEL_H) for x, _ in screws]
-        names = [Label("BUS", sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H)]
+        return [Label("DALI", 0.0, 72.0, 2.6)], []
     else:
         main = main or ef.components("main")
         radius = be.SCREW_HOLE / 2
@@ -201,19 +197,18 @@ def stroke_path(boxes):
 
 def marks():
     """Printed shapes other than text."""
-    return [stroke_path(dali_terminals()[1])]
+    strokes = dali_terminals()[1]
+    return [stroke_path(strokes)] if strokes else []
 
 
 def v3_labels():
     placed, _ = dali_terminals()
-    for x, text in ((-2.875, "\u2212"), (2.875, "+")):
-        placed.append(Label(text, x, 3.0, TITLE_H))
-    placed.append(Label("KNX", 0.0, 6.8, TITLE_H))
-    placed.append(Label(SUPPLY_LABEL, 0.0, 11.0, LABEL_H))
-    placed.append(Label("PRG/RST", -4.4, 60.0, 1.4))
-    placed.append(Label("FUNC", 4.4, 60.0, 1.4))
-    for text, x in (("STATUS", -5.2), ("KNX", 0.4), ("DALI", 5.6)):
-        placed.append(Label(text, x, 57.3, 0.85))
+    placed.append(Label("BUS   POWER", 0.0, 5.5, 1.45))
+    placed.append(Label("KNX", 0.0, 11.2, 2.6))
+    placed.append(Label("PRG/RST", -4.1, 28.6, 1.15))
+    placed.append(Label("FUNC", 4.1, 28.6, 1.15))
+    for text, x in (("STATUS", -4.8), ("KNX", 0.0), ("DALI", 4.8)):
+        placed.append(Label(text, x, 19.6, 0.85))
     return placed
 
 
