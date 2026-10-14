@@ -1,22 +1,32 @@
-"""Unified build script run inside the `eda` or `cad` container (no Docker calls).
+"""Unified hardware & mechanical build, route, render, release and test pipeline.
 
-Inside the `eda` container (`docker compose --profile hardware run --rm eda ...`):
-    python3 hardware/scripts/build.py [board...] [--fresh] [--release] [--test]
+Works both from the host (where only Docker + standard-library Python exist;
+spawns the `eda`, `cad` and `lint` containers in parallel across variants) and
+inside the `eda` or `cad` container (where it runs the steps directly in one
+Python process without calling Docker):
 
-Inside the `cad` container (`docker compose --profile hardware run --rm cad ...`):
-    python3 hardware/scripts/build.py [--test]
+From the host:
+    python3 hardware/scripts/build.py                  # full build + release + tests for v1, v2, v3
+    python3 hardware/scripts/build.py v3               # full pipeline for v3 only
+    python3 hardware/scripts/build.py v3 --eda         # circuits + placement/routing + board renders
+    python3 hardware/scripts/build.py v3 --cad         # enclosure + fit SVG + legend + 3MF/embossed + 3D renders
+    python3 hardware/scripts/build.py v3 --release     # package hardware/releases/<variant>/
+    python3 hardware/scripts/build.py v1 v2 v3 --test  # run full EDA + CAD + lint test suites in parallel
 
-Automatically detects whether it is running in `eda` (pcbnew available) or `cad`
-(cadquery available) and executes all steps in a single Python process.
+Inside the `eda` or `cad` container:
+    python3 hardware/scripts/build.py --in-eda [board...]
+    python3 hardware/scripts/build.py --in-cad
 """
 
 import argparse
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+ALL_VARIANTS = ("v1", "v2", "v3")
 
 
 def has_module(name):
@@ -30,10 +40,11 @@ def has_module(name):
 def run_eda(boards, *, fresh=False, do_release=False, do_test=False):
     sys.path.insert(0, str(REPO / "hardware/scripts"))
     import gen_circuits
-    import layout
     import pcbnew
     import release
     import render_board
+
+    import layout
 
     gen_circuits.main()
     os.chdir(REPO)
@@ -50,8 +61,11 @@ def run_eda(boards, *, fresh=False, do_release=False, do_test=False):
         layout.tidy_silk(b)
         render_board.render(b, "routed", placement=False)
     if do_release:
-        sys.argv = ["release.py", variant, *target_boards]
-        release.main()
+        try:
+            release.main(variant, target_boards)
+        except SystemExit as exc:
+            if exc.code:
+                raise
     if do_test:
         subprocess.run([
             sys.executable, "-m", "pytest",
@@ -69,7 +83,7 @@ def run_cad(*, do_test=False):
     import legend_color_model
     import render_assembly3d
 
-    build_enclosure.export_parts()
+    build_enclosure.export_parts(REPO / "mechanical/build" / build_enclosure.VARIANT)
     fit_drawing.main()
     front_legend.main()
     legend_color_model.main()
@@ -83,20 +97,68 @@ def run_cad(*, do_test=False):
         ], cwd=REPO, check=True)
 
 
+def docker_run(variant, service, cmd):
+    full = ["docker", "compose", "--profile", "hardware", "run", "--rm", "-T",
+            "-e", f"HARDWARE_VARIANT={variant}", service, cmd]
+    proc = subprocess.run(full, cwd=REPO, text=True, capture_output=True, check=False)
+    for line in (proc.stdout + proc.stderr).splitlines():
+        if not any(skip in line for skip in ("Container ", "platform (", "Debug: ", 'assert "Pgm')):
+            print(f"[{variant} {service}] {line}")
+    if proc.returncode != 0:
+        raise RuntimeError(f"{variant} {service} failed (exit {proc.returncode})")
+
+
+def run_variant_on_host(variant, args):
+    run_all = not (args.eda or args.cad or args.release or args.test)
+    board_arg = " ".join(args.boards)
+    fresh_flag = " --fresh" if args.fresh else ""
+    if args.eda or run_all:
+        docker_run(variant, "eda", f"python3 hardware/scripts/build.py --in-eda{fresh_flag} {board_arg}".strip())
+    if args.cad or run_all:
+        docker_run(variant, "cad", "python3 hardware/scripts/build.py --in-cad")
+    if args.release or run_all:
+        docker_run(variant, "eda", f"python3 hardware/scripts/release.py {variant} {board_arg}".strip())
+    if args.test or run_all:
+        docker_run(variant, "eda",
+                   "python3 -m pytest hardware/tests mechanical/tests/test_fit.py "
+                   "mechanical/tests/test_ui_stackup.py mechanical/tests/test_board_stack.py "
+                   "--ignore=hardware/tests/test_step_geometry.py -q -p no:cacheprovider --tb=short")
+        docker_run(variant, "cad",
+                   "python3 -m pytest mechanical/tests/test_enclosure_probe.py "
+                   "mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py "
+                   "-q -p no:cacheprovider --tb=short")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("boards", nargs="*", help="subset of boards in eda mode (default: all boards of HARDWARE_VARIANT)")
+    parser.add_argument("variants", nargs="*", help="v1, v2, v3 (or board names when inside a container)")
+    parser.add_argument("--boards", nargs="*", default=[], help="subset of boards (e.g. main ui)")
+    parser.add_argument("--eda", action="store_true", help="run circuit generation + layout/routing + board renders")
+    parser.add_argument("--cad", action="store_true", help="run enclosure + fit + legend + 3MF/embossed + 3D renders")
+    parser.add_argument("--release", action="store_true", help="run release.py")
+    parser.add_argument("--test", action="store_true", help="run EDA + CAD pytest suites")
     parser.add_argument("--fresh", action="store_true", help="re-place and re-route boards from scratch")
-    parser.add_argument("--release", action="store_true", help="also package hardware/releases/<variant>/")
-    parser.add_argument("--test", action="store_true", help="run the container's pytest suite at the end")
+    parser.add_argument("--in-eda", action="store_true", help="run EDA steps directly inside the eda container")
+    parser.add_argument("--in-cad", action="store_true", help="run CAD steps directly inside the cad container")
     args = parser.parse_args()
 
-    if has_module("pcbnew"):
-        run_eda(args.boards, fresh=args.fresh, do_release=args.release, do_test=args.test)
-    elif has_module("cadquery"):
+    if args.in_eda or has_module("pcbnew"):
+        boards = [v for v in args.variants if v not in ALL_VARIANTS] or args.boards
+        run_eda(boards, fresh=args.fresh, do_release=args.release, do_test=args.test)
+        return
+    if args.in_cad or has_module("cadquery"):
         run_cad(do_test=args.test)
-    else:
-        sys.exit("Run hardware/scripts/build.py inside the `eda` or `cad` Docker container.")
+        return
+
+    variants = [v for v in args.variants if v in ALL_VARIANTS] or list(ALL_VARIANTS)
+    with ThreadPoolExecutor(max_workers=len(variants)) as pool:
+        futures = [pool.submit(run_variant_on_host, v, args) for v in variants]
+        for f in futures:
+            f.result()
+
+    if args.test or not (args.eda or args.cad or args.release):
+        subprocess.run(["docker", "compose", "--profile", "lint", "run", "--rm", "-T", "lint", "check", "."],
+                       cwd=REPO, check=True)
 
 
 if __name__ == "__main__":

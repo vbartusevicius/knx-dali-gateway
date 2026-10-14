@@ -85,8 +85,8 @@ Each release's `enclosure/` directory contains:
 
 | Task | Command |
 | --- | --- |
-| **Build, route, render, release & test all hardware variants (`v1`, `v2`, `v3`) in parallel** | `docker compose --profile hardware run --rm -e HARDWARE_VARIANT=v3 eda "python3 hardware/scripts/build.py --release --test"` |
-| **Build/test a single variant (e.g. `v3`)** | `docker compose --profile hardware run --rm -e HARDWARE_VARIANT=v3 cad "python3 hardware/scripts/build.py --test"` |
+| **Build, route, render, release & test all hardware variants (`v1`, `v2`, `v3`) in parallel** | `python3 hardware/scripts/build.py` |
+| **Build/test a single variant (e.g. `v3`)** | `python3 hardware/scripts/build.py v3` (`--eda`, `--cad`, `--release`, `--test`) |
 | **Firmware unit tests & ESP32-C6 build** | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
 | **Refresh clangd compilation database** | `pio run -d gateway -e dev_c6 -t compiledb` |
 | **Docker KNX/DALI integration lab** | `simulation/run-tests.sh` |

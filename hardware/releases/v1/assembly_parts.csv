@@ -8,4 +8,4 @@ KNX bus plug (red/black),1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)","
 Main-to-UI cable,1,JST A10SR10SR30K102A,"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main J4 <-> ui J1",Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works
 DALI supply jumper caps,2,LCSC C100114,"2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",LCSC
 "Case base (snap-fit, no screws)",1,enclosure/base.stl,"PETG or ASA, 0.2 mm layers, rail channel face down",printed
-"Case cover (snap-fit, no screws)",1,enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf),"PETG or ASA, 0.2 mm layers, front face down (cover.stl debossed, cover_embossed.stl raised text, cover_color.3mf multi-colour inlay)",printed
+"Case cover (snap-fit, no screws)",1,enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf),"PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)",printed
