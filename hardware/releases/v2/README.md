@@ -47,7 +47,7 @@ supply or the MDT STC-1280.01 30 V output are both inside.
   print, cyan = face edges and openings for positioning only. For UV/pad
   printing on an FDM cover (custom quote) or an adhesive polyester label cut
   along the cyan lines.
-- `enclosure/cover_embossed.stl (raised embossed text) or cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
+- `enclosure/cover_embossed.stl (0.3 mm recessed text) or cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
   the cover for full-colour resin printing (JLC3DP "Full-Color Resin", WJP).
   Upload either one instead of `cover.stl` and select full-colour printing.
   The legend is a separate black body 0.3 mm deep, flush with the faces; the

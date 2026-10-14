@@ -12,18 +12,22 @@ Checks:
 """
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
-import yaml
 
 REPO = Path(__file__).resolve().parents[2]
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+sys.path.insert(0, str(REPO / "hardware/scripts"))
+import board_variant as bv
+
+VARIANT = bv.VARIANT
+SPEC = bv.load_spec()
 
 
 def _parse_netlist(board="main"):
     """Parse the SKiDL netlist and return net -> list of (ref, pin)."""
-    net_path = REPO / "hardware/build" / SPEC["active_variant"] / board / f"{board}.net"
+    net_path = REPO / "hardware/build" / VARIANT / board / f"{board}.net"
     text = net_path.read_text()
     nets = {}
     nets_start = text.find("(nets")
@@ -62,14 +66,30 @@ def _parse_netlist(board="main"):
 
 def _parse_parts(board="main"):
     """Parse parts.json and return ref -> part info."""
-    parts_path = REPO / "hardware/build" / SPEC["active_variant"] / board / "parts.json"
+    parts_path = REPO / "hardware/build" / VARIANT / board / "parts.json"
     import json
     parts = json.loads(parts_path.read_text())
     return {p["ref"]: p for p in parts}
 
 
-NETS = _parse_netlist("main")
-PARTS = _parse_parts("main")
+def _merged_netlists():
+    merged = {}
+    for b in SPEC["variants"][VARIANT]["boards"]:
+        for net, nodes in _parse_netlist(b).items():
+            merged.setdefault(net, []).extend(nodes)
+    return merged
+
+
+def _merged_parts():
+    merged = {}
+    for b in SPEC["variants"][VARIANT]["boards"]:
+        for ref, info in _parse_parts(b).items():
+            merged.setdefault(ref, info)
+    return merged
+
+
+NETS = _merged_netlists()
+PARTS = _merged_parts()
 
 # NCN5130 pin name -> pin number (from gateway.kicad_sym, Table 1)
 NCN5130_PINS = {
@@ -98,7 +118,7 @@ XIAO_PIN_MAP = {
 }
 
 
-XIAO_REF = "U8"  # XIAO ESP32C6 (U6=LM66100, U7=XIAO in current ref sequence)
+XIAO_REF = "U2" if VARIANT == "v2" else "U8"  # XIAO ESP32C6 (U6=LM66100, U7=XIAO in current ref sequence)
 
 
 def _net_members(net_name):
@@ -323,7 +343,8 @@ def test_xiao_pin_map():
     # D0=LED_DATA (RGB LED chain), D1 spare and unconnected, D3=LED_DALI (spare wire)
     assert (XIAO_REF, XIAO_PIN_MAP["D0"]) in _net_members("LED_DATA")
     assert (XIAO_REF, XIAO_PIN_MAP["D1"]) in _net_members("DALI_SUPPLY_OFF")
-    assert not any((XIAO_REF, XIAO_PIN_MAP["D3"]) in members for members in _parse_netlist("main").values())
+    mcu_board = "ui" if VARIANT == "v2" else "main"
+    assert not any((XIAO_REF, XIAO_PIN_MAP["D3"]) in members for members in _parse_netlist(mcu_board).values())
     # D2=BTN_LADDER (ADC)
     assert (XIAO_REF, XIAO_PIN_MAP["D2"]) in _net_members("BTN_LADDER")
     # D6=KNX_RXD (MCU TX), D7=KNX_TXD (MCU RX)
@@ -470,7 +491,8 @@ def test_dali_rx_polarity():
     Record for firmware: inverted (bus high = logic low)."""
     # U5 pin 6 (opto transistor output) on DALI_RX
     dali_rx_members = _net_members("DALI_RX")
-    assert ("U6", "6") in dali_rx_members, "U5 pin 6 not on DALI_RX"
+    rx_opto = "U2" if VARIANT == "v2" else "U6"
+    assert (rx_opto, "6") in dali_rx_members, "U5 pin 6 not on DALI_RX"
     # Pull-up resistor present
     r_found = any(ref.startswith("R") for ref, _ in dali_rx_members)
     assert r_found, "No pull-up on DALI_RX"
@@ -520,9 +542,11 @@ def test_supply_jumpers_switch_both_dali_lines():
 
 
 def test_buck_pins_follow_the_sct2400_datasheet():
-    expected = {"BST": "N$2", "GND": "GND", "FB": "N$3", "EN": "N$1", "VIN": "VFILT", "SW": "SW"}
+    main_nets = _parse_netlist("main")
+    sw = "BUCK5_SW" if "BUCK5_SW" in main_nets else "SW"
+    expected = {"BST": "N$2", "GND": "GND", "FB": "N$3", "EN": "N$1", "VIN": "VFILT", "SW": sw}
     for name, net in expected.items():
-        assert ("U2", SCT2400_PINS[name]) in _net_members(net), (name, net)
+        assert ("U2", SCT2400_PINS[name]) in main_nets.get(net, []), (name, net)
 
 
 def test_dali_gate_series_resistor():
@@ -632,10 +656,11 @@ def test_knx_rxd_series_resistor():
 
 def test_no_domain_bridge_except_isolators():
     """No single net connects parts in both SELV-KNX and DALI/AUX domains
-    except through U3 (REM3), U4/U5 (optos)."""
-    gnd_refs = _refs_on_net("GND")
-    gndd_refs = _refs_on_net("GNDD")
-    gnda_refs = _refs_on_net("GNDA")
+    except through U3 (REM3), U4/U5/U6 (optos)."""
+    main_nets = _parse_netlist("main")
+    gnd_refs = {r for r, _ in main_nets.get("GND", [])}
+    gndd_refs = {r for r, _ in main_nets.get("GNDD", [])}
+    gnda_refs = {r for r, _ in main_nets.get("GNDA", [])}
     optos = {"U3", "U4", "U5", "U6"}
     gnd_only = gnd_refs - optos
     gndd_only = gndd_refs - optos
@@ -797,7 +822,8 @@ def test_dali_tx_drives_opto_led():
 def test_dali_rx_from_opto():
     """DALI_RX from RX opto transistor with pull-up."""
     dali_rx_members = _net_members("DALI_RX")
-    assert ("U6", "6") in dali_rx_members
+    rx_opto = "U2" if VARIANT == "v2" else "U6"
+    assert (rx_opto, "6") in dali_rx_members
     r_found = any(ref.startswith("R") for ref, _ in dali_rx_members)
     assert r_found, "No pull-up on DALI_RX"
 
@@ -807,9 +833,10 @@ def test_led_chain_is_buffered_to_5v_with_series_resistor():
     SK6805 through a series resistor; each LED feeds the next one. Pin numbers
     from the SK6805-EC15 datasheet p.4: 1 DIN, 2 VDD, 3 DOUT, 4 GND."""
     ui = _parse_netlist("ui")
-    assert ("U1", "2") in ui["LED_DATA"]
-    assert ("U1", "5") in ui["+5V"]
-    buffered = next(n for n, m in ui.items() if ("U1", "4") in m)
+    buf = "U3" if VARIANT == "v2" else "U1"
+    assert (buf, "2") in ui["LED_DATA"]
+    assert (buf, "5") in ui["+5V"]
+    buffered = next(n for n, m in ui.items() if (buf, "4") in m)
     resistor = next(ref for ref, _ in ui[buffered] if ref.startswith("R"))
     first = next(n for n, m in ui.items() if (resistor, "1") in m or (resistor, "2") in m if n != buffered)
     assert ("D1", "1") in ui[first]

@@ -144,8 +144,8 @@ def side_view():
         rect(ax, UI_BOTTOM_Z + UI_THICK, p["y"] - 1.5, ef.TOTAL_D - WALL - UI_BOTTOM_Z - UI_THICK, 3,
              fc="#6a1b9a", alpha=0.35, ec="#6a1b9a")
     if not ef.screw_tabs():
-        for y0 in (WALL, ef.HIDDEN_H - WALL - 1.1):
-            rect(ax, 39.0, y0, lo - WALL - 39.0, 1.1, fc="#6a1b9a", alpha=0.45, ec="#6a1b9a")
+        for yc in (14.8, 64.5):
+            rect(ax, 39.2, yc - 1.4, lo - WALL - 39.2, 2.8, fc="#6a1b9a", alpha=0.45, ec="#6a1b9a")
     for name, holes in ef.terminal_holes().items():
         size = 10.6 if name == "KNX" else 4.0
         for h in holes:

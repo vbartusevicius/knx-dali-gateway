@@ -43,14 +43,11 @@ def prism(points, z0, height):
     return cq.Workplane("XY", origin=(0, 0, z0)).polyline(points).close().extrude(height)
 
 
-def inlay(path, face_z, *, emboss=False):
-    """Solid of a filled path, either inlaid (face_z - INLAY_DEPTH..face_z) or
-    embossed (face_z - 0.05..face_z + INLAY_DEPTH)."""
-    z0 = face_z - 0.05 if emboss else face_z - INLAY_DEPTH
-    h = INLAY_DEPTH + 0.05 if emboss else INLAY_DEPTH
+def inlay(path, face_z):
+    """Solid of a filled path, from face_z - INLAY_DEPTH up to the face."""
     solid = None
     for depth, points in rings(path):
-        body = prism(points, z0, h)
+        body = prism(points, face_z - INLAY_DEPTH, INLAY_DEPTH)
         if depth % 2 == 0:
             solid = body if solid is None else solid.union(body)
         elif solid is not None:
@@ -58,23 +55,22 @@ def inlay(path, face_z, *, emboss=False):
     return solid
 
 
-def led_ring(window, *, emboss=False):
+def led_ring(window):
     outer = be.LED_WINDOW / 2 + fl.LED_RING
     inner = outer - fl.RING_LINE
-    z0 = FACE_Z["front"] - (0.05 if emboss else INLAY_DEPTH)
-    h = INLAY_DEPTH + (0.05 if emboss else 0.0)
+    z0 = FACE_Z["front"] - INLAY_DEPTH
     return (cq.Workplane("XY", origin=(window["x"], window["y"], z0)).circle(outer).circle(inner)
-            .extrude(h))
+            .extrude(INLAY_DEPTH))
 
 
-def legend_bodies(*, emboss=False):
+def legend_bodies():
     bodies = []
     for label in fl.labels():
-        bodies.append(inlay(label.path(), FACE_Z[fl.face_of(label.y)], emboss=emboss))
+        bodies.append(inlay(label.path(), FACE_Z[fl.face_of(label.y)]))
     for mark in fl.marks():
         ext = mark.get_extents()
-        bodies.append(inlay(mark, FACE_Z[fl.face_of((ext.y0 + ext.y1) / 2)], emboss=emboss))
-    bodies += [led_ring(w, emboss=emboss) for w in ef.led_windows()]
+        bodies.append(inlay(mark, FACE_Z[fl.face_of((ext.y0 + ext.y1) / 2)]))
+    bodies += [led_ring(w) for w in ef.led_windows()]
     legend = bodies[0]
     for body in bodies[1:]:
         legend = legend.union(body)
@@ -130,16 +126,14 @@ def write_obj_zip(parts, path):
 
 
 def main():
-    raw_cover = be.build_cover()
     legend = legend_bodies()
-    cover = raw_cover.cut(legend)
+    cover = be.build_cover().cut(legend)
     parts = {"cover": mesh(cover), "legend": mesh(legend)}
     OUT.mkdir(parents=True, exist_ok=True)
     write_3mf(parts, OUT / "cover_color.3mf")
     write_obj_zip(parts, OUT / "cover_color_obj.zip")
-    embossed = raw_cover.union(legend_bodies(emboss=True))
-    cq.exporters.export(embossed, str(OUT / "cover_embossed.step"), cq.exporters.ExportTypes.STEP)
-    cq.exporters.export(embossed, str(OUT / "cover_embossed.stl"), cq.exporters.ExportTypes.STL,
+    cq.exporters.export(cover, str(OUT / "cover_embossed.step"), cq.exporters.ExportTypes.STEP)
+    cq.exporters.export(cover, str(OUT / "cover_embossed.stl"), cq.exporters.ExportTypes.STL,
                         tolerance=TOLERANCE, angularTolerance=0.1)
     print(f"cover_color.3mf + cover_color_obj.zip + cover_embossed.stl/.step written to {OUT.relative_to(REPO)}")
 

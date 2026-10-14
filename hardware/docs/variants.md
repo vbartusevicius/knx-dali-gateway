@@ -61,5 +61,5 @@ filter capacitor (`C1`) to `GND`:
 Every variant (`v1`, `v2`, `v3`) includes three ready-to-print cover files generated
 from the exact same `front_legend.py` geometry:
 1. **`cover.stl` / `cover.step`:** single-colour cover ( without text cuts on `cover.stl`, or with debossed cutouts in `cover_color`).
-2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`+0.3 mm` raised embossed text and LED rings** matching `front_legend.svg`.
+2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`0.3 mm` recessed text and LED rings** matching `front_legend.svg`.
 3. **`cover_color.3mf` / `cover_color_obj.zip`:** multi-material / full-colour WJP resin cover with flush `0.3 mm` inlaid legend bodies.

@@ -190,27 +190,37 @@ def plate_inner(tab):
 
 
 def shoulder_snap_bodies():
-    """On V3 (where J1 and J3 occupy the front of the top and bottom shoulders),
-    two snap-click tongues on the left side (x = -6.9..-4.5, clear of J1 and J3)
-    click into keeper pockets on the inner faces of the top and bottom base walls."""
+    """On V3, the base is open on the left side (-x) so the vertical main board
+    (with its +x J1/J2 pins) slides in from the left. The cover carries the left
+    side wall (x = -WIDTH/2..-INNER_W/2) and clicks onto the base with four side
+    snap-click hooks (two on the right side wall at y = 14.8 and y = 64.5, clear
+    of the KNX/AUX and DALI connectors, and two on the left side wall at z = 15..21)."""
     if screw_tabs():
         return []
     bodies = []
+    for y_c in (14.8, 64.5):
+        tongue = box(INNER_W / 2 - 1.1, INNER_W / 2, y_c - 1.4, y_c + 1.4, 39.2, BASE_TOP_Z + 0.4)
+        barb = box(INNER_W / 2 - 1.1, INNER_W / 2 + 0.5, y_c - 1.4, y_c + 1.4, 39.2, 40.4)
+        bodies.append(tongue.union(barb))
     for y_wall, d in ((WALL, 1), (HIDDEN_H - WALL, -1)):
         y0, y1 = sorted((y_wall, y_wall + d * 1.1))
         yb0, yb1 = sorted((y_wall - d * 0.5, y_wall + d * 1.1))
-        tongue = box(-6.9, -4.5, y0, y1, 39.0, SHOULDER_Z["top"] - WALL)
-        barb = box(-6.9, -4.5, yb0, yb1, 39.0, 40.2)
+        tongue = box(-WIDTH / 2, -INNER_W / 2 + 1.2, y0, y1, 15.0, 21.0)
+        barb = box(-INNER_W / 2, -INNER_W / 2 + 1.2, yb0, yb1, 15.0, 21.0)
         bodies.append(tongue.union(barb))
     return bodies
 
 
 def shoulder_snap_keepers():
-    """Matching keeper recesses on the inner faces of the top and bottom base walls."""
+    """Matching keeper recesses on the right side wall (y = 14.8, 64.5) and left
+    top/bottom wall rims (z = 14.8..21.2) of the V3 base."""
     if screw_tabs():
         return []
-    return [box(-7.0, -4.4, WALL - 0.6, WALL + 0.1, 38.9, 40.4),
-            box(-7.0, -4.4, HIDDEN_H - WALL - 0.1, HIDDEN_H - WALL + 0.6, 38.9, 40.4)]
+    keepers = [box(INNER_W / 2 - 0.1, INNER_W / 2 + 0.6, y_c - 1.6, y_c + 1.6, 39.0, 40.6)
+               for y_c in (14.8, 64.5)]
+    keepers += [box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, WALL - 0.6, WALL + 0.1, 14.8, 21.2),
+                box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, HIDDEN_H - WALL - 0.1, HIDDEN_H - WALL + 0.6, 14.8, 21.2)]
+    return keepers
 
 
 def screw_tab_bodies():
@@ -293,6 +303,9 @@ def build_base():
         # 2.8 mm PST 1,0 plastic strips on main (x = -4.2); only the metal pins
         # poke through 2.2 mm holes, and each pocket has a 30-deg half-butterfly
         # dovetail keyway on its + wall.
+        # Open the left side wall so the vertical main board (and its +x pins)
+        # slides straight in from the left (-x -> +x); the cover closes the left wall.
+        base = base.cut(box(-WIDTH / 2 - 1, -INNER_W / 2 + 0.01, WALL, HIDDEN_H - WALL, WALL, BASE_TOP_Z + 1))
         base = base.union(box(-1.3, WIDTH / 2, 0.0, 12.2, 14.8, 39.8))
         for ref, z_lo, z_hi in (("J2", 16.3, 26.8), ("J1", 29.3, 39.8)):
             base = base.cut(box(-0.3, WIDTH / 2 + 1, -1, 11.2, z_lo, z_hi))
@@ -398,6 +411,8 @@ def build_cover():
     protrusion = box(-WIDTH / 2, WIDTH / 2, FRONT_Y_START, FRONT_Y_END, BASE_TOP_Z, TOTAL_D).cut(
         box(-INNER_W / 2, INNER_W / 2, FRONT_Y_START + WALL, FRONT_Y_END - WALL, BASE_TOP_Z - 1, FRONT_INNER_Z))
     cover = protrusion.union(shoulder_plate("bottom")).union(shoulder_plate("top"))
+    if VARIANT == "v3":
+        cover = cover.union(box(-WIDTH / 2, -INNER_W / 2, WALL - 0.01, HIDDEN_H - WALL + 0.01, WALL, BASE_TOP_Z + 0.01))
     for body in lip_bodies() + peg_bodies() + standoff_bodies() + screw_tab_bodies() + baffle_bodies():
         cover = cover.union(body)
     for slot, tongue in snap_geometry():

@@ -1,5 +1,8 @@
 CompileFlags:
   CompilationDatabase: .pio/build/dev_c6/clangd
+  Add:
+    - -nostdinc++
+    - -fno-blocks
   Remove:
     - -march=*
     - -fstrict-volatile-bitfields

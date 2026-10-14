@@ -21,21 +21,21 @@
 //   D10 / GPIO18 = DALI_TX          (TX optocoupler LED; high = bus low)
 namespace gateway::firmware::board {
 
-constexpr gpio_num_t led_data = GPIO_NUM_0;          // XIAO D0
-constexpr std::size_t led_count = 3;                  // D1 STATUS (0), D2 KNX (1), D3 DALI (2)
-constexpr gpio_num_t dali_supply_off = GPIO_NUM_1;    // XIAO D1 (active high = supply off)
-constexpr gpio_num_t button_ladder = GPIO_NUM_2;      // XIAO D2 (ADC1_CH2)
+constexpr gpio_num_t led_data = GPIO_NUM_0;         // XIAO D0
+constexpr std::size_t led_count = 3;                // D1 STATUS (0), D2 KNX (1), D3 DALI (2)
+constexpr gpio_num_t dali_supply_off = GPIO_NUM_1;  // XIAO D1 (active high = supply off)
+constexpr gpio_num_t button_ladder = GPIO_NUM_2;    // XIAO D2 (ADC1_CH2)
 constexpr adc_unit_t button_adc_unit = ADC_UNIT_1;
 constexpr adc_channel_t button_adc_channel = ADC_CHANNEL_2;
-constexpr gpio_num_t i2c_sda = GPIO_NUM_22;           // XIAO D4
-constexpr gpio_num_t i2c_scl = GPIO_NUM_23;           // XIAO D5
+constexpr gpio_num_t i2c_sda = GPIO_NUM_22;  // XIAO D4
+constexpr gpio_num_t i2c_scl = GPIO_NUM_23;  // XIAO D5
 constexpr uart_port_t knx_uart = UART_NUM_1;
-constexpr gpio_num_t knx_tx = GPIO_NUM_16;            // XIAO D6 -> NCN5130 SDI/RXD
-constexpr gpio_num_t knx_rx = GPIO_NUM_17;            // XIAO D7 <- NCN5130 SDO/TXD
+constexpr gpio_num_t knx_tx = GPIO_NUM_16;  // XIAO D6 -> NCN5130 SDI/RXD
+constexpr gpio_num_t knx_rx = GPIO_NUM_17;  // XIAO D7 <- NCN5130 SDO/TXD
 constexpr std::uint32_t knx_baud = 19200;
-constexpr gpio_num_t dali_rx = GPIO_NUM_19;           // XIAO D8
-constexpr gpio_num_t ncn_saveb = GPIO_NUM_20;         // XIAO D9
-constexpr gpio_num_t dali_tx = GPIO_NUM_18;           // XIAO D10
+constexpr gpio_num_t dali_rx = GPIO_NUM_19;    // XIAO D8
+constexpr gpio_num_t ncn_saveb = GPIO_NUM_20;  // XIAO D9
+constexpr gpio_num_t dali_tx = GPIO_NUM_18;    // XIAO D10
 // On the gateway PCB, DALI_TX high turns the TX optocoupler on (pulling the bus
 // low), and bus idle high turns the RX optocoupler on (pulling DALI_RX low).
 constexpr bool dali_invert_tx = false;
@@ -47,8 +47,8 @@ constexpr bool usb_pin(gpio_num_t pin) {
 
 constexpr bool pins_distinct() {
     const gpio_num_t pins[] = {
-        led_data, dali_supply_off, button_ladder, i2c_sda, i2c_scl,
-        knx_tx, knx_rx, dali_rx, ncn_saveb, dali_tx,
+        led_data, dali_supply_off, button_ladder, i2c_sda,   i2c_scl,
+        knx_tx,   knx_rx,          dali_rx,       ncn_saveb, dali_tx,
     };
     for (std::size_t i = 0; i < sizeof(pins) / sizeof(pins[0]); ++i) {
         if (usb_pin(pins[i])) {

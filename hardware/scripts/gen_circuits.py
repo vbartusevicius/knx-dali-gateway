@@ -104,6 +104,169 @@ def write_derived(net_classes_by_board):
     SPEC.write_text(text)
 
 
+
+
+def collect_assembly_parts(variant, spec):
+    """Automatically build the off-board + hand-fitted assembly_parts list from
+    parts.json of every board in `variant` and `spec.yaml`."""
+    boards = spec["variants"][variant]["boards"]
+    hand_by_mpn = {}
+    all_parts = []
+    for b in boards:
+        for p in json.loads((BUILD / variant / b / "parts.json").read_text()):
+            all_parts.append((b, p))
+            if p["assembly"] == "hand":
+                entry = hand_by_mpn.setdefault(p["mpn"], {"p": p, "locs": []})
+                entry["locs"].append(f"{b} {p['ref']}")
+
+    items = []
+    # 1. Hand-fitted board parts (XIAO, REM3, PST 1,0 pin strips, THT OLED)
+    if "102010636" in hand_by_mpn:
+        locs = ", ".join(hand_by_mpn["102010636"]["locs"])
+        sock_h = "5.0 mm" if variant == "v3" else "8.5 mm"
+        items.append({
+            "item": "MCU module (hand-fitted into sockets)",
+            "qty": len(hand_by_mpn["102010636"]["locs"]),
+            "part": "Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)",
+            "description": f"ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two {sock_h} female sockets ({locs})",
+            "source": "Seeed Studio / Digi-Key / Mouser",
+        })
+        items.append({
+            "item": "XIAO sockets (hand-soldered)",
+            "qty": 2 * len(hand_by_mpn["102010636"]["locs"]),
+            "part": "1x7 2.54 mm female header, 5.0 mm tall (e.g. Hong Cheng HC-PM254-5.0H)" if variant == "v3"
+                    else "PM2.54-1x7PZZ-H8.5 (LCSC C54876729)",
+            "description": f"1x7 female header, 2.54 mm, {sock_h} tall, soldered into {locs}; the XIAO stays detachable",
+            "source": "LCSC",
+        })
+    if "REM3-2415S/A/CTRL" in hand_by_mpn:
+        locs = ", ".join(hand_by_mpn["REM3-2415S/A/CTRL"]["locs"])
+        items.append({
+            "item": "Isolated DALI DC-DC converter (hand-soldered)",
+            "qty": len(hand_by_mpn["REM3-2415S/A/CTRL"]["locs"]),
+            "part": "RECOM REM3-2415S/A/CTRL",
+            "description": f"24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24 A-pinning with pin 1 CTRL ({locs}; no minimum load required)",
+            "source": "Digi-Key / Mouser / TME",
+        })
+    if "WEA012864DWPP3N00003" in hand_by_mpn:
+        locs = ", ".join(hand_by_mpn["WEA012864DWPP3N00003"]["locs"])
+        items.append({
+            "item": "OLED display module (hand-soldered)",
+            "qty": len(hand_by_mpn["WEA012864DWPP3N00003"]["locs"]),
+            "part": "Winstar WEA012864DWPP3N00003",
+            "description": f"0.96 in 128x64 SSD1306 I2C OLED module, 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into {locs}",
+            "source": "Digi-Key / Mouser / TME",
+        })
+    if "1574200" in hand_by_mpn:
+        locs = hand_by_mpn["1574200"]["locs"]
+        items.append({
+            "item": "KNX / AUX PCB pin strips (hand-soldered)" if len(locs) > 1 else "KNX PCB pin strip (hand-soldered)",
+            "qty": len(locs),
+            "part": "Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",
+            "description": f"2-pin 5.75 mm pitch Ø 1.0 mm pin strip soldered into {', '.join(locs)}",
+            "source": "Phoenix Contact / Digi-Key / Mouser",
+        })
+        items.append({
+            "item": "KNX bus plug (red/black)",
+            "qty": 1,
+            "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)",
+            "description": "red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip (main J1)",
+            "source": "Phoenix Contact / Digi-Key / Mouser",
+        })
+        if any(loc.endswith("J2") for loc in locs):
+            items.append({
+                "item": "AUX 20-32 V plug (yellow/white)",
+                "qty": 1,
+                "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299)",
+                "description": "yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75 pin strip (main J2; 20-32 V for the internal DALI supply only)",
+                "source": "Phoenix Contact / Digi-Key / Mouser",
+            })
+
+    # 2. Plug-in ZIF OLED + mounting tape (when FPC-05F-12PH20 is on ui)
+    if any(p["mpn"] == "FPC-05F-12PH20" for _, p in all_parts):
+        items.append({
+            "item": "OLED display (12-pin ZIF FPC, plug-in, no soldering)",
+            "qty": 1,
+            "part": "Crystalfontz CFAL12832D-B (or CFAL12832C0-091B)",
+            "description": "0.91 in 128x32 SSD1306 I2C OLED (30.0 x 11.5 x 1.45 mm, charge-pump caps on the 25.0 mm flex tail); folds through the 1.0 mm top cutout on UI and plugs into JLC-assembled ZIF connector ui J2 (XUNPU FPC-05F-12PH20)",
+            "source": "Crystalfontz / Digi-Key / Mouser",
+        })
+        items.append({
+            "item": "OLED mounting tape",
+            "qty": 2,
+            "part": "3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.6 x 26 mm)",
+            "description": "adheres the left/right back edges of the CFAL12832D-B OLED onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)",
+            "source": "any",
+        })
+
+    # 3. Board-to-board cables from spec["boards"]["interconnects"]
+    ffc_links = [lk for lk in spec["boards"].get("interconnects", []) if lk.get("type") == "ffc"]
+    cable_links = [lk for lk in spec["boards"].get("interconnects", []) if lk.get("type") == "cable"]
+    if ffc_links:
+        pairs = ", ".join(f"{lk['from']} {lk.get('refs', {}).get(lk['from'], 'J4')} <-> {lk['to']} {lk.get('refs', {}).get(lk['to'], 'J1')}" for lk in ffc_links)
+        items.append({
+            "item": "Main-to-UI FFC cable",
+            "qty": len(ffc_links),
+            "part": "SHOU HAN FFC-0.5-8P-50mm (LCSC C6936295)",
+            "description": f"8-pin 0.5 mm same-side (Type A) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
+            "source": "LCSC",
+        })
+    if cable_links:
+        pairs = ", ".join(f"{lk['from']} {lk.get('refs', {}).get(lk['from'], 'J4')} <-> {lk['to']} {lk.get('refs', {}).get(lk['to'], 'J1')}" for lk in cable_links)
+        items.append({
+            "item": "Main-to-UI cable",
+            "qty": len(cable_links),
+            "part": "JST A10SR10SR30K102A",
+            "description": f"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); {pairs}",
+            "source": "Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works",
+        })
+
+    # 4. DALI supply jumper caps
+    if any(p["ref"] == "JP1" for _, p in all_parts):
+        items.append({
+            "item": "DALI supply jumper caps",
+            "qty": 2,
+            "part": "LCSC C100114",
+            "description": "2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",
+            "source": "LCSC",
+        })
+
+    # 5. Case screws (when enclosure.screw_tabs is non-empty) and printed case parts
+    screws = spec.get("enclosure", {}).get("screw_tabs", [])
+    if screws:
+        items.append({
+            "item": "Case screws",
+            "qty": len(screws),
+            "part": "2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",
+            "description": "through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot)",
+            "source": "any",
+        })
+    snap_note = " (snap-fit, no screws)" if not screws else ""
+    items.append({
+        "item": f"Case base{snap_note}",
+        "qty": 1,
+        "part": "enclosure/base.stl",
+        "description": "PETG or ASA, 0.2 mm layers, rail channel face down",
+        "source": "printed",
+    })
+    items.append({
+        "item": f"Case cover{snap_note}",
+        "qty": 1,
+        "part": "enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)",
+        "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)",
+        "source": "printed",
+    })
+    return items
+
+
+def sync_assembly_parts(variant, spec):
+    target = (common.REPO_ROOT / "hardware/circuits/variants/v3/assembly_parts.yaml"
+              if variant == "v3" else common.REPO_ROOT / "hardware/product/assembly_parts.yaml")
+    header = ("# Automatically generated by hardware/scripts/gen_circuits.py from parts.json + spec.yaml.\n"
+              "# Copied by hardware/scripts/release.py into the release as assembly_parts.csv.\n")
+    target.write_text(header + yaml.safe_dump(collect_assembly_parts(variant, spec), sort_keys=False))
+
+
 def main():
     spec = load_spec()
     variant = spec["active_variant"]
@@ -116,6 +279,7 @@ def main():
     logs = {name: generate_board(variant, name, module.build, module.NET_CLASSES)
             for name, module in modules.items()}
     write_derived({name: module.NET_CLASSES for name, module in modules.items()})
+    sync_assembly_parts(variant, spec)
 
     erc_errors = 0
     netlist_errors = 0
