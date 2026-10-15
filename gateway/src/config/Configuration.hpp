@@ -21,6 +21,17 @@ struct SwitchOn {
     dali::ArcLevel fixed = *dali::ArcLevel::from(dali::ArcLevel::maximum);
 };
 
+// Per-channel DT6 ballast operating limits & fade curve (IEC 62386-102).
+// 0xFF in fade_time / fade_rate means "keep existing ballast setting".
+struct BallastParameters {
+    std::uint8_t min_level = 1;               // DALI arc 1..254
+    std::uint8_t max_level = 254;             // DALI arc 1..254
+    std::uint8_t power_on_level = 254;        // DALI arc 0..254 or 255 (MASK / last level)
+    std::uint8_t system_failure_level = 254;  // DALI arc 0..254 or 255 (MASK / no change)
+    std::uint8_t fade_time = 0xFF;            // 0..15 or 0xFF (keep)
+    std::uint8_t fade_rate = 0xFF;            // 1..15 or 0xFF (keep)
+};
+
 // DALI-2 input channel: the IEC 62386-103 control device short address and
 // instance the channel binds to, the declared instance type, and the
 // type-specific behaviour parameters.
@@ -50,10 +61,13 @@ struct InputChannel {
     std::uint8_t threshold = 0;  // illuminance send threshold %; 0 = every event
 };
 
-// ETS parameter set: per-channel switch-on policy and DALI group membership
-// (bit g = member of group g), plus group and broadcast switch-on policies.
+// ETS parameter set: per-channel switch-on policy, DT6 ballast limits/fade,
+// and DALI group membership (bit g = member of group g), plus group and
+// broadcast switch-on policies and internal DALI PSU enable.
 struct Configuration {
+    bool internal_dali_psu_enabled = true;
     std::array<SwitchOn, dali::ShortAddress::capacity> channels{};
+    std::array<BallastParameters, dali::ShortAddress::capacity> ballasts{};
     std::array<std::uint16_t, dali::ShortAddress::capacity> group_masks{};
     std::array<SwitchOn, dali::Group::capacity> groups{};
     SwitchOn broadcast{};
@@ -68,4 +82,4 @@ Configuration default_configuration() noexcept;
 // Out-of-range or invalid values fall back to that field's default.
 Configuration parse_configuration(const std::uint8_t* parameters, std::size_t size) noexcept;
 
-}
+}  // namespace gateway::config

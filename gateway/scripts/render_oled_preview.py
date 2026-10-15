@@ -18,42 +18,54 @@ using namespace gateway::diagnostics;
 
 int main() {
     OledSystemState st{};
-    st.knx_individual_address = (1U << 12U) | (1U << 8U) | 20U; // 1.1.20
-    st.knx_configured = true;
+    st.knx_individual_address = (15U << 12U) | (15U << 8U) | 255U; // 15.15.255 max KNX IA
     st.knx_prog_mode = false;
     st.knx_bus_ok = true;
+    st.dali_bus_ok = true;
     st.dali_psu_enabled = true;
-    st.present_gear_count = 18;
-    st.active_lamp_count = 12;
-    st.faulty_gear_count = 1;
-    st.input_device_count = 4;
-    st.average_brightness_pct = 68;
-    st.last_scene = 2;
-    for (unsigned i = 0; i < 18; ++i) {
+    st.present_gear_count = 27;
+    st.active_lamp_count = 4;
+    st.faulty_gear_count = 15;
+    st.lamp_power_watts = 58;
+    st.bus_current_ma = 64;
+    for (unsigned i = 0; i < 27; ++i) {
         st.gear_present.set(i);
-        if (i % 3 != 0) st.gear_on.set(i);
     }
-    st.gear_faulty.set(7);
-    const std::uint8_t grp[16] = {254, 200, 140, 90, 0, 220, 180, 0, 110, 60, 0, 254, 128, 0, 45, 0};
-    for (unsigned g = 0; g < 16; ++g) st.group_levels[g] = grp[g];
+    st.gear_on.set(0);
+    st.gear_on.set(2);
+    st.gear_on.set(5);
+    st.gear_on.set(11);
+    const unsigned fault_addrs[15] = {0, 7, 14, 16, 18, 20, 21, 22, 24, 26, 30, 35, 42, 50, 55};
+    for (unsigned f : fault_addrs) {
+        st.gear_faulty.set(f);
+    }
     st.wifi_state = WifiState::Connected;
-    st.wifi_rssi_dbm = -61;
-    std::snprintf(st.ipv4.data(), st.ipv4.size(), "192.168.1.42");
-    std::snprintf(st.ssid.data(), st.ssid.size(), "Home-IoT-24G");
+    st.wifi_rssi_dbm = -58;
+    std::snprintf(st.ipv4.data(), st.ipv4.size(), "255.255.255.255");
+    std::snprintf(st.chip_id.data(), st.chip_id.size(), "f5aa11f");
     st.mqtt_connected = true;
-    st.ha_discovery_enabled = true;
-    st.ws_clients = 2;
-    st.dali_tx_frames = 14820;
-    st.dali_collisions = 1;
-    st.logged_errors = 2;
+    st.logged_errors = 15;
     st.last_error_code = ErrorCode::DaliLampFailure;
     st.last_error_address = 7;
+    st.recent_error_count = 9;
+    st.recent_errors[0] = {ErrorCode::DaliLampFailure, 7};
+    st.recent_errors[1] = {ErrorCode::DaliGearFailure, 14};
+    st.recent_errors[2] = {ErrorCode::DaliReplyTimeout, 3};
+    st.recent_errors[3] = {ErrorCode::DaliFrameCollision, 0xFFFF};
+    st.recent_errors[4] = {ErrorCode::DaliLampFailure, 21};
+    st.recent_errors[5] = {ErrorCode::KnxBusPowerLoss, 0xFFFF};
+    st.recent_errors[6] = {ErrorCode::DaliLampFailure, 30};
+    st.recent_errors[7] = {ErrorCode::DaliGearFailure, 42};
+    st.recent_errors[8] = {ErrorCode::DaliReplyTimeout, 55};
     st.uptime_seconds = 14 * 86400 + 6 * 3600 + 22 * 60;
 
-    auto dump = [&](const char* id, OledGeometry geom, OledPage page, const OledSystemState& s) {
+    auto dump = [&](const char* id, OledGeometry geom, OledPage page, const OledSystemState& s, std::uint32_t t = 100) {
         OledDisplay disp(geom);
-        disp.set_page(page, 100);
-        disp.render(s, 100);
+        disp.render(s, t);
+        if (!s.lamp_finder_active) {
+            disp.set_page(page, t);
+        }
+        disp.render(s, t);
         std::printf("SCREEN %s %u %u\n", id, disp.width(), disp.height());
         for (unsigned y = 0; y < disp.height(); ++y) {
             for (unsigned x = 0; x < disp.width(); ++x) {
@@ -63,23 +75,44 @@ int main() {
         }
     };
 
-    const OledPage pages[5] = {
-        OledPage::Overview, OledPage::DaliMatrix, OledPage::GroupsScenes,
-        OledPage::NetworkHa, OledPage::Diagnostics
-    };
-    const char* names[5] = {"overview", "matrix", "groups", "network", "diagnostics"};
-    for (int i = 0; i < 5; ++i) {
-        char id64[32], id64p[32];
-        std::snprintf(id64, sizeof(id64), "64_%s", names[i]);
-        std::snprintf(id64p, sizeof(id64p), "64p_%s", names[i]);
-        dump(id64, OledGeometry::Oled128x64, pages[i], st);
-        dump(id64p, OledGeometry::Oled64x128, pages[i], st);
-    }
+    OledSystemState map_st = st;
+    map_st.gear_faulty.reset();
+    map_st.gear_faulty.set(7);
+    map_st.gear_faulty.set(14);
+    map_st.faulty_gear_count = 2;
+
+    dump("64_overview", OledGeometry::Oled128x64, OledPage::Overview, st);
+    dump("64p_overview", OledGeometry::Oled64x128, OledPage::Overview, st);
+    dump("64_matrix", OledGeometry::Oled128x64, OledPage::DaliMatrix, map_st);
+    dump("64p_matrix", OledGeometry::Oled64x128, OledPage::DaliMatrix, map_st);
+    dump("64_errors", OledGeometry::Oled128x64, OledPage::Errors, st);
+    dump("64p_errors", OledGeometry::Oled64x128, OledPage::Errors, st);
+    dump("64_info", OledGeometry::Oled128x64, OledPage::DeviceInfo, st);
+    dump("64p_info", OledGeometry::Oled64x128, OledPage::DeviceInfo, st);
+
+    OledSystemState no_wifi = map_st;
+    no_wifi.wifi_state = WifiState::Off;
+    no_wifi.mqtt_connected = false;
+    no_wifi.gear_faulty.reset();
+    no_wifi.faulty_gear_count = 0;
+    no_wifi.last_error_code = ErrorCode::None;
+    dump("64_wifi_idle", OledGeometry::Oled128x64, OledPage::Overview, no_wifi);
+    dump("64p_wifi_idle", OledGeometry::Oled64x128, OledPage::Overview, no_wifi);
+
+    OledSystemState wifi_ap = st;
+    wifi_ap.wifi_state = WifiState::Setup;
+    dump("64_modal_wifi", OledGeometry::Oled128x64, OledPage::Overview, wifi_ap);
+    dump("64p_modal_wifi", OledGeometry::Oled64x128, OledPage::Overview, wifi_ap);
 
     OledSystemState prog = st;
     prog.knx_prog_mode = true;
     dump("64_modal_prog", OledGeometry::Oled128x64, OledPage::Overview, prog);
     dump("64p_modal_prog", OledGeometry::Oled64x128, OledPage::Overview, prog);
+
+    OledSystemState shorted = st;
+    shorted.dali_psu_short_tripped = true;
+    dump("64_modal_short", OledGeometry::Oled128x64, OledPage::Overview, shorted);
+    dump("64p_modal_short", OledGeometry::Oled64x128, OledPage::Overview, shorted);
     return 0;
 }
 """
@@ -120,55 +153,58 @@ def main() -> None:
             idx += 1
 
     titles = [
-        ("overview", "Page 1 — Bus &amp; System Overview"),
-        ("matrix", "Page 2 — 64-Channel DALI Lamp Matrix"),
-        ("groups", "Page 3 — 16 DALI Groups Bar Chart &amp; Scene"),
-        ("network", "Page 4 — WiFi, MQTT &amp; Home Assistant"),
-        ("diagnostics", "Page 5 — Diagnostics &amp; Latest Error Log"),
-        ("modal_prog", "Modal Alert — KNX Programming Mode"),
+        ("overview", "Page 1 — WiFi Connected (Max IP 255.255.255.255 + 15 Errors)"),
+        ("wifi_idle", "Page 1 — No WiFi Connected (Inline 'NO WIFI: HOLD FUNC 5S' + 0 Errors)"),
+        ("matrix", "Page 2 — Full 64-Ballast Map (Solid=ON, Box=OFF, [X]=ERR, Dot=FREE)"),
+        ("errors", "Page 3 — Recent Error Log (5x7 Header + Dense 3x5 Body, Newest First)"),
+        ("info", "Page 4 — Device Info (KNX, ON, PWR W, BUS mA, Uptime)"),
+        ("modal_wifi", "Auto-Wake Modal — WiFi Setup Portal Active (After Holding FUNC 5s)"),
+        ("modal_prog", "Auto-Wake Modal — KNX Programming Mode (Max KNX: 15.15.255)"),
+        ("modal_short", "Auto-Wake Modal — DALI Bus Short Latched Off"),
     ]
 
-    scale = 1.8
-    w128 = int(128 * scale)
-    w64 = int(64 * scale)
-    pair_w = w128 + 18 + w64 + 34
-    total_w = 24 + pair_w * 2
-    row_h = int(128 * scale) + 48
-    total_h = 74 + 3 * row_h
+    scale = 3
+    px_size = 2.85
+    w128 = 128 * scale
+    w64 = 64 * scale
+    pair_w = w128 + 24 + w64 + 40
+    total_w = 28 + pair_w * 2
+    row_h = 128 * scale + 56
+    total_h = 80 + 4 * row_h
 
     svg = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total_w} {total_h}" width="{total_w}" height="{total_h}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total_w} {total_h}" width="{total_w}" height="{total_h}" shape-rendering="crispEdges">',
         '<rect width="100%" height="100%" fill="#0f141c"/>',
         (
-            '<text x="24" y="28" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">'
-            "KNX-DALI Gateway Front-Panel 0.96&quot; OLED Screens — V1/V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>"
+            '<text x="28" y="30" fill="#e6edf3" font-family="monospace" font-size="16" font-weight="bold">'
+            'KNX-DALI Gateway 0.96" OLED Screens — V1/V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>'
         ),
         (
-            '<text x="24" y="48" fill="#8b949e" font-family="monospace" font-size="11">'
-            'Each pair: Left = V1/V2 128x64 Landscape (0.96" Winstar WEA012864D) | Right = V3 64x128 Portrait (0.96" 14x28mm)</text>'
+            '<text x="28" y="52" fill="#8b949e" font-family="monospace" font-size="12">'
+            'Compiled from gateway/src/device/OledDisplay.cpp | Dot-and-Bar Pagination | 2-Line IP on V3 | Right-Aligned Info Col 2</text>'
         ),
     ]
 
     for idx_t, (key, label) in enumerate(titles):
         grid_col = idx_t % 2
         grid_row = idx_t // 2
-        base_x = 24 + grid_col * pair_w
-        base_y = 68 + grid_row * row_h
+        base_x = 28 + grid_col * pair_w
+        base_y = 74 + grid_row * row_h
         svg.append(
-            f'<text x="{base_x}" y="{base_y + 12}" fill="#c9d1d9" font-family="monospace" font-size="11" font-weight="bold">{label}</text>'
+            f'<text x="{base_x}" y="{base_y + 14}" fill="#c9d1d9" font-family="monospace" font-size="11.5" font-weight="bold">{label}</text>'
         )
-        for prefix, dx, color in [("64", 0, "#38bdf8"), ("64p", w128 + 18, "#4ade80")]:
+        for prefix, dx, color in [("64", 0, "#38bdf8"), ("64p", w128 + 24, "#4ade80")]:
             w, h, rows = screens[f"{prefix}_{key}"]
             bx = base_x + dx
-            by = base_y + 22 + int(((128 - h) * scale) // 2)
+            by = base_y + 26 + ((128 - h) * scale) // 2
             svg.append(
-                f'<rect x="{bx - 3}" y="{by - 3}" width="{w * scale + 6:.1f}" height="{h * scale + 6:.1f}" rx="4" fill="#05070a" stroke="#30363d" stroke-width="1.5"/>'
+                f'<rect x="{bx - 4}" y="{by - 4}" width="{w * scale + 8}" height="{h * scale + 8}" rx="4" fill="#05070a" stroke="#30363d" stroke-width="2"/>'
             )
             for py, r in enumerate(rows):
                 for px, ch in enumerate(r):
                     if ch == "#":
                         svg.append(
-                            f'<rect x="{bx + px * scale:.2f}" y="{by + py * scale:.2f}" width="{scale - 0.2:.2f}" height="{scale - 0.2:.2f}" fill="{color}"/>'
+                            f'<rect x="{bx + px * scale}" y="{by + py * scale}" width="{px_size}" height="{px_size}" fill="{color}"/>'
                         )
 
     svg.append("</svg>")

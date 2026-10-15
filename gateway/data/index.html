@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KNX-DALI Gateway — Console &amp; Diagnostics</title>
-  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <header class="topbar">
@@ -46,7 +46,7 @@
           <div class="front-panel-wrap">
             <div class="oled-bezel">
               <canvas id="oled-canvas" width="128" height="64"></canvas>
-              <div class="oled-caption" id="oled-meta">SSD1306 128×32 • Page 1/5</div>
+              <div class="oled-caption" id="oled-meta">SSD1306 128×64 • Page 1/3</div>
             </div>
             <div class="leds-column">
               <div class="led-item"><span class="led-dot" id="led-0"></span><span>D1 STATUS</span></div>
@@ -71,12 +71,51 @@
               <span class="mono" id="bcast-level-val">254</span>
             </div>
             <div class="control-row">
-              <span class="label">Broadcast CCT (K):</span>
-              <input type="range" min="2000" max="6500" step="50" value="4000" id="bcast-cct"
+              <span class="label">Broadcast CCT / RGB:</span>
+              <input type="range" min="2000" max="6500" step="50" value="4000" id="bcast-cct" class="cct-range"
                 onchange="sendCmd({action:'set_cct',target:'broadcast',kelvin:Number(this.value)})">
               <span class="mono" id="bcast-cct-val">4000K</span>
+              <input type="color" value="#ffaa44" id="bcast-rgb" title="Broadcast DT8 RGB Colour"
+                onchange="sendHexRgb('broadcast',0,this.value)">
             </div>
             <div class="scenes-bar" id="scenes-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2>DALI Power, Bus Current &amp; Energy Monitor (REM3-2415S/A/CTRL + IEC 62386-102/252)</h2>
+            <p class="muted">Monitors the isolated 16 V / 250 mA DALI bus supply, short-circuit protection latch, and logarithmic lighting power across all 64 ballasts.</p>
+          </div>
+          <div class="inline-controls">
+            <span class="muted" style="font-size:12px">Nominal Fixture Wattage (W):</span>
+            <input type="number" id="nominal-watts" min="1" max="200" value="15" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
+            <button class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU</button>
+          </div>
+        </div>
+        <div class="power-metrics-grid">
+          <div class="metric-box">
+            <span class="metric-label">DALI Bus Supply (REM3)</span>
+            <span class="metric-value" id="pwr-psu-state">16.0 V ACTIVE</span>
+            <span class="metric-sub" id="pwr-psu-sub">Short-circuit protection armed (&gt;80 ms cutoff)</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">DALI Bus Current Budget (Max 250 mA)</span>
+            <span class="metric-value" id="pwr-bus-ma">0 mA / 250 mA</span>
+            <div class="progress-wrap" style="margin-top:6px"><div class="progress-bar" id="pwr-bus-bar" style="width:0%"></div></div>
+            <span class="metric-sub" id="pwr-bus-sub">0 gear (2 mA ea) + 0 sensors (5 mA ea)</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Active Lighting Power (IEC 62386 Curve)</span>
+            <span class="metric-value" id="pwr-active-w">0.0 W</span>
+            <span class="metric-sub" id="pwr-standby-w">Standby draw: 0.0 W (0.4 W/driver)</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Est. Daily Consumption &amp; Bus Health</span>
+            <span class="metric-value" id="pwr-daily-kwh">0.00 kWh/d</span>
+            <span class="metric-sub" id="pwr-bus-health">TX: 0 frames • Collisions: 0</span>
           </div>
         </div>
       </div>
@@ -128,7 +167,7 @@
             </label>
             <label class="field-check">
               <input type="checkbox" id="cfg-ap-fallback" checked>
-              <span>Enable SoftAP Setup Portal Fallback (SSID: <code>KNX-DALI-Setup</code>)</span>
+              <span>Enable SoftAP Setup Portal Fallback (SSID: <code id="cfg-ap-ssid-preview">KNX-DALI-SETUP-f5aa11f</code>)</span>
             </label>
             <label class="field-check">
               <input type="checkbox" id="cfg-wifi-ps" checked>
@@ -143,7 +182,7 @@
               <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="WPA2/WPA3 Password">
             </div>
             <div class="field">
-              <span>Device Hostname</span>
+              <span>Device Hostname / Unique Node Prefix (Chip ID <code id="cfg-chip-id-preview">f5aa11f</code> is appended automatically in MQTT/HA)</span>
               <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
             </div>
 
@@ -432,6 +471,6 @@
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -37,6 +37,24 @@
               <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%ColourControl" ParameterType="%AID%_PT-ColourControl" Text="Colour control" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
               </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%004" Name="f%C%MinLevel" ParameterType="%AID%_PT-Percent" Text="DT6 minimum brightness limit" SuffixText="%" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="5" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%005" Name="f%C%MaxLevel" ParameterType="%AID%_PT-Percent" Text="DT6 maximum brightness limit" SuffixText="%" Value="100">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="6" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%006" Name="f%C%PowerOnLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="DT6 ballast power-on level (0=Off, 1..100%, 101=Last)" Value="100">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="7" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%007" Name="f%C%SysFailLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="DT6 ballast system-failure level (0=Off, 1..100%, 101=No change)" Value="100">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="8" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%008" Name="f%C%FadeTime" ParameterType="%AID%_PT-FadeTime" Text="DT6 ballast fade time (IEC 62386-102 Table 15)" Value="255">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="9" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%009" Name="f%C%FadeRate" ParameterType="%AID%_PT-FadeRate" Text="DT6 ballast fade rate (IEC 62386-102 Table 16)" Value="255">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="10" BitOffset="0" />
+              </Parameter>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
@@ -58,6 +76,12 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%115_R-%TT%%CC%11501" RefId="%AID%_UP-%TT%%CC%115" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%116_R-%TT%%CC%11601" RefId="%AID%_UP-%TT%%CC%116" />
               <ParameterRef Id="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_P-%TT%%CC%003" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_P-%TT%%CC%004" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_P-%TT%%CC%005" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_P-%TT%%CC%006" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_P-%TT%%CC%007" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_P-%TT%%CC%008" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_P-%TT%%CC%009" />
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"           Number="%K0%" Text="Channel %C%: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
@@ -121,6 +145,12 @@
                 <ParameterRefRef RefId="%AID%_UP-%TT%%CC%115_R-%TT%%CC%11501" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%%CC%116_R-%TT%%CC%11601" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%007_R-%TT%%CC%00701" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" />
+                <ParameterRefRef RefId="%AID%_P-%TT%%CC%009_R-%TT%%CC%00901" />
                 <choose>
                   <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 != 255">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />

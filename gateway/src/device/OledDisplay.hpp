@@ -15,52 +15,57 @@ namespace gateway::device {
 enum class OledGeometry : std::uint8_t {
     Auto = 0,
     Oled128x64 = 1,  // V1 / V2: Winstar WEA012864D (0.96" 128x64 landscape SSD1306)
-    Oled64x128 = 2,  // V3: 0.96" 64x128 portrait (14.0x28.0mm SSD1312 / SH1107)
+    Oled64x128 = 2,  // V3: 0.96" 64x128 portrait (14.0x28.0mm SSD1312)
     Disabled = 3
 };
 
 enum class OledPage : std::uint8_t {
     Overview = 0,
     DaliMatrix = 1,
-    GroupsScenes = 2,
-    NetworkHa = 3,
-    Diagnostics = 4
+    Errors = 2,
+    DeviceInfo = 3
 };
 
-inline constexpr std::size_t oled_page_count = 5;
+inline constexpr std::size_t oled_page_count = 4;
 inline constexpr std::size_t oled_width = 128;
 inline constexpr std::size_t oled_max_height = 64;
 inline constexpr std::size_t oled_max_pages = oled_max_height / 8;
 inline constexpr std::size_t oled_buffer_size = oled_width * oled_max_pages;  // 1024 bytes
+inline constexpr std::size_t oled_max_recent_errors = 10;
+
+struct OledErrorLine {
+    diagnostics::ErrorCode code = diagnostics::ErrorCode::None;
+    std::uint16_t address = 0xFFFF;  // 0..63 = ballast A00..A63, 0xFFFF = system/bus
+};
 
 struct OledSystemState {
     std::uint16_t knx_individual_address = 0xFFFF;
-    bool knx_configured = false;
     bool knx_prog_mode = false;
     bool knx_bus_ok = true;
+    bool dali_bus_ok = true;
     bool dali_psu_enabled = true;
+    bool dali_psu_short_tripped = false;
+    bool lamp_finder_active = false;
+    std::uint8_t lamp_finder_channel = 0;
+    bool lamp_finder_smooth = false;
     std::uint8_t present_gear_count = 0;
     std::uint8_t active_lamp_count = 0;
     std::uint8_t faulty_gear_count = 0;
-    std::uint8_t input_device_count = 0;
-    std::uint8_t average_brightness_pct = 0;
-    std::uint8_t last_scene = 0xFF;
-    std::bitset<64> gear_present{};
-    std::bitset<64> gear_on{};
-    std::bitset<64> gear_faulty{};
-    std::array<std::uint8_t, 16> group_levels{};
+    std::uint16_t lamp_power_watts = 0;
+    std::uint16_t bus_current_ma = 0;
+    std::bitset<64> gear_present;
+    std::bitset<64> gear_on;
+    std::bitset<64> gear_faulty;
     WifiState wifi_state = WifiState::Off;
     std::int8_t wifi_rssi_dbm = 0;
     std::array<char, 16> ipv4{"0.0.0.0"};
-    std::array<char, 24> ssid{"-"};
+    std::array<char, 12> chip_id{"f5aa11f"};
     bool mqtt_connected = false;
-    bool ha_discovery_enabled = false;
-    std::uint8_t ws_clients = 0;
-    std::uint32_t dali_tx_frames = 0;
-    std::uint32_t dali_collisions = 0;
     std::uint32_t logged_errors = 0;
     diagnostics::ErrorCode last_error_code = diagnostics::ErrorCode::None;
     std::uint16_t last_error_address = 0xFFFF;
+    std::uint8_t recent_error_count = 0;
+    std::array<OledErrorLine, oled_max_recent_errors> recent_errors{};
     std::uint32_t uptime_seconds = 0;
     commissioning::Phase comm_phase = commissioning::Phase::Idle;
     std::uint8_t comm_progress = 0;
@@ -79,6 +84,15 @@ public:
     void draw_rect(int x, int y, int w, int h, bool on = true) noexcept;
     void draw_char(int x, int y, char c, bool on = true) noexcept;
     void draw_text(int x, int y, const char* text, bool on = true) noexcept;
+    [[nodiscard]] int draw_char_medium(int x, int y, char c, bool on = true) noexcept;
+    void draw_text_medium(int x, int y, const char* text, bool on = true) noexcept;
+    [[nodiscard]] int measure_text_medium(const char* text) const noexcept;
+    void draw_text_medium_right(int right_x, int y, const char* text, bool on = true) noexcept;
+    void draw_char_small(int x, int y, char c, bool on = true) noexcept;
+    void draw_text_small(int x, int y, const char* text, bool on = true) noexcept;
+    void draw_wifi_icon(int x, int y, WifiState state, std::int8_t rssi_dbm, bool on = true) noexcept;
+    void draw_checkbox(int x, int y, bool checked, bool on = true) noexcept;
+    void draw_page_dots(int x, int y, unsigned page_num, unsigned total_pages, bool on = false) noexcept;
     [[nodiscard]] const std::array<std::uint8_t, oled_buffer_size>& buffer() const noexcept {
         return buffer_;
     }
@@ -100,8 +114,8 @@ public:
     [[nodiscard]] virtual std::uint8_t ssd1306_mux_ratio() const noexcept = 0;
     [[nodiscard]] virtual std::uint8_t ssd1306_com_pins() const noexcept = 0;
     virtual void render_modal(OledCanvas& canvas, const OledSystemState& state) const noexcept = 0;
-    virtual void render_page(OledCanvas& canvas, OledPage page,
-                             const OledSystemState& state) const noexcept = 0;
+    virtual void render_page(OledCanvas& canvas, OledPage page, const OledSystemState& state,
+                             std::uint32_t now_ms) const noexcept = 0;
 };
 
 [[nodiscard]] const OledLayoutStrategy& select_oled_strategy(OledGeometry geometry) noexcept;
@@ -141,7 +155,9 @@ private:
     OledPage page_ = OledPage::Overview;
     std::uint32_t last_wake_ms_ = 0;
     std::uint32_t sleep_timeout_ms_ = default_sleep_timeout_ms;
+    std::bitset<64> prev_faulty_;
+    diagnostics::ErrorCode prev_error_code_ = diagnostics::ErrorCode::None;
     OledCanvas canvas_{};
 };
 
-}
+}  // namespace gateway::device

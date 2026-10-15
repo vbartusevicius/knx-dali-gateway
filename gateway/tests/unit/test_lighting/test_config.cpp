@@ -11,19 +11,25 @@ namespace {
 
 using gateway::config::Configuration;
 using gateway::config::SwitchOnPolicy;
-using gateway::dali::ArcLevel;
 
 static_assert(std::is_trivially_copyable_v<Configuration>);
 
 std::array<std::uint8_t, MAIN_ParameterSize> parameters() {
     std::array<std::uint8_t, MAIN_ParameterSize> buffer{};
-    // Valid defaults: mode 0 (last level), 100 %, no memberships.
+    // Valid defaults: mode 0 (last level), 100 %, no memberships, internal PSU enabled.
     buffer[CH_BcSwitchOnMode] = 0;
     buffer[CH_BcFixedLevel] = 100;
+    buffer[CH_InternalDaliPsu] = 1;
     for (unsigned channel = 0; channel < CH_ChannelCount; ++channel) {
         const auto offset = CH_ParamBlockOffset + channel * CH_ParamBlockSize;
         buffer[offset + CH_fSwitchOnMode] = 0;
         buffer[offset + CH_fFixedLevel] = 100;
+        buffer[offset + CH_fMinLevel] = 1;
+        buffer[offset + CH_fMaxLevel] = 100;
+        buffer[offset + CH_fPowerOnLevel] = 100;
+        buffer[offset + CH_fSysFailLevel] = 100;
+        buffer[offset + CH_fFadeTime] = 255;
+        buffer[offset + CH_fFadeRate] = 255;
     }
     for (unsigned group = 0; group < GR_ChannelCount; ++group) {
         const auto offset = GR_ParamBlockOffset + group * GR_ParamBlockSize;
@@ -174,7 +180,27 @@ void test_out_of_range_percent_falls_back_to_default_level() {
     TEST_ASSERT_EQUAL_UINT8(254, config.channels[2].fixed.value());
 }
 
+void test_parse_dt6_ballast_limits_fade_and_psu_mode() {
+    auto buffer = parameters();
+    buffer[CH_InternalDaliPsu] = 0;  // external DALI PSU
+    const auto offset = CH_ParamBlockOffset + 3 * CH_ParamBlockSize;
+    buffer[offset + CH_fMinLevel] = 10;
+    buffer[offset + CH_fMaxLevel] = 80;
+    buffer[offset + CH_fPowerOnLevel] = 101;  // 101 = MASK (last level)
+    buffer[offset + CH_fSysFailLevel] = 0;    // 0 = Off
+    buffer[offset + CH_fFadeTime] = 4;        // 2.0 s
+    buffer[offset + CH_fFadeRate] = 7;        // 44.7 steps/s
+    const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
+    TEST_ASSERT_FALSE(config.internal_dali_psu_enabled);
+    TEST_ASSERT_EQUAL_UINT8(gateway::knx::arc_from_scaling(26).value(), config.ballasts[3].min_level);
+    TEST_ASSERT_EQUAL_UINT8(gateway::knx::arc_from_scaling(204).value(), config.ballasts[3].max_level);
+    TEST_ASSERT_EQUAL_UINT8(0xFF, config.ballasts[3].power_on_level);
+    TEST_ASSERT_EQUAL_UINT8(0, config.ballasts[3].system_failure_level);
+    TEST_ASSERT_EQUAL_UINT8(4, config.ballasts[3].fade_time);
+    TEST_ASSERT_EQUAL_UINT8(7, config.ballasts[3].fade_rate);
 }
+
+}  // namespace
 
 void run_config_tests() {
     UnitySetTestFile(__FILE__);
@@ -188,4 +214,5 @@ void run_config_tests() {
     RUN_TEST(test_parse_input_channel_block);
     RUN_TEST(test_invalid_input_values_fall_back_to_defaults);
     RUN_TEST(test_out_of_range_percent_falls_back_to_default_level);
+    RUN_TEST(test_parse_dt6_ballast_limits_fade_and_psu_mode);
 }

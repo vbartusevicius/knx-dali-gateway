@@ -148,6 +148,23 @@ ControlResult LightingService::reconcile_groups(dali::ShortAddress address) {
             failed = status;
         }
     }
+    const auto& bp = config_.ballasts[address.value()];
+    const bool has_custom_dt6 =
+        (bp.min_level != 1U || bp.max_level != 254U || bp.power_on_level != 254U ||
+         bp.system_failure_level != 254U || bp.fade_time != 0xFFU || bp.fade_rate != 0xFFU);
+    if (failed == dali::TransportStatus::Ok && has_custom_dt6) {
+        GearConfig gcfg{};
+        gcfg.min_level = bp.min_level != 1U ? bp.min_level : 0xFFU;
+        gcfg.max_level = bp.max_level != 254U ? bp.max_level : 0xFFU;
+        gcfg.power_on_level = bp.power_on_level != 254U ? bp.power_on_level : 0xFFU;
+        gcfg.system_failure_level = bp.system_failure_level != 254U ? bp.system_failure_level : 0xFFU;
+        gcfg.fade_time = bp.fade_time;
+        gcfg.fade_rate = bp.fade_rate;
+        const auto dt6_res = configure_gear(address, gcfg);
+        if (dt6_res.error != ControlError::None) {
+            failed = dt6_res.transport_status;
+        }
+    }
     return {failed == dali::TransportStatus::Ok ? ControlError::None : ControlError::TransportFailure,
             failed,
             channel_states_[address.value()],

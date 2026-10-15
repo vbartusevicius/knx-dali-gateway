@@ -33,6 +33,9 @@ static_assert(std::is_trivially_copyable_v<NetworkConfig>, "NetworkConfig persis
 
 [[nodiscard]] NetworkConfig default_network_config() noexcept;
 void sanitize_network_config(NetworkConfig& cfg) noexcept;
+void format_unique_ap_ssid(const char* chip_id, char* out, std::size_t out_size) noexcept;
+void format_unique_node_id(const char* base_name, const char* chip_id, char* out,
+                           std::size_t out_size) noexcept;
 
 class ReconnectBackoff final {
 public:

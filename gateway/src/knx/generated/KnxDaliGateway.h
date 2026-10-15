@@ -13,7 +13,7 @@
 #define MAIN_ApplicationNumber 90
 #define MAIN_ApplicationVersion 1
 #define MAIN_ApplicationEncoding iso-8859-15
-#define MAIN_ParameterSize 564
+#define MAIN_ParameterSize 949
 #define MAIN_MaxKoNumber 1321
 #define MAIN_OrderNumber "0xFF5A"
 // Parameter with single occurrence
@@ -23,6 +23,7 @@
 #define CH_BcSwitchOnMode                       1      // 8 Bits, Bit 7-0
 #define CH_BcFixedLevel                         2      // uint8_t
 #define CH_DaliChannel                          3      // uint8_t
+#define CH_InternalDaliPsu                      4      // 8 Bits, Bit 7-0
 
 // Startup delay
 #define ParamCH_StartupDelay                        (knx.paramByte(CH_StartupDelay))
@@ -32,6 +33,8 @@
 #define ParamCH_BcFixedLevel                        (knx.paramByte(CH_BcFixedLevel))
 // DALI channel
 #define ParamCH_DaliChannel                         (knx.paramByte(CH_DaliChannel))
+// Internal DALI bus power supply (REM3 16 V / 250 mA)
+#define ParamCH_InternalDaliPsu                     (knx.paramByte(CH_InternalDaliPsu))
 
 #define CH_KoBcSwitch 1185
 #define CH_KoBcBrightness 1186
@@ -65,8 +68,8 @@
 #define CH_ChannelCount 64
 
 // Parameter per channel
-#define CH_ParamBlockOffset 4
-#define CH_ParamBlockSize 5
+#define CH_ParamBlockOffset 5
+#define CH_ParamBlockSize 11
 #define CH_ParamCalcIndex(index) (index + CH_ParamBlockOffset + _channelIndex * CH_ParamBlockSize)
 
 #define CH_fSwitchOnMode                        0      // 8 Bits, Bit 7-0
@@ -120,6 +123,12 @@
 #define     CH_fGroup16Mask 0x80
 #define     CH_fGroup16Shift 7
 #define CH_fColourControl                       4      // 8 Bits, Bit 7-0
+#define CH_fMinLevel                            5      // uint8_t
+#define CH_fMaxLevel                            6      // uint8_t
+#define CH_fPowerOnLevel                        7      // uint8_t
+#define CH_fSysFailLevel                        8      // uint8_t
+#define CH_fFadeTime                            9      // 8 Bits, Bit 7-0
+#define CH_fFadeRate                           10      // 8 Bits, Bit 7-0
 
 // Switch-on level
 #define ParamCH_fSwitchOnMode                       (knx.paramByte(CH_ParamCalcIndex(CH_fSwitchOnMode)))
@@ -159,6 +168,18 @@
 #define ParamCH_fGroup16                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup16)) & CH_fGroup16Mask))
 // Colour control
 #define ParamCH_fColourControl                      (knx.paramByte(CH_ParamCalcIndex(CH_fColourControl)))
+// DT6 minimum brightness limit
+#define ParamCH_fMinLevel                           (knx.paramByte(CH_ParamCalcIndex(CH_fMinLevel)))
+// DT6 maximum brightness limit
+#define ParamCH_fMaxLevel                           (knx.paramByte(CH_ParamCalcIndex(CH_fMaxLevel)))
+// DT6 ballast power-on level (0=Off, 1..100%, 101=Last)
+#define ParamCH_fPowerOnLevel                       (knx.paramByte(CH_ParamCalcIndex(CH_fPowerOnLevel)))
+// DT6 ballast system-failure level (0=Off, 1..100%, 101=No change)
+#define ParamCH_fSysFailLevel                       (knx.paramByte(CH_ParamCalcIndex(CH_fSysFailLevel)))
+// DT6 ballast fade time (IEC 62386-102 Table 15)
+#define ParamCH_fFadeTime                           (knx.paramByte(CH_ParamCalcIndex(CH_fFadeTime)))
+// DT6 ballast fade rate (IEC 62386-102 Table 16)
+#define ParamCH_fFadeRate                           (knx.paramByte(CH_ParamCalcIndex(CH_fFadeRate)))
 
 // deprecated
 #define CH_KoOffset 1
@@ -221,7 +242,7 @@
 #define GR_ChannelCount 16
 
 // Parameter per channel
-#define GR_ParamBlockOffset 324
+#define GR_ParamBlockOffset 709
 #define GR_ParamBlockSize 3
 #define GR_ParamCalcIndex(index) (index + GR_ParamBlockOffset + _channelIndex * GR_ParamBlockSize)
 
@@ -294,7 +315,7 @@
 #define IN_ChannelCount 32
 
 // Parameter per channel
-#define IN_ParamBlockOffset 372
+#define IN_ParamBlockOffset 757
 #define IN_ParamBlockSize 6
 #define IN_ParamCalcIndex(index) (index + IN_ParamBlockOffset + _channelIndex * IN_ParamBlockSize)
 

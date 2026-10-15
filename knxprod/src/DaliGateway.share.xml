@@ -62,6 +62,56 @@
               <ParameterType Id="%AID%_PT-ThresholdPercent" Name="ThresholdPercent">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-DaliSupplyMode" Name="DaliSupplyMode">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="Disabled (external DALI bus power supply)" Value="0" />
+                  <Enumeration Id="%ENID%" Text="Enabled (internal 16 V / 250 mA REM3 supply)" Value="1" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SpecialLevelPercent" Name="SpecialLevelPercent">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="101" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-FadeTime" Name="FadeTime">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="Keep ballast setting (do not overwrite)" Value="255" />
+                  <Enumeration Id="%ENID%" Text="0 - No fade (&lt; 0.7 s)" Value="0" />
+                  <Enumeration Id="%ENID%" Text="1 - 0.7 s" Value="1" />
+                  <Enumeration Id="%ENID%" Text="2 - 1.0 s" Value="2" />
+                  <Enumeration Id="%ENID%" Text="3 - 1.4 s" Value="3" />
+                  <Enumeration Id="%ENID%" Text="4 - 2.0 s" Value="4" />
+                  <Enumeration Id="%ENID%" Text="5 - 2.8 s" Value="5" />
+                  <Enumeration Id="%ENID%" Text="6 - 4.0 s" Value="6" />
+                  <Enumeration Id="%ENID%" Text="7 - 5.7 s" Value="7" />
+                  <Enumeration Id="%ENID%" Text="8 - 8.0 s" Value="8" />
+                  <Enumeration Id="%ENID%" Text="9 - 11.3 s" Value="9" />
+                  <Enumeration Id="%ENID%" Text="10 - 16.0 s" Value="10" />
+                  <Enumeration Id="%ENID%" Text="11 - 22.6 s" Value="11" />
+                  <Enumeration Id="%ENID%" Text="12 - 32.0 s" Value="12" />
+                  <Enumeration Id="%ENID%" Text="13 - 45.3 s" Value="13" />
+                  <Enumeration Id="%ENID%" Text="14 - 64.0 s" Value="14" />
+                  <Enumeration Id="%ENID%" Text="15 - 90.5 s" Value="15" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-FadeRate" Name="FadeRate">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="Keep ballast setting (do not overwrite)" Value="255" />
+                  <Enumeration Id="%ENID%" Text="1 - 358 steps/s (0.7 s full)" Value="1" />
+                  <Enumeration Id="%ENID%" Text="2 - 253 steps/s (1.0 s full)" Value="2" />
+                  <Enumeration Id="%ENID%" Text="3 - 179 steps/s (1.4 s full)" Value="3" />
+                  <Enumeration Id="%ENID%" Text="4 - 127 steps/s (2.0 s full)" Value="4" />
+                  <Enumeration Id="%ENID%" Text="5 - 89.4 steps/s (2.8 s full)" Value="5" />
+                  <Enumeration Id="%ENID%" Text="6 - 63.3 steps/s (4.0 s full)" Value="6" />
+                  <Enumeration Id="%ENID%" Text="7 - 44.7 steps/s (5.7 s full)" Value="7" />
+                  <Enumeration Id="%ENID%" Text="8 - 31.6 steps/s (8.0 s full)" Value="8" />
+                  <Enumeration Id="%ENID%" Text="9 - 22.4 steps/s (11.3 s full)" Value="9" />
+                  <Enumeration Id="%ENID%" Text="10 - 15.8 steps/s (16.0 s full)" Value="10" />
+                  <Enumeration Id="%ENID%" Text="11 - 11.2 steps/s (22.6 s full)" Value="11" />
+                  <Enumeration Id="%ENID%" Text="12 - 7.9 steps/s (32.0 s full)" Value="12" />
+                  <Enumeration Id="%ENID%" Text="13 - 5.6 steps/s (45.3 s full)" Value="13" />
+                  <Enumeration Id="%ENID%" Text="14 - 4.0 steps/s (64.0 s full)" Value="14" />
+                  <Enumeration Id="%ENID%" Text="15 - 2.8 steps/s (90.5 s full)" Value="15" />
+                </TypeRestriction>
+              </ParameterType>
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00001" Name="StartupDelay" ParameterType="%AID%_PT-StartupDelay" Text="Startup delay" SuffixText="s" Value="0">
@@ -78,12 +128,16 @@
               <Parameter Id="%AID%_P-%TT%00004" Name="DaliChannel" ParameterType="%AID%_PT-DaliChannel" Text="DALI channel" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="3" BitOffset="0" />
               </Parameter>
+              <Parameter Id="%AID%_P-%TT%00005" Name="InternalDaliPsu" ParameterType="%AID%_PT-DaliSupplyMode" Text="Internal DALI bus power supply (REM3 16 V / 250 mA)" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
+              </Parameter>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
               <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" />
               <ParameterRef Id="%AID%_P-%TT%00003_R-%TT%0000301" RefId="%AID%_P-%TT%00003" />
               <ParameterRef Id="%AID%_P-%TT%00004_R-%TT%0000401" RefId="%AID%_P-%TT%00004" />
+              <ParameterRef Id="%AID%_P-%TT%00005_R-%TT%0000501" RefId="%AID%_P-%TT%00005" />
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%01185" Name="BcSwitch"          Number="1185" Text="Broadcast: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
@@ -115,6 +169,7 @@
             <ChannelIndependentBlock>
               <ParameterBlock Id="%AID%_PB-%TT%00001" Name="General" Text="General">
                 <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00005_R-%TT%0000501" />
               </ParameterBlock>
               <ParameterBlock Id="%AID%_PB-%TT%00002" Name="Broadcast" Text="Broadcast">
                 <ParameterRefRef RefId="%AID%_P-%TT%00002_R-%TT%0000201" />

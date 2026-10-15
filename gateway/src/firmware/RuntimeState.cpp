@@ -109,10 +109,6 @@ void RuntimeState::init_storage() noexcept {
     oled_.set_geometry(net_cfg_.oled_geometry);
     oled_.set_sleep_timeout_ms(static_cast<std::uint32_t>(net_cfg_.oled_sleep_seconds) * 1000U);
     oled_state_.dali_psu_enabled = net_cfg_.internal_dali_psu_enabled;
-    oled_state_.ha_discovery_enabled = net_cfg_.ha_discovery_enabled;
-    std::strncpy(oled_state_.ssid.data(),
-                 net_cfg_.wifi_ssid[0] != '\0' ? net_cfg_.wifi_ssid.data() : "AP-Portal",
-                 oled_state_.ssid.size() - 1);
 
     const auto reason = esp_reset_reason();
     if (reason == ESP_RST_TASK_WDT || reason == ESP_RST_INT_WDT || reason == ESP_RST_WDT) {
@@ -138,10 +134,6 @@ void RuntimeState::save_network_config(const network::NetworkConfig& cfg) noexce
     oled_.set_geometry(net_cfg_.oled_geometry);
     oled_.set_sleep_timeout_ms(static_cast<std::uint32_t>(net_cfg_.oled_sleep_seconds) * 1000U);
     oled_state_.dali_psu_enabled = net_cfg_.internal_dali_psu_enabled;
-    oled_state_.ha_discovery_enabled = net_cfg_.ha_discovery_enabled;
-    std::strncpy(oled_state_.ssid.data(),
-                 net_cfg_.wifi_ssid[0] != '\0' ? net_cfg_.wifi_ssid.data() : "AP-Portal",
-                 oled_state_.ssid.size() - 1);
 
     nvs_handle_t h = 0;
     if (nvs_open("net_cfg", NVS_READWRITE, &h) == ESP_OK) {
@@ -199,12 +191,15 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
         }
     }
     oled_state_.active_lamp_count = static_cast<std::uint8_t>(on_count);
-    oled_state_.average_brightness_pct =
-        on_count > 0 ? static_cast<std::uint8_t>((sum_arc * 100U) / (on_count * 254U)) : 0U;
+    // Estimate active + standby lamp power (default 15 W nominal fixture + 0.4 W/ballast standby)
+    const unsigned standby_tenths_w = static_cast<unsigned>(oled_state_.present_gear_count) * 4U;
+    const unsigned active_tenths_w = (sum_arc * 150U) / 254U;
+    oled_state_.lamp_power_watts =
+        static_cast<std::uint16_t>((standby_tenths_w + active_tenths_w + 5U) / 10U);
 
     for (unsigned g = 0; g < 16; ++g) {
         const auto st = lighting.state(*dali::Group::from(g));
-        oled_state_.group_levels[g] = st.level ? st.level->value() : 0U;
+        group_levels_[g] = st.level ? st.level->value() : 0U;
     }
 
     unsigned input_devs = 0;
@@ -213,16 +208,25 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
             ++input_devs;
         }
     }
-    oled_state_.input_device_count = static_cast<std::uint8_t>(input_devs);
+    input_device_count_ = static_cast<std::uint8_t>(input_devs);
+    oled_state_.bus_current_ma =
+        static_cast<std::uint16_t>(oled_state_.present_gear_count * 2U + input_devs * 5U);
     oled_state_.comm_phase = snap.progress.phase;
     oled_state_.comm_progress = snap.progress.progress;
     oled_state_.comm_found = snap.progress.found;
-    oled_state_.dali_tx_frames = trace_.total_frames();
-    oled_state_.dali_collisions = trace_.total_collisions();
     oled_state_.logged_errors = static_cast<std::uint32_t>(log_.size());
     if (const auto* last = log_.latest()) {
         oled_state_.last_error_code = last->code;
         oled_state_.last_error_address = last->address;
+    }
+    const std::size_t n_log = log_.size();
+    const std::size_t n_copy =
+        n_log < device::oled_max_recent_errors ? n_log : device::oled_max_recent_errors;
+    oled_state_.recent_error_count = static_cast<std::uint8_t>(n_copy);
+    for (std::size_t i = 0; i < n_copy; ++i) {
+        const auto& e = log_.entry_oldest_first(n_log - 1U - i);
+        oled_state_.recent_errors[i].code = e.code;
+        oled_state_.recent_errors[i].address = e.address;
     }
     oled_state_.uptime_seconds = now_ms / 1000U;
     unlock();
@@ -232,7 +236,7 @@ void RuntimeState::update_knx_state(std::uint16_t ia, bool configured, bool prog
                                     device::PanelHint hint, std::uint32_t now_ms) noexcept {
     lock();
     oled_state_.knx_individual_address = ia;
-    oled_state_.knx_configured = configured;
+    knx_configured_ = configured;
     oled_state_.knx_prog_mode = prog_mode;
     oled_state_.knx_bus_ok = bus_ok;
     oled_state_.hint = hint;
@@ -256,16 +260,19 @@ void RuntimeState::update_knx_state(std::uint16_t ia, bool configured, bool prog
 }
 
 void RuntimeState::update_network_state(device::WifiState wifi, std::int8_t rssi, const char* ipv4,
-                                        bool mqtt_connected, std::uint8_t ws_clients,
-                                        std::uint32_t now_ms) noexcept {
+                                        bool mqtt_connected, std::uint8_t ws_clients, std::uint32_t now_ms,
+                                        const char* chip_id) noexcept {
     lock();
     oled_state_.wifi_state = wifi;
     oled_state_.wifi_rssi_dbm = rssi;
     if (ipv4) {
         std::strncpy(oled_state_.ipv4.data(), ipv4, oled_state_.ipv4.size() - 1);
     }
+    if (chip_id && chip_id[0] != '\0') {
+        std::strncpy(oled_state_.chip_id.data(), chip_id, oled_state_.chip_id.size() - 1);
+    }
     oled_state_.mqtt_connected = mqtt_connected;
-    oled_state_.ws_clients = ws_clients;
+    ws_clients_ = ws_clients;
     oled_state_.uptime_seconds = now_ms / 1000U;
     unlock();
 }
@@ -350,7 +357,7 @@ bool RuntimeState::channel_faulty(std::uint8_t index) const noexcept {
 
 std::uint8_t RuntimeState::group_level(std::uint8_t index) const noexcept {
     lock();
-    const auto v = oled_state_.group_levels[index & 0x0FU];
+    const auto v = group_levels_[index & 0x0FU];
     unlock();
     return v;
 }
@@ -379,9 +386,9 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
 
     append(
         "{\"type\":\"live\",\"uptime_s\":%lu,\"epoch_ms\":%llu,\"free_heap\":%lu,\"min_heap\":%lu,"
-        "\"fw_version\":\"%s\",\"partition\":\"%s\","
+        "\"fw_version\":\"%s\",\"partition\":\"%s\",\"chip_id\":\"%s\","
         "\"knx\":{\"ia\":%u,\"configured\":%s,\"prog_mode\":%s,\"bus_ok\":%s},"
-        "\"dali\":{\"present\":%u,\"active\":%u,\"faulty\":%u,\"inputs\":%u,\"psu_on\":%s,"
+        "\"dali\":{\"present\":%u,\"active\":%u,\"faulty\":%u,\"inputs\":%u,\"psu_on\":%s,\"psu_short\":%s,"
         "\"tx_frames\":%lu,\"collisions\":%lu,\"errors\":%lu,\"comm_phase\":\"%s\",\"comm_progress\":%u},"
         "\"net\":{\"wifi_state\":%u,\"ssid\":\"%s\",\"ip\":\"%s\",\"rssi\":%d,\"mqtt\":%s,\"ha\":%s,\"ws\":%"
         "u},"
@@ -390,26 +397,27 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
         static_cast<unsigned long>(now_ms / 1000U),
         static_cast<unsigned long long>(log_.current_epoch_ms(now_ms)), static_cast<unsigned long>(free_heap),
         static_cast<unsigned long>(min_heap), app ? app->version : "0.1.0",
-        running_part ? running_part->label : "ota_0",
-        static_cast<unsigned>(oled_state_.knx_individual_address),
-        oled_state_.knx_configured ? "true" : "false", oled_state_.knx_prog_mode ? "true" : "false",
-        oled_state_.knx_bus_ok ? "true" : "false", static_cast<unsigned>(oled_state_.present_gear_count),
+        running_part ? running_part->label : "ota_0", oled_state_.chip_id.data(),
+        static_cast<unsigned>(oled_state_.knx_individual_address), knx_configured_ ? "true" : "false",
+        oled_state_.knx_prog_mode ? "true" : "false", oled_state_.knx_bus_ok ? "true" : "false",
+        static_cast<unsigned>(oled_state_.present_gear_count),
         static_cast<unsigned>(oled_state_.active_lamp_count),
-        static_cast<unsigned>(oled_state_.faulty_gear_count),
-        static_cast<unsigned>(oled_state_.input_device_count),
-        oled_state_.dali_psu_enabled ? "true" : "false", static_cast<unsigned long>(trace_.total_frames()),
+        static_cast<unsigned>(oled_state_.faulty_gear_count), static_cast<unsigned>(input_device_count_),
+        oled_state_.dali_psu_enabled ? "true" : "false",
+        oled_state_.dali_psu_short_tripped ? "true" : "false",
+        static_cast<unsigned long>(trace_.total_frames()),
         static_cast<unsigned long>(trace_.total_collisions()),
         static_cast<unsigned long>(trace_.total_errors()), phase_str(oled_state_.comm_phase),
         static_cast<unsigned>(oled_state_.comm_progress), static_cast<unsigned>(oled_state_.wifi_state),
-        oled_state_.ssid.data(), oled_state_.ipv4.data(), static_cast<int>(oled_state_.wifi_rssi_dbm),
-        oled_state_.mqtt_connected ? "true" : "false", oled_state_.ha_discovery_enabled ? "true" : "false",
-        static_cast<unsigned>(oled_state_.ws_clients), static_cast<unsigned>(led_colours_[0].r),
-        static_cast<unsigned>(led_colours_[0].g), static_cast<unsigned>(led_colours_[0].b),
-        static_cast<unsigned>(led_colours_[1].r), static_cast<unsigned>(led_colours_[1].g),
-        static_cast<unsigned>(led_colours_[1].b), static_cast<unsigned>(led_colours_[2].r),
-        static_cast<unsigned>(led_colours_[2].g), static_cast<unsigned>(led_colours_[2].b),
-        static_cast<unsigned>(oled_.width()), static_cast<unsigned>(oled_.height()),
-        static_cast<unsigned>(oled_.page()));
+        net_cfg_.wifi_ssid[0] != '\0' ? net_cfg_.wifi_ssid.data() : "AP-Portal", oled_state_.ipv4.data(),
+        static_cast<int>(oled_state_.wifi_rssi_dbm), oled_state_.mqtt_connected ? "true" : "false",
+        net_cfg_.ha_discovery_enabled ? "true" : "false", static_cast<unsigned>(ws_clients_),
+        static_cast<unsigned>(led_colours_[0].r), static_cast<unsigned>(led_colours_[0].g),
+        static_cast<unsigned>(led_colours_[0].b), static_cast<unsigned>(led_colours_[1].r),
+        static_cast<unsigned>(led_colours_[1].g), static_cast<unsigned>(led_colours_[1].b),
+        static_cast<unsigned>(led_colours_[2].r), static_cast<unsigned>(led_colours_[2].g),
+        static_cast<unsigned>(led_colours_[2].b), static_cast<unsigned>(oled_.width()),
+        static_cast<unsigned>(oled_.height()), static_cast<unsigned>(oled_.page()));
 
     const std::size_t fb_bytes = oled_.framebuffer_bytes();
     const auto& fb = oled_.buffer();
@@ -417,11 +425,11 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
         append("%02X", static_cast<unsigned>(fb[i]));
     }
 
-    append("\"},\"groups\":[");
+    append("%s", "\"},\"groups\":[");
     for (unsigned g = 0; g < 16; ++g) {
-        append("%s%u", g == 0 ? "" : ",", static_cast<unsigned>(oled_state_.group_levels[g]));
+        append("%s%u", g == 0 ? "" : ",", static_cast<unsigned>(group_levels_[g]));
     }
-    append("],\"channels\":[");
+    append("%s", "],\"channels\":[");
     for (unsigned i = 0; i < 64; ++i) {
         const auto& c = channels_[i];
         const unsigned p = oled_state_.gear_present.test(i) ? 1U : 0U;
@@ -438,12 +446,12 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                static_cast<unsigned>(c.details.status_byte), static_cast<unsigned>(c.details.groups),
                static_cast<unsigned>(c.details.device_type));
     }
-    append("],\"inputs\":[");
+    append("%s", "],\"inputs\":[");
     for (unsigned i = 0; i < 64; ++i) {
         const bool pres = (inputs_.present[i / 8] & (1U << (i % 8))) != 0;
         append("%s[%u,%u]", i == 0 ? "" : ",", pres ? 1U : 0U, static_cast<unsigned>(inputs_.summary[i]));
     }
-    append("]}");
+    append("%s", "]}");
     unlock();
     return off;
 }
@@ -466,7 +474,8 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         "\"limit_error\":%s,\"fade_running\":%s,\"reset_state\":%s,\"missing_short\":%s,\"power_cycle\":%s,"
         "\"device_type\":%u,\"version\":%u,\"physical_min\":%u,\"min_level\":%u,\"max_level\":%u,"
         "\"power_on_level\":%u,\"system_failure_level\":%u,\"fade_time\":%u,\"fade_rate\":%u,"
-        "\"groups\":%u,\"probed\":%s,\"kelvin\":%u,\"r\":%u,\"g\":%u,\"b\":%u,\"w\":%u,\"scenes\":[",
+        "\"groups\":%u,\"probed\":%s,\"kelvin\":%u,\"r\":%u,\"g\":%u,\"b\":%u,\"w\":%u,"
+        "\"xy_x\":%u,\"xy_y\":%u,\"scenes\":[",
         static_cast<unsigned>(ch), pres ? "true" : "false", flt ? "true" : "false",
         static_cast<unsigned>(c.level), source_str(c.source), static_cast<unsigned>(d.status_byte),
         (d.status_byte & 0x01U) ? "true" : "false", (d.status_byte & 0x02U) ? "true" : "false",
@@ -480,7 +489,8 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         static_cast<unsigned>(d.fade_rate), static_cast<unsigned>(d.groups), d.probed ? "true" : "false",
         static_cast<unsigned>(c.colour.temperature_kelvin), static_cast<unsigned>(c.colour.r),
         static_cast<unsigned>(c.colour.g), static_cast<unsigned>(c.colour.b),
-        static_cast<unsigned>(c.colour.w));
+        static_cast<unsigned>(c.colour.w), static_cast<unsigned>(c.colour.x),
+        static_cast<unsigned>(c.colour.y));
     if (n > 0 && static_cast<std::size_t>(n) < out_size) {
         off = static_cast<std::size_t>(n);
     }

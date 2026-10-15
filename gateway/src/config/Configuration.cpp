@@ -12,13 +12,17 @@ namespace gateway::config {
 
 // Layout contract with knxprod/src/*.xml; a regenerated header that violates
 // these fails the build instead of silently shifting the parser.
-static_assert(CH_ParamBlockOffset == 4, "channel parameters start after the shared parameters");
-static_assert(CH_ParamBlockSize == 5, "channel parameter block must stay 5 bytes");
+static_assert(CH_InternalDaliPsu == 4, "internal DALI PSU parameter must sit at offset 4");
+static_assert(CH_ParamBlockOffset == 5, "channel parameters start after the shared parameters");
+static_assert(CH_ParamBlockSize == 11, "channel parameter block must stay 11 bytes");
 static_assert(CH_fSwitchOnMode == 0 && CH_fFixedLevel == 1 && CH_fGroup01 == 2,
               "channel parameter layout changed");
 static_assert(CH_fGroup16 == CH_fGroup01 + 1, "group mask must occupy two consecutive bytes");
 static_assert(CH_fGroup01Mask == 0x01 && CH_fGroup16Mask == 0x80,
               "group mask byte order must be little-endian, bit g = DALI group g");
+static_assert(CH_fMinLevel == 5 && CH_fMaxLevel == 6 && CH_fPowerOnLevel == 7 && CH_fSysFailLevel == 8 &&
+                  CH_fFadeTime == 9 && CH_fFadeRate == 10,
+              "channel DT6 ballast parameter layout changed");
 static_assert(GR_ParamBlockOffset == CH_ParamBlockOffset + CH_ChannelCount * CH_ParamBlockSize,
               "group parameters follow the channel blocks");
 static_assert(GR_ParamBlockSize == 3, "group parameter block must stay 3 bytes");
@@ -38,6 +42,11 @@ static_assert(MAIN_ParameterSize == IN_ParamBlockOffset + IN_ChannelCount * IN_P
 
 namespace {
 
+std::uint8_t percent_to_arc(std::uint8_t percent) noexcept {
+    const auto raw = static_cast<std::uint8_t>((static_cast<unsigned>(percent) * 255 + 50) / 100);
+    return knx::arc_from_scaling(raw).value();
+}
+
 SwitchOn parse_switch_on(std::uint8_t mode, std::uint8_t percent) {
     // Undefined enum values and out-of-range levels fall back to the default
     // of that field independently.
@@ -52,7 +61,41 @@ SwitchOn parse_switch_on(std::uint8_t mode, std::uint8_t percent) {
     return result;
 }
 
+BallastParameters parse_ballast_parameters(const std::uint8_t* block) noexcept {
+    BallastParameters bp{};
+    if (block[CH_fMinLevel] >= 1 && block[CH_fMinLevel] <= 100) {
+        bp.min_level = percent_to_arc(block[CH_fMinLevel]);
+    }
+    if (block[CH_fMaxLevel] >= 1 && block[CH_fMaxLevel] <= 100) {
+        bp.max_level = percent_to_arc(block[CH_fMaxLevel]);
+    }
+    if (bp.min_level > bp.max_level) {
+        bp.min_level = bp.max_level;
+    }
+    if (block[CH_fPowerOnLevel] == 0) {
+        bp.power_on_level = 0;
+    } else if (block[CH_fPowerOnLevel] >= 1 && block[CH_fPowerOnLevel] <= 100) {
+        bp.power_on_level = percent_to_arc(block[CH_fPowerOnLevel]);
+    } else if (block[CH_fPowerOnLevel] == 101) {
+        bp.power_on_level = 0xFF;  // DALI MASK (restore last level)
+    }
+    if (block[CH_fSysFailLevel] == 0) {
+        bp.system_failure_level = 0;
+    } else if (block[CH_fSysFailLevel] >= 1 && block[CH_fSysFailLevel] <= 100) {
+        bp.system_failure_level = percent_to_arc(block[CH_fSysFailLevel]);
+    } else if (block[CH_fSysFailLevel] == 101) {
+        bp.system_failure_level = 0xFF;  // DALI MASK (no change on bus failure)
+    }
+    if (block[CH_fFadeTime] <= 15 || block[CH_fFadeTime] == 0xFF) {
+        bp.fade_time = block[CH_fFadeTime];
+    }
+    if ((block[CH_fFadeRate] >= 1 && block[CH_fFadeRate] <= 15) || block[CH_fFadeRate] == 0xFF) {
+        bp.fade_rate = block[CH_fFadeRate];
+    }
+    return bp;
 }
+
+}  // namespace
 
 Configuration default_configuration() noexcept {
     return Configuration{};
@@ -63,9 +106,13 @@ Configuration parse_configuration(const std::uint8_t* parameters, std::size_t si
     if (parameters == nullptr || size < MAIN_ParameterSize) {
         return config;
     }
+    if (parameters[CH_InternalDaliPsu] <= 1) {
+        config.internal_dali_psu_enabled = (parameters[CH_InternalDaliPsu] != 0);
+    }
     for (unsigned channel = 0; channel < dali::ShortAddress::capacity; ++channel) {
         const auto block = parameters + CH_ParamBlockOffset + std::size_t{channel} * CH_ParamBlockSize;
         config.channels[channel] = parse_switch_on(block[CH_fSwitchOnMode], block[CH_fFixedLevel]);
+        config.ballasts[channel] = parse_ballast_parameters(block);
         config.group_masks[channel] =
             static_cast<std::uint16_t>(block[CH_fGroup01] | (block[CH_fGroup16] << 8));
     }
@@ -99,4 +146,4 @@ Configuration parse_configuration(const std::uint8_t* parameters, std::size_t si
     return config;
 }
 
-}
+}  // namespace gateway::config

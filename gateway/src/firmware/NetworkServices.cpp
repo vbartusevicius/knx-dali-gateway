@@ -9,6 +9,7 @@
 #include <esp_event.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
+#include <esp_mac.h>
 #include <esp_netif.h>
 #include <esp_netif_sntp.h>
 #include <esp_ota_ops.h>
@@ -54,6 +55,16 @@ bool g_ha_published = false;
 bool g_reload_requested = false;
 bool g_ap_portal_active = false;
 char g_ipv4[16]{"0.0.0.0"};
+char g_chip_id[12]{"0000000"};
+
+void init_chip_id() noexcept {
+    std::uint8_t mac[6]{};
+    (void)esp_efuse_mac_get_default(mac);
+    const std::uint32_t tail =
+        (static_cast<std::uint32_t>(mac[2] & 0x0FU) << 24U) | (static_cast<std::uint32_t>(mac[3]) << 16U) |
+        (static_cast<std::uint32_t>(mac[4]) << 8U) | static_cast<std::uint32_t>(mac[5]);
+    std::snprintf(g_chip_id, sizeof(g_chip_id), "%07lx", static_cast<unsigned long>(tail));
+}
 
 std::uint32_t now_ms() noexcept {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
@@ -606,6 +617,8 @@ void publish_ha_discovery_and_states() noexcept {
         return;
     }
     const auto cfg = runtime_state().network_config();
+    char node_id[33]{};
+    network::format_unique_node_id(cfg.hostname.data(), g_chip_id, node_id, sizeof(node_id));
     char topic[128]{};
     char payload[640]{};
 
@@ -618,19 +631,19 @@ void publish_ha_discovery_and_states() noexcept {
             const auto addr = *dali::ShortAddress::from(i);
             const auto cap =
                 ch.has_capabilities ? std::optional<dali::ColourCapabilities>(ch.capabilities) : std::nullopt;
-            if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(),
-                                                           cfg.hostname.data(), addr, topic, sizeof(topic)) &&
-                network::format_ha_channel_discovery_payload(cfg.mqtt_base_topic.data(), cfg.hostname.data(),
-                                                             addr, cap, payload, sizeof(payload))) {
+            if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                           topic, sizeof(topic)) &&
+                network::format_ha_channel_discovery_payload(cfg.mqtt_base_topic.data(), node_id, addr, cap,
+                                                             payload, sizeof(payload))) {
                 esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
             }
         }
         for (std::uint8_t g = 0; g < 16; ++g) {
             const auto grp = *dali::Group::from(g);
-            if (network::format_ha_group_discovery_topic(cfg.ha_discovery_prefix.data(), cfg.hostname.data(),
-                                                         grp, topic, sizeof(topic)) &&
-                network::format_ha_group_discovery_payload(cfg.mqtt_base_topic.data(), cfg.hostname.data(),
-                                                           grp, payload, sizeof(payload))) {
+            if (network::format_ha_group_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, grp, topic,
+                                                         sizeof(topic)) &&
+                network::format_ha_group_discovery_payload(cfg.mqtt_base_topic.data(), node_id, grp, payload,
+                                                           sizeof(payload))) {
                 esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
             }
         }
@@ -665,8 +678,10 @@ void apply_wifi_and_mqtt_config(bool force_ap) noexcept {
     g_ap_portal_active = force_ap || (!has_sta && cfg.ap_fallback_enabled);
 
     wifi_config_t ap_cfg{};
-    std::strncpy(reinterpret_cast<char*>(ap_cfg.ap.ssid), "KNX-DALI-Setup", sizeof(ap_cfg.ap.ssid) - 1);
-    ap_cfg.ap.ssid_len = static_cast<std::uint8_t>(std::strlen("KNX-DALI-Setup"));
+    char ap_ssid[33]{};
+    network::format_unique_ap_ssid(g_chip_id, ap_ssid, sizeof(ap_ssid));
+    std::strncpy(reinterpret_cast<char*>(ap_cfg.ap.ssid), ap_ssid, sizeof(ap_cfg.ap.ssid) - 1);
+    ap_cfg.ap.ssid_len = static_cast<std::uint8_t>(std::strlen(ap_ssid));
     ap_cfg.ap.channel = 6;
     ap_cfg.ap.max_connection = 4;
     ap_cfg.ap.authmode = WIFI_AUTH_OPEN;
@@ -709,8 +724,11 @@ void apply_wifi_and_mqtt_config(bool force_ap) noexcept {
                       static_cast<unsigned>(cfg.mqtt_port));
         char lwt_topic[64]{};
         std::snprintf(lwt_topic, sizeof(lwt_topic), "%s/status", cfg.mqtt_base_topic.data());
+        char client_id[33]{};
+        network::format_unique_node_id(cfg.hostname.data(), g_chip_id, client_id, sizeof(client_id));
         esp_mqtt_client_config_t mqtt_cfg{};
         mqtt_cfg.broker.address.uri = uri;
+        mqtt_cfg.credentials.client_id = client_id;
         if (cfg.mqtt_username[0] != '\0') {
             mqtt_cfg.credentials.username = cfg.mqtt_username.data();
         }
@@ -741,6 +759,7 @@ NetworkServices::NetworkServices(Queue<control::Command>& commands, I2cOled& ole
 }
 
 void NetworkServices::start() noexcept {
+    init_chip_id();
     esp_ota_mark_app_valid_cancel_rollback();
 
     (void)esp_netif_init();
@@ -814,7 +833,8 @@ void NetworkServices::loop() noexcept {
         }
 
         const std::uint8_t ws_clients = broadcast_ws_state();
-        runtime_state().update_network_state(g_wifi_state, rssi, g_ipv4, g_mqtt_connected, ws_clients, now);
+        runtime_state().update_network_state(g_wifi_state, rssi, g_ipv4, g_mqtt_connected, ws_clients, now,
+                                             g_chip_id);
 
         runtime_state().render_oled(now);
         oled_.flush(runtime_state().oled_display(), runtime_state().oled_sleeping(now));

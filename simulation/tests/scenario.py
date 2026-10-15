@@ -191,28 +191,33 @@ def group_addresses() -> list[int]:
     )
 
 
-PARAMETER_SIZE = 564  # MAIN_ParameterSize from the generated header
+PARAMETER_SIZE = 949  # MAIN_ParameterSize from the generated header
 
 
 def parameters() -> bytes:
     """Parameter image: defaults + channel 2 fixed-on 50% + group 0 members
     + the input-channel bindings in INPUT_BINDINGS."""
     params = bytearray(PARAMETER_SIZE)
-    # Channel blocks at offset 4, size 5:
-    # [mode, percent, groups lo, groups hi, colour-control].
-    # mode 0 = last level, 1 = fixed level; colour-control is ETS visibility
-    # only and stays 0 (None) — the firmware probes gear capabilities.
-    for channel in range(4):
-        base = 4 + channel * 5
+    params[4] = 1  # InternalDaliPsu enabled
+    # Channel blocks at offset 5, size 11:
+    # [mode, percent, groups lo, groups hi, colour-control, min, max, pon, fail, fade_time, fade_rate].
+    for channel in range(64):
+        base = 5 + channel * 11
+        params[base + 5] = 1
+        params[base + 6] = 100
+        params[base + 7] = 100
+        params[base + 8] = 100
+        params[base + 9] = 255
+        params[base + 10] = 255
         if channel in (0, 1):
             params[base + 2] |= 0x01  # member of DALI group 0
         if channel == 2:
             params[base + 0] = 1  # SwitchOnPolicy::FixedLevel
             params[base + 1] = 50  # percent
-    # Input-channel blocks at offset 372, size 6:
+    # Input-channel blocks at offset 757, size 6:
     # [device, instance, type, function, scene, threshold].
     for channel, binding in INPUT_BINDINGS.items():
-        base = 372 + channel * 6
+        base = 757 + channel * 6
         params[base + 0] = binding["device"]
         params[base + 1] = binding["instance"]
         params[base + 2] = binding["type"]

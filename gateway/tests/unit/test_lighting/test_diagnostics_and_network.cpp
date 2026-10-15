@@ -147,7 +147,6 @@ void test_oled_display_renders_both_128x64_and_64x128_geometries() {
     state.knx_individual_address = 0x1114;  // 1.1.20
     state.present_gear_count = 12;
     state.active_lamp_count = 8;
-    state.average_brightness_pct = 75;
 
     device::OledDisplay disp64{device::OledGeometry::Oled128x64};
     TEST_ASSERT_EQUAL_UINT8(128, disp64.width());
@@ -155,6 +154,20 @@ void test_oled_display_renders_both_128x64_and_64x128_geometries() {
     TEST_ASSERT_EQUAL_UINT32(1024, disp64.framebuffer_bytes());
     disp64.render(state, 100);
     TEST_ASSERT_TRUE(disp64.pixel(1, 0));
+
+    // When asleep, first next_page() tap wakes on Overview without skipping to Page 2!
+    disp64.set_page(device::OledPage::DaliMatrix, 100);
+    TEST_ASSERT_TRUE(disp64.sleeping(70'000));
+    disp64.next_page(70'000);
+    TEST_ASSERT_FALSE(disp64.sleeping(70'000));
+    TEST_ASSERT_EQUAL(static_cast<int>(device::OledPage::Overview), static_cast<int>(disp64.page()));
+
+    // New ballast fault while asleep automatically wakes the screen to Overview!
+    TEST_ASSERT_TRUE(disp64.sleeping(140'000));
+    state.faulty_gear_count = 1;
+    state.gear_faulty.set(7);
+    disp64.render(state, 140'000);
+    TEST_ASSERT_FALSE(disp64.sleeping(140'000));
 
     device::OledDisplay disp_portrait{device::OledGeometry::Oled64x128};
     TEST_ASSERT_EQUAL_UINT8(64, disp_portrait.width());
@@ -191,6 +204,14 @@ void test_ha_discovery_and_mqtt_command_codec() {
     const auto& set_lvl = std::get<control::SetLevel>(*cmd);
     TEST_ASSERT_EQUAL_UINT8(5, set_lvl.address.as_short()->value());
     TEST_ASSERT_EQUAL_UINT8(190, set_lvl.level.value());
+
+    char ap_ssid[33]{};
+    network::format_unique_ap_ssid("f5aa11f", ap_ssid, sizeof(ap_ssid));
+    TEST_ASSERT_EQUAL_STRING("KNX-DALI-SETUP-f5aa11f", ap_ssid);
+
+    char node_id[33]{};
+    network::format_unique_node_id("knx-dali-gw", "f5aa11f", node_id, sizeof(node_id));
+    TEST_ASSERT_EQUAL_STRING("knx-dali-gw-f5aa11f", node_id);
 }
 
 void test_api_codec_and_reconnect_backoff() {

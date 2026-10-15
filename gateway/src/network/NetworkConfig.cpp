@@ -1,7 +1,9 @@
 #include "network/NetworkConfig.hpp"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 #include "device/OledDisplay.hpp"
@@ -41,6 +43,28 @@ void sanitize_network_config(NetworkConfig& cfg) noexcept {
     if (static_cast<unsigned>(cfg.oled_geometry) > static_cast<unsigned>(device::OledGeometry::Disabled)) {
         cfg.oled_geometry = device::OledGeometry::Auto;
     }
+}
+
+void format_unique_ap_ssid(const char* chip_id, char* out, std::size_t out_size) noexcept {
+    if (!out || out_size == 0) {
+        return;
+    }
+    const char* id = (chip_id && chip_id[0] != '\0') ? chip_id : "0000000";
+    std::snprintf(out, out_size, "KNX-DALI-SETUP-%.7s", id);
+}
+
+void format_unique_node_id(const char* base_name, const char* chip_id, char* out,
+                           std::size_t out_size) noexcept {
+    if (!out || out_size == 0) {
+        return;
+    }
+    const char* base = (base_name && base_name[0] != '\0') ? base_name : "knx-dali-gw";
+    const char* id = (chip_id && chip_id[0] != '\0') ? chip_id : "0000000";
+    if (std::strstr(base, id) != nullptr) {
+        std::snprintf(out, out_size, "%s", base);
+        return;
+    }
+    std::snprintf(out, out_size, "%.20s-%.7s", base, id);
 }
 
 void ReconnectBackoff::on_connected() noexcept {

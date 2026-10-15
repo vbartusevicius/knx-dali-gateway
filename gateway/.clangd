@@ -3,11 +3,15 @@ CompileFlags:
   Add:
     - -nostdinc++
     - -fno-blocks
+    - -Wno-inconsistent-missing-override
+    - -Wno-unknown-pragmas
+    - -Wno-extern-c-compat
   Remove:
     - -march=*
     - -fstrict-volatile-bitfields
     - -fno-tree-switch-conversion
     - -fno-shrink-wrap
+    - -Werror
     - -Werror=all
 ---
 If:
@@ -17,6 +21,7 @@ CompileFlags:
   Add:
     - -I.pio/libdeps/native/Unity/src
   Remove:
+    - -nostdinc++
     - -DUNITY_INCLUDE_CONFIG_H
 ---
 # The Linux integration lab builds only inside Docker; on the host we borrow
@@ -33,3 +38,5 @@ CompileFlags:
     - -DKNX_FLASH_SIZE=8192
     - -DKNX_TUNNELING=4
     - -D__linux__
+  Remove:
+    - -nostdinc++

@@ -102,7 +102,75 @@ function renderOledCanvas(oled) {
   }
   ctx.putImageData(img, 0, 0);
   document.getElementById("oled-meta").textContent =
-    `SSD1306 ${w}×${h} • Page ${(oled.page || 0) + 1}/5`;
+    `OLED ${w}×${h} • Page ${(oled.page || 0) + 1}/3`;
+}
+
+// IEC 62386-102 Table 15 & 16 human-readable Fade Time / Fade Rate tables
+const FADE_TIME_LABELS = [
+  "0 — No fade (<0.7 s)",
+  "1 — 0.7 s",
+  "2 — 1.0 s",
+  "3 — 1.4 s",
+  "4 — 2.0 s",
+  "5 — 2.8 s",
+  "6 — 4.0 s",
+  "7 — 5.7 s",
+  "8 — 8.0 s",
+  "9 — 11.3 s",
+  "10 — 16.0 s",
+  "11 — 22.6 s",
+  "12 — 32.0 s",
+  "13 — 45.3 s",
+  "14 — 64.0 s",
+  "15 — 90.5 s",
+];
+
+const FADE_RATE_LABELS = [
+  "",
+  "1 — 358 steps/s (0.7 s)",
+  "2 — 253 steps/s (1.0 s)",
+  "3 — 179 steps/s (1.4 s)",
+  "4 — 127 steps/s (2.0 s)",
+  "5 — 89.4 steps/s (2.8 s)",
+  "6 — 63.3 steps/s (4.0 s)",
+  "7 — 44.7 steps/s (5.7 s)",
+  "8 — 31.6 steps/s (8.0 s)",
+  "9 — 22.4 steps/s (11.3 s)",
+  "10 — 15.8 steps/s (16.0 s)",
+  "11 — 11.2 steps/s (22.6 s)",
+  "12 — 7.9 steps/s (32.0 s)",
+  "13 — 5.6 steps/s (45.3 s)",
+  "14 — 4.0 steps/s (64.0 s)",
+  "15 — 2.8 steps/s (90.5 s)",
+];
+
+// IEC 62386-102 §9.1 logarithmic dimming curve: X(n) = 10^((n - 254) / (253/3))
+function daliArcToPowerRatio(arc) {
+  if (!arc || arc <= 0) return 0.0;
+  if (arc >= 254) return 1.0;
+  return Math.pow(10, (arc - 254) / (253 / 3));
+}
+
+function rgbToHex(r, g, b) {
+  const to2 = (v) => Math.max(0, Math.min(255, Number(v) || 0)).toString(16).padStart(2, "0");
+  return "#" + to2(r) + to2(g) + to2(b);
+}
+
+function sendHexRgb(target, index, hex) {
+  const clean = (hex || "#ffffff").replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) || 0;
+  const g = parseInt(clean.slice(2, 4), 16) || 0;
+  const b = parseInt(clean.slice(4, 6), 16) || 0;
+  sendCmd({ action: "set_rgb", target, index, r, g, b });
+}
+
+function formatGroupList(mask) {
+  if (!mask) return "No groups";
+  const list = [];
+  for (let g = 0; g < 16; g++) {
+    if (mask & (1 << g)) list.push("G" + String(g).padStart(2, "0"));
+  }
+  return list.join(", ");
 }
 
 function setLampFilter(filter, btn) {
@@ -126,6 +194,7 @@ function decodeStatusBits(st) {
 function renderLamps(channels) {
   const grid = document.getElementById("lamps-grid");
   grid.innerHTML = "";
+  const nomWatts = Number(document.getElementById("nominal-watts")?.value || 15);
   channels.forEach((ch, idx) => {
     const [present, faulty, level, source, dt8, kelvin, r, g, b, statusByte, groupsMask, devType] = ch;
     if (lampFilter === "present" && !present) return;
@@ -133,31 +202,69 @@ function renderLamps(channels) {
     if (lampFilter === "fault" && !faulty && (statusByte & 0x03) === 0) return;
 
     const pct = Math.round((level * 100) / 254);
+    const liveWatts = present
+      ? (level > 0 ? nomWatts * daliArcToPowerRatio(level) + 0.4 : 0.4).toFixed(1)
+      : "0.0";
     const card = document.createElement("div");
     card.className =
       "lamp-card" + (level > 0 ? " on" : "") + (faulty ? " fault" : "") + (!present ? " absent" : "");
 
     const statusFlags = decodeStatusBits(statusByte);
-    const dtLabel = dt8 ? "DT8" : devType === 6 ? "DT6" : `DT${devType}`;
     const addrStr = "A" + String(idx).padStart(2, "0");
+
+    // Detailed DT6 & DT8 capability badges
+    const dtBadges = [];
+    if (devType === 6 || !dt8) dtBadges.push('<span class="badge">DT6 Dim</span>');
+    if (dt8 & 1) dtBadges.push('<span class="badge">DT8 Tc</span>');
+    if (dt8 & 4) dtBadges.push('<span class="badge">DT8 RGBW</span>');
+    else if (dt8 & 2) dtBadges.push('<span class="badge">DT8 RGB</span>');
+    if (dt8 & 8) dtBadges.push('<span class="badge">DT8 XY</span>');
+
+    const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#ffd28a";
 
     let colourControls = "";
     if (dt8 & 1) {
+      const kVal = kelvin || 4000;
+      const mirek = Math.round(1000000 / kVal);
       colourControls += `
         <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px">CCT</span>
-          <input type="range" min="2000" max="6500" step="100" value="${kelvin || 4000}"
+          <span class="mono" style="font-size:11px;min-width:28px">CCT</span>
+          <input type="range" class="cct-range" min="2000" max="6500" step="100" value="${kVal}"
             onchange="sendCmd({action:'set_cct',target:'ch',index:${idx},kelvin:Number(this.value)})">
-          <span class="mono" style="font-size:11px">${kelvin || 4000}K</span>
+          <span class="mono" style="font-size:11px;min-width:74px;text-align:right">${kVal}K (${mirek}M)</span>
+        </div>`;
+    }
+    if (dt8 & 6) {
+      colourControls += `
+        <div class="lamp-slider-row">
+          <span class="mono" style="font-size:11px;min-width:28px">RGB</span>
+          <input type="color" value="${hexColor}" onchange="sendHexRgb('ch',${idx},this.value)">
+          <span class="mono" style="font-size:11px;color:#8b9bb4">${r || 0},${g || 0},${b || 0}</span>
+          ${
+            dt8 & 4
+              ? `<span class="mono" style="font-size:11px;margin-left:auto">W:</span>
+                 <input type="range" min="0" max="254" value="0" style="max-width:70px"
+                   onchange="sendCmd({action:'set_rgbw',target:'ch',index:${idx},r:${r || 0},g:${g || 0},b:${b || 0},w:Number(this.value)})">`
+              : ""
+          }
+        </div>`;
+    }
+    if (dt8 & 8) {
+      colourControls += `
+        <div class="lamp-slider-row">
+          <span class="mono" style="font-size:11px">CIE xy:</span>
+          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:20480,y:21500,brightness:${level || 200}})">D65 White</button>
+          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:29000,y:26500,brightness:${level || 200}})">Warm 2700K</button>
+          <button class="btn btn-sm" onclick="openGearModal(${idx})">Custom xy…</button>
         </div>`;
     }
 
     card.innerHTML = `
       <div class="lamp-top">
-        <span class="lamp-title">${addrStr}</span>
+        <span class="lamp-title">${addrStr} <span class="color-swatch" style="background:${level > 0 ? hexColor : "#1f2937"}"></span></span>
         <div class="badges">
           <span class="badge ${present ? "ok" : ""}">${present ? "PRESENT" : "ABSENT"}</span>
-          <span class="badge">${dtLabel}</span>
+          ${dtBadges.join("")}
           <span class="badge ${source === "readback" ? "ok" : "warn"}">${source}</span>
           ${faulty ? '<span class="badge err">FAULT</span>' : ""}
         </div>
@@ -166,18 +273,18 @@ function renderLamps(channels) {
         <button class="btn btn-sm" onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${idx}})">${level > 0 ? "OFF" : "ON"}</button>
         <input type="range" min="0" max="254" value="${level}"
           onchange="sendCmd({action:'set_level',target:'ch',index:${idx},level:Number(this.value)})">
-        <span class="mono" style="min-width:44px;text-align:right">${pct}%</span>
+        <span class="mono" style="min-width:74px;text-align:right">${pct}% • ${liveWatts}W</span>
       </div>
       ${colourControls}
       <div class="lamp-top" style="margin-top:2px">
         <span class="mono" style="font-size:11px;color:#8b9bb4">
-          ARC:${level} GRP:0x${(groupsMask || 0).toString(16).padStart(4, "0").toUpperCase()}
+          ARC:${level}/254 • ${formatGroupList(groupsMask)}
           ${statusFlags.length ? " • " + statusFlags.join(",") : ""}
         </span>
         <div class="btn-group">
           <button class="btn btn-sm" title="Lamp Finder: Blink ON/OFF (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'blink'})">Blink</button>
           <button class="btn btn-sm" title="Lamp Finder: Smooth Breathing Pulse (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'pulse'})">Pulse</button>
-          <button class="btn btn-sm" title="Ballast Inspector &amp; Tuning" onclick="openGearModal(${idx})">Tune</button>
+          <button class="btn btn-sm" title="Ballast Inspector, DT6/DT8 Registers &amp; Parameter Tuning" onclick="openGearModal(${idx})">Inspect / Tune</button>
         </div>
       </div>
     `;
@@ -195,13 +302,17 @@ function renderGroups(groups) {
     el.innerHTML = `
       <div class="lamp-top">
         <span class="lamp-title">Group G${String(idx).padStart(2, "0")}</span>
-        <span class="badge">${pct}% (${lvl})</span>
+        <div class="btn-group">
+          <button class="btn btn-sm" title="Blink Group" onclick="sendCmd({action:'find_lamp',target:'grp',index:${idx},mode:'blink'})">Blink</button>
+          <span class="badge">${pct}% (${lvl})</span>
+        </div>
       </div>
       <div class="lamp-slider-row">
         <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${idx}})">ON</button>
         <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${idx}})">OFF</button>
         <input type="range" min="0" max="254" value="${lvl}"
           onchange="sendCmd({action:'set_level',target:'grp',index:${idx},level:Number(this.value)})">
+        <input type="color" value="#ffd28a" title="Group DT8 RGB Colour" onchange="sendHexRgb('grp',${idx},this.value)">
       </div>
     `;
     grid.appendChild(el);
@@ -237,15 +348,72 @@ function renderInputs(inputs) {
   }
 }
 
+function updatePowerMonitor(data) {
+  const d = data.dali || {};
+  const channels = data.channels || [];
+  const nomW = Number(document.getElementById("nominal-watts")?.value || 15);
+
+  const psuEl = document.getElementById("pwr-psu-state");
+  const psuSub = document.getElementById("pwr-psu-sub");
+  if (d.psu_short) {
+    psuEl.textContent = "SHORT TRIPPED!";
+    psuEl.style.color = "var(--err)";
+    psuSub.textContent = "REM3 latched OFF (>80 ms low) — fix wiring & Re-Arm";
+  } else if (d.psu_on) {
+    psuEl.textContent = "16.0 V ACTIVE";
+    psuEl.style.color = "var(--ok)";
+    psuSub.textContent = "Internal REM3-2415S/A/CTRL supply armed";
+  } else {
+    psuEl.textContent = "EXTERNAL PSU";
+    psuEl.style.color = "var(--primary)";
+    psuSub.textContent = "Internal REM3 disabled via GPIO1";
+  }
+
+  // IEC 62386-101 bus current: 2 mA per control gear + 5 mA per multi-master input device
+  const gearCnt = d.present || 0;
+  const inpCnt = d.inputs || 0;
+  const busMa = gearCnt * 2 + inpCnt * 5;
+  const busPct = Math.min(100, Math.round((busMa * 100) / 250));
+  document.getElementById("pwr-bus-ma").textContent = `${busMa} mA / 250 mA (${busPct}%)`;
+  document.getElementById("pwr-bus-bar").style.width = `${busPct}%`;
+  document.getElementById("pwr-bus-sub").textContent =
+    `${gearCnt} gear (2 mA ea) + ${inpCnt} input devs (5 mA ea)`;
+
+  let activeW = 0;
+  let standbyW = 0;
+  channels.forEach((ch) => {
+    const [present, , level] = ch;
+    if (!present) return;
+    standbyW += 0.4;
+    if (level > 0) {
+      activeW += nomW * daliArcToPowerRatio(level);
+    }
+  });
+  const totalW = activeW + standbyW;
+  const dailyKwh = (totalW * 24) / 1000;
+  document.getElementById("pwr-active-w").textContent = `${totalW.toFixed(1)} W`;
+  document.getElementById("pwr-standby-w").textContent =
+    `Lamp output: ${activeW.toFixed(1)} W • Driver standby: ${standbyW.toFixed(1)} W`;
+  document.getElementById("pwr-daily-kwh").textContent = `${dailyKwh.toFixed(2)} kWh/d`;
+  document.getElementById("pwr-bus-health").textContent =
+    `TX: ${d.tx_frames || 0} frames • Collisions: ${d.collisions || 0}`;
+}
+
 function handleLiveState(data) {
   latestState = data;
+  const chipId = data.chip_id || "f5aa11f";
+  const apPreview = document.getElementById("cfg-ap-ssid-preview");
+  if (apPreview) apPreview.textContent = `KNX-DALI-SETUP-${chipId}`;
+  const chipPreview = document.getElementById("cfg-chip-id-preview");
+  if (chipPreview) chipPreview.textContent = chipId;
+
   const knxPill = document.getElementById("pill-knx");
   knxPill.textContent = `KNX: ${formatIa(data.knx.ia)} ${data.knx.prog_mode ? "[PROG]" : data.knx.bus_ok ? "OK" : "SAVEB!"}`;
   knxPill.className = "pill " + (data.knx.bus_ok ? "ok" : "err");
 
   const daliPill = document.getElementById("pill-dali");
   daliPill.textContent = `DALI: ${data.dali.present}/64 ON:${data.dali.active} FLT:${data.dali.faulty}`;
-  daliPill.className = "pill " + (data.dali.faulty > 0 ? "err" : "ok");
+  daliPill.className = "pill " + (data.dali.faulty > 0 || data.dali.psu_short ? "err" : "ok");
 
   const mqttPill = document.getElementById("pill-mqtt");
   mqttPill.textContent = `MQTT: ${data.net.mqtt ? "ONLINE" : "OFF"} (${data.net.ip})`;
@@ -266,6 +434,7 @@ function handleLiveState(data) {
     });
   }
 
+  updatePowerMonitor(data);
   renderOledCanvas(data.oled);
   renderLamps(data.channels || []);
   renderGroups(data.groups || []);
@@ -343,26 +512,63 @@ async function openGearModal(ch) {
   const res = await fetch(`/api/channel?ch=${ch}`);
   const d = await res.json();
 
+  const ftOptions = FADE_TIME_LABELS.map(
+    (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
+  ).join("");
+  const frOptions = FADE_RATE_LABELS.slice(1)
+    .map(
+      (lbl, idx) =>
+        `<option value="${idx + 1}" ${d.fade_rate === idx + 1 ? "selected" : ""}>${lbl}</option>`
+    )
+    .join("");
+  const xyX = ((d.xy_x || 20480) / 65535).toFixed(4);
+  const xyY = ((d.xy_y || 21500) / 65535).toFixed(4);
+
   body.innerHTML = `
     <div class="sys-info-box">
-      <div><strong>Status Byte (0x90):</strong> 0x${(d.status_byte || 0).toString(16).padStart(2, "0").toUpperCase()}
-        [GearFail:${d.gear_failure} LampFail:${d.lamp_failure} ArcOn:${d.arc_on} LimitErr:${d.limit_error} Fade:${d.fade_running} Reset:${d.reset_state} PwrCyc:${d.power_cycle}]
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <span class="badge ${d.gear_failure ? "err" : "ok"}">Driver: ${d.gear_failure ? "FAULT" : "OK"}</span>
+        <span class="badge ${d.lamp_failure ? "err" : "ok"}">Lamp: ${d.lamp_failure ? "FAILURE" : "OK"}</span>
+        <span class="badge ${d.arc_on ? "ok" : ""}">Arc: ${d.arc_on ? "ON" : "OFF"}</span>
+        <span class="badge ${d.limit_error ? "warn" : ""}">Limit: ${d.limit_error ? "OUT OF RANGE" : "OK"}</span>
+        <span class="badge">DT${d.device_type} (v${d.version})</span>
+        <span class="badge">Phys Min: ${d.physical_min} (${(daliArcToPowerRatio(d.physical_min) * 100).toFixed(2)}%)</span>
       </div>
-      <div><strong>Device Type / Version / Physical Min:</strong> DT${d.device_type} • v${d.version} • PhysMin=${d.physical_min}</div>
-      <div><strong>Scene Levels (S01..S16):</strong> ${(d.scenes || []).map((v, i) => `S${i + 1}:${v === 255 ? "MASK" : v}`).join(" ")}</div>
+      <div><strong>Group Memberships (G00..G15):</strong> ${formatGroupList(d.groups)}</div>
+      <div><strong>Scene Levels (S01..S16):</strong> ${(d.scenes || []).map((v, i) => `S${String(i + 1).padStart(2, "0")}:${v === 255 ? "MASK" : Math.round((v * 100) / 254) + "%"}`).join(" • ")}</div>
     </div>
+    <h3 style="margin:10px 0 6px;font-size:13px">DT6 Operating Limits &amp; Fade Curve (IEC 62386-102)</h3>
     <div class="field-row">
-      <div class="field"><span>Min Level (1..254)</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></div>
+      <div class="field"><span>Min Level (1..254, PhysMin=${d.physical_min})</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></div>
       <div class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></div>
       <div class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></div>
     </div>
     <div class="field-row">
       <div class="field"><span>System-Failure Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></div>
-      <div class="field"><span>Fade Time (0..15)</span><input type="number" id="gm-ft" min="0" max="15" value="${d.fade_time}"></div>
-      <div class="field"><span>Fade Rate (1..15)</span><input type="number" id="gm-fr" min="1" max="15" value="${d.fade_rate}"></div>
+      <div class="field"><span>Fade Time (IEC 62386 Table 15)</span><select id="gm-ft">${ftOptions}</select></div>
+      <div class="field"><span>Fade Rate (IEC 62386 Table 16)</span><select id="gm-fr">${frOptions}</select></div>
+    </div>
+    <h3 style="margin:10px 0 6px;font-size:13px">DT8 Colour Control (IEC 62386-209: Tc / RGBW / CIE 1931 xy)</h3>
+    <div class="field-row">
+      <div class="field">
+        <span>Tunable White CCT (K)</span>
+        <input type="number" min="1800" max="8000" step="100" value="${d.kelvin || 4000}"
+          onchange="sendCmd({action:'set_cct',target:'ch',index:${ch},kelvin:Number(this.value)})">
+      </div>
+      <div class="field">
+        <span>CIE 1931 x (0.00..0.80)</span>
+        <input type="number" id="gm-xy-x" min="0" max="0.8" step="0.005" value="${xyX}">
+      </div>
+      <div class="field">
+        <span>CIE 1931 y (0.00..0.80)</span>
+        <input type="number" id="gm-xy-y" min="0" max="0.8" step="0.005" value="${xyY}">
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <button class="btn" type="button" onclick="sendCmd({action:'set_xy',target:'ch',index:${ch},x:Math.round(Number(document.getElementById('gm-xy-x').value)*65535),y:Math.round(Number(document.getElementById('gm-xy-y').value)*65535),brightness:${d.level || 200}})">Apply CIE xy</button>
+      </div>
     </div>
     <div class="btn-group" style="margin-top:10px">
-      <button class="btn btn-primary" onclick="saveGearParams(${ch})">Write Parameters to Ballast (DTR0 + 2x Store)</button>
+      <button class="btn btn-primary" onclick="saveGearParams(${ch})">Write DT6 Parameters to Ballast (DTR0 + 2x Store)</button>
       <button class="btn" onclick="openGearModal(${ch})">Re-Query Registers</button>
     </div>
   `;

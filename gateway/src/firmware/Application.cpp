@@ -1,7 +1,7 @@
 #include "firmware/Application.hpp"
 
 #include <array>
-#include <cstddef>
+#include <cstdint>
 
 #include <esp_app_desc.h>
 #include <esp_log.h>
@@ -196,6 +196,11 @@ void publish_job_result(Wiring& wiring, const commissioning::JobResult& result, 
 void apply_configuration_values(Wiring& wiring, const config::Configuration& configuration) {
     wiring.lighting.configure(configuration);
     wiring.inputs.configure(configuration);
+    auto net_cfg = runtime_state().network_config();
+    if (net_cfg.internal_dali_psu_enabled != configuration.internal_dali_psu_enabled) {
+        net_cfg.internal_dali_psu_enabled = configuration.internal_dali_psu_enabled;
+        runtime_state().save_network_config(net_cfg);
+    }
     unsigned reconciled = 0;
     unsigned failed = 0;
     for (unsigned channel = 0; channel < dali::ShortAddress::capacity; ++channel) {

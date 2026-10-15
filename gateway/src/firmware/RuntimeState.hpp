@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <bitset>
 #include <cstddef>
 #include <cstdint>
 
@@ -53,7 +52,8 @@ public:
                           device::PanelHint hint, std::uint32_t now_ms) noexcept;
 
     void update_network_state(device::WifiState wifi, std::int8_t rssi, const char* ipv4, bool mqtt_connected,
-                              std::uint8_t ws_clients, std::uint32_t now_ms) noexcept;
+                              std::uint8_t ws_clients, std::uint32_t now_ms,
+                              const char* chip_id = nullptr) noexcept;
 
     void on_power_fail_saveb(std::uint32_t now_ms) noexcept;
     void request_psu_reset() noexcept;
@@ -87,13 +87,17 @@ private:
     mutable StaticSemaphore_t mutex_buf_{};
     NvsLogBackend log_backend_{};
     diagnostics::DiagnosticLog log_;
-    diagnostics::DaliDebugTrace trace_{};
+    diagnostics::DaliDebugTrace trace_;
     network::NetworkConfig net_cfg_{};
     device::OledDisplay oled_{device::OledGeometry::Oled64x128};
     device::OledSystemState oled_state_{};
     std::array<ChannelSnapshot, 64> channels_{};
+    std::array<std::uint8_t, 16> group_levels_{};
     commissioning::InputSnapshot inputs_{};
     device::LedColours led_colours_{};
+    std::uint8_t input_device_count_ = 0;
+    std::uint8_t ws_clients_ = 0;
+    bool knx_configured_ = false;
     bool power_loss_latched_ = false;
     bool psu_reset_requested_ = false;
 };
