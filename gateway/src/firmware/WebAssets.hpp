@@ -47,7 +47,7 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
             <h2>Front Panel Live Mirror (OLED + SK6805 LEDs)</h2>
             <div class="btn-group">
               <button class="btn btn-sm" id="btn-oled-page">SW2 FUNC (Next Page)</button>
-              <button class="btn btn-sm" id="btn-oled-geom">128×64 ⇄ 128×32</button>
+              <button class="btn btn-sm" id="btn-oled-geom">128×64 ⇄ 64×128</button>
             </div>
           </div>
           <div class="front-panel-wrap">
@@ -201,9 +201,9 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
               <div class="field">
                 <span>Front-Panel OLED Display Type</span>
                 <select id="cfg-oled-geom">
-                  <option value="0">Auto-Detect (Default 128×32 V3 / I2C Probe)</option>
-                  <option value="1">V1 / V2 — 0.96" Winstar 128×64 SSD1306</option>
-                  <option value="2">V3 — 0.91" Crystalfontz 128×32 SSD1306</option>
+                  <option value="0">Auto (V3 — 0.96" 64×128 Portrait)</option>
+                  <option value="2">V3 — 0.96" Winstar/SSD1312 64×128 Portrait (14×28 mm)</option>
+                  <option value="1">V1 / V2 — 0.96" Winstar 128×64 Landscape SSD1306</option>
                   <option value="3">Disabled (OLED Off)</option>
                 </select>
               </div>
@@ -1099,7 +1099,8 @@ function renderOledCanvas(oled) {
   if (canvas.width !== w || canvas.height !== h) {
     canvas.width = w;
     canvas.height = h;
-    canvas.style.height = h === 32 ? "64px" : "128px";
+    canvas.style.width = (w * 2) + "px";
+    canvas.style.height = (h * 2) + "px";
   }
   const ctx = canvas.getContext("2d");
   const img = ctx.createImageData(w, h);

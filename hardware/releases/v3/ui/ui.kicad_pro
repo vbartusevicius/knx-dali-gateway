@@ -456,7 +456,35 @@
       },
       {
         "netclass": "SELV-KNX",
+        "pattern": "OLED_C1N"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_C1P"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_C2N"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_C2P"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_IREF"
+      },
+      {
+        "netclass": "SELV-KNX",
         "pattern": "OLED_RES"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_VCOMH"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "OLED_VOUT"
       }
     ]
   },

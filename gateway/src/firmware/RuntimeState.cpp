@@ -305,9 +305,9 @@ void RuntimeState::next_oled_page(std::uint32_t now_ms) noexcept {
 
 void RuntimeState::toggle_oled_geometry(std::uint32_t now_ms) noexcept {
     lock();
-    net_cfg_.oled_geometry = (oled_.resolved_geometry() == device::OledGeometry::Oled128x32)
+    net_cfg_.oled_geometry = (oled_.resolved_geometry() == device::OledGeometry::Oled64x128)
                                  ? device::OledGeometry::Oled128x64
-                                 : device::OledGeometry::Oled128x32;
+                                 : device::OledGeometry::Oled64x128;
     oled_.set_geometry(net_cfg_.oled_geometry);
     oled_.wake(now_ms);
     oled_.render(oled_state_, now_ms);

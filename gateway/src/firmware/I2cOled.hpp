@@ -30,7 +30,7 @@ private:
     i2c_master_bus_handle_t bus_ = nullptr;
     i2c_master_dev_handle_t dev_ = nullptr;
     std::uint8_t addr_ = 0x3C;
-    device::OledGeometry active_geometry_ = device::OledGeometry::Oled128x32;
+    device::OledGeometry active_geometry_ = device::OledGeometry::Oled64x128;
     bool present_ = false;
     bool display_on_ = false;
 };

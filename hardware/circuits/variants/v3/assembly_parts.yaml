@@ -36,18 +36,18 @@
   description: yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75
     pin strip (main J2; 20-32 V for the internal DALI supply only)
   source: Phoenix Contact / Digi-Key / Mouser
-- item: OLED display (12-pin ZIF FPC, plug-in, no soldering)
+- item: OLED display (14-pin ZIF FPC, plug-in, no soldering)
   qty: 1
-  part: Crystalfontz CFAL12832D-B (or CFAL12832C0-091B)
-  description: 0.91 in 128x32 SSD1306 I2C OLED (30.0 x 11.5 x 1.45 mm, charge-pump
-    caps on the 25.0 mm flex tail); folds through the 1.0 mm top cutout on UI and
-    plugs into JLC-assembled ZIF connector ui J2 (XUNPU FPC-05F-12PH20)
-  source: Crystalfontz / Digi-Key / Mouser
+  part: QG-6428TSWCG02 / JLX12864OLED-S096W (0.96 in 64x128 SSD1312 I2C)
+  description: 0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); flex
+    tail folds through the 1.0 mm top cutout on UI and plugs into JLC-assembled 14-pin
+    0.5 mm ZIF connector ui J2 (XUNPU FPC-05F-14PH20)
+  source: Panelook / LCSC / AliExpress / EastRising
 - item: OLED mounting tape
   qty: 2
-  part: 3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.6 x 26 mm)
-  description: adheres the left/right back edges of the CFAL12832D-B OLED onto the
-    cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)
+  part: 3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.4 x 26 mm)
+  description: adheres the left/right back edges of the 14.0 x 28.0 mm 64x128 OLED
+    onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)
   source: any
 - item: Main-to-UI FFC cable
   qty: 1

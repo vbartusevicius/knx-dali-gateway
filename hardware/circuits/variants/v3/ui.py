@@ -1,8 +1,9 @@
-"""V3 UI board (1 DIN front, 13.8 x 40.5 mm): Crystalfontz CFAL12832D-B 0.91"
-128x32 SSD1306 OLED (30.0 x 11.5 x 1.45 mm, charge-pump caps on the flex tail)
-connected via a JLC-assembled 12-pin 0.5 mm Flip-Top ZIF FPC connector J2 on
-the back (zero hand-soldering), two TS-1088 switches pressed through printed
-plungers, and three SK6805 RGB LEDs below the buttons; FFC J1 to the carrier."""
+"""V3 UI board (1 DIN front, 13.8 x 40.5 mm): 0.96" 64x128 SSD1312 portrait
+OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 x 1.22 mm) connected via
+a JLC-assembled 14-pin 0.5 mm Flip-Top ZIF FPC connector J2 on the back (zero
+hand-soldering) with its 3.3 V charge-pump passives on the back, two Omron
+B3U-1000P switches pressed through printed plungers, and three SK6805 RGB LEDs
+below the buttons; FFC J1 to the carrier."""
 
 from blocks import ui
 from common import block, power, power_flag
@@ -10,14 +11,14 @@ from skidl import Net
 
 from variants.v3.main import UI_LINK, ffc, wire
 
-CFAL12832_ZIF12 = {
-    "footprint": "gateway_fp:FPC_XUNPU_FPC-05F-12PH20",
-    "mpn": "FPC-05F-12PH20",
+SSD1312_64X128_ZIF14 = {
+    "footprint": "gateway_fp:FPC_XUNPU_FPC-05F-14PH20",
+    "mpn": "FPC-05F-14PH20",
     "mfr": "XUNPU",
-    "lcsc": "C2856799",
-    "pins": ("GND", "SDA", "SDA", "SCL", "GND", "RES", "GND", "VCC", "GND", "VCC", "VCC", "GND"),
-    "source": "12-pin 0.5 mm Flip-Top bottom-contact ZIF FPC connector on the back of the UI board receiving "
-              "the folded flex tail of the Crystalfontz CFAL12832D-B 0.91in 128x32 SSD1306 OLED (datasheet p.5-7)",
+    "lcsc": "C2856800",
+    "pins": ("C2P", "C2N", "C1P", "C1N", "VCC", "NC", "GND", "VCC", "RES", "SCL", "SDA", "IREF", "VCOMH", "VOUT"),
+    "source": "14-pin 0.5 mm Flip-Top bottom-contact ZIF FPC connector on the back of the UI board receiving "
+              "the folded flex tail of the 0.96in 64x128 SSD1312 portrait I2C OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0x28.0x1.22 mm)",
 }
 BUTTON_B3U = {"footprint": "Button_Switch_SMD:SW_SPST_B3U-1000P", "mpn": "B3U-1000P",
               "mfr": "Omron", "lcsc": "C231329"}
@@ -34,7 +35,7 @@ def build():
     wire(ffc("Carrier", "J1", "FFC to the carrier"), UI_LINK,
          {"+3V3": v3, "GND": gnd, "BTN_LADDER": btn_ladder, "LED_DATA": led_data, "+5V": v5, "I2C_SDA": sda,
           "I2C_SCL": scl})
-    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=CFAL12832_ZIF12, button=BUTTON_B3U)
+    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=SSD1312_64X128_ZIF14, button=BUTTON_B3U)
 
 
 NET_CLASSES = dict(ui.NET_CLASSES)

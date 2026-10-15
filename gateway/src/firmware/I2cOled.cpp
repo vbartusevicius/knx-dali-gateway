@@ -66,7 +66,7 @@ bool I2cOled::init(device::OledGeometry requested) noexcept {
     }
 
     const auto geom =
-        (requested == device::OledGeometry::Auto) ? device::OledGeometry::Oled128x32 : requested;
+        (requested == device::OledGeometry::Auto) ? device::OledGeometry::Oled64x128 : requested;
     return init_controller(geom);
 }
 
@@ -82,7 +82,7 @@ void I2cOled::reconfigure(device::OledGeometry geometry) noexcept {
         return;
     }
     const auto resolved =
-        (geometry == device::OledGeometry::Auto) ? device::OledGeometry::Oled128x32 : geometry;
+        (geometry == device::OledGeometry::Auto) ? device::OledGeometry::Oled64x128 : geometry;
     if (resolved != active_geometry_ || !display_on_) {
         (void)init_controller(resolved);
     }
@@ -150,6 +150,7 @@ void I2cOled::flush(const device::OledDisplay& display, bool sleep) noexcept {
     }
 
     const std::uint8_t pages = display.height() / 8U;
+    const std::size_t row_w = display.width();
     const auto& fb = display.buffer();
     for (std::uint8_t page = 0; page < pages; ++page) {
         const std::array<std::uint8_t, 3> pos_cmd{
@@ -162,9 +163,8 @@ void I2cOled::flush(const device::OledDisplay& display, bool sleep) noexcept {
         }
         std::array<std::uint8_t, 1 + device::oled_width> page_buf{};
         page_buf[0] = 0x40U;  // Co = 0, D/C# = 1 (GDDRAM data stream)
-        std::memcpy(page_buf.data() + 1, fb.data() + static_cast<std::size_t>(page) * device::oled_width,
-                    device::oled_width);
-        (void)i2c_master_transmit(dev_, page_buf.data(), page_buf.size(), i2c_timeout_ms);
+        std::memcpy(page_buf.data() + 1, fb.data() + static_cast<std::size_t>(page) * row_w, row_w);
+        (void)i2c_master_transmit(dev_, page_buf.data(), row_w + 1, i2c_timeout_ms);
     }
 }
 

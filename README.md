@@ -32,7 +32,7 @@ All three variants share the same circuit blocks (`hardware/circuits/blocks/`), 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **V1** (`v1`) | **3 DIN** (`54 mm`) | **2** (`main`, `ui`) | 10-pin JST-SH cable | `MX126-5.0-02P` screw | `PST 1,0` KNX + `MX126` AUX screw | Winstar `WEA012864D-03` 0.96" 128×64 (4-pin THT) | 2 × `2.5×10` screws + UI snaps | [`hardware/releases/v1/`](hardware/releases/v1/README.md) |
 | **V2** (`v2`) | **2 DIN** (`36 mm`) | **3** (`main`, `interface`, `ui`) | 10-pin JST-SH cable + `1×4` & `1×3` B2B headers | `MX126-5.0-02P` screw | `PST 1,0` KNX + `MX126` AUX screw | Winstar `WEA012864D-03` 0.96" 128×64 (4-pin THT) | 2 × `2.5×10` screws + UI snaps | [`hardware/releases/v2/`](hardware/releases/v2/README.md) |
-| **V3** (`v3`) | **1 DIN** (`18 mm`) | **2** (`main` two-sided vertical, `ui`) | 8-pin `0.5 mm` FFC (`50 mm`, `C6936295`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`) | Two `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | Crystalfontz `CFAL12832D-B` 0.91" 128×32 (12-pin `0.5 mm` ZIF `C2856799`, no soldering) | Side-opening clamshell with 4 side snap-clicks + UI snaps | [`hardware/releases/v3/`](hardware/releases/v3/README.md) |
+| **V3** (`v3`) | **1 DIN** (`18 mm`) | **2** (`main` two-sided vertical, `ui`) | 8-pin `0.5 mm` FFC (`50 mm`, `C6936295`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`) | Two `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | 0.96" `64×128` portrait `SSD1312` (`QG-6428TSWCG02`, `14 × 28 mm`, 14-pin `0.5 mm` ZIF `C2856800`, no soldering) | Side-opening clamshell with 4 side snap-clicks + UI snaps | [`hardware/releases/v3/`](hardware/releases/v3/README.md) |
 
 Detailed electrical and mechanical notes, including the XIAO `D0..D10` pin table, LED chain indexing, and ADC button ladder voltages: [`hardware/docs/variants.md`](hardware/docs/variants.md).
 
@@ -56,7 +56,7 @@ For each board subfolder in the release (`main/`, `ui/`, and `interface/` on V2)
   - **Seeed XIAO ESP32-C6 Pre-Soldered (`102010636`)** + two `1×7` `2.54 mm` female socket strips (`5.0 mm` tall on V3, `8.5 mm` tall on V1/V2).
   - **RECOM `REM3-2415S/A/CTRL`** isolated DC-DC converter (`main U3`).
   - **Phoenix Contact `PST 1,0/2-5,75 R32` (`1574200`)** pin strips + mating **red/black KNX plug (`1574300`)** and (on V3) **yellow/white AUX plug (`1574299`)**.
-  - **OLED display:** Winstar `WEA012864DWPP3N00003` (4-pin THT on V1/V2) or **Crystalfontz `CFAL12832D-B`** (12-pin `0.5 mm` ZIF plug-in flex tail on V3, adhered with `1.0 mm` double-sided foam tape onto the cover's backing rails — zero hand-soldering on the V3 UI board).
+  - **OLED display:** Winstar `WEA012864DWPP3N00003` (0.96" `128×64` 4-pin THT on V1/V2) or **`QG-6428TSWCG02` / `JLX12864OLED-S096W`** (0.96" `64×128` portrait `SSD1312`, `14.0 × 28.0 mm`, 14-pin `0.5 mm` ZIF plug-in flex tail on V3, adhered with `1.0 mm` double-sided foam tape onto the cover's backing rails — zero hand-soldering on the V3 UI board).
   - **Board-to-board cable** (`50 mm` 8-pin `0.5 mm` FFC `C6936295` on V3; `100 mm` 10-pin JST-SH cable on V1/V2) and two `2.54 mm` jumper caps (`C100114`) for `JP1`.
 
 ### 3. 3D-Print the DIN-Rail Enclosure (`enclosure/`)
@@ -67,7 +67,7 @@ Each release's `enclosure/` directory contains:
   2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`0.3 mm` recessed (debossed) text and LED rings** cut into the cover faces (ideal for single-colour printing).
   3. **`cover_color.3mf` / `cover_color_obj.zip`:** multi-material / full-colour WJP resin cover (`0.3 mm` flush inlaid text bodies).
 - **Assembly (`V3` 1-DIN):**
-  1. Snap the `ui` board into the cover's front protrusion, fold the `CFAL12832D-B` OLED's `25 mm` flex tail through the `1.0 mm` top cutout on the UI board into ZIF connector `J2`, and stick the OLED onto the cover's backing rails with `1.0 mm` double-sided foam tape.
+  1. Snap the `ui` board into the cover's front protrusion, fold the 0.96" `64×128` OLED's flex tail through the `1.0 mm` top cutout on the UI board into the 14-pin ZIF connector `J2`, and stick the OLED onto the cover's backing rails with `1.0 mm` double-sided foam tape.
   2. Slide the `main` board into `base` **from the open left side (`-x → +x`)** so `J1` and `J2`'s pins pass straight through the four `Ø 2.2 mm` holes into the right-side KNX/AUX pockets and `J3` (`KF142R`) seats in the top opening.
   3. Connect the `50 mm` 8-pin FFC cable between `main J4` and `ui J1`, then close `cover` over the left side and front until the **four side snap-click hooks** lock into `base`.
 

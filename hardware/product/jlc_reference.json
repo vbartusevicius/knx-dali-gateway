@@ -222,6 +222,44 @@
         "2": "A"
       }
     },
+    "C15849": {
+      "record": {
+        "componentModelEn": "CL10A105KB8NNNC",
+        "componentBrandEn": "Samsung Electro-Mechanics",
+        "componentSpecificationEn": "0603",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2304140030_Samsung-Electro-Mechanics-CL10A105KB8NNNC_C15849.pdf",
+        "componentLibraryType": "base",
+        "attributes": [
+          {
+            "attribute_name_en": "Voltage Rating",
+            "component_code": "C15849",
+            "attribute_value_name": "50V"
+          },
+          {
+            "attribute_name_en": "Capacitance",
+            "component_code": "C15849",
+            "attribute_value_name": "1uF"
+          }
+        ]
+      },
+      "footprint": "C0603",
+      "pads": [
+        [
+          "2",
+          0.700023999999964,
+          -0.0
+        ],
+        [
+          "1",
+          -0.700023999999964,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "2": "2",
+        "1": "1"
+      }
+    },
     "C15850": {
       "record": {
         "componentModelEn": "CL21A106KAYNNNE",
@@ -703,6 +741,39 @@
         "1": "1"
       }
     },
+    "C23150": {
+      "record": {
+        "componentModelEn": "0603WAF3903T5E",
+        "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+        "componentSpecificationEn": "0603",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2206010116_UNI-ROYAL-Uniroyal-Elec-0603WAF3903T5E_C23150.pdf",
+        "componentLibraryType": "expand",
+        "attributes": [
+          {
+            "attribute_name_en": "Resistance",
+            "component_code": "C23150",
+            "attribute_value_name": "390kΩ"
+          }
+        ]
+      },
+      "footprint": "R0603",
+      "pads": [
+        [
+          "2",
+          0.7533639999999732,
+          -0.0
+        ],
+        [
+          "1",
+          -0.7533639999999732,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "2": "2",
+        "1": "1"
+      }
+    },
     "C23162": {
       "record": {
         "componentModelEn": "0603WAF4701T5E",
@@ -1122,89 +1193,101 @@
         "1": "1"
       }
     },
-    "C2856799": {
+    "C2856800": {
       "record": {
-        "componentModelEn": "FPC-05F-12PH20",
+        "componentModelEn": "FPC-05F-14PH20",
         "componentBrandEn": "XUNPU",
         "componentSpecificationEn": "SMD,P=0.5mm,Surface Mount，Right Angle",
-        "dataManualUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2109221030_XUNPU-FPC-05F-12PH20_C2856799.pdf",
+        "dataManualUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2109221030_XUNPU-FPC-05F-14PH20_C2856800.pdf",
         "componentLibraryType": "expand",
         "attributes": []
       },
-      "footprint": "FPC-SMD_12P-P0.50_FPC-05F-12PH20",
+      "footprint": "FPC-SMD_14P-P0.50_XUNPU_FPC-05F-14PH20",
       "pads": [
         [
           "1",
-          -2.7499310000000317,
+          -3.2499300000000186,
           1.28752599999999
         ],
         [
           "2",
-          -2.2500590000000704,
+          -2.7500580000000574,
           1.28752599999999
         ],
         [
           "3",
-          -1.7499330000000572,
+          -2.2499320000000442,
           1.28752599999999
         ],
         [
           "4",
-          -1.250061000000096,
+          -1.7500600000000832,
           1.28752599999999
         ],
         [
           "5",
-          -0.7499350000000832,
+          -1.2499340000000703,
           1.28752599999999
         ],
         [
           "6",
-          -0.2500630000000065,
+          -0.7500619999999936,
           1.28752599999999
         ],
         [
           "7",
-          0.2500630000000065,
+          -0.2499359999999806,
           1.28752599999999
         ],
         [
           "8",
-          0.7499349999999677,
+          0.2499359999999806,
           1.28752599999999
         ],
         [
           "9",
-          1.2500609999999805,
+          0.7500619999999936,
           1.28752599999999
         ],
         [
           "10",
-          1.7499329999999418,
+          1.2499339999999548,
           1.28752599999999
         ],
         [
           "11",
-          2.250058999999955,
+          1.7500599999999678,
           1.28752599999999
         ],
         [
           "12",
-          2.7499309999999157,
+          2.2499319999999288,
+          1.28752599999999
+        ],
+        [
+          "13",
+          2.750057999999942,
           1.28752599999999
         ],
         [
           "14",
-          -4.440047000000031,
+          3.2501839999999547,
+          1.28752599999999
+        ],
+        [
+          "16",
+          -4.9400460000000175,
           -1.28752599999999
         ],
         [
-          "13",
-          4.4400469999999155,
+          "15",
+          4.9400460000000175,
           -1.28752599999999
         ]
       ],
       "pin_names": {
+        "16": "16",
+        "15": "15",
         "14": "14",
         "13": "13",
         "12": "12",

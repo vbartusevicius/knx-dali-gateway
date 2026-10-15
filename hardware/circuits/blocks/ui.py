@@ -132,15 +132,36 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
     nets = {"GND": gnd, "VCC": v3, "SCL": scl, "SDA": sda}
     if "RES" in oled["pins"]:
         oled_res = Net("OLED_RES")
-        r_res = res("10k", src(source="CFAL12832D-B RES# pull-up"))
-        c_res = cap("100n 50V", src(source="CFAL12832D-B RES# RC power-on reset"))
+        r_res = res("10k", src(source="OLED RES# pull-up"))
+        c_res = cap("100n 50V", src(source="OLED RES# RC power-on reset"))
         r_res[1] += v3
         r_res[2] += oled_res
         c_res[1] += oled_res
         c_res[2] += gnd
         nets["RES"] = oled_res
+    if "C1P" in oled["pins"]:
+        c1p, c1n, c2p, c2n = Net("OLED_C1P"), Net("OLED_C1N"), Net("OLED_C2P"), Net("OLED_C2N")
+        iref, vcomh, vout = Net("OLED_IREF"), Net("OLED_VCOMH"), Net("OLED_VOUT")
+        c_fly1 = cap("1u 50V", src(source="SSD1312 C1P-C1N charge-pump flying cap"))
+        c_fly1[1] += c1p
+        c_fly1[2] += c1n
+        c_fly2 = cap("1u 50V", src(source="SSD1312 C2P-C2N charge-pump flying cap"))
+        c_fly2[1] += c2p
+        c_fly2[2] += c2n
+        r_iref = res("390k", src(source="SSD1312 IREF segment current reference (390k to GND)"))
+        r_iref[1] += iref
+        r_iref[2] += gnd
+        c_vcomh = cap("1u 50V", src(source="SSD1312 VCOMH deselect decoupling cap"))
+        c_vcomh[1] += vcomh
+        c_vcomh[2] += gnd
+        c_vout = cap("1u 50V", src(source="SSD1312 VCC charge-pump output stabilization cap"))
+        c_vout[1] += vout
+        c_vout[2] += gnd
+        nets.update({"C1P": c1p, "C1N": c1n, "C2P": c2p, "C2N": c2n,
+                     "IREF": iref, "VCOMH": vcomh, "VOUT": vout})
     for i, name in enumerate(oled["pins"], start=1):
-        j3[i] += nets[name]
+        if name != "NC":
+            j3[i] += nets[name]
 
 
 NET_CLASSES = {

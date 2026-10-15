@@ -1,4 +1,4 @@
-"""Compile OledDisplay.cpp on host and render pixel-accurate SVG previews of all 128x64 and 128x32 OLED screens."""
+"""Compile OledDisplay.cpp on host and render pixel-accurate SVG previews of all 128x64 and 64x128 OLED screens."""
 
 from __future__ import annotations
 
@@ -69,17 +69,17 @@ int main() {
     };
     const char* names[5] = {"overview", "matrix", "groups", "network", "diagnostics"};
     for (int i = 0; i < 5; ++i) {
-        char id64[32], id32[32];
+        char id64[32], id64p[32];
         std::snprintf(id64, sizeof(id64), "64_%s", names[i]);
-        std::snprintf(id32, sizeof(id32), "32_%s", names[i]);
+        std::snprintf(id64p, sizeof(id64p), "64p_%s", names[i]);
         dump(id64, OledGeometry::Oled128x64, pages[i], st);
-        dump(id32, OledGeometry::Oled128x32, pages[i], st);
+        dump(id64p, OledGeometry::Oled64x128, pages[i], st);
     }
 
     OledSystemState prog = st;
     prog.knx_prog_mode = true;
     dump("64_modal_prog", OledGeometry::Oled128x64, OledPage::Overview, prog);
-    dump("32_modal_prog", OledGeometry::Oled128x32, OledPage::Overview, prog);
+    dump("64p_modal_prog", OledGeometry::Oled64x128, OledPage::Overview, prog);
     return 0;
 }
 """
@@ -128,23 +128,24 @@ def main() -> None:
         ("modal_prog", "Modal Alert — KNX Programming Mode"),
     ]
 
-    scale = 1.5
-    w_px = int(128 * scale)
-    pair_w = w_px + 14 + w_px + 28
+    scale = 1.8
+    w128 = int(128 * scale)
+    w64 = int(64 * scale)
+    pair_w = w128 + 18 + w64 + 34
     total_w = 24 + pair_w * 2
-    row_h = int(64 * scale) + 46
-    total_h = max(72 + 3 * row_h, total_w)
+    row_h = int(128 * scale) + 48
+    total_h = 74 + 3 * row_h
 
     svg = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total_w} {total_h}" width="{total_w}" height="{total_h}">',
         '<rect width="100%" height="100%" fill="#0f141c"/>',
         (
             '<text x="24" y="28" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">'
-            "KNX-DALI Gateway Front-Panel SSD1306 OLED Screens — V1/V2 (128x64) vs V3 (128x32)</text>"
+            "KNX-DALI Gateway Front-Panel 0.96&quot; OLED Screens — V1/V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>"
         ),
         (
             '<text x="24" y="48" fill="#8b949e" font-family="monospace" font-size="11">'
-            'Each pair: Left = V1/V2 Winstar WEA012864D (0.96" 128x64) | Right = V3 Crystalfontz CFAL12832D-B (0.91" 128x32)</text>'
+            'Each pair: Left = V1/V2 128x64 Landscape (0.96" Winstar WEA012864D) | Right = V3 64x128 Portrait (0.96" 14x28mm)</text>'
         ),
     ]
 
@@ -156,10 +157,10 @@ def main() -> None:
         svg.append(
             f'<text x="{base_x}" y="{base_y + 12}" fill="#c9d1d9" font-family="monospace" font-size="11" font-weight="bold">{label}</text>'
         )
-        for prefix, dx, color in [("64", 0, "#38bdf8"), ("32", w_px + 14, "#f8fafc")]:
+        for prefix, dx, color in [("64", 0, "#38bdf8"), ("64p", w128 + 18, "#4ade80")]:
             w, h, rows = screens[f"{prefix}_{key}"]
             bx = base_x + dx
-            by = base_y + 20 + int(((64 - h) * scale) // 2)
+            by = base_y + 22 + int(((128 - h) * scale) // 2)
             svg.append(
                 f'<rect x="{bx - 3}" y="{by - 3}" width="{w * scale + 6:.1f}" height="{h * scale + 6:.1f}" rx="4" fill="#05070a" stroke="#30363d" stroke-width="1.5"/>'
             )

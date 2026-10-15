@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 
 #include "commissioning/Commissioning.hpp"
 #include "device/FrontPanel.hpp"
@@ -304,169 +305,194 @@ public:
     }
 };
 
-class Oled128x32Strategy final : public OledLayoutStrategy {
+class Oled64x128Strategy final : public OledLayoutStrategy {
 public:
-    [[nodiscard]] OledGeometry geometry() const noexcept override { return OledGeometry::Oled128x32; }
-    [[nodiscard]] std::uint8_t height() const noexcept override { return 32; }
-    [[nodiscard]] std::uint8_t ssd1306_mux_ratio() const noexcept override { return 0x1FU; }
-    [[nodiscard]] std::uint8_t ssd1306_com_pins() const noexcept override { return 0x02U; }
+    [[nodiscard]] OledGeometry geometry() const noexcept override { return OledGeometry::Oled64x128; }
+    [[nodiscard]] std::uint8_t width() const noexcept override { return 64; }
+    [[nodiscard]] std::uint8_t height() const noexcept override { return 128; }
+    [[nodiscard]] std::uint8_t ssd1306_mux_ratio() const noexcept override { return 0x7FU; }
+    [[nodiscard]] std::uint8_t ssd1306_com_pins() const noexcept override { return 0x12U; }
 
     void render_modal(OledCanvas& canvas, const OledSystemState& state) const noexcept override {
-        canvas.draw_rect(0, 0, 128, 32, true);
-        canvas.fill_rect(1, 1, 126, 9, true);
+        canvas.draw_rect(0, 0, 64, 128, true);
+        canvas.fill_rect(1, 1, 62, 11, true);
         if (state.hint == PanelHint::FactoryResetArming) {
-            canvas.draw_text(10, 2, "! FACTORY RESET !", false);
-            canvas.draw_text(4, 12, "HOLD SW1+SW2 TO WIPE", true);
-            canvas.draw_text(4, 21, "RELEASE TO CANCEL", true);
+            canvas.draw_text(4, 3, "! RESET !", false);
+            canvas.draw_text(4, 22, "HOLD BOTH", true);
+            canvas.draw_text(4, 34, "BUTTONS", true);
+            canvas.draw_text(4, 46, "10 SEC TO", true);
+            canvas.draw_text(4, 58, "WIPE NVS.", true);
+            canvas.draw_text(4, 78, "RELEASE", true);
+            canvas.draw_text(4, 90, "TO ABORT", true);
             return;
         }
         if (state.knx_prog_mode) {
-            canvas.draw_text(6, 2, "KNX PROG MODE ACTIVE", false);
+            canvas.draw_text(4, 3, "KNX PROG!", false);
             char ia[12]{};
             format_ia(state.knx_individual_address, ia, sizeof(ia));
-            char line[32]{};
-            std::snprintf(line, sizeof(line), "IA:%s ETS READY", ia);
-            canvas.draw_text(4, 12, line, true);
-            canvas.draw_text(4, 21, "HOLD SW1 5S TO EXIT", true);
+            canvas.draw_text(4, 20, "ADDRESS:", true);
+            canvas.draw_text(4, 30, ia, true);
+            canvas.draw_text(4, 48, "ETS READY", true);
+            canvas.draw_text(4, 60, "FOR ADDR", true);
+            canvas.draw_text(4, 72, "DOWNLOAD.", true);
+            canvas.draw_text(4, 94, "HOLD SW1", true);
+            canvas.draw_text(4, 106, "5S: EXIT", true);
             return;
         }
         if (state.wifi_state == WifiState::Setup) {
-            canvas.draw_text(10, 2, "WIFI SETUP PORTAL", false);
-            canvas.draw_text(4, 12, "AP: KNX-DALI-SETUP", true);
-            canvas.draw_text(4, 21, "HTTP://192.168.4.1", true);
+            canvas.draw_text(4, 3, "WIFI AP", false);
+            canvas.draw_text(4, 20, "SSID:", true);
+            canvas.draw_text(4, 30, "KNX-DALI", true);
+            canvas.draw_text(4, 48, "PORTAL:", true);
+            canvas.draw_text(4, 58, "192.168.", true);
+            canvas.draw_text(4, 68, "4.1", true);
             return;
         }
-        canvas.draw_text(8, 2, "DALI COMMISSIONING", false);
-        char line[32]{};
-        std::snprintf(line, sizeof(line), "%u%%  FOUND:%u", static_cast<unsigned>(state.comm_progress),
-                      static_cast<unsigned>(state.comm_found));
-        canvas.draw_text(4, 12, line, true);
-        canvas.draw_rect(4, 21, 120, 8, true);
-        canvas.fill_rect(6, 23, (116 * static_cast<int>(state.comm_progress)) / 100, 4, true);
+        canvas.draw_text(4, 3, "DALI SCAN", false);
+        char line[16]{};
+        std::snprintf(line, sizeof(line), "DONE:%3u%%", static_cast<unsigned>(state.comm_progress));
+        canvas.draw_text(4, 22, line, true);
+        std::snprintf(line, sizeof(line), "FOUND:%2u", static_cast<unsigned>(state.comm_found));
+        canvas.draw_text(4, 36, line, true);
+        canvas.draw_rect(4, 54, 56, 12, true);
+        canvas.fill_rect(6, 56, (52 * static_cast<int>(state.comm_progress)) / 100, 8, true);
     }
 
     void render_page(OledCanvas& canvas, OledPage page,
                      const OledSystemState& state) const noexcept override {
+        canvas.fill_rect(0, 0, 64, 10, true);
+        char hdr[16]{};
         switch (page) {
         case OledPage::Overview: {
+            canvas.draw_text(2, 1, "OVERVIEW1", false);
             char ia[12]{};
             format_ia(state.knx_individual_address, ia, sizeof(ia));
-            char line0[32]{};
-            std::snprintf(line0, sizeof(line0), "KNX:%-7s %s 1/5", ia, state.knx_bus_ok ? "OK" : "LOW");
-            canvas.draw_text(0, 0, line0);
-
-            char line1[32]{};
-            std::snprintf(line1, sizeof(line1), "DALI:%02u/64 ON:%02u F:%u",
-                          static_cast<unsigned>(state.present_gear_count),
-                          static_cast<unsigned>(state.active_lamp_count),
-                          static_cast<unsigned>(state.faulty_gear_count));
-            canvas.draw_text(0, 8, line1);
-
-            char line2[32]{};
-            if (state.wifi_state == WifiState::Connected) {
-                std::snprintf(line2, sizeof(line2), "%-15s M:%s", state.ipv4.data(),
-                              state.mqtt_connected ? "OK" : "--");
-            } else {
-                std::snprintf(line2, sizeof(line2), "WIFI:OFF  PSU:%s",
-                              state.dali_psu_enabled ? "INT" : "EXT");
-            }
-            canvas.draw_text(0, 16, line2);
-
-            canvas.draw_rect(0, 25, 76, 6, true);
-            canvas.fill_rect(2, 27, (72 * static_cast<int>(state.average_brightness_pct)) / 100, 2, true);
-            char pct[16]{};
-            std::snprintf(pct, sizeof(pct), "BRI:%3u%%", static_cast<unsigned>(state.average_brightness_pct));
-            canvas.draw_text(80, 24, pct);
+            char line[16]{};
+            std::snprintf(line, sizeof(line), "IA:%s", ia);
+            canvas.draw_text(2, 14, line);
+            std::snprintf(line, sizeof(line), "KNX:%s", state.knx_bus_ok ? "OK" : "SAVEB");
+            canvas.draw_text(2, 24, line);
+            std::snprintf(line, sizeof(line), "PSU:%s", state.dali_psu_enabled ? "INT" : "EXT");
+            canvas.draw_text(2, 34, line);
+            canvas.fill_rect(0, 44, 64, 1, true);
+            std::snprintf(line, sizeof(line), "GEAR:%02u/64",
+                          static_cast<unsigned>(state.present_gear_count));
+            canvas.draw_text(2, 48, line);
+            std::snprintf(line, sizeof(line), "ON:  %02u", static_cast<unsigned>(state.active_lamp_count));
+            canvas.draw_text(2, 58, line);
+            std::snprintf(line, sizeof(line), "FLT: %02u", static_cast<unsigned>(state.faulty_gear_count));
+            canvas.draw_text(2, 68, line);
+            std::snprintf(line, sizeof(line), "INP: %02u", static_cast<unsigned>(state.input_device_count));
+            canvas.draw_text(2, 78, line);
+            canvas.fill_rect(0, 88, 64, 1, true);
+            std::snprintf(line, sizeof(line), "BRI: %3u%%",
+                          static_cast<unsigned>(state.average_brightness_pct));
+            canvas.draw_text(2, 92, line);
+            canvas.draw_rect(2, 102, 60, 8, true);
+            canvas.fill_rect(4, 104, (56 * static_cast<int>(state.average_brightness_pct)) / 100, 4, true);
+            char up[12]{};
+            format_uptime(state.uptime_seconds, up, sizeof(up));
+            std::snprintf(line, sizeof(line), "UP:%s", up);
+            canvas.draw_text(2, 116, line);
             break;
         }
         case OledPage::DaliMatrix: {
-            canvas.draw_text(0, 0, "DALI 64-LAMP MAP  2/5");
+            canvas.draw_text(2, 1, "64-CH  2", false);
             for (unsigned ch = 0; ch < 64; ++ch) {
-                const int col = static_cast<int>(ch % 32);
-                const int row = static_cast<int>(ch / 32);
-                const int x = col * 4;
-                const int y = 9 + row * 7;
+                const int col = static_cast<int>(ch % 8);
+                const int row = static_cast<int>(ch / 8);
+                const int x = 2 + col * 7;
+                const int y = 14 + row * 10;
                 if (state.gear_faulty.test(ch)) {
-                    canvas.draw_rect(x, y, 3, 6, true);
-                    canvas.set_pixel(x + 1, y + 2, true);
+                    canvas.draw_rect(x, y, 6, 8, true);
+                    canvas.set_pixel(x + 2, y + 2, true);
+                    canvas.set_pixel(x + 2, y + 5, true);
                 } else if (state.gear_on.test(ch)) {
-                    canvas.fill_rect(x, y, 3, 6, true);
+                    canvas.fill_rect(x, y, 6, 8, true);
                 } else if (state.gear_present.test(ch)) {
-                    canvas.draw_rect(x, y, 3, 6, true);
+                    canvas.draw_rect(x, y, 6, 8, true);
                 } else {
-                    canvas.set_pixel(x + 1, y + 2, true);
+                    canvas.set_pixel(x + 2, y + 3, true);
                 }
             }
-            char summary[32]{};
-            std::snprintf(summary, sizeof(summary), "OK:%02u ON:%02u FLT:%u",
+            char line[16]{};
+            std::snprintf(line, sizeof(line), "OK:%02u L:%02u",
                           static_cast<unsigned>(state.present_gear_count),
-                          static_cast<unsigned>(state.active_lamp_count),
-                          static_cast<unsigned>(state.faulty_gear_count));
-            canvas.draw_text(0, 24, summary);
+                          static_cast<unsigned>(state.active_lamp_count));
+            canvas.draw_text(2, 98, line);
+            std::snprintf(line, sizeof(line), "FAULT: %02u", static_cast<unsigned>(state.faulty_gear_count));
+            canvas.draw_text(2, 110, line);
             break;
         }
         case OledPage::GroupsScenes: {
-            canvas.draw_text(0, 0, "GROUPS G00..G15   3/5");
+            canvas.draw_text(2, 1, "GROUPS 3", false);
             unsigned active_groups = 0;
             for (unsigned g = 0; g < 16; ++g) {
-                const int x = static_cast<int>(g) * 8;
-                const int max_h = 13;
-                const int bar_h = (static_cast<int>(state.group_levels[g]) * max_h) / 254;
-                canvas.draw_rect(x, 9, 6, max_h, true);
-                if (bar_h > 0) {
+                const int y = 14 + static_cast<int>(g) * 6;
+                const int max_w = 42;
+                const int bar_w = (static_cast<int>(state.group_levels[g]) * max_w) / 254;
+                std::snprintf(hdr, sizeof(hdr), "%X", g);
+                canvas.draw_text(2, y - 1, hdr);
+                canvas.draw_rect(12, y, max_w, 5, true);
+                if (bar_w > 0) {
                     ++active_groups;
-                    canvas.fill_rect(x + 1, 9 + (max_h - bar_h), 4, bar_h, true);
+                    canvas.fill_rect(13, y + 1, bar_w > 2 ? bar_w - 2 : 1, 3, true);
                 }
             }
-            char bottom[32]{};
-            if (state.last_scene < 16) {
-                std::snprintf(bottom, sizeof(bottom), "ACT:%u/16  SCENE:#%02u", active_groups,
-                              static_cast<unsigned>(state.last_scene + 1));
-            } else {
-                std::snprintf(bottom, sizeof(bottom), "ACT:%u/16  SCENE:--", active_groups);
-            }
-            canvas.draw_text(0, 24, bottom);
+            char line[16]{};
+            std::snprintf(line, sizeof(line), "ACT:%02u/16", active_groups);
+            canvas.draw_text(2, 114, line);
             break;
         }
         case OledPage::NetworkHa: {
-            char line0[32]{};
-            std::snprintf(line0, sizeof(line0), "WIFI:%ddBm WS:%u 4/5", static_cast<int>(state.wifi_rssi_dbm),
-                          static_cast<unsigned>(state.ws_clients));
-            canvas.draw_text(0, 0, line0);
-            char line1[32]{};
-            std::snprintf(line1, sizeof(line1), "IP:%s", state.ipv4.data());
-            canvas.draw_text(0, 8, line1);
-            char line2[32]{};
-            std::snprintf(line2, sizeof(line2), "MQTT:%s HA:%s", state.mqtt_connected ? "ON " : "OFF",
-                          state.ha_discovery_enabled ? "AUTO" : "OFF");
-            canvas.draw_text(0, 16, line2);
-            char up[12]{};
-            format_uptime(state.uptime_seconds, up, sizeof(up));
-            char line3[32]{};
-            std::snprintf(line3, sizeof(line3), "UP:%s SSID:%.7s", up, state.ssid.data());
-            canvas.draw_text(0, 24, line3);
+            canvas.draw_text(2, 1, "NET/HA 4", false);
+            char line[16]{};
+            canvas.draw_text(2, 14, "SSID:");
+            std::snprintf(line, sizeof(line), "%.10s", state.ssid.data());
+            canvas.draw_text(2, 24, line);
+            canvas.draw_text(2, 38, "IPV4:");
+            std::snprintf(line, sizeof(line), "%.10s", state.ipv4.data());
+            canvas.draw_text(2, 48, line);
+            if (std::strlen(state.ipv4.data()) > 10) {
+                canvas.draw_text(2, 58, state.ipv4.data() + 10);
+            }
+            std::snprintf(line, sizeof(line), "RSSI:%ddB", static_cast<int>(state.wifi_rssi_dbm));
+            canvas.draw_text(2, 72, line);
+            std::snprintf(line, sizeof(line), "MQTT:%s", state.mqtt_connected ? "ON" : "OFF");
+            canvas.draw_text(2, 84, line);
+            std::snprintf(line, sizeof(line), "HA:  %s", state.ha_discovery_enabled ? "AUTO" : "OFF");
+            canvas.draw_text(2, 96, line);
+            std::snprintf(line, sizeof(line), "WS:  %u", static_cast<unsigned>(state.ws_clients));
+            canvas.draw_text(2, 108, line);
             break;
         }
         case OledPage::Diagnostics: {
-            char line[32]{};
-            std::snprintf(line, sizeof(line), "DIAG TX:%lu  5/5",
-                          static_cast<unsigned long>(state.dali_tx_frames));
-            canvas.draw_text(0, 0, line);
-            std::snprintf(line, sizeof(line), "COL:%lu LOG:%lu",
-                          static_cast<unsigned long>(state.dali_collisions),
-                          static_cast<unsigned long>(state.logged_errors));
-            canvas.draw_text(0, 8, line);
+            canvas.draw_text(2, 1, "DIAG   5", false);
+            char line[16]{};
+            std::snprintf(line, sizeof(line), "TX:%lu", static_cast<unsigned long>(state.dali_tx_frames));
+            canvas.draw_text(2, 14, line);
+            std::snprintf(line, sizeof(line), "COL:%lu", static_cast<unsigned long>(state.dali_collisions));
+            canvas.draw_text(2, 26, line);
+            std::snprintf(line, sizeof(line), "ERR:%lu", static_cast<unsigned long>(state.logged_errors));
+            canvas.draw_text(2, 38, line);
+            canvas.fill_rect(0, 50, 64, 1, true);
+            canvas.draw_text(2, 54, "LAST ERR:");
+            std::snprintf(line, sizeof(line), "E%03u", static_cast<unsigned>(state.last_error_code));
+            canvas.draw_text(2, 66, line);
             const auto& desc = diagnostics::describe_error(state.last_error_code);
-            std::snprintf(line, sizeof(line), "E%03u:%.15s", static_cast<unsigned>(state.last_error_code),
-                          desc.symbol);
-            canvas.draw_text(0, 16, line);
+            std::snprintf(line, sizeof(line), "%.10s", desc.symbol);
+            canvas.draw_text(2, 78, line);
+            if (std::strlen(desc.symbol) > 10) {
+                std::snprintf(line, sizeof(line), "%.10s", desc.symbol + 10);
+                canvas.draw_text(2, 88, line);
+            }
             if (state.last_error_address != 0xFFFFU) {
-                std::snprintf(line, sizeof(line), "TARGET: A%02u",
+                std::snprintf(line, sizeof(line), "CH: A%02u",
                               static_cast<unsigned>(state.last_error_address & 0x3FU));
             } else {
-                std::snprintf(line, sizeof(line), "TARGET: BUS/SYS");
+                std::snprintf(line, sizeof(line), "CH: SYS");
             }
-            canvas.draw_text(0, 24, line);
+            canvas.draw_text(2, 104, line);
             break;
         }
         }
@@ -484,7 +510,7 @@ public:
 };
 
 const Oled128x64Strategy strategy_64{};
-const Oled128x32Strategy strategy_32{};
+const Oled64x128Strategy strategy_64x128{};
 const DisabledOledStrategy strategy_disabled{};
 
 }  // namespace
@@ -493,25 +519,27 @@ const OledLayoutStrategy& select_oled_strategy(OledGeometry geometry) noexcept {
     switch (geometry) {
     case OledGeometry::Oled128x64:
         return strategy_64;
-    case OledGeometry::Oled128x32:
+    case OledGeometry::Oled64x128:
     case OledGeometry::Auto:
-        return strategy_32;
+        return strategy_64x128;
     case OledGeometry::Disabled:
         return strategy_disabled;
     }
-    return strategy_32;
+    return strategy_64x128;
 }
 
-void OledCanvas::reset(std::uint8_t height) noexcept {
+void OledCanvas::reset(std::uint8_t width, std::uint8_t height) noexcept {
+    width_ = width;
     height_ = height;
     buffer_.fill(0);
 }
 
 void OledCanvas::set_pixel(int x, int y, bool on) noexcept {
-    if (x < 0 || x >= static_cast<int>(oled_width) || y < 0 || y >= static_cast<int>(height_)) {
+    if (x < 0 || x >= static_cast<int>(width_) || y < 0 || y >= static_cast<int>(height_)) {
         return;
     }
-    const auto index = static_cast<std::size_t>(y / 8) * oled_width + static_cast<std::size_t>(x);
+    const auto index =
+        static_cast<std::size_t>(y / 8) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(x);
     const auto mask = static_cast<std::uint8_t>(1U << (y & 7));
     if (on) {
         buffer_[index] = static_cast<std::uint8_t>(buffer_[index] | mask);
@@ -521,10 +549,10 @@ void OledCanvas::set_pixel(int x, int y, bool on) noexcept {
 }
 
 bool OledCanvas::pixel(std::uint8_t x, std::uint8_t y) const noexcept {
-    if (x >= oled_width || y >= height_) {
+    if (x >= width_ || y >= height_) {
         return false;
     }
-    const auto index = static_cast<std::size_t>(y / 8U) * oled_width + x;
+    const auto index = static_cast<std::size_t>(y / 8U) * static_cast<std::size_t>(width_) + x;
     return (buffer_[index] & (1U << (y & 7U))) != 0;
 }
 
@@ -575,7 +603,7 @@ void OledCanvas::draw_text(int x, int y, const char* text, bool on) noexcept {
     }
     int cursor = x;
     for (const char* p = text; *p != '\0'; ++p) {
-        if (cursor + 5 > static_cast<int>(oled_width)) {
+        if (cursor + 5 > static_cast<int>(width_)) {
             break;
         }
         draw_char(cursor, y, *p, on);
@@ -616,7 +644,7 @@ bool OledDisplay::sleeping(std::uint32_t now_ms) const noexcept {
 }
 
 void OledDisplay::render(const OledSystemState& state, std::uint32_t now_ms) noexcept {
-    canvas_.reset(strategy_->height());
+    canvas_.reset(strategy_->width(), strategy_->height());
     if (strategy_->geometry() == OledGeometry::Disabled) {
         return;
     }

@@ -58,3 +58,4 @@ def _resolve(token, env):
 
 env.AddPostAction("$COMPILATIONDB_PATH", _absolutize_drivers)
 env.AddPostAction("compiledb", _absolutize_drivers)
+env.AlwaysBuild(env.File("$COMPILATIONDB_PATH"))

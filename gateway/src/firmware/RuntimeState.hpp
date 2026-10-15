@@ -89,7 +89,7 @@ private:
     diagnostics::DiagnosticLog log_;
     diagnostics::DaliDebugTrace trace_{};
     network::NetworkConfig net_cfg_{};
-    device::OledDisplay oled_{device::OledGeometry::Oled128x32};
+    device::OledDisplay oled_{device::OledGeometry::Oled64x128};
     device::OledSystemState oled_state_{};
     std::array<ChannelSnapshot, 64> channels_{};
     commissioning::InputSnapshot inputs_{};

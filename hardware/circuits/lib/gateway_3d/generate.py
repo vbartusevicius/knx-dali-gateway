@@ -24,7 +24,7 @@ PARTS = {
     "Phoenix_PST_1,0-2-5,75_R32": (8.55, 2.8, 9.9),
     "LED_SK6805-EC15_1.5x1.5mm": (1.5, 1.5, 0.65),
     "FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P": (8.9, 4.2, 1.2),
-    "FPC_XUNPU_FPC-05F-12PH20": (10.6, 4.5, 2.0),
+    "FPC_XUNPU_FPC-05F-14PH20": (11.6, 4.5, 2.0),
 }
 
 

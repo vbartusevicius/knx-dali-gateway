@@ -14,8 +14,8 @@ namespace gateway::device {
 
 enum class OledGeometry : std::uint8_t {
     Auto = 0,
-    Oled128x64 = 1,  // V1 / V2: Winstar WEA012864DWPP3N00003 (0.96" 128x64 SSD1306)
-    Oled128x32 = 2,  // V3: Crystalfontz CFAL12832D-B (0.91" 128x32 SSD1306)
+    Oled128x64 = 1,  // V1 / V2: Winstar WEA012864D (0.96" 128x64 landscape SSD1306)
+    Oled64x128 = 2,  // V3: 0.96" 64x128 portrait (14.0x28.0mm SSD1312 / SH1107)
     Disabled = 3
 };
 
@@ -70,7 +70,9 @@ struct OledSystemState {
 
 class OledCanvas final {
 public:
-    void reset(std::uint8_t height) noexcept;
+    void reset(std::uint8_t width, std::uint8_t height) noexcept;
+    [[nodiscard]] std::uint8_t width() const noexcept { return width_; }
+    [[nodiscard]] std::uint8_t height() const noexcept { return height_; }
     void set_pixel(int x, int y, bool on = true) noexcept;
     [[nodiscard]] bool pixel(std::uint8_t x, std::uint8_t y) const noexcept;
     void fill_rect(int x, int y, int w, int h, bool on = true) noexcept;
@@ -82,16 +84,18 @@ public:
     }
 
 private:
-    std::uint8_t height_ = 32;
+    std::uint8_t width_ = 64;
+    std::uint8_t height_ = 128;
     std::array<std::uint8_t, oled_buffer_size> buffer_{};
 };
 
-// Strategy interface for different SSD1306 panel geometries (128x64 V1/V2 vs
-// 128x32 V3 vs Disabled), selected dynamically via Web UI or NVS configuration.
+// Strategy interface for different OLED panel geometries (128x64 V1/V2
+// landscape, 64x128 V3 portrait, or Disabled).
 class OledLayoutStrategy {
 public:
     virtual ~OledLayoutStrategy() = default;
     [[nodiscard]] virtual OledGeometry geometry() const noexcept = 0;
+    [[nodiscard]] virtual std::uint8_t width() const noexcept { return 128; }
     [[nodiscard]] virtual std::uint8_t height() const noexcept = 0;
     [[nodiscard]] virtual std::uint8_t ssd1306_mux_ratio() const noexcept = 0;
     [[nodiscard]] virtual std::uint8_t ssd1306_com_pins() const noexcept = 0;
@@ -106,12 +110,12 @@ class OledDisplay final {
 public:
     static constexpr std::uint32_t default_sleep_timeout_ms = 60'000;
 
-    explicit OledDisplay(OledGeometry geometry = OledGeometry::Oled128x32) noexcept;
+    explicit OledDisplay(OledGeometry geometry = OledGeometry::Oled64x128) noexcept;
 
     void set_geometry(OledGeometry geometry) noexcept;
     [[nodiscard]] const OledLayoutStrategy& strategy() const noexcept { return *strategy_; }
     [[nodiscard]] OledGeometry resolved_geometry() const noexcept { return strategy_->geometry(); }
-    [[nodiscard]] std::uint8_t width() const noexcept { return static_cast<std::uint8_t>(oled_width); }
+    [[nodiscard]] std::uint8_t width() const noexcept { return strategy_->width(); }
     [[nodiscard]] std::uint8_t height() const noexcept { return strategy_->height(); }
     [[nodiscard]] std::size_t framebuffer_bytes() const noexcept {
         return static_cast<std::size_t>(width()) * (height() / 8U);

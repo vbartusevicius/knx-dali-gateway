@@ -75,8 +75,8 @@ front_ui:
     - { id: prg_rst, label: PRG/RST, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
     - { id: func, label: FUNC, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
   display:
-    type: oled-0.91in-ssd1306-i2c-zif
-    part: Crystalfontz CFAL12832D-B (30.0 x 11.5 x 1.45 mm, 12-pin 0.5 mm ZIF FPC, datasheet p.5-7)
+    type: oled-0.96in-64x128-ssd1312-i2c-zif
+    part: QG-6428TSWCG02 / JLX12864OLED-S096W (14.0 x 28.0 x 1.22 mm, 14-pin 0.5 mm ZIF FPC)
     geometry: hardware/circuits/variants/v3/layout_ui.yaml oled_module
 
 enclosure:

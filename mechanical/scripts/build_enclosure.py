@@ -337,12 +337,12 @@ def standoff_bodies():
     z1 = FRONT_INNER_Z + STACK.pocket_depth + 0.1
     bodies = [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
     if VARIANT == "v3":
-        # Two vertical support rails behind the left/right edges of the CFAL12832D-B
-        # OLED panel, stopping 1.5 mm behind the panel back for 1-2 layers of 1 mm
+        # Two vertical support rails behind the left/right edges of the 14.0 x 28.0 mm
+        # 64x128 OLED panel, stopping 1.5 mm behind the panel back for 1-2 layers of 1 mm
         # double-sided foam tape while leaving the centre clear for the flex tail.
         z_tape = STACK.oled_glass_z - STACK.oled["panel"] - STACK.oled["module_board"] - 1.5 if hasattr(STACK, "oled") else FRONT_INNER_Z - 1.5
-        for sx in (-4.6, 4.6):
-            bodies.append(box(sx - 0.8, sx + 0.8, 30.0, 56.0, z_tape, z1))
+        for sx in (-6.3, 6.3):
+            bodies.append(box(sx - 0.7, sx + 0.7, 30.0, 56.0, z_tape, z1))
     return bodies
 
 

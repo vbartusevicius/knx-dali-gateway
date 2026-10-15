@@ -1,17 +1,18 @@
 # V3 UI board, 4 layers, 1.6 mm, inside the 1-DIN front protrusion (13.8 x
-# 40.5 mm, with a 1.0 x 7.4 mm cutout at the top edge x 3.2..10.6, y 39.5..40.5
-# for the OLED flex cable). Front: Crystalfontz CFAL12832D-B 0.91" 128x32 I2C
-# OLED panel (30.0 x 11.5 mm, y 9.5..39.5, supported on double-sided foam tape
-# over the cover cradle), two Omron B3U-1000P compact-pad switches at y 6.0
-# rotated 90 deg and aligned at x 2.8 and x 11.0 directly above D1 and D3, and
-# the three SK6805-EC15 RGB LEDs in a horizontal row below the buttons at y 2.0.
-# Back: 12-pin 0.5 mm ZIF FPC connector J2 at y 21.2 (rot 180, mouth facing up
-# to match the 25.0 mm CFAL12832D-B flex cable after the 5.6 mm bend through
-# the top cutout), 8-pin FFC J1 to main below J2, and the 5 V buffer + passives.
+# 40.5 mm, with a 1.0 x 8.4 mm cutout at the top edge x 2.7..11.1, y 39.5..40.5
+# for the OLED flex cable). Front: 0.96" 64x128 SSD1312 portrait I2C OLED panel
+# (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 mm, y 11.5..39.5, supported
+# on double-sided foam tape over the cover backing rails), two Omron B3U-1000P
+# compact-pad switches at y 6.0 rotated 90 deg and aligned at x 2.8 and x 11.0
+# directly above D1 and D3, and the three SK6805-EC15 RGB LEDs in a horizontal
+# row below the buttons at y 2.0.
+# Back: 14-pin 0.5 mm ZIF FPC connector J2 at y 21.2 (rot 180, mouth facing up)
+# with the SSD1312 3.3 V charge-pump caps + IREF resistor above it, 8-pin FFC J1
+# to main below J2, and the 5 V buffer + passives.
 
 frame:
   size: { x: 13.8, y: 40.5 }
-  outline: [[0.0, 0.0], [13.8, 0.0], [13.8, 40.5], [10.6, 40.5], [10.6, 39.5], [3.2, 39.5], [3.2, 40.5], [0.0, 40.5]]
+  outline: [[0.0, 0.0], [13.8, 0.0], [13.8, 40.5], [11.1, 40.5], [11.1, 39.5], [2.7, 39.5], [2.7, 40.5], [0.0, 40.5]]
   copper_layers: 4
   thickness: 1.6
   min_drill: 0.2
@@ -29,15 +30,15 @@ frame:
     - { net: GND, layers: [In1.Cu], region: { x0: 0.4, y0: 0.35, x1: 13.4, y1: 39.1 } }
 
 oled_module:
-  # Crystalfontz CFAL12832D-B drawing p.5: panel 30.0 x 11.5 mm (y 9.5..39.5,
-  # right up to the 1.0 mm top cable cutout), viewing area 24.384 x 7.584 mm
-  outline: { x: 1.15, y: 9.5,  w: 11.5, h: 30.0 }
-  glass:   { x: 3.11, y: 13.0, w: 7.58, h: 24.4 }
+  # 0.96" 64x128 portrait SSD1312 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W):
+  # panel 14.0 x 28.0 mm (y 11.5..39.5), active area 10.86 x 21.74 mm
+  outline: { x: 0.0,  y: 11.5, w: 13.8,  h: 28.0 }
+  glass:   { x: 1.47, y: 14.5, w: 10.86, h: 21.74 }
 
 case:
   standoffs:
-    - { x: 1.6,  y: 38.8 }
-    - { x: 12.2, y: 38.8 }
+    - { x: 1.5,  y: 38.8 }
+    - { x: 12.3, y: 38.8 }
 
 heights:
   default: 1.2
@@ -55,12 +56,16 @@ parts:
   D2:  { x: 6.9,   y: 2.0,   rot: 0,   block: leds, locked: true }
   D3:  { x: 11.0,  y: 2.0,   rot: 0,   block: leds, locked: true }
 
-  # Back: J2 at y 21.2 (rot 180, mouth facing up) so the 25.0 mm OLED flex tail
-  # bends through the y 39.5 top cutout and lands straight in J2; the middle of
-  # y 24..34 is kept clear for the flex cable's component area
+  # Back: 14-pin 0.5 mm ZIF J2 at y 21.2 (rot 180, mouth facing up) + SSD1312
+  # internal charge-pump passives (C8, C9, C10, C11, R6) and reset RC (R5, C7)
   J2:  { x: 6.9,   y: 21.2,  rot: 180, side: back, block: oled, locked: true }
-  R5:  { x: 2.0,   y: 28.0,  rot: 90,  side: back, block: oled }
-  C7:  { x: 11.8,  y: 28.0,  rot: 90,  side: back, block: oled }
+  C8:  { x: 2.8,   y: 26.8,  rot: 0,   side: back, block: oled }
+  C9:  { x: 6.9,   y: 26.8,  rot: 0,   side: back, block: oled }
+  C10: { x: 11.0,  y: 26.8,  rot: 0,   side: back, block: oled }
+  C11: { x: 2.8,   y: 30.0,  rot: 0,   side: back, block: oled }
+  R6:  { x: 6.9,   y: 30.0,  rot: 0,   side: back, block: oled }
+  R5:  { x: 11.0,  y: 30.0,  rot: 0,   side: back, block: oled }
+  C7:  { x: 6.9,   y: 32.5,  rot: 0,   side: back, block: oled }
   J1:  { x: 6.9,   y: 14.8,  rot: 180, side: back, block: int_main, locked: true }
   U1:  { x: 6.9,   y: 9.2,   rot: 0,   side: back, block: leds }
   C2:  { x: 2.8,   y: 9.2,   rot: 90,  side: back, block: leds }

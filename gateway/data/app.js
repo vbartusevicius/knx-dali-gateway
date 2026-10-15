@@ -78,7 +78,8 @@ function renderOledCanvas(oled) {
   if (canvas.width !== w || canvas.height !== h) {
     canvas.width = w;
     canvas.height = h;
-    canvas.style.height = h === 32 ? "64px" : "128px";
+    canvas.style.width = (w * 2) + "px";
+    canvas.style.height = (h * 2) + "px";
   }
   const ctx = canvas.getContext("2d");
   const img = ctx.createImageData(w, h);

@@ -142,7 +142,7 @@ void test_tracing_transport_logs_collisions_and_gear_faults() {
     TEST_ASSERT_EQUAL_UINT32(1, trace.size());
 }
 
-void test_oled_display_renders_both_128x64_and_128x32_geometries() {
+void test_oled_display_renders_both_128x64_and_64x128_geometries() {
     device::OledSystemState state{};
     state.knx_individual_address = 0x1114;  // 1.1.20
     state.present_gear_count = 12;
@@ -150,20 +150,21 @@ void test_oled_display_renders_both_128x64_and_128x32_geometries() {
     state.average_brightness_pct = 75;
 
     device::OledDisplay disp64{device::OledGeometry::Oled128x64};
+    TEST_ASSERT_EQUAL_UINT8(128, disp64.width());
     TEST_ASSERT_EQUAL_UINT8(64, disp64.height());
     TEST_ASSERT_EQUAL_UINT32(1024, disp64.framebuffer_bytes());
     disp64.render(state, 100);
-    // Header bar at (5, 5) is filled on 128x64
     TEST_ASSERT_TRUE(disp64.pixel(1, 0));
 
-    device::OledDisplay disp32{device::OledGeometry::Oled128x32};
-    TEST_ASSERT_EQUAL_UINT8(32, disp32.height());
-    TEST_ASSERT_EQUAL_UINT32(512, disp32.framebuffer_bytes());
+    device::OledDisplay disp_portrait{device::OledGeometry::Oled64x128};
+    TEST_ASSERT_EQUAL_UINT8(64, disp_portrait.width());
+    TEST_ASSERT_EQUAL_UINT8(128, disp_portrait.height());
+    TEST_ASSERT_EQUAL_UINT32(1024, disp_portrait.framebuffer_bytes());
     for (unsigned p = 0; p < device::oled_page_count; ++p) {
-        disp32.render(state, 200 + p * 10);
-        disp32.next_page(200 + p * 10);
+        disp_portrait.render(state, 200 + p * 10);
+        disp_portrait.next_page(200 + p * 10);
     }
-    TEST_ASSERT_EQUAL(static_cast<int>(device::OledPage::Overview), static_cast<int>(disp32.page()));
+    TEST_ASSERT_EQUAL(static_cast<int>(device::OledPage::Overview), static_cast<int>(disp_portrait.page()));
 }
 
 void test_ha_discovery_and_mqtt_command_codec() {
@@ -295,14 +296,28 @@ void test_lamp_finder_blinks_pulses_and_restores_previous_level() {
 
 void test_oled_strategy_supplies_ssd1306_registers_and_dimensions() {
     const auto& s64 = device::select_oled_strategy(device::OledGeometry::Oled128x64);
+    TEST_ASSERT_EQUAL_UINT8(128, s64.width());
     TEST_ASSERT_EQUAL_UINT8(64, s64.height());
     TEST_ASSERT_EQUAL_UINT8(0x3F, s64.ssd1306_mux_ratio());
     TEST_ASSERT_EQUAL_UINT8(0x12, s64.ssd1306_com_pins());
 
-    const auto& s32 = device::select_oled_strategy(device::OledGeometry::Oled128x32);
-    TEST_ASSERT_EQUAL_UINT8(32, s32.height());
-    TEST_ASSERT_EQUAL_UINT8(0x1F, s32.ssd1306_mux_ratio());
-    TEST_ASSERT_EQUAL_UINT8(0x02, s32.ssd1306_com_pins());
+    const auto& s64p = device::select_oled_strategy(device::OledGeometry::Oled64x128);
+    TEST_ASSERT_EQUAL_UINT8(64, s64p.width());
+    TEST_ASSERT_EQUAL_UINT8(128, s64p.height());
+    TEST_ASSERT_EQUAL_UINT8(0x7F, s64p.ssd1306_mux_ratio());
+    TEST_ASSERT_EQUAL_UINT8(0x12, s64p.ssd1306_com_pins());
+
+    device::OledSystemState state{};
+    state.knx_individual_address = 0x1114;
+    state.present_gear_count = 18;
+    state.active_lamp_count = 12;
+    device::OledDisplay disp_portrait{device::OledGeometry::Oled64x128};
+    TEST_ASSERT_EQUAL_UINT32(1024, disp_portrait.framebuffer_bytes());
+    for (unsigned p = 0; p < device::oled_page_count; ++p) {
+        disp_portrait.render(state, 100 + p * 10);
+        TEST_ASSERT_TRUE(disp_portrait.pixel(1, 0));
+        disp_portrait.next_page(100 + p * 10);
+    }
 }
 
 }  // namespace
@@ -314,7 +329,7 @@ void run_diagnostics_and_network_tests() {
     RUN_TEST(test_diagnostic_log_ring_buffer_wraps_cleanly);
     RUN_TEST(test_dali_debug_trace_decodes_frames_and_auto_triggers);
     RUN_TEST(test_tracing_transport_logs_collisions_and_gear_faults);
-    RUN_TEST(test_oled_display_renders_both_128x64_and_128x32_geometries);
+    RUN_TEST(test_oled_display_renders_both_128x64_and_64x128_geometries);
     RUN_TEST(test_ha_discovery_and_mqtt_command_codec);
     RUN_TEST(test_api_codec_and_reconnect_backoff);
     RUN_TEST(test_lighting_service_queries_and_configures_gear_details);
