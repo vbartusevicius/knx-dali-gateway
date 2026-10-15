@@ -9,6 +9,7 @@
 #include "commissioning/Commissioning.hpp"
 #include "config/Configuration.hpp"
 #include "control/Command.hpp"
+#include "device/DaliPsuMonitor.hpp"
 #include "device/FrontPanel.hpp"
 #include "device/StatusLeds.hpp"
 #include "firmware/Board.hpp"
@@ -16,6 +17,8 @@
 #include "knxstack/KnxApplication.hpp"
 
 namespace gateway::firmware {
+
+class NetworkServices;
 
 // ESP-IDF half of the KNX device: UART pins to the NCN5130, 3-LED SK6805-EC15
 // status chain (D1 STATUS, D2 KNX, D3 DALI), ADC button ladder sampling
@@ -25,7 +28,7 @@ class KnxDevice final {
 public:
     KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
               Queue<config::Configuration>& configuration, Queue<commissioning::Snapshot>& snapshots,
-              Queue<commissioning::InputSnapshot>& input_snapshots) noexcept;
+              Queue<commissioning::InputSnapshot>& input_snapshots, NetworkServices* net = nullptr) noexcept;
 
     void run();
 
@@ -54,8 +57,10 @@ private:
     adc_oneshot_unit_handle_t adc_ = nullptr;
     adc_cali_handle_t adc_cali_ = nullptr;
     device::FrontPanel panel_;
+    device::DaliPsuMonitor psu_monitor_;
     device::LedColours shown_{};
     bool led_written_ = false;
+    NetworkServices* net_ = nullptr;
 };
 
 }

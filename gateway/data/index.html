@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KNX-DALI Gateway — Console &amp; Diagnostics</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">KNX ⇄ DALI-2</span>
+      <div>
+        <h1>KNX-DALI Gateway</h1>
+        <p class="subtitle" id="hdr-sub">ESP32-C6 • Wired KNX TP + Multi-Master DALI-2 / DT8</p>
+      </div>
+    </div>
+    <div class="status-pills">
+      <span class="pill" id="pill-ws"><span class="dot"></span>WS: Connecting</span>
+      <span class="pill" id="pill-knx">KNX: --</span>
+      <span class="pill" id="pill-dali">DALI: --/64</span>
+      <span class="pill" id="pill-mqtt">MQTT: --</span>
+      <span class="pill" id="pill-uptime">UP: --</span>
+    </div>
+  </header>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="monitoring">Live Monitoring</button>
+    <button class="tab" data-tab="configuration">Configuration</button>
+    <button class="tab" data-tab="logs">Logs &amp; Debug</button>
+    <button class="tab" data-tab="firmware">Firmware Update</button>
+  </nav>
+
+  <main class="container">
+    <!-- PANEL 1: LIVE MONITORING -->
+    <section id="panel-monitoring" class="panel active">
+      <div class="grid-top">
+        <div class="card front-panel-card">
+          <div class="card-header">
+            <h2>Front Panel Live Mirror (OLED + SK6805 LEDs)</h2>
+            <div class="btn-group">
+              <button class="btn btn-sm" id="btn-oled-page">SW2 FUNC (Next Page)</button>
+              <button class="btn btn-sm" id="btn-oled-geom">128×64 ⇄ 128×32</button>
+            </div>
+          </div>
+          <div class="front-panel-wrap">
+            <div class="oled-bezel">
+              <canvas id="oled-canvas" width="128" height="64"></canvas>
+              <div class="oled-caption" id="oled-meta">SSD1306 128×32 • Page 1/5</div>
+            </div>
+            <div class="leds-column">
+              <div class="led-item"><span class="led-dot" id="led-0"></span><span>D1 STATUS</span></div>
+              <div class="led-item"><span class="led-dot" id="led-1"></span><span>D2 KNX</span></div>
+              <div class="led-item"><span class="led-dot" id="led-2"></span><span>D3 DALI</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card broadcast-card">
+          <div class="card-header">
+            <h2>Broadcast &amp; Scene Control</h2>
+            <span class="badge" id="comm-status-badge">Commissioning: Idle</span>
+          </div>
+          <div class="broadcast-controls">
+            <div class="control-row">
+              <span class="label">Broadcast All Lamps:</span>
+              <button class="btn btn-primary" onclick="sendCmd({action:'switch_on',target:'broadcast'})">ALL ON</button>
+              <button class="btn" onclick="sendCmd({action:'switch_off',target:'broadcast'})">ALL OFF</button>
+              <input type="range" min="0" max="254" value="254" id="bcast-level"
+                onchange="sendCmd({action:'set_level',target:'broadcast',level:Number(this.value)})">
+              <span class="mono" id="bcast-level-val">254</span>
+            </div>
+            <div class="control-row">
+              <span class="label">Broadcast CCT (K):</span>
+              <input type="range" min="2000" max="6500" step="50" value="4000" id="bcast-cct"
+                onchange="sendCmd({action:'set_cct',target:'broadcast',kelvin:Number(this.value)})">
+              <span class="mono" id="bcast-cct-val">4000K</span>
+            </div>
+            <div class="scenes-bar" id="scenes-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>DALI Ballasts / Drivers &amp; Lamps (64 Short Addresses A00..A63)</h2>
+          <div class="filter-bar">
+            <button class="btn btn-sm active" data-filter="all" onclick="setLampFilter('all',this)">All (64)</button>
+            <button class="btn btn-sm" data-filter="present" onclick="setLampFilter('present',this)">Present</button>
+            <button class="btn btn-sm" data-filter="on" onclick="setLampFilter('on',this)">Active ON</button>
+            <button class="btn btn-sm" data-filter="fault" onclick="setLampFilter('fault',this)">Faults</button>
+            <button class="btn btn-sm" onclick="sendCmd({action:'find_lamp',target:'broadcast',mode:'stop'})">Stop Finder</button>
+            <button class="btn btn-sm" onclick="sendCmd({action:'scan_bus'})">Scan DALI Bus</button>
+          </div>
+        </div>
+        <div class="lamps-grid" id="lamps-grid"></div>
+      </div>
+
+      <div class="grid-two">
+        <div class="card">
+          <div class="card-header">
+            <h2>DALI Groups (G00..G15)</h2>
+          </div>
+          <div class="groups-grid" id="groups-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>DALI-2 Input Devices (Part 103 Multi-Master)</h2>
+            <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Scan Inputs</button>
+          </div>
+          <div class="inputs-grid" id="inputs-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 2: CONFIGURATION -->
+    <section id="panel-configuration" class="panel">
+      <div class="grid-two">
+        <div class="card">
+          <div class="card-header">
+            <h2>WiFi &amp; Setup Portal Configuration</h2>
+          </div>
+          <form id="form-config" onsubmit="saveConfig(event)">
+            <label class="field-check">
+              <input type="checkbox" id="cfg-wifi-enabled" checked>
+              <span>Enable WiFi Radio (KNX/DALI control always runs independently)</span>
+            </label>
+            <label class="field-check">
+              <input type="checkbox" id="cfg-ap-fallback" checked>
+              <span>Enable SoftAP Setup Portal Fallback (SSID: <code>KNX-DALI-Setup</code>)</span>
+            </label>
+            <label class="field-check">
+              <input type="checkbox" id="cfg-wifi-ps" checked>
+              <span>Enable DTIM Modem Sleep (recommended for KNX bus power budget)</span>
+            </label>
+            <div class="field">
+              <span>WiFi Station SSID</span>
+              <input type="text" id="cfg-wifi-ssid" maxlength="32" placeholder="Home-IoT-24G">
+            </div>
+            <div class="field">
+              <span>WiFi Password</span>
+              <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="WPA2/WPA3 Password">
+            </div>
+            <div class="field">
+              <span>Device Hostname</span>
+              <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
+            </div>
+
+            <hr class="sep">
+            <h3>MQTT &amp; Home Assistant Auto-Discovery</h3>
+            <label class="field-check">
+              <input type="checkbox" id="cfg-mqtt-enabled">
+              <span>Enable MQTT Client (auto-reconnects with exponential backoff)</span>
+            </label>
+            <label class="field-check">
+              <input type="checkbox" id="cfg-ha-enabled" checked>
+              <span>Publish Home Assistant MQTT Auto-Discovery topics</span>
+            </label>
+            <div class="field-row">
+              <div class="field">
+                <span>MQTT Broker Host / IP</span>
+                <input type="text" id="cfg-mqtt-host" maxlength="64" placeholder="192.168.1.10">
+              </div>
+              <div class="field" style="max-width:120px">
+                <span>Port</span>
+                <input type="number" id="cfg-mqtt-port" min="1" max="65535" value="1883">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <span>MQTT Username</span>
+                <input type="text" id="cfg-mqtt-user" maxlength="32">
+              </div>
+              <div class="field">
+                <span>MQTT Password</span>
+                <input type="password" id="cfg-mqtt-pass" maxlength="64">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <span>MQTT Base Topic</span>
+                <input type="text" id="cfg-mqtt-base" maxlength="32" value="knx_dali">
+              </div>
+              <div class="field">
+                <span>HA Discovery Prefix</span>
+                <input type="text" id="cfg-ha-prefix" maxlength="32" value="homeassistant">
+              </div>
+            </div>
+
+            <hr class="sep">
+            <h3>Hardware, Front-Panel OLED &amp; DALI Bus Supply</h3>
+            <div class="field-row">
+              <div class="field">
+                <span>Front-Panel OLED Display Type</span>
+                <select id="cfg-oled-geom">
+                  <option value="0">Auto-Detect (Default 128×32 V3 / I2C Probe)</option>
+                  <option value="1">V1 / V2 — 0.96" Winstar 128×64 SSD1306</option>
+                  <option value="2">V3 — 0.91" Crystalfontz 128×32 SSD1306</option>
+                  <option value="3">Disabled (OLED Off)</option>
+                </select>
+              </div>
+              <div class="field" style="max-width:160px">
+                <span>OLED Sleep (s, 0=Always On)</span>
+                <input type="number" id="cfg-oled-sleep" min="0" max="3600" value="60">
+              </div>
+            </div>
+            <label class="field-check">
+              <input type="checkbox" id="cfg-dali-psu" checked>
+              <span>Enable Internal DALI Bus PSU (REM3-2415S/A/CTRL via D1/GPIO1; latches OFF on bus short)</span>
+            </label>
+            <div style="margin-bottom:10px">
+              <button type="button" class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU After Short Trip</button>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save &amp; Apply Configuration</button>
+              <span id="cfg-save-msg" class="save-msg"></span>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>DALI Commissioning &amp; Maintenance</h2>
+          </div>
+          <p class="muted">
+            ETS owns the authoritative KNX association &amp; group configuration. Commissioning commands below run through the same serialized DALI worker queue as ETS function properties.
+          </p>
+          <div class="action-list">
+            <div class="action-item">
+              <div>
+                <strong>Scan DALI Control Gear (0..63)</strong>
+                <p>Queries presence, status byte, and DT8 colour capabilities on all 64 short addresses.</p>
+              </div>
+              <button class="btn btn-primary" onclick="sendCmd({action:'scan_bus'})">Scan Gear</button>
+            </div>
+            <div class="action-item">
+              <div>
+                <strong>Address Unaddressed DALI Gear</strong>
+                <p>Runs IEC 62386-102 random-address binary search for new ballasts without changing existing addresses.</p>
+              </div>
+              <button class="btn" onclick="sendCmd({action:'assign_addresses',mode:'new'})">Assign New</button>
+            </div>
+            <div class="action-item">
+              <div>
+                <strong>Replace Single Ballast</strong>
+                <p>Assigns one unaddressed replacement ballast to an absent short address and restores its groups &amp; level.</p>
+              </div>
+              <div class="inline-controls">
+                <input type="number" id="replace-addr" min="0" max="63" value="0" style="width:70px">
+                <button class="btn" onclick="sendCmd({action:'replace_device',index:Number(document.getElementById('replace-addr').value)})">Replace</button>
+              </div>
+            </div>
+            <div class="action-item">
+              <div>
+                <strong>Scan &amp; Address DALI-2 Input Devices (Part 103)</strong>
+                <p>Inventories 24-bit multi-master sensors/buttons (301/303/304) and configures instance event filters.</p>
+              </div>
+              <div class="inline-controls">
+                <button class="btn" onclick="sendCmd({action:'scan_inputs'})">Scan Inputs</button>
+                <button class="btn" onclick="sendCmd({action:'assign_inputs',mode:'new'})">Assign New</button>
+              </div>
+            </div>
+            <div class="action-item">
+              <div>
+                <strong>Synchronize Gateway Wall-Clock Time</strong>
+                <p>Syncs browser UTC epoch to the gateway so persistent error logs and DALI debug traces record exact wall-clock timestamps.</p>
+              </div>
+              <button class="btn" onclick="syncGatewayTime()">Sync Browser Time</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: LOGS & DEBUG -->
+    <section id="panel-logs" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2>DALI Live Debug Session (256-Frame Circular Buffer)</h2>
+            <p class="muted">Captures 16-bit gear commands/queries, 8-bit backward replies, 24-bit Part 103 events, and collisions with full protocol decoding.</p>
+          </div>
+          <div class="btn-group">
+            <label class="field-check inline-check">
+              <input type="checkbox" id="dbg-autotrigger" checked onchange="controlDebug('auto')">
+              <span>Auto-trigger from DALI events/faults</span>
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="controlDebug('start')">Start Capture</button>
+            <button class="btn btn-sm" onclick="controlDebug('stop')">Pause</button>
+            <button class="btn btn-sm" onclick="controlDebug('clear')">Clear</button>
+            <button class="btn btn-sm" onclick="loadDebugTrace()">Refresh</button>
+            <button class="btn btn-sm" onclick="exportJson('dali-trace.json', window.lastTraceData)">Export JSON</button>
+          </div>
+        </div>
+        <div class="trace-stats" id="trace-stats">Session: ACTIVE • Total Frames: 0 • Collisions: 0 • Bus Errors: 0</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Timestamp</th>
+                <th>Uptime</th>
+                <th>Bits</th>
+                <th>Raw Frame</th>
+                <th>Target</th>
+                <th>Mnemonic</th>
+                <th>Decoded Details &amp; Reply</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="trace-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2>Persistent KNX &amp; DALI Error Log (NVS Non-Volatile Ring Buffer)</h2>
+            <p class="muted">Survives power failures and reboots. Automatically flushed to flash on Critical/Error events and NCN5130 SAVEB power warnings.</p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="loadErrorLogs()">Refresh</button>
+            <button class="btn btn-sm" onclick="clearErrorLogs()">Clear Log</button>
+            <button class="btn btn-sm" onclick="exportJson('gateway-error-log.json', window.lastLogData)">Export JSON</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time (UTC / Local)</th>
+                <th>Source</th>
+                <th>Severity</th>
+                <th>Error Code &amp; Title</th>
+                <th>Target</th>
+                <th>Count</th>
+                <th>Detail &amp; Recommended Remedy</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Descriptive Error Code Reference Catalog</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Symbol</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Recommended Remedy</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 4: FIRMWARE UPDATE -->
+    <section id="panel-firmware" class="panel">
+      <div class="grid-two">
+        <div class="card">
+          <div class="card-header">
+            <h2>Application Firmware Update (<code>firmware.bin</code>)</h2>
+          </div>
+          <p class="muted">
+            Streams a compiled ESP32-C6 application binary (<code>.pio/build/release_c6/firmware.bin</code>) directly to the inactive OTA slot (<code>ota_0</code> / <code>ota_1</code>), verifies the ESP-IDF image header, and switches the boot partition.
+          </p>
+          <div class="sys-info-box" id="fw-sys-info">
+            <div><strong>Running Version:</strong> <span id="info-fw-ver">--</span></div>
+            <div><strong>Active Partition:</strong> <span id="info-part">--</span></div>
+            <div><strong>Free / Min Heap:</strong> <span id="info-heap">--</span></div>
+          </div>
+          <div class="upload-box">
+            <input type="file" id="file-firmware" accept=".bin">
+            <button class="btn btn-primary" onclick="uploadOta('firmware')">Upload &amp; Flash Firmware (.bin)</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar" id="prog-firmware" style="width:0%"></div>
+          </div>
+          <div class="upload-status" id="status-firmware">Select a valid ESP32-C6 firmware.bin file.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Web UI / LittleFS Partition Update (<code>littlefs.bin</code>)</h2>
+          </div>
+          <p class="muted">
+            Uploads a packed Web UI filesystem image (<code>gateway/build/littlefs.bin</code>) directly to the 2 MB <code>storage</code> flash partition (<code>0x420000</code>) and hot-reloads the HTML/CSS/JS assets without rebooting.
+          </p>
+          <div class="upload-box">
+            <input type="file" id="file-littlefs" accept=".bin">
+            <button class="btn btn-primary" onclick="uploadOta('littlefs')">Upload &amp; Flash LittleFS (.bin)</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar" id="prog-littlefs" style="width:0%"></div>
+          </div>
+          <div class="upload-status" id="status-littlefs">Select a littlefs.bin filesystem image.</div>
+
+          <hr class="sep">
+          <div class="action-item">
+            <div>
+              <strong>Configuration-Preserving Device Reboot</strong>
+              <p>Restarts the ESP32-C6 and TP-UART link while retaining all KNX associations, NVS target levels, and error logs.</p>
+            </div>
+            <button class="btn" onclick="rebootDevice()">Reboot Gateway</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BALLAST INSPECTOR MODAL -->
+  <div class="modal-backdrop" id="gear-modal" style="display:none">
+    <div class="modal">
+      <div class="card-header">
+        <h2 id="modal-title">Ballast Inspector — A00</h2>
+        <button class="btn btn-sm" onclick="closeGearModal()">Close ✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

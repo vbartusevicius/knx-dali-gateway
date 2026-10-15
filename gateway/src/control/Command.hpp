@@ -12,6 +12,7 @@
 #include "dali/Transport.hpp"
 #include "inputs/InputChannel.hpp"
 #include "inputs/InputMapper.hpp"
+#include "lighting/LampFinder.hpp"
 #include "lighting/LightingService.hpp"
 #include "lighting/RelativeDimmer.hpp"
 
@@ -136,11 +137,25 @@ struct ColourDimStop {
     dali::Address address;
 };
 
-using Command =
-    std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups, DimStart, DimStop,
-                 RecallScene, StoreScene, ScanBus, AssignAddresses, ReplaceDevice, IdentifyDevice,
-                 ResetAddresses, ScanInputDevices, AssignInputDevices, InputFeedback, SetColourTemperature,
-                 SetRgb, SetRgbw, SetXy, ColourDimStart, ColourDimStop>;
+struct QueryGearDetails {
+    dali::ShortAddress address;
+};
+
+struct ConfigureGear {
+    dali::ShortAddress address;
+    lighting::GearConfig config;
+};
+
+struct FindLamp {
+    dali::Address address;
+    lighting::FinderMode mode;
+};
+
+using Command = std::variant<SetLevel, SwitchOn, SwitchOff, Refresh, Recover, ReconcileGroups, DimStart,
+                             DimStop, RecallScene, StoreScene, ScanBus, AssignAddresses, ReplaceDevice,
+                             IdentifyDevice, ResetAddresses, ScanInputDevices, AssignInputDevices,
+                             InputFeedback, SetColourTemperature, SetRgb, SetRgbw, SetXy, ColourDimStart,
+                             ColourDimStop, QueryGearDetails, ConfigureGear, FindLamp>;
 
 static_assert(std::is_trivially_copyable_v<Command>, "Command travels through FreeRTOS queues");
 
@@ -187,6 +202,7 @@ static_assert(std::is_trivially_copyable_v<StatusEvent>, "StatusEvent travels th
                                                lighting::RelativeDimmer& colour_dimmer,
                                                commissioning::Commissioning& commissioning,
                                                inputs::InputMapper& inputs, std::uint32_t now_ms,
-                                               const Command& command);
+                                               const Command& command,
+                                               lighting::LampFinder* finder = nullptr);
 
 }

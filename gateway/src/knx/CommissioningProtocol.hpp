@@ -21,7 +21,8 @@ enum class CommandProperty : std::uint8_t {
     Identify = 4,
     ResetAddresses = 5,
     ScanInputs = 6,
-    AssignInputs = 7
+    AssignInputs = 7,
+    LampFinder = 8
 };
 
 constexpr std::uint8_t state_property = 1;

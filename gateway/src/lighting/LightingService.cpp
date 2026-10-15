@@ -10,6 +10,7 @@
 #include "dali/Address.hpp"
 #include "dali/ArcLevel.hpp"
 #include "dali/ColourControl.hpp"
+#include "dali/Commands.hpp"
 #include "dali/Group.hpp"
 #include "dali/Scaling.hpp"
 #include "dali/Scene.hpp"
@@ -856,6 +857,136 @@ std::optional<ColourReport> LightingService::colour_report(dali::Address address
         break;
     }
     return report;
+}
+
+void LightingService::record_status_byte(dali::ShortAddress address, std::uint8_t status_byte) noexcept {
+    gear_details_[address.value()].status_byte = status_byte;
+}
+
+const GearDetails& LightingService::gear_details(dali::ShortAddress address) const noexcept {
+    return gear_details_[address.value()];
+}
+
+ControlResult LightingService::query_gear_details(dali::ShortAddress address) {
+    ControlResult result{};
+    auto& details = gear_details_[address.value()];
+
+    const auto st = transport_.query_status(address);
+    if (st.status != dali::TransportStatus::Ok || !st.gear_status) {
+        result.error = ControlError::TransportFailure;
+        result.transport_status = st.status;
+        return result;
+    }
+    details.status_byte = *st.gear_status;
+
+    if (const auto dev_type = transport_.query(address, dali::cmd::query_device_type);
+        dev_type.status == dali::TransportStatus::Ok && dev_type.value) {
+        details.device_type = *dev_type.value;
+    }
+    if (const auto ver = transport_.query(address, dali::cmd::query_version_number);
+        ver.status == dali::TransportStatus::Ok && ver.value) {
+        details.version_number = *ver.value;
+    }
+    if (const auto phys = transport_.query(address, dali::cmd::query_physical_minimum);
+        phys.status == dali::TransportStatus::Ok && phys.value) {
+        details.physical_min = *phys.value;
+    }
+    if (const auto min_lvl = transport_.query(address, dali::cmd::query_min_level);
+        min_lvl.status == dali::TransportStatus::Ok && min_lvl.value) {
+        details.min_level = *min_lvl.value;
+    }
+    if (const auto max_lvl = transport_.query(address, dali::cmd::query_max_level);
+        max_lvl.status == dali::TransportStatus::Ok && max_lvl.value) {
+        details.max_level = *max_lvl.value;
+    }
+    if (const auto pon_lvl = transport_.query(address, dali::cmd::query_power_on_level);
+        pon_lvl.status == dali::TransportStatus::Ok && pon_lvl.value) {
+        details.power_on_level = *pon_lvl.value;
+    }
+    if (const auto sys_lvl = transport_.query(address, dali::cmd::query_system_failure_level);
+        sys_lvl.status == dali::TransportStatus::Ok && sys_lvl.value) {
+        details.system_failure_level = *sys_lvl.value;
+    }
+    if (const auto fade = transport_.query(address, dali::cmd::query_fade_time_rate);
+        fade.status == dali::TransportStatus::Ok && fade.value) {
+        details.fade_time = static_cast<std::uint8_t>((*fade.value >> 4U) & 0x0FU);
+        details.fade_rate = static_cast<std::uint8_t>(*fade.value & 0x0FU);
+    }
+    if (const auto grp = transport_.read_groups(address);
+        grp.status == dali::TransportStatus::Ok && grp.groups) {
+        details.groups = *grp.groups;
+    }
+    for (unsigned s = 0; s < 16; ++s) {
+        if (const auto sc =
+                transport_.query(address, static_cast<std::uint8_t>(dali::cmd::query_scene_level_0 + s));
+            sc.status == dali::TransportStatus::Ok && sc.value) {
+            details.scenes[s] = *sc.value;
+        }
+    }
+    details.probed = true;
+    (void)refresh(address);
+    result.state = channel_states_[address.value()];
+    return result;
+}
+
+ControlResult LightingService::configure_gear(dali::ShortAddress address, const GearConfig& cfg) {
+    ControlResult result{};
+    const auto target = dali::Address::short_address(address);
+    const auto write_dtr_cmd = [&](std::uint8_t value, std::uint8_t opcode) -> bool {
+        const auto dtr_st = transport_.set_dtr(dali::Dtr::Dtr0, value);
+        if (dtr_st != dali::TransportStatus::Ok) {
+            result.error = ControlError::TransportFailure;
+            result.transport_status = dtr_st;
+            return false;
+        }
+        const auto cmd_st = transport_.send_command(target, opcode, true);
+        if (cmd_st != dali::TransportStatus::Ok) {
+            result.error = ControlError::TransportFailure;
+            result.transport_status = cmd_st;
+            return false;
+        }
+        return true;
+    };
+
+    auto& details = gear_details_[address.value()];
+    if (cfg.min_level <= dali::ArcLevel::maximum) {
+        if (!write_dtr_cmd(cfg.min_level, dali::cmd::set_min_level)) {
+            return result;
+        }
+        details.min_level = cfg.min_level;
+    }
+    if (cfg.max_level <= dali::ArcLevel::maximum) {
+        if (!write_dtr_cmd(cfg.max_level, dali::cmd::set_max_level)) {
+            return result;
+        }
+        details.max_level = cfg.max_level;
+    }
+    if (cfg.power_on_level <= dali::ArcLevel::maximum) {
+        if (!write_dtr_cmd(cfg.power_on_level, dali::cmd::set_power_on_level)) {
+            return result;
+        }
+        details.power_on_level = cfg.power_on_level;
+    }
+    if (cfg.system_failure_level <= dali::ArcLevel::maximum) {
+        if (!write_dtr_cmd(cfg.system_failure_level, dali::cmd::set_system_failure_level)) {
+            return result;
+        }
+        details.system_failure_level = cfg.system_failure_level;
+    }
+    if (cfg.fade_time <= 15) {
+        if (!write_dtr_cmd(cfg.fade_time, dali::cmd::set_fade_time)) {
+            return result;
+        }
+        details.fade_time = cfg.fade_time;
+    }
+    if (cfg.fade_rate >= 1 && cfg.fade_rate <= 15) {
+        if (!write_dtr_cmd(cfg.fade_rate, dali::cmd::set_fade_rate)) {
+            return result;
+        }
+        details.fade_rate = cfg.fade_rate;
+    }
+    details.probed = true;
+    return result;
 }
 
 }

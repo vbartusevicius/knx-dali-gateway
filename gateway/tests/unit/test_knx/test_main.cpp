@@ -708,6 +708,22 @@ void test_protocol_encodes_snapshot_layout() {
     TEST_ASSERT_EQUAL_UINT8(0x02, output[13]);  // fault: address 9 → byte 1 bit 1
 }
 
+void test_protocol_decodes_lamp_finder_commands() {
+    const std::uint8_t blink_data[] = {12, 1};
+    const auto blink = gateway::knx::decode_command(160, 8, blink_data, 2);
+    TEST_ASSERT_TRUE(blink.command.has_value());
+    TEST_ASSERT_TRUE(std::holds_alternative<gateway::control::FindLamp>(*blink.command));
+    const auto& fl = std::get<gateway::control::FindLamp>(*blink.command);
+    TEST_ASSERT_EQUAL_UINT8(12, fl.address.as_short()->value());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::FinderMode::BlinkOnOff), static_cast<int>(fl.mode));
+
+    const std::uint8_t stop_data[] = {0xFF, 0};
+    const auto stop = gateway::knx::decode_command(160, 8, stop_data, 2);
+    TEST_ASSERT_TRUE(stop.command.has_value());
+    const auto& fl_stop = std::get<gateway::control::FindLamp>(*stop.command);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::lighting::FinderMode::Stop), static_cast<int>(fl_stop.mode));
+}
+
 }
 
 int main() {
@@ -755,5 +771,6 @@ int main() {
     RUN_TEST(test_protocol_rejects_wrong_object_and_property);
     RUN_TEST(test_protocol_response_byte_values);
     RUN_TEST(test_protocol_encodes_snapshot_layout);
+    RUN_TEST(test_protocol_decodes_lamp_finder_commands);
     return UNITY_END() == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

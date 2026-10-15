@@ -20,14 +20,19 @@
 #include "control/WorkerWait.hpp"
 #include "dali/BusTransport.hpp"
 #include "dali/RetryingTransport.hpp"
+#include "dali/TracingTransport.hpp"
 #include "dali/devices/EventDecoder.hpp"
 #include "espidf/NvsLevelStore.hpp"
 #include "espidf/RmtDaliBus.hpp"
 #include "firmware/Board.hpp"
+#include "firmware/I2cOled.hpp"
 #include "firmware/KnxDevice.hpp"
+#include "firmware/NetworkServices.hpp"
 #include "firmware/Queue.hpp"
+#include "firmware/RuntimeState.hpp"
 #include "firmware/UsbConsole.hpp"
 #include "inputs/InputMapper.hpp"
+#include "lighting/LampFinder.hpp"
 #include "lighting/RelativeDimmer.hpp"
 
 namespace gateway::firmware {
@@ -157,6 +162,7 @@ struct Wiring {
     Queue<commissioning::Snapshot>& console_snapshots;
     Queue<commissioning::InputSnapshot>& input_snapshots;
     Queue<commissioning::InputSnapshot>& console_input_snapshots;
+    NetworkServices* net = nullptr;
 };
 
 bool input_instance_bound(std::uint8_t device, std::uint8_t instance, void* context) {
@@ -175,7 +181,7 @@ void publish_status(Queue<control::StatusEvent>& statuses, control::StatusEvent 
     }
 }
 
-void publish_job_result(Wiring& wiring, const commissioning::JobResult& result) {
+void publish_job_result(Wiring& wiring, const commissioning::JobResult& result, std::uint32_t now_ms_val) {
     const auto push = [&wiring](const control::StatusEvent& event) {
         publish_status(wiring.statuses, event);
         return true;
@@ -184,6 +190,7 @@ void publish_job_result(Wiring& wiring, const commissioning::JobResult& result) 
     const auto input = wiring.commissioning.input_snapshot();
     wiring.input_snapshots.overwrite(input);
     wiring.console_input_snapshots.overwrite(input);
+    runtime_state().sync_from_worker(wiring.lighting, wiring.commissioning, now_ms_val);
 }
 
 void apply_configuration_values(Wiring& wiring, const config::Configuration& configuration) {
@@ -211,14 +218,18 @@ std::uint32_t now_ms() {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
 }
 
-// Ticks until the next dimmer deadline or fault poll, capped so the task
-// watchdog stays fed while idle.
+// Ticks until the next dimmer/finder deadline or fault poll, capped so the
+// task watchdog stays fed while idle.
 TickType_t worker_wait(const lighting::RelativeDimmer& dimmer, const lighting::RelativeDimmer& colour_dimmer,
-                       std::uint32_t next_poll_ms) {
+                       const lighting::LampFinder& finder, std::uint32_t next_poll_ms) {
     auto deadline = dimmer.next_deadline();
     if (const auto colour = colour_dimmer.next_deadline();
         colour && (!deadline || static_cast<std::int32_t>(*colour - *deadline) < 0)) {
         deadline = colour;
+    }
+    if (const auto find_dl = finder.next_deadline();
+        find_dl && (!deadline || static_cast<std::int32_t>(*find_dl - *deadline) < 0)) {
+        deadline = find_dl;
     }
     return pdMS_TO_TICKS(control::worker_wait_ms(now_ms(), deadline, next_poll_ms, watchdog_feed_ms));
 }
@@ -295,7 +306,7 @@ void startup(Wiring& wiring) {
     ESP_LOGI(log_tag, "startup: scanning the DALI bus and recovering present gear");
     const auto result = wiring.commissioning.startup(&input_instance_bound, &wiring.inputs);
     wiring.inputs.refresh_resolutions(wiring.commissioning.devices());
-    publish_job_result(wiring, result);
+    publish_job_result(wiring, result, now_ms());
     ESP_LOGI(log_tag, "startup: %u present, %u faulty",
              static_cast<unsigned>(wiring.commissioning.present().count()),
              static_cast<unsigned>(wiring.commissioning.faulty().count()));
@@ -308,11 +319,12 @@ void dali_task(void* arg) {
     wiring.commissioning.set_listener(&snapshot_forwarder);
     lighting::RelativeDimmer dimmer;
     lighting::RelativeDimmer colour_dimmer;
+    lighting::LampFinder finder;
     startup(wiring);
     auto next_poll = now_ms() + fault_poll_interval_ms;
     for (;;) {
         esp_task_wdt_reset();
-        const auto command = wiring.commands.pop(worker_wait(dimmer, colour_dimmer, next_poll));
+        const auto command = wiring.commands.pop(worker_wait(dimmer, colour_dimmer, finder, next_poll));
         const auto now = now_ms();
         if (command) {
             apply_configuration(wiring);
@@ -326,9 +338,9 @@ void dali_task(void* arg) {
                 ESP_LOGI(log_tag, "commissioning job started");
             }
             const auto result = control::execute(wiring.lighting, dimmer, colour_dimmer, wiring.commissioning,
-                                                 wiring.inputs, now, *command);
+                                                 wiring.inputs, now, *command, &finder);
             log_result(control::address_of(*command), result.result);
-            publish_job_result(wiring, result);
+            publish_job_result(wiring, result, now);
         } else if (static_cast<std::int32_t>(now - next_poll) >= 0) {
             next_poll = now + fault_poll_interval_ms;
             if (const auto changed = wiring.commissioning.poll_next()) {
@@ -338,6 +350,13 @@ void dali_task(void* arg) {
                     wiring.statuses,
                     control::FaultUpdate{*changed, wiring.commissioning.faulty().test(changed->value())});
                 snapshot_forwarder.on_snapshot(wiring.commissioning.snapshot());
+            }
+            runtime_state().sync_from_worker(wiring.lighting, wiring.commissioning, now);
+        }
+        if (const auto step = finder.poll(now)) {
+            const auto res = wiring.lighting.set_level(step->address, step->level);
+            if (step->restore_final) {
+                publish_job_result(wiring, {res, {}}, now);
             }
         }
         dimmer.poll(
@@ -372,15 +391,15 @@ void dali_task(void* arg) {
 
 void knx_task(void* arg) {
     auto& wiring = *static_cast<Wiring*>(arg);
-    KnxDevice device{wiring.commands, wiring.statuses, wiring.configuration, wiring.snapshots,
-                     wiring.input_snapshots};
+    KnxDevice device{wiring.commands,  wiring.statuses,        wiring.configuration,
+                     wiring.snapshots, wiring.input_snapshots, wiring.net};
     device.run();
 }
 
 }
 
 void factory_reset() {
-    for (const char* name : {"eeprom", "targets_v1"}) {
+    for (const char* name : {"eeprom", "targets_v1", "net_cfg", "diag_v1"}) {
         nvs_handle_t handle = 0;
         if (nvs_open(name, NVS_READWRITE, &handle) == ESP_OK) {
             ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_erase_all(handle));
@@ -397,9 +416,9 @@ void factory_reset() {
 
 void run() {
     const auto* description = esp_app_get_description();
-    ESP_LOGI(log_tag, "%s %s: development slice, not a commissioned gateway", description->project_name,
-             description->version);
+    ESP_LOGI(log_tag, "%s %s: starting KNX-DALI gateway", description->project_name, description->version);
     espidf::NvsLevelStore targets{open_targets()};
+    runtime_state().init_storage();
     espidf::RmtDaliBus bus{{.tx_gpio = board::dali_tx,
                             .rx_gpio = board::dali_rx,
                             .invert_tx = board::dali_invert_tx,
@@ -407,9 +426,10 @@ void run() {
     open_dali(bus);
     dali::BusTransport bus_transport{bus, &bus_delay_ms};
     dali::RetryingTransport retrying{bus_transport};
-    lighting::LightingService lighting{retrying, targets};
+    dali::TracingTransport traced{retrying, runtime_state().trace(), runtime_state().log(), &now_ms};
+    lighting::LightingService lighting{traced, targets};
     lighting.configure(config::default_configuration());
-    commissioning::Commissioning commissioning{retrying, lighting};
+    commissioning::Commissioning commissioning{traced, lighting};
     inputs::InputMapper inputs;
     inputs.configure(config::default_configuration());
     Queue<control::Command> commands{64};
@@ -419,11 +439,15 @@ void run() {
     Queue<commissioning::Snapshot> console_snapshots{1};
     Queue<commissioning::InputSnapshot> input_snapshots{1};
     Queue<commissioning::InputSnapshot> console_input_snapshots{1};
-    Wiring wiring{lighting,          retrying,        commissioning,          inputs,
-                  commands,          statuses,        configuration,          snapshots,
-                  console_snapshots, input_snapshots, console_input_snapshots};
-    xTaskCreate(dali_task, "dali", 4096, &wiring, 5, nullptr);
+    I2cOled oled{};
+    (void)oled.init(runtime_state().network_config().oled_geometry);
+    NetworkServices net{commands, oled};
+    Wiring wiring{lighting,          traced,          commissioning,           inputs,
+                  commands,          statuses,        configuration,           snapshots,
+                  console_snapshots, input_snapshots, console_input_snapshots, &net};
+    xTaskCreate(dali_task, "dali", 6144, &wiring, 5, nullptr);
     xTaskCreate(knx_task, "knx", 12288, &wiring, 6, nullptr);
+    net.start();
     UsbConsole console{commands, console_snapshots, console_input_snapshots, bus.configured(),
                        targets.available()};
     const auto error = console.start();

@@ -36,6 +36,7 @@
 #include "lab/FileLevelStore.hpp"
 #include "lab/SocketDaliTransport.hpp"
 #include "lab/StdQueue.hpp"
+#include "lighting/LampFinder.hpp"
 #include "lighting/LightingService.hpp"
 #include "lighting/RelativeDimmer.hpp"
 
@@ -180,6 +181,7 @@ void worker(Wiring& wiring) {
     wiring.commissioning.set_listener(&snapshot_forwarder);
     gateway::lighting::RelativeDimmer dimmer;
     gateway::lighting::RelativeDimmer colour_dimmer;
+    gateway::lighting::LampFinder finder;
 
     // Wait briefly for the KNX task to deliver ETS parameters, then scan and
     // recover present gear — same sequence as the firmware.
@@ -200,6 +202,10 @@ void worker(Wiring& wiring) {
             colour && (!deadline || static_cast<std::int32_t>(*colour - *deadline) < 0)) {
             deadline = colour;
         }
+        if (const auto find_dl = finder.next_deadline();
+            find_dl && (!deadline || static_cast<std::int32_t>(*find_dl - *deadline) < 0)) {
+            deadline = find_dl;
+        }
         const auto command = wiring.commands.pop(
             gateway::control::worker_wait_ms(now_ms(), deadline, next_poll, max_idle_wait_ms));
         const auto now = now_ms();
@@ -207,8 +213,9 @@ void worker(Wiring& wiring) {
             if (const auto configuration = wiring.configuration.pop(0)) {
                 apply_configuration(wiring, *configuration);
             }
-            const auto result = gateway::control::execute(wiring.service, dimmer, colour_dimmer,
-                                                          wiring.commissioning, wiring.inputs, now, *command);
+            const auto result =
+                gateway::control::execute(wiring.service, dimmer, colour_dimmer, wiring.commissioning,
+                                          wiring.inputs, now, *command, &finder);
             if (result.result.error != gateway::lighting::ControlError::None) {
                 std::fprintf(stderr, "[worker] command failed: %s (transport %s)\n",
                              error_name(result.result.error), transport_name(result.result.transport_status));
@@ -223,6 +230,12 @@ void worker(Wiring& wiring) {
                 publish_status(wiring, gateway::control::FaultUpdate{
                                            *changed, wiring.commissioning.faulty().test(changed->value())});
                 snapshot_forwarder.on_snapshot(wiring.commissioning.snapshot());
+            }
+        }
+        if (const auto step = finder.poll(now)) {
+            const auto res = wiring.service.set_level(step->address, step->level);
+            if (step->restore_final) {
+                publish_job_result(wiring, {res, {}});
             }
         }
         dimmer.poll(

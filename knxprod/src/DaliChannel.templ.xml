@@ -97,6 +97,11 @@
           <Dynamic>
             <Channel Id="%AID%_CH-%CC%" Number="%PREFIX%" Name="Channel %C%" Text="Channel %C%">
               <ParameterBlock Id="%AID%_PB-%TT%%CC%001" Name="Channel%C%" Text="Channel %C%">
+                <ParameterSeparator Id="%AID%_PS-%TT%%CC%001" Text="Use Lamp Finder to blink or smoothly pulse this DALI ballast on the line (automatically restores the previous brightness when stopped)." UIHint="Information" />
+                <Button Id="%AID%_B-%TT%%CC%001" Text="Find this lamp (blink on/off)" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderBlink" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
+                <Button Id="%AID%_B-%TT%%CC%002" Text="Find this lamp (smooth pulse)" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderPulse" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
+                <Button Id="%AID%_B-%TT%%CC%003" Text="Stop lamp finder" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
+                <Button Id="%AID%_B-%TT%%CC%004" Text="Replace this ballast" EventHandlerOnline="ConnectionOriented" EventHandler="channelReplace" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%%CC%101_R-%TT%%CC%10101" />
@@ -116,12 +121,16 @@
                 <ParameterRefRef RefId="%AID%_UP-%TT%%CC%115_R-%TT%%CC%11501" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%%CC%116_R-%TT%%CC%11601" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
-                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
+                <choose>
+                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 != 255">
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
+                  </when>
+                </choose>
                 <choose>
                   <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 1">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" />

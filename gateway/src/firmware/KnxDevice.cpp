@@ -11,6 +11,8 @@
 #include "device/ButtonLadder.hpp"
 #include "device/StatusLeds.hpp"
 #include "firmware/Application.hpp"
+#include "firmware/NetworkServices.hpp"
+#include "firmware/RuntimeState.hpp"
 
 namespace gateway::firmware {
 namespace {
@@ -39,7 +41,7 @@ void show(const device::LedColours& colours) {
 
 KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEvent>& statuses,
                      Queue<config::Configuration>& configuration, Queue<commissioning::Snapshot>& snapshots,
-                     Queue<commissioning::InputSnapshot>& input_snapshots) noexcept
+                     Queue<commissioning::InputSnapshot>& input_snapshots, NetworkServices* net) noexcept
     : commands_(commands),
       statuses_(statuses),
       configuration_(configuration),
@@ -58,7 +60,8 @@ KnxDevice::KnxDevice(Queue<control::Command>& commands, Queue<control::StatusEve
           [](void*, const char* message) { ESP_LOGW(log_tag, "%s", message); },
           this,
       },
-      app_(knx_, hooks_) {
+      app_(knx_, hooks_),
+      net_(net) {
     led_strip_config_t strip_config = {};
     strip_config.strip_gpio_num = board::led_data;
     strip_config.max_leds = board::led_count;
@@ -174,8 +177,13 @@ void KnxDevice::handle_button(std::uint32_t now) {
         ESP_LOGW(log_tag, "both buttons held: factory reset");
         factory_reset();
     case device::Gesture::NextPage:
+        runtime_state().next_oled_page(now);
+        break;
     case device::Gesture::WifiSetup:
-        ESP_LOGI(log_tag, "FUNC gestures need the display and WiFi services");
+        ESP_LOGI(log_tag, "FUNC held 5s: starting WiFi SoftAP setup portal");
+        if (net_) {
+            net_->start_wifi_setup_portal();
+        }
         break;
     case device::Gesture::None:
         break;
@@ -185,14 +193,41 @@ void KnxDevice::handle_button(std::uint32_t now) {
 void KnxDevice::update_led(std::uint32_t now) {
     device::DeviceStatus status;
     status.knx_bus_ok = gpio_get_level(board::ncn_saveb) != 0;
-    status.knx_prog_mode = knx_.progMode();
-    for (const auto byte : latest_snapshot_.faulty) {
-        if (byte != 0) {
-            status.dali = device::DaliState::GearFault;
-            break;
+    if (!status.knx_bus_ok && net_) {
+        net_->emergency_power_down();
+    } else {
+        if (runtime_state().consume_psu_reset_request()) {
+            psu_monitor_.reset_trip();
+        }
+        psu_monitor_.set_internal_psu_enabled(runtime_state().network_config().internal_dali_psu_enabled);
+        const bool rx_pin_high = gpio_get_level(board::dali_rx) != 0;
+        const bool bus_idle_high = board::dali_invert_rx ? !rx_pin_high : rx_pin_high;
+        const auto psu_res = psu_monitor_.sample(bus_idle_high, now);
+        gpio_set_level(board::dali_supply_off, psu_res.supply_off_gpio ? 1 : 0);
+        status.dali = psu_res.dali_led_state;
+        if (psu_res.just_tripped_short) {
+            runtime_state().log().record(diagnostics::LogSource::Dali, diagnostics::LogSeverity::Critical,
+                                         diagnostics::ErrorCode::DaliBusShort, diagnostics::no_address,
+                                         "DALI bus short >=80ms; REM3 latched OFF", now);
+        } else if (psu_res.just_lost_external_power) {
+            runtime_state().log().record(diagnostics::LogSource::Dali, diagnostics::LogSeverity::Error,
+                                         diagnostics::ErrorCode::DaliNoPower, diagnostics::no_address,
+                                         "External DALI bus power absent", now);
         }
     }
+    status.knx_prog_mode = knx_.progMode();
+    if (status.dali == device::DaliState::Ok) {
+        for (const auto byte : latest_snapshot_.faulty) {
+            if (byte != 0) {
+                status.dali = device::DaliState::GearFault;
+                break;
+            }
+        }
+    }
+    status.wifi = runtime_state().oled_state().wifi_state;
     status.hint = panel_.hint();
+    runtime_state().update_knx_state(knx_.individualAddress(), knx_.configured(), status.knx_prog_mode,
+                                     status.knx_bus_ok, status.hint, now);
     const auto colours = device::led_colours(status, now);
     if (!led_written_ || !(colours == shown_)) {
         led_written_ = true;

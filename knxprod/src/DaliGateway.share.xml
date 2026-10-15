@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   <!-- Helper functions in the script are called by the entry points, not from XML. -->
-  <op:nowarn id="3" regex="gwSendCommand|gwChannel|gwPhaseName|gwCountBits" />
+  <op:nowarn id="3" regex="gwSendCommand|gwChannel|gwContextChannel|gwPhaseName|gwCountBits" />
   <ManufacturerData>
     <Manufacturer>
       <ApplicationPrograms>
@@ -28,11 +28,12 @@
               </ParameterType>
               <ParameterType Id="%AID%_PT-ColourControl" Name="ColourControl">
                 <TypeRestriction Base="Value" SizeInBit="8">
-                  <Enumeration Id="%ENID%" Text="None" Value="0" />
-                  <Enumeration Id="%ENID%" Text="Colour temperature" Value="1" />
+                  <Enumeration Id="%ENID%" Text="None (brightness only)" Value="0" />
+                  <Enumeration Id="%ENID%" Text="Colour temperature (Tc)" Value="1" />
                   <Enumeration Id="%ENID%" Text="RGB" Value="2" />
                   <Enumeration Id="%ENID%" Text="RGBW" Value="3" />
-                  <Enumeration Id="%ENID%" Text="xy" Value="4" />
+                  <Enumeration Id="%ENID%" Text="xy chromaticity" Value="4" />
+                  <Enumeration Id="%ENID%" Text="Unused (hide channel objects)" Value="255" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-InstanceNumber" Name="InstanceNumber">
@@ -137,7 +138,11 @@
                 <ParameterSeparator Id="%AID%_PS-%TT%00003" Text="Resetting clears every short address on the DALI bus; all devices become unaddressed and must be commissioned again." UIHint="Warning" />
                 <Button Id="%AID%_B-%TT%00007" Text="Reset DALI addresses" EventHandlerOnline="ConnectionOriented" EventHandler="daliResetAddresses" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00004_R-%TT%0000401" />
-                <Button Id="%AID%_B-%TT%00004" Text="Identify channel" EventHandlerOnline="ConnectionOriented" EventHandler="daliIdentify" />
+                <Button Id="%AID%_B-%TT%00004" Text="Identify channel (recall max)" EventHandlerOnline="ConnectionOriented" EventHandler="daliIdentify" />
+                <Button Id="%AID%_B-%TT%00012" Text="Lamp finder: blink on/off (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderBlink" />
+                <Button Id="%AID%_B-%TT%00013" Text="Lamp finder: smooth pulse (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderPulse" />
+                <Button Id="%AID%_B-%TT%00014" Text="Find next channel (+1 &amp; blink)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderNext" />
+                <Button Id="%AID%_B-%TT%00015" Text="Stop lamp finder (restore level)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
                 <Button Id="%AID%_B-%TT%00005" Text="Replace channel" EventHandlerOnline="ConnectionOriented" EventHandler="daliReplace" />
                 <Button Id="%AID%_B-%TT%00006" Text="Refresh status" EventHandlerOnline="ConnectionOriented" EventHandler="daliStatus" />
                 <ParameterSeparator Id="%AID%_PS-%TT%00004" Text="DALI-2 input devices (push buttons, occupancy and light sensors) live in their own short-address space. Scan discovers them; the buttons below commission new or all input devices." UIHint="Information" />

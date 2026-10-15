@@ -84,6 +84,32 @@ struct ColourReport {
     std::uint8_t brightness = 0;
 };
 
+struct GearDetails {
+    std::uint8_t status_byte = 0;
+    std::uint8_t device_type = 6;
+    std::uint8_t version_number = 0;
+    std::uint8_t physical_min = 1;
+    std::uint8_t min_level = 1;
+    std::uint8_t max_level = 254;
+    std::uint8_t power_on_level = 254;
+    std::uint8_t system_failure_level = 254;
+    std::uint8_t fade_time = 0;
+    std::uint8_t fade_rate = 7;
+    std::uint16_t groups = 0;
+    std::array<std::uint8_t, 16> scenes{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    bool probed = false;
+};
+
+struct GearConfig {
+    std::uint8_t min_level = 0xFF;
+    std::uint8_t max_level = 0xFF;
+    std::uint8_t power_on_level = 0xFF;
+    std::uint8_t system_failure_level = 0xFF;
+    std::uint8_t fade_time = 0xFF;
+    std::uint8_t fade_rate = 0xFF;
+};
+
 struct ControlResult {
     ControlError error = ControlError::None;
     dali::TransportStatus transport_status = dali::TransportStatus::Ok;
@@ -154,6 +180,11 @@ public:
     std::optional<ColourReport> colour_report(dali::Address address) const noexcept;
     State state(dali::ShortAddress address) const noexcept;
     State state(dali::Group group) const noexcept;
+    [[nodiscard]] ControlResult query_gear_details(dali::ShortAddress address);
+    [[nodiscard]] ControlResult configure_gear(dali::ShortAddress address, const GearConfig& cfg);
+    void record_status_byte(dali::ShortAddress address, std::uint8_t status_byte) noexcept;
+    const GearDetails& gear_details(dali::ShortAddress address) const noexcept;
+    const config::Configuration& configuration() const noexcept { return config_; }
 
 private:
     struct LastActive {
@@ -193,6 +224,7 @@ private:
     std::array<LastActive, dali::ShortAddress::capacity> channel_last_active_{};
     std::array<LastActive, dali::Group::capacity> group_last_active_{};
     LastActive broadcast_last_active_{};
+    std::array<GearDetails, dali::ShortAddress::capacity> gear_details_{};
 };
 
 }

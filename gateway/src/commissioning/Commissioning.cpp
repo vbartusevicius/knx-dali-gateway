@@ -296,6 +296,9 @@ std::optional<dali::ShortAddress> Commissioning::poll_next() {
         poll_index_ = index + 1;
         const auto address = *dali::ShortAddress::from(index);
         const auto reply = transport_.query_status(address);
+        if (reply.status == dali::TransportStatus::Ok && reply.gear_status) {
+            service_.record_status_byte(address, *reply.gear_status);
+        }
         const bool faulty = reply.status != dali::TransportStatus::Ok ||
                             (reply.gear_status && (*reply.gear_status & lamp_failure_mask) != 0);
         if (faulty_.test(index) != faulty) {

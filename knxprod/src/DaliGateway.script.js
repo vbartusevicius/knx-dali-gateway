@@ -4,7 +4,9 @@
 // Command property ids: 1 scan, 2 assign (data[0]: 0 = unaddressed, 1 = all),
 // 3 replace (data[0] = short address), 4 identify (data[0] = short address),
 // 5 reset all DALI short addresses (no data), 6 scan input devices,
-// 7 assign input devices (data[0]: 0 = new, 1 = all).
+// 7 assign input devices (data[0]: 0 = new, 1 = all),
+// 8 lamp finder (data[0] = short address 0..63 or 0xFF, data[1] = 0 stop,
+// 1 blink on/off, 2 smooth pulse).
 // Response codes: 0 accepted, 1 busy, 2 invalid argument.
 // The status refresh reads function-property state id 1 through
 // online.invokeFunctionPropertyState, which returns
@@ -65,6 +67,57 @@ function daliResetAddresses(device, online, progress, context) {
 function daliIdentify(device, online, progress, context) {
     var channel = gwChannel(device);
     gwSendCommand(device, online, progress, 4, [channel], "Identifying DALI channel " + channel);
+}
+
+function gwContextChannel(device, context) {
+    if (context && context.ch !== undefined && context.ch !== null) {
+        var idx = Number(context.ch) - 1;
+        if (idx >= 0 && idx <= 63) {
+            return idx;
+        }
+    }
+    return gwChannel(device);
+}
+
+function daliFinderBlink(device, online, progress, context) {
+    var channel = gwChannel(device);
+    gwSendCommand(device, online, progress, 8, [channel, 1],
+                  "Lamp Finder (blink on/off) on DALI channel " + channel);
+}
+
+function daliFinderPulse(device, online, progress, context) {
+    var channel = gwChannel(device);
+    gwSendCommand(device, online, progress, 8, [channel, 2],
+                  "Lamp Finder (smooth pulse) on DALI channel " + channel);
+}
+
+function daliFinderNext(device, online, progress, context) {
+    var param = device.getParameterByName("CH_DaliChannel") || device.getParameterByName("DaliChannel");
+    var next = param ? ((Number(param.value) + 1) & 0x3F) : 0;
+    if (param) {
+        param.value = next;
+    }
+    gwSendCommand(device, online, progress, 8, [next, 1],
+                  "Lamp Finder stepped to DALI channel " + next + " (blinking)");
+}
+
+function daliFinderStop(device, online, progress, context) {
+    gwSendCommand(device, online, progress, 8, [0xFF, 0], "Stopping Lamp Finder and restoring level");
+}
+
+function channelFinderBlink(device, online, progress, context) {
+    var ch = gwContextChannel(device, context);
+    gwSendCommand(device, online, progress, 8, [ch, 1], "Lamp Finder (blink on/off) on channel " + (ch + 1));
+}
+
+function channelFinderPulse(device, online, progress, context) {
+    var ch = gwContextChannel(device, context);
+    gwSendCommand(device, online, progress, 8, [ch, 2], "Lamp Finder (smooth pulse) on channel " + (ch + 1));
+}
+
+function channelReplace(device, online, progress, context) {
+    var ch = gwContextChannel(device, context);
+    gwSendCommand(device, online, progress, 3, [ch], "Replacing ballast on channel " + (ch + 1));
 }
 
 function daliReplace(device, online, progress, context) {

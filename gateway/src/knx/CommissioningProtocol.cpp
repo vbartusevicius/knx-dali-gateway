@@ -7,8 +7,10 @@
 
 #include "commissioning/Commissioning.hpp"
 #include "control/Command.hpp"
+#include "dali/Address.hpp"
 #include "dali/ShortAddress.hpp"
 #include "dali/Transport.hpp"
+#include "lighting/LampFinder.hpp"
 
 namespace gateway::knx {
 namespace {
@@ -66,6 +68,24 @@ DecodedRequest decode_command(std::uint8_t object_index, std::uint8_t property_i
         return {control::AssignInputDevices{data[0] == 1 ? dali::CommissionMode::All
                                                          : dali::CommissionMode::Unaddressed},
                 RequestResponse::Accepted};
+    case CommandProperty::LampFinder: {
+        if (length < 1) {
+            return reject(RequestResponse::InvalidArgument);
+        }
+        const std::uint8_t raw_mode = length >= 2 ? data[1] : (data[0] == 0xFFU ? 0U : 1U);
+        if (raw_mode > 2) {
+            return reject(RequestResponse::InvalidArgument);
+        }
+        const auto mode = static_cast<lighting::FinderMode>(raw_mode);
+        if (data[0] == 0xFFU) {
+            return {control::FindLamp{dali::Address::broadcast(), mode}, RequestResponse::Accepted};
+        }
+        const auto ch = dali::ShortAddress::from(data[0]);
+        if (!ch) {
+            return reject(RequestResponse::InvalidArgument);
+        }
+        return {control::FindLamp{dali::Address::short_address(*ch), mode}, RequestResponse::Accepted};
+    }
     }
     return reject(RequestResponse::InvalidArgument);
 }

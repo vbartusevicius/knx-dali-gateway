@@ -938,5 +938,7 @@ int main() {
     run_device_inventory_tests();
     run_event_decoder_tests();
     run_input_mapper_tests();
+    void run_diagnostics_and_network_tests();
+    run_diagnostics_and_network_tests();
     return UNITY_END() == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

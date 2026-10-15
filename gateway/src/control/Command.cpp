@@ -1,12 +1,15 @@
 #include "control/Command.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 #include <variant>
 
 #include "commissioning/Commissioning.hpp"
 #include "dali/Address.hpp"
+#include "dali/ArcLevel.hpp"
 #include "dali/Transport.hpp"
+#include "lighting/LampFinder.hpp"
 #include "lighting/LightingService.hpp"
 #include "lighting/RelativeDimmer.hpp"
 
@@ -38,7 +41,7 @@ dali::Address address_of(const Command& command) noexcept {
                           std::is_same_v<Request, DimStop> || std::is_same_v<Request, SetColourTemperature> ||
                           std::is_same_v<Request, SetRgb> || std::is_same_v<Request, SetRgbw> ||
                           std::is_same_v<Request, SetXy> || std::is_same_v<Request, ColourDimStart> ||
-                          std::is_same_v<Request, ColourDimStop>) {
+                          std::is_same_v<Request, ColourDimStop> || std::is_same_v<Request, FindLamp>) {
                 return alternative.address;
             } else if constexpr (std::is_same_v<Request, RecallScene> ||
                                  std::is_same_v<Request, StoreScene> || std::is_same_v<Request, ScanBus> ||
@@ -58,7 +61,7 @@ dali::Address address_of(const Command& command) noexcept {
 commissioning::JobResult execute(lighting::LightingService& service, lighting::RelativeDimmer& dimmer,
                                  lighting::RelativeDimmer& colour_dimmer,
                                  commissioning::Commissioning& commissioning, inputs::InputMapper& inputs,
-                                 std::uint32_t now_ms, const Command& command) {
+                                 std::uint32_t now_ms, const Command& command, lighting::LampFinder* finder) {
     return std::visit(
         [&](const auto& alternative) -> commissioning::JobResult {
             using Request = std::decay_t<decltype(alternative)>;
@@ -117,6 +120,27 @@ commissioning::JobResult execute(lighting::LightingService& service, lighting::R
             } else if constexpr (std::is_same_v<Request, ColourDimStop>) {
                 if (colour_dimmer.stop(alternative.address)) {
                     return wrap(service.finish_colour_temperature(alternative.address));
+                }
+                return wrap({lighting::ControlError::None, dali::TransportStatus::Ok, {}, {}, {}});
+            } else if constexpr (std::is_same_v<Request, QueryGearDetails>) {
+                return wrap(service.query_gear_details(alternative.address));
+            } else if constexpr (std::is_same_v<Request, ConfigureGear>) {
+                return wrap(service.configure_gear(alternative.address, alternative.config));
+            } else if constexpr (std::is_same_v<Request, FindLamp>) {
+                if (!finder) {
+                    if (const auto s = alternative.address.as_short()) {
+                        return commissioning.identify(*s);
+                    }
+                    return wrap({lighting::ControlError::None, dali::TransportStatus::Ok, {}, {}, {}});
+                }
+                std::optional<dali::ArcLevel> prev;
+                if (const auto s = alternative.address.as_short()) {
+                    prev = service.state(*s).level;
+                } else if (const auto g = alternative.address.as_group()) {
+                    prev = service.state(*g).level;
+                }
+                if (const auto step = finder->start(alternative.address, alternative.mode, prev, now_ms)) {
+                    return wrap(service.set_level(step->address, step->level));
                 }
                 return wrap({lighting::ControlError::None, dali::TransportStatus::Ok, {}, {}, {}});
             } else if constexpr (std::is_same_v<Request, DimStart>) {
