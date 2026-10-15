@@ -96,6 +96,7 @@ struct GearDetails {
     std::uint8_t system_failure_level = 254;
     std::uint8_t fade_time = 0;
     std::uint8_t fade_rate = 7;
+    std::uint8_t dimming_curve = 0;  // IEC 62386-207 (DT6): 0 = Logarithmic, 1 = Linear
     std::uint16_t groups = 0;
     std::array<std::uint8_t, 16> scenes{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -119,11 +120,13 @@ struct GearConfig {
     std::uint8_t system_failure_level = 0xFF;
     std::uint8_t fade_time = 0xFF;
     std::uint8_t fade_rate = 0xFF;
+    std::uint8_t dimming_curve = 0xFF;  // 0 = Logarithmic, 1 = Linear, 0xFF = unchanged
     std::uint16_t full_power_deciwatts = 0xFFFF;
     std::uint16_t idle_power_centiwatts = 0xFFFF;
     std::uint8_t use_manual_power_override = 0xFF;  // 0 = false, 1 = true, 0xFF = unchanged
     std::uint8_t switch_only = 0xFF;                // 0 = false, 1 = true, 0xFF = unchanged
     std::uint8_t device_type_override = 0xFF;       // 0..8 = override device_type, 0xFF = unchanged
+    std::uint8_t dt8_mask_override = 0xFF;          // bit0=Tc, bit1=RGB, bit2=RGBW, bit3=xy, 0xFF = unchanged
     std::uint32_t groups_mask = 0xFFFFFFFFU;  // 0..0xFFFF = set 16-bit group mask, 0xFFFFFFFF = unchanged
 };
 

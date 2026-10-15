@@ -3,12 +3,24 @@
 let ws = null;
 let mockMode = false;
 let lampFilter = "all";
+const DT8_COLOR_OPTIONS = [
+  { mask: 1, label: "Tunable White (CCT)" },
+  { mask: 2, label: "RGB" },
+  { mask: 6, label: "RGBW" },
+  { mask: 7, label: "CCT + RGBW" },
+  { mask: 8, label: "CIE xy" },
+  { mask: 9, label: "CCT + CIE xy" },
+];
 let selectedCh = 0;
+let selectedSensor = 0;
 let selectedGrp = 0;
 let selectedScene = 0;
+let inspectorTab = "control";
 let renderedInspectorCh = -1;
 let renderedInspectorSig = "";
+let renderedGrpSig = "";
 let selectedColorModeByCh = {};
+let selectedColorModeByGrp = {};
 let latestState = null;
 let channelDetailsCache = {};
 window.lastLogData = { entries: [] };
@@ -87,6 +99,19 @@ const COLOR_PRESETS = [
   { name: "Indigo", r: 99, g: 102, b: 241, hex: "#6366f1" },
   { name: "Violet", r: 168, g: 85, b: 247, hex: "#a855f7" },
 ];
+
+function arcToPct(arc, minPct = 0) {
+  if (!arc || arc <= 0) return minPct;
+  if (arc >= 254) return 100;
+  return Math.max(minPct, Math.round((arc * 100) / 254));
+}
+
+function pctToArc(pct, minArc = 0) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  if (p === 0) return minArc;
+  if (p >= 100) return 254;
+  return Math.max(minArc, Math.round((p * 254) / 100));
+}
 
 function daliArcToPowerRatio(arc) {
   if (!arc || arc <= 0) return 0.0;
@@ -198,9 +223,73 @@ function initUi() {
 
 function setLampFilter(filter, btn) {
   lampFilter = filter;
-  document.querySelectorAll(".filter-pills .pill-btn").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".matrix-header .pill-btn").forEach((b) => b.classList.remove("active"));
   if (btn) btn.classList.add("active");
-  if (latestState) renderLampsGrid(latestState.channels || []);
+  const lampsGrid = document.getElementById("lamps-grid");
+  const inputsGrid = document.getElementById("inputs-grid");
+  const actionBtns = document.getElementById("bus-action-btns");
+  renderedInspectorCh = -1;
+  if (filter === "sensors") {
+    selectedCh = -1;
+    lampsGrid.style.display = "none";
+    inputsGrid.style.display = "grid";
+    actionBtns.innerHTML = `
+      <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Scan Sensors</button>
+      <button class="btn btn-sm" onclick="sendCmd({action:'assign_inputs',mode:'new'})">Address New</button>
+    `;
+    if (latestState) {
+      renderInputs(latestState.inputs || [], latestState.input_events || []);
+      renderSensorInspector(selectedSensor);
+    }
+  } else {
+    if (selectedCh < 0) selectedCh = 0;
+    lampsGrid.style.display = "grid";
+    inputsGrid.style.display = "none";
+    actionBtns.innerHTML = `
+      <button class="btn btn-sm" onclick="sendCmd({action:'scan_bus'})">Scan</button>
+      <button class="btn btn-sm" onclick="sendCmd({action:'assign_addresses',mode:'new'})">Address New</button>
+    `;
+    if (latestState) {
+      renderLampsGrid(latestState.channels || []);
+      renderInspector(selectedCh, true);
+    }
+  }
+}
+
+function selectSensor(idx) {
+  selectedSensor = idx;
+  if (latestState) {
+    renderInputs(latestState.inputs || [], latestState.input_events || []);
+    renderSensorInspector(idx);
+  }
+}
+
+function setInspectorTab(tab) {
+  inspectorTab = tab;
+  renderedInspectorCh = -1;
+  renderInspector(selectedCh, true);
+}
+
+async function onProfileOrSwitchChange(chIdx) {
+  const devType = Number(document.getElementById("gm-devtype")?.value ?? 6);
+  const curDt8 = latestState?.channels?.[chIdx]?.[4] || 0;
+  const dt8Mask = devType === 8 ? (curDt8 || 15) : 0;
+  const swOnly = devType === 7;
+
+  if (latestState && latestState.channels && latestState.channels[chIdx]) {
+    latestState.channels[chIdx][4] = dt8Mask;
+    latestState.channels[chIdx][11] = devType;
+    latestState.channels[chIdx][18] = swOnly ? 1 : 0;
+  }
+  await sendCmd({
+    action: "configure_gear",
+    index: chIdx,
+    device_type: devType,
+    dt8_mask: dt8Mask,
+    switch_only: swOnly,
+  });
+  renderedInspectorCh = -1;
+  renderInspector(chIdx, true);
 }
 
 function selectLamp(idx) {
@@ -385,8 +474,8 @@ function renderInspector(chIdx, forceRebuild = false) {
   const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
   const hasErr = Boolean(faulty || (statusByte & 0x03) !== 0);
 
-  // Structural signature: only rebuild the Inspector DOM when the selected channel or its structural capabilities change
-  const sig = `${chIdx}:${present}:${dt8}:${devType}:${d4iSupported}:${isSwitch}`;
+  // Structural signature: only rebuild the Inspector DOM when the selected channel, tab, or capabilities change
+  const sig = `${chIdx}:${inspectorTab}:${present}:${dt8}:${devType}:${d4iSupported}:${isSwitch}`;
   if (!forceRebuild && renderedInspectorCh === chIdx && renderedInspectorSig === sig) {
     // Update live readouts in-place without clobbering form inputs or sliders being dragged
     const activeEl = document.activeElement;
@@ -468,16 +557,17 @@ function renderInspector(chIdx, forceRebuild = false) {
   }
 
   let colorHtml = "";
-  if (!isSwitch && dt8) {
+  const effectiveDt8 = !isSwitch && (Number(devType) === 8 ? (dt8 || 15) : dt8);
+  if (effectiveDt8) {
     const availModes = [];
-    if (dt8 & 1) availModes.push({ id: "cct", label: "White (CCT)" });
-    if (dt8 & 6) availModes.push({ id: "rgb", label: dt8 & 4 ? "Color (RGBW)" : "Color (RGB)" });
-    if (dt8 & 8) availModes.push({ id: "xy", label: "CIE xy" });
+    if (effectiveDt8 & 1) availModes.push({ id: "cct", label: "White (CCT)" });
+    if (effectiveDt8 & 6) availModes.push({ id: "rgb", label: effectiveDt8 & 4 ? "Color (RGBW)" : "Color (RGB)" });
+    if (effectiveDt8 & 8) availModes.push({ id: "xy", label: "CIE xy" });
 
     let activeMode = selectedColorModeByCh[chIdx];
     if (!activeMode || !availModes.some((m) => m.id === activeMode)) {
-      if ((dt8 & 6) && (r || g || b)) activeMode = "rgb";
-      else if (dt8 & 1) activeMode = "cct";
+      if ((effectiveDt8 & 6) && (r || g || b)) activeMode = "rgb";
+      else if (effectiveDt8 & 1) activeMode = "cct";
       else activeMode = availModes[0].id;
       selectedColorModeByCh[chIdx] = activeMode;
     }
@@ -530,7 +620,7 @@ function renderInspector(chIdx, forceRebuild = false) {
           <span class="mono" style="font-size:11px;color:var(--text-2)">RGB: ${r || 0}, ${g || 0}, ${b || 0}</span>
         </div>
         ${
-          dt8 & 4
+          effectiveDt8 & 4
             ? `<div class="insp-row" style="margin-top:4px">
                  <span style="font-size:11.5px;color:var(--text-2)">Dedicated White LED (W)</span>
                  <input type="range" min="0" max="254" value="${wVal}"
@@ -569,6 +659,11 @@ function renderInspector(chIdx, forceRebuild = false) {
         `<option value="${k}" ${Number(devType) === Number(k) ? "selected" : ""}>${label}</option>`
     )
     .join("");
+  const minPct = arcToPct(d.min_level ?? 1, 1);
+  const maxPct = arcToPct(d.max_level ?? 254, 1);
+  const ponPct = arcToPct(d.power_on_level ?? 254, 0);
+  const failPct = arcToPct(d.system_failure_level ?? 254, 0);
+  const dimCurve = Number(d.dimming_curve ?? 0);
 
   const ftOptions = FADE_TIME_LABELS.map(
     (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
@@ -600,94 +695,106 @@ function renderInspector(chIdx, forceRebuild = false) {
       </div>
     </div>
 
-    <div class="insp-section">
-      <div class="insp-row">
-        <span class="insp-sec-title">${isSwitch ? "Switch Control (Non-Dimmable)" : "Brightness"}</span>
-        <span class="mono" id="insp-bri-text">${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W</span>
-      </div>
-      <div class="insp-row">
-        <button id="insp-toggle-btn" class="btn btn-sm ${level > 0 ? "btn-primary" : ""}"
-          onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${chIdx}})">${level > 0 ? "Turn Off" : "Turn On"}</button>
-        <input type="range" id="insp-bri-slider" min="0" max="254" value="${level}" ${isSwitch ? "disabled title='Dimming disabled for Switch-Only device'" : ""}
-          onchange="sendCmd({action:'set_level',target:'ch',index:${chIdx},level:Number(this.value)})">
-      </div>
-    </div>
-
-    ${colorHtml}
-
-    <div class="insp-section">
-      <span class="insp-sec-title">Device Type &amp; Dimming Mode</span>
-      <label class="field">
-        <span>DALI Device Type (Reported by ballast, overridable here or in ETS)</span>
-        <select id="gm-devtype">${dtTypeOptions}</select>
-      </label>
-      <label class="check-row" style="font-size:12px">
-        <input type="checkbox" id="gm-switch-only" ${isSwitch ? "checked" : ""}>
-        <span>On/Off switch only (disable brightness dimming)</span>
-      </label>
-    </div>
-
-    <div class="insp-section">
-      <div class="insp-row">
-        <span class="insp-sec-title">Power</span>
-        <span id="insp-pwr-badge" class="badge ${d4iSupported && !manualOverride ? "ok" : ""}">${
-          d4iSupported && !manualOverride
-            ? `D4i Ballast: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
-            : `${pwr.totalW.toFixed(1)} W (Lamp ${pwr.lampW.toFixed(1)}W + Idle ${pwr.idleW.toFixed(2)}W)`
-        }</span>
-      </div>
-      <div class="form-grid-2">
-        <label class="field">
-          <span>Lamp at 100% (W)</span>
-          <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${fullWVal}">
-        </label>
-        <label class="field">
-          <span>Ballast Idle (W)</span>
-          <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${idleWVal}">
-        </label>
-      </div>
-      ${
-        d4iSupported
-          ? `<label class="check-row" style="font-size:11.5px;color:var(--text-2)">
-               <input type="checkbox" id="gm-pwr-override" ${manualOverride ? "checked" : ""}>
-               <span>Use calculated power instead of D4i ballast reporting</span>
-             </label>`
-          : ""
-      }
+    <div class="segmented-control" style="margin-top:10px">
+      <button type="button" class="pill-btn ${inspectorTab === "control" ? "active" : ""}" onclick="setInspectorTab('control')">Control</button>
+      <button type="button" class="pill-btn ${inspectorTab === "config" ? "active" : ""}" onclick="setInspectorTab('config')">Settings</button>
     </div>
 
     ${
-      !isSwitch
-        ? `<div class="insp-section">
-             <span class="insp-sec-title">Dimming Limits &amp; Fade</span>
-             <div class="form-grid-2">
-               <label class="field"><span>Min Level (1..254)</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></label>
-               <label class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></label>
-             </div>
-             <div class="form-grid-2">
-               <label class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></label>
-               <label class="field"><span>Bus-Fail Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></label>
-             </div>
-             <div class="form-grid-2">
-               <label class="field"><span>Fade Time</span><select id="gm-ft">${ftOptions}</select></label>
-               <label class="field"><span>Fade Rate</span><select id="gm-fr">${frOptions}</select></label>
-             </div>
-           </div>`
-        : ""
-    }
+      inspectorTab === "control"
+        ? `
+          <div class="insp-section">
+            <div class="insp-row">
+              <span class="insp-sec-title">${isSwitch ? "Switch Control" : "Brightness"}</span>
+              <span class="mono" id="insp-bri-text">${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W</span>
+            </div>
+            <div class="insp-row">
+              <button id="insp-toggle-btn" class="btn btn-sm ${level > 0 ? "btn-primary" : ""}"
+                onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${chIdx}})">${level > 0 ? "Turn Off" : "Turn On"}</button>
+              <input type="range" id="insp-bri-slider" min="0" max="254" value="${level}" ${isSwitch ? "disabled title='Dimming disabled for Switch-Only device'" : ""}
+                onchange="sendCmd({action:'set_level',target:'ch',index:${chIdx},level:Number(this.value)})">
+            </div>
+          </div>
+          ${colorHtml}
+        `
+        : `
+          <div class="insp-section">
+            <span class="insp-sec-title">Device Type</span>
+            <label class="field">
+              <span>DALI Device Type</span>
+              <select id="gm-devtype" onchange="onProfileOrSwitchChange(${chIdx})">${dtTypeOptions}</select>
+            </label>
+          </div>
 
-    <div class="insp-section">
-      <div class="btn-row">
-        <button class="btn btn-primary btn-sm" onclick="saveGearParams(${chIdx})">Save Settings</button>
-        <button class="btn btn-sm" onclick="queryChannelDetails(${chIdx})">Read from Ballast</button>
-        ${
-          !present || hasErr
-            ? `<button class="btn btn-sm" title="Assigns a newly connected unaddressed replacement ballast on the bus to ${addrStr} and restores its groups &amp; settings"
-                 onclick="sendCmd({action:'replace_device',index:${chIdx}})">Assign New Ballast to ${addrStr}</button>`
-            : ""
-        }
-      </div>
-    </div>
+          <div class="insp-section">
+            <div class="insp-row">
+              <span class="insp-sec-title">Power</span>
+              <span id="insp-pwr-badge" class="badge ${d4iSupported && !manualOverride ? "ok" : ""}">${
+                d4iSupported && !manualOverride
+                  ? `D4i: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
+                  : `${pwr.totalW.toFixed(1)} W`
+              }</span>
+            </div>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Lamp at 100% (W)</span>
+                <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${fullWVal}">
+              </label>
+              <label class="field">
+                <span>Ballast Idle (W)</span>
+                <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${idleWVal}">
+              </label>
+            </div>
+            ${
+              d4iSupported
+                ? `<label class="check-row" style="font-size:11.5px;color:var(--text-2)">
+                     <input type="checkbox" id="gm-pwr-override" ${manualOverride ? "checked" : ""}>
+                     <span>Use calculated power instead of D4i</span>
+                   </label>`
+                : ""
+            }
+          </div>
+
+          ${
+            !isSwitch
+              ? `<div class="insp-section">
+                   <span class="insp-sec-title">Dimming Limits, Curve &amp; Fade</span>
+                   <label class="field">
+                     <span>Dimming Curve</span>
+                     <select id="gm-curve">
+                       <option value="0" ${dimCurve === 0 ? "selected" : ""}>Logarithmic (Standard eye curve)</option>
+                       <option value="1" ${dimCurve === 1 ? "selected" : ""}>Linear</option>
+                     </select>
+                   </label>
+                   <div class="form-grid-2">
+                     <label class="field"><span>Min Level (%)</span><input type="number" id="gm-min" min="1" max="100" value="${minPct}"></label>
+                     <label class="field"><span>Max Level (%)</span><input type="number" id="gm-max" min="1" max="100" value="${maxPct}"></label>
+                   </div>
+                   <div class="form-grid-2">
+                     <label class="field"><span>Power-On Level (%)</span><input type="number" id="gm-pon" min="0" max="100" value="${ponPct}"></label>
+                     <label class="field"><span>Bus-Fail Level (%)</span><input type="number" id="gm-fail" min="0" max="100" value="${failPct}"></label>
+                   </div>
+                   <div class="form-grid-2">
+                     <label class="field"><span>Fade Time (Scenes &amp; %)</span><select id="gm-ft">${ftOptions}</select></label>
+                     <label class="field"><span>Button Dim Speed</span><select id="gm-fr">${frOptions}</select></label>
+                   </div>
+                 </div>`
+              : ""
+          }
+
+          <div class="insp-section">
+            <div class="btn-row">
+              <button class="btn btn-primary btn-sm" onclick="saveGearParams(${chIdx})">Save Settings</button>
+              <button class="btn btn-sm" onclick="queryChannelDetails(${chIdx})">Read Ballast</button>
+              ${
+                !present || hasErr
+                  ? `<button class="btn btn-sm" onclick="sendCmd({action:'replace_device',index:${chIdx}})">Assign New to ${addrStr}</button>`
+                  : ""
+              }
+            </div>
+          </div>
+        `
+    }
   `;
 }
 
@@ -706,13 +813,16 @@ async function saveGearParams(ch) {
   const fullW = Math.round(Number(document.getElementById("gm-full-w").value) * 10);
   const idleW = Math.round(Number(document.getElementById("gm-idle-w").value) * 100);
   const overEl = document.getElementById("gm-pwr-override");
-  const swOnly = document.getElementById("gm-switch-only").checked;
-  const devType = Number(document.getElementById("gm-devtype").value);
+  const devType = Number(document.getElementById("gm-devtype").value ?? 6);
+  const swOnly = devType === 7;
+  const curDt8 = latestState?.channels?.[ch]?.[4] || 0;
+  const dt8Mask = devType === 8 ? (curDt8 || 15) : 0;
 
   const payload = {
     action: "configure_gear",
     index: ch,
     device_type: devType,
+    dt8_mask: dt8Mask,
     switch_only: swOnly,
     full_power_deciwatts: fullW,
     idle_power_centiwatts: idleW,
@@ -720,12 +830,13 @@ async function saveGearParams(ch) {
   };
   const minEl = document.getElementById("gm-min");
   if (minEl) {
-    payload.min_level = Number(minEl.value);
-    payload.max_level = Number(document.getElementById("gm-max").value);
-    payload.power_on_level = Number(document.getElementById("gm-pon").value);
-    payload.system_failure_level = Number(document.getElementById("gm-fail").value);
+    payload.min_level = pctToArc(minEl.value, 1);
+    payload.max_level = pctToArc(document.getElementById("gm-max").value, 1);
+    payload.power_on_level = pctToArc(document.getElementById("gm-pon").value, 0);
+    payload.system_failure_level = pctToArc(document.getElementById("gm-fail").value, 0);
     payload.fade_time = Number(document.getElementById("gm-ft").value);
     payload.fade_rate = Number(document.getElementById("gm-fr").value);
+    payload.dimming_curve = Number(document.getElementById("gm-curve").value);
   }
   await sendCmd(payload);
   renderedInspectorCh = -1;
@@ -742,7 +853,26 @@ function sendHexRgb(target, index, hex) {
 
 function selectGroup(grpIdx) {
   selectedGrp = grpIdx;
-  if (latestState) renderGroups(latestState.groups || [], latestState.channels || []);
+  renderedGrpSig = "";
+  if (latestState) renderGroups(latestState.groups || [], latestState.channels || [], true);
+}
+
+function setGroupColorMode(grpIdx, mode) {
+  selectedColorModeByGrp[grpIdx] = mode;
+  renderedGrpSig = "";
+  if (latestState) renderGroupDetail(grpIdx, latestState.groups[grpIdx] || 0, latestState.channels || [], true);
+}
+
+function previewGroupCctSlider(grpIdx, kelvin) {
+  const k = Number(kelvin) || 4000;
+  const col = kelvinToCss(k);
+  const slider = document.getElementById("grp-cct-slider");
+  const label = document.getElementById("grp-cct-val");
+  if (slider) {
+    slider.style.setProperty("--cct-thumb", col);
+    slider.style.accentColor = col;
+  }
+  if (label) label.textContent = `${k}K`;
 }
 
 async function toggleLampInGroup(chIdx, grpIdx) {
@@ -750,6 +880,7 @@ async function toggleLampInGroup(chIdx, grpIdx) {
   const curMask = latestState.channels[chIdx][10] || 0;
   const nextMask = curMask ^ (1 << grpIdx);
   latestState.channels[chIdx][10] = nextMask;
+  renderedGrpSig = "";
   await sendCmd({
     action: "configure_gear",
     index: chIdx,
@@ -757,7 +888,7 @@ async function toggleLampInGroup(chIdx, grpIdx) {
   });
 }
 
-function renderGroups(groups, channels) {
+function renderGroups(groups, channels, forceRebuild = false) {
   const list = document.getElementById("groups-grid");
   list.innerHTML = "";
 
@@ -800,23 +931,37 @@ function renderGroups(groups, channels) {
     list.appendChild(tile);
   });
 
-  renderGroupDetail(selectedGrp, groups[selectedGrp] || 0, channels || []);
+  renderGroupDetail(selectedGrp, groups[selectedGrp] || 0, channels || [], forceRebuild);
 }
 
-function renderGroupDetail(grpIdx, lvl, channels) {
+function renderGroupDetail(grpIdx, lvl, channels, forceRebuild = false) {
   const pane = document.getElementById("group-detail-content");
   if (!pane) return;
   const gName = "G" + String(grpIdx).padStart(2, "0");
   const members = [];
   const lampTiles = [];
+  let grpDt8 = 0;
+  let sampleKelvin = 4000;
+  let sampleR = 56;
+  let sampleG = 189;
+  let sampleB = 248;
 
   channels.forEach((ch, cIdx) => {
-    const [present, , , , dt8, , , , , , groupsMask, devType, , , , , , , switchOnly] = ch;
+    const [present, , , , dt8, kelvin, r, g, b, , groupsMask, devType, , , , , , , switchOnly] = ch;
     if (!present) return;
     const isMember = (groupsMask & (1 << grpIdx)) !== 0;
     const isSwitch = Boolean(switchOnly || devType === 7);
     const addrStr = "A" + String(cIdx).padStart(2, "0");
-    if (isMember) members.push(addrStr);
+    if (isMember) {
+      members.push(addrStr);
+      grpDt8 |= Number(devType) === 8 ? (dt8 || 15) : dt8;
+      if (kelvin) sampleKelvin = kelvin;
+      if (r || g || b) {
+        sampleR = r;
+        sampleG = g;
+        sampleB = b;
+      }
+    }
 
     lampTiles.push(`
       <div class="group-lamp-item ${isMember ? "member" : ""}" onclick="toggleLampInGroup(${cIdx},${grpIdx})">
@@ -835,12 +980,114 @@ function renderGroupDetail(grpIdx, lvl, channels) {
   });
 
   const pct = Math.round((lvl * 100) / 254);
+  const sig = `${grpIdx}:${members.join(",")}:${grpDt8}`;
+  if (!forceRebuild && renderedGrpSig === sig) {
+    const activeEl = document.activeElement;
+    const briTxt = document.getElementById("grp-bri-text");
+    if (briTxt) briTxt.textContent = `${pct}% (${lvl}/254)`;
+    const briSlider = document.getElementById("grp-bri-slider");
+    if (briSlider && activeEl !== briSlider) {
+      briSlider.value = String(lvl);
+    }
+    return;
+  }
+  renderedGrpSig = sig;
+
+  let colorHtml = "";
+  if (members.length > 0 && grpDt8) {
+    const availModes = [];
+    if (grpDt8 & 1) availModes.push({ id: "cct", label: "White (CCT)" });
+    if (grpDt8 & 6) availModes.push({ id: "rgb", label: grpDt8 & 4 ? "Color (RGBW)" : "Color (RGB)" });
+    if (grpDt8 & 8) availModes.push({ id: "xy", label: "CIE xy" });
+
+    let activeMode = selectedColorModeByGrp[grpIdx];
+    if (!activeMode || !availModes.some((m) => m.id === activeMode)) {
+      activeMode = availModes[0].id;
+      selectedColorModeByGrp[grpIdx] = activeMode;
+    }
+
+    const modeTabsHtml =
+      availModes.length > 1
+        ? `<div class="segmented-control" style="margin-bottom:6px">
+             ${availModes
+               .map(
+                 (m) =>
+                   `<button type="button" class="pill-btn ${activeMode === m.id ? "active" : ""}"
+                      onclick="setGroupColorMode(${grpIdx},'${m.id}')">${m.label}</button>`
+               )
+               .join("")}
+           </div>`
+        : "";
+
+    let bodyHtml = "";
+    if (activeMode === "cct") {
+      const kCol = kelvinToCss(sampleKelvin);
+      bodyHtml = `
+        <div class="insp-row">
+          <input type="range" id="grp-cct-slider" class="cct-range" min="2000" max="6500" step="100" value="${sampleKelvin}"
+            style="--cct-thumb:${kCol};accent-color:${kCol}"
+            oninput="previewGroupCctSlider(${grpIdx},this.value)"
+            onchange="sendCmd({action:'set_cct',target:'grp',index:${grpIdx},kelvin:Number(this.value)})">
+          <span class="mono" id="grp-cct-val" style="min-width:52px;text-align:right">${sampleKelvin}K</span>
+        </div>
+        <div class="btn-row">
+          ${[2700, 3000, 4000, 5000, 6500]
+            .map(
+              (k) =>
+                `<button class="btn btn-xs" onclick="previewGroupCctSlider(${grpIdx},${k});sendCmd({action:'set_cct',target:'grp',index:${grpIdx},kelvin:${k}})">${k}K</button>`
+            )
+            .join("")}
+        </div>`;
+    } else if (activeMode === "rgb") {
+      const hexColor = rgbToHex(sampleR, sampleG, sampleB);
+      bodyHtml = `
+        <div class="swatch-row">
+          ${COLOR_PRESETS.map(
+            (p) =>
+              `<button class="color-preset" style="background:${p.hex}" title="${p.name}"
+                 onclick="sendCmd({action:'set_rgb',target:'grp',index:${grpIdx},r:${p.r},g:${p.g},b:${p.b}})"></button>`
+          ).join("")}
+          <input type="color" class="color-input" value="${hexColor}" onchange="sendHexRgb('grp',${grpIdx},this.value)">
+        </div>
+        ${
+          grpDt8 & 4
+            ? `<div class="insp-row" style="margin-top:4px">
+                 <span style="font-size:11.5px;color:var(--text-2)">Dedicated White LED (W)</span>
+                 <input type="range" min="0" max="254" value="0"
+                   oninput="document.getElementById('grp-w-val').textContent=Math.round(this.value*100/254)+'%'"
+                   onchange="sendCmd({action:'set_rgbw',target:'grp',index:${grpIdx},r:${sampleR},g:${sampleG},b:${sampleB},w:Number(this.value)})">
+                 <span class="mono" id="grp-w-val" style="min-width:36px;text-align:right">0%</span>
+               </div>`
+            : ""
+        }`;
+    } else if (activeMode === "xy") {
+      bodyHtml = `
+        <div class="form-grid-3">
+          <label class="field"><span>x (0..0.8)</span><input type="number" id="grp-xy-x" min="0" max="0.8" step="0.005" value="0.312"></label>
+          <label class="field"><span>y (0..0.8)</span><input type="number" id="grp-xy-y" min="0" max="0.8" step="0.005" value="0.328"></label>
+          <div class="field" style="justify-content:flex-end">
+            <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'grp',index:${grpIdx},x:Math.round(Number(document.getElementById('grp-xy-x').value)*65535),y:Math.round(Number(document.getElementById('grp-xy-y').value)*65535),brightness:${lvl || 200}})">Apply</button>
+          </div>
+        </div>`;
+    }
+
+    colorHtml = `
+      <div class="insp-section">
+        <span class="insp-sec-title">Group Color Control (DT8)</span>
+        ${modeTabsHtml}
+        ${bodyHtml}
+      </div>`;
+  }
+
   pane.innerHTML = `
     <div class="insp-header">
       <div>
         <div class="insp-title">Group ${gName}</div>
         <div class="insp-badges">
           <span class="badge ${members.length > 0 ? "ok" : ""}">${members.length} lamp${members.length === 1 ? "" : "s"} assigned</span>
+          ${grpDt8 & 1 ? '<span class="badge">CCT</span>' : ""}
+          ${grpDt8 & 4 ? '<span class="badge">RGBW</span>' : grpDt8 & 2 ? '<span class="badge">RGB</span>' : ""}
+          ${grpDt8 & 8 ? '<span class="badge">CIE xy</span>' : ""}
         </div>
       </div>
       ${
@@ -857,15 +1104,17 @@ function renderGroupDetail(grpIdx, lvl, channels) {
         ? `<div class="insp-section">
              <div class="insp-row">
                <span class="insp-sec-title">Group Brightness</span>
-               <span class="mono">${pct}% (${lvl}/254)</span>
+               <span class="mono" id="grp-bri-text">${pct}% (${lvl}/254)</span>
              </div>
              <div class="insp-row">
                <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${grpIdx}})">All On</button>
                <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${grpIdx}})">All Off</button>
-               <input type="range" min="0" max="254" value="${lvl}"
+               <input type="range" id="grp-bri-slider" min="0" max="254" value="${lvl}"
+                 oninput="document.getElementById('grp-bri-text').textContent=Math.round(this.value*100/254)+'% ('+this.value+'/254)'"
                  onchange="sendCmd({action:'set_level',target:'grp',index:${grpIdx},level:Number(this.value)})">
              </div>
-           </div>`
+           </div>
+           ${colorHtml}`
         : ""
     }
 
@@ -948,35 +1197,63 @@ function inputTypeName(type) {
 function renderInputs(inputs, inputEvents) {
   const grid = document.getElementById("inputs-grid");
   grid.innerHTML = "";
-  let any = false;
+  let any = 0;
+  const evs = inputEvents || [];
+
   inputs.forEach((item, idx) => {
     const [present, summary, instTypes] = item;
     if (!present) return;
-    any = true;
+    any++;
     const instCount = summary & 0x1f;
-    const instBadges = [];
+    const dStr = "D" + String(idx).padStart(2, "0");
+
+    // Summarize instance types cleanly (e.g. "4× Push Button" or "Occupancy · Light Sensor")
+    const typeCounts = {};
     if (Array.isArray(instTypes) && instTypes.length > 0) {
-      instTypes.forEach((t, iIdx) => {
-        instBadges.push(
-          `<span class="chip">I${String(iIdx).padStart(2, "0")}: ${inputTypeName(t)}</span>`
-        );
+      instTypes.forEach((t) => {
+        const name = inputTypeName(t);
+        typeCounts[name] = (typeCounts[name] || 0) + 1;
       });
     } else {
-      if (summary & 0x20) instBadges.push('<span class="chip">Push Button</span>');
-      if (summary & 0x40) instBadges.push('<span class="chip">Occupancy</span>');
-      if (summary & 0x80) instBadges.push('<span class="chip">Light Sensor</span>');
+      if (summary & 0x20) typeCounts["Push Button"] = instCount || 1;
+      if (summary & 0x40) typeCounts["Occupancy"] = 1;
+      if (summary & 0x80) typeCounts["Light Sensor"] = 1;
     }
-    const el = document.createElement("div");
-    el.className = "group-card";
-    el.innerHTML = `
+    const typeSummary = Object.entries(typeCounts)
+      .map(([name, cnt]) => (cnt > 1 ? `${cnt}× ${name}` : name))
+      .join(" · ");
+
+    // Find most recent live event for this sensor
+    const lastEv = evs.find((e) => e[0] === idx);
+    const statusLine = lastEv
+      ? `I${String(lastEv[1]).padStart(2, "0")}: ${decodeInputEvent(lastEv[2], lastEv[3])}`
+      : `${instCount} instance${instCount === 1 ? "" : "s"}`;
+    const isRecent = Boolean(lastEv && lastEv[4] <= 15);
+
+    const tile = document.createElement("div");
+    tile.className =
+      "lamp-tile" +
+      (lampFilter === "sensors" && idx === selectedSensor ? " selected" : "") +
+      (isRecent ? " on" : "");
+    tile.onclick = () => selectSensor(idx);
+    tile.innerHTML = `
       <div class="tile-head">
-        <strong class="mono">D${String(idx).padStart(2, "0")}</strong>
-        <span class="badge ok">${instCount} inst</span>
+        <span class="tile-addr">${dStr}</span>
+        <button class="tile-pwr-btn" title="Blink physical LED on ${dStr} (Identify Device)"
+          onclick="event.stopPropagation();sendCmd({action:'identify_input',index:${idx}})">◎</button>
       </div>
-      <div class="chips-wrap">${instBadges.join("")}</div>
+      <div class="tile-bar-track">
+        <div class="tile-bar-fill" style="width:${lastEv ? 100 : 35}%;background:${isRecent ? "#10b981" : "#3b82f6"}"></div>
+      </div>
+      <div class="tile-foot">
+        <span class="tile-status">${statusLine}</span>
+        <span class="tile-type">${typeSummary || "Input device"}</span>
+      </div>
     `;
-    grid.appendChild(el);
+    grid.appendChild(tile);
   });
+  const cntSensors = document.getElementById("cnt-sensors");
+  if (cntSensors) cntSensors.textContent = String(any);
   if (!any) {
     grid.innerHTML = '<div class="subtext">No DALI-2 sensors or buttons found on the bus.</div>';
   }
@@ -984,7 +1261,6 @@ function renderInputs(inputs, inputEvents) {
   const tbody = document.getElementById("input-events-tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  const evs = inputEvents || [];
   if (evs.length === 0) {
     tbody.innerHTML =
       '<tr><td colspan="5" class="subtext">No recent sensor/button events yet. Press a DALI-2 button to see its address and instance here.</td></tr>';
@@ -1002,6 +1278,99 @@ function renderInputs(inputs, inputEvents) {
     `;
     tbody.appendChild(tr);
   });
+}
+
+function renderSensorInspector(devIdx) {
+  const pane = document.getElementById("inspector-content");
+  if (!pane || !latestState) return;
+  const inputs = latestState.inputs || [];
+  const item = inputs[devIdx] || [0, 0, []];
+  const [present, summary, instTypes] = item;
+  const dStr = "D" + String(devIdx).padStart(2, "0");
+  const evs = latestState.input_events || [];
+
+  const instances = Array.isArray(instTypes) && instTypes.length > 0 ? instTypes : [];
+  const instRows = instances.map((t, iIdx) => {
+    const iStr = "I" + String(iIdx).padStart(2, "0");
+    const lastEv = evs.find((e) => e[0] === devIdx && e[1] === iIdx);
+    const valStr = lastEv ? decodeInputEvent(lastEv[2], lastEv[3]) : "Idle";
+    let filterOpts = "";
+    if (t === 1) {
+      filterOpts = `
+        <select class="sensor-filter-sel">
+          <option value="244" selected>Short + Long Press (Dimming)</option>
+          <option value="4">Short Press Only</option>
+          <option value="12">Short + Double Press</option>
+          <option value="0">Disabled</option>
+        </select>`;
+    } else if (t === 3) {
+      filterOpts = `
+        <select class="sensor-filter-sel">
+          <option value="27" selected>Occupied + Vacant + Movement</option>
+          <option value="3">Occupied + Vacant Only</option>
+          <option value="0">Disabled</option>
+        </select>`;
+    } else if (t === 4) {
+      filterOpts = `
+        <select class="sensor-filter-sel">
+          <option value="1" selected>Report Lux Changes</option>
+          <option value="0">Disabled</option>
+        </select>`;
+    } else {
+      filterOpts = `
+        <select class="sensor-filter-sel">
+          <option value="3" selected>On / Off</option>
+          <option value="0">Disabled</option>
+        </select>`;
+    }
+
+    return `
+      <div class="action-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="tile-head">
+          <div>
+            <strong class="mono">${iStr}</strong>
+            <span class="badge" style="margin-left:6px">${inputTypeName(t)}</span>
+          </div>
+          <span class="mono" style="font-size:11.5px;color:${lastEv ? "var(--ok)" : "var(--text-2)"}">${valStr}</span>
+        </div>
+        <div class="insp-row">
+          <span style="font-size:11.5px;color:var(--text-2)">Event Filter</span>
+          ${filterOpts}
+        </div>
+      </div>
+    `;
+  });
+
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Sensor ${dStr} <span style="font-weight:400;color:var(--text-2);font-size:12px">(Device ${devIdx})</span></div>
+        <div class="insp-badges">
+          <span class="badge ${present ? "ok" : ""}">${present ? "Installed" : "Not Installed"}</span>
+          <span class="badge">${instances.length || (summary & 0x1f)} instance${(instances.length || (summary & 0x1f)) === 1 ? "" : "s"}</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-xs" title="Blink LED on physical sensor for 10s (IEC 62386-103 IDENTIFY DEVICE)"
+          onclick="sendCmd({action:'identify_input',index:${devIdx}})">Identify LED</button>
+      </div>
+    </div>
+
+    <div class="insp-section">
+      <span class="insp-sec-title">Instances &amp; Event Filters (IEC 62386-301..304)</span>
+      <div class="action-stack">
+        ${instRows.join("") || '<span class="subtext">No instances discovered on this address.</span>'}
+      </div>
+    </div>
+
+    <div class="insp-section">
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="sendCmd({action:'configure_input',index:${devIdx}})">Save to Sensor</button>
+        <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Re-Scan Sensors</button>
+      </div>
+      <div class="subtext">In ETS (Input 1..32), set Device Address = ${devIdx} and Instance = 0..${Math.max(0, instances.length - 1)}.</div>
+    </div>
+  `;
 }
 
 function handleLiveState(data) {
@@ -1089,10 +1458,17 @@ function handleLiveState(data) {
     `${Math.round((data.free_heap || 0) / 1024)} KB`;
 
   renderLampsGrid(data.channels || []);
-  renderInspector(selectedCh);
+  renderInputs(data.inputs || [], data.input_events || []);
+  if (lampFilter === "sensors") {
+    if (renderedInspectorCh !== -100 - selectedSensor) {
+      renderedInspectorCh = -100 - selectedSensor;
+      renderSensorInspector(selectedSensor);
+    }
+  } else {
+    renderInspector(selectedCh);
+  }
   renderGroups(data.groups || [], data.channels || []);
   renderScenes(data);
-  renderInputs(data.inputs || [], data.input_events || []);
 
   document.getElementById("info-fw-ver").textContent = fwVer;
   document.getElementById("info-part").textContent = data.partition || "ota_0";

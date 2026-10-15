@@ -228,6 +228,9 @@ std::optional<control::Command> parse_api_command_json(const char* json, std::si
         if (const auto v = read_int(buf, "fade_rate"); v && *v >= 1 && *v <= 15) {
             gcfg.fade_rate = static_cast<std::uint8_t>(*v);
         }
+        if (const auto v = read_int(buf, "dimming_curve"); v && *v >= 0 && *v <= 1) {
+            gcfg.dimming_curve = static_cast<std::uint8_t>(*v);
+        }
         if (const auto v = read_int(buf, "full_power_deciwatts"); v && *v >= 0 && *v <= 60000) {
             gcfg.full_power_deciwatts = static_cast<std::uint16_t>(*v);
         }
@@ -242,6 +245,9 @@ std::optional<control::Command> parse_api_command_json(const char* json, std::si
         }
         if (const auto v = read_int(buf, "device_type"); v && *v >= 0 && *v <= 8) {
             gcfg.device_type_override = static_cast<std::uint8_t>(*v);
+        }
+        if (const auto v = read_int(buf, "dt8_mask"); v && *v >= 0 && *v <= 15) {
+            gcfg.dt8_mask_override = static_cast<std::uint8_t>(*v);
         }
         if (const auto v = read_int(buf, "groups_mask"); v && *v >= 0 && *v <= 65535) {
             gcfg.groups_mask = static_cast<std::uint32_t>(*v);

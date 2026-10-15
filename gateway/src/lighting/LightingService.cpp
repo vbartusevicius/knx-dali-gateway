@@ -965,6 +965,15 @@ ControlResult LightingService::query_gear_details(dali::ShortAddress address) {
         details.fade_time = static_cast<std::uint8_t>((*fade.value >> 4U) & 0x0FU);
         details.fade_rate = static_cast<std::uint8_t>(*fade.value & 0x0FU);
     }
+    // IEC 62386-207 (DT6 LED module): QUERY DIMMING CURVE (0xEE) preceded by ENABLE DEVICE TYPE 6
+    if (details.device_type == 6U || details.device_type == 8U) {
+        if (transport_.enable_device_type(6U) == dali::TransportStatus::Ok) {
+            if (const auto curve = transport_.query(address, 0xEEU);
+                curve.status == dali::TransportStatus::Ok && curve.value) {
+                details.dimming_curve = (*curve.value == 1U) ? 1U : 0U;
+            }
+        }
+    }
     if (const auto grp = transport_.read_groups(address);
         grp.status == dali::TransportStatus::Ok && grp.groups) {
         details.groups = *grp.groups;
@@ -1107,6 +1116,15 @@ ControlResult LightingService::configure_gear(dali::ShortAddress address, const 
         }
         details.fade_rate = cfg.fade_rate;
     }
+    // IEC 62386-207 (DT6 LED module): SELECT DIMMING CURVE (0xE3, send-twice) preceded by DTR0 + ENABLE
+    // DEVICE TYPE 6
+    if (cfg.dimming_curve <= 1U) {
+        if (transport_.set_dtr(dali::Dtr::Dtr0, cfg.dimming_curve) == dali::TransportStatus::Ok &&
+            transport_.enable_device_type(6U) == dali::TransportStatus::Ok) {
+            (void)transport_.send_command(target, 0xE3U, true);
+        }
+        details.dimming_curve = cfg.dimming_curve;
+    }
     if (cfg.full_power_deciwatts != 0xFFFFU) {
         details.full_power_deciwatts = cfg.full_power_deciwatts;
         details.power_configured = true;
@@ -1124,6 +1142,20 @@ ControlResult LightingService::configure_gear(dali::ShortAddress address, const 
     if (cfg.device_type_override <= 8U) {
         details.device_type = cfg.device_type_override;
         details.switch_only = (cfg.device_type_override == 7U);
+        if (cfg.device_type_override != 8U && cfg.dt8_mask_override == 0xFFU) {
+            capabilities_[address.value()] = dali::ColourCapabilities{};
+        }
+    }
+    if (cfg.dt8_mask_override <= 0x0FU) {
+        dali::ColourCapabilities cap{};
+        cap.tc_capable = (cfg.dt8_mask_override & 0x01U) != 0;
+        cap.xy_capable = (cfg.dt8_mask_override & 0x08U) != 0;
+        if ((cfg.dt8_mask_override & 0x04U) != 0) {
+            cap.rgbwaf_channels = 4;
+        } else if ((cfg.dt8_mask_override & 0x02U) != 0) {
+            cap.rgbwaf_channels = 3;
+        }
+        capabilities_[address.value()] = cap;
     }
     if (cfg.groups_mask <= 0xFFFFU) {
         const auto desired = static_cast<std::uint16_t>(cfg.groups_mask);

@@ -514,6 +514,7 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         "\"limit_error\":%s,\"fade_running\":%s,\"reset_state\":%s,\"missing_short\":%s,\"power_cycle\":%s,"
         "\"device_type\":%u,\"version\":%u,\"physical_min\":%u,\"min_level\":%u,\"max_level\":%u,"
         "\"power_on_level\":%u,\"system_failure_level\":%u,\"fade_time\":%u,\"fade_rate\":%u,"
+        "\"dimming_curve\":%u,"
         "\"groups\":%u,\"probed\":%s,\"kelvin\":%u,\"r\":%u,\"g\":%u,\"b\":%u,\"w\":%u,"
         "\"xy_x\":%u,\"xy_y\":%u,\"d4i_power_supported\":%s,\"use_manual_power_override\":%s,"
         "\"d4i_active_power_deciwatts\":%u,\"d4i_active_energy_wh\":%lu,"
@@ -529,7 +530,8 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         static_cast<unsigned>(d.physical_min), static_cast<unsigned>(d.min_level),
         static_cast<unsigned>(d.max_level), static_cast<unsigned>(d.power_on_level),
         static_cast<unsigned>(d.system_failure_level), static_cast<unsigned>(d.fade_time),
-        static_cast<unsigned>(d.fade_rate), static_cast<unsigned>(d.groups), d.probed ? "true" : "false",
+        static_cast<unsigned>(d.fade_rate), static_cast<unsigned>(d.dimming_curve),
+        static_cast<unsigned>(d.groups), d.probed ? "true" : "false",
         static_cast<unsigned>(c.colour.temperature_kelvin), static_cast<unsigned>(c.colour.r),
         static_cast<unsigned>(c.colour.g), static_cast<unsigned>(c.colour.b),
         static_cast<unsigned>(c.colour.w), static_cast<unsigned>(c.colour.x),

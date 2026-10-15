@@ -110,6 +110,7 @@ class LabState:
                         # DT7 Relay Switch (On/Off non-dimmable exhaust fan / Contactor, 25W)
                         dev_type = 7
                         sw_only = 1
+                        groups_mask = 0
                         full_deciw = 250
                         level = 254
                     elif i < 12:
@@ -380,12 +381,14 @@ class LabState:
                     ch[2] = 200
             elif action == "configure_gear":
                 d = self.details[i]
-                for k in ("min_level", "max_level", "power_on_level", "system_failure_level", "fade_time", "fade_rate"):
+                for k in ("min_level", "max_level", "power_on_level", "system_failure_level", "fade_time", "fade_rate", "dimming_curve"):
                     if k in cmd:
                         d[k] = int(cmd[k])
                 if "device_type" in cmd:
                     d["device_type"] = int(cmd["device_type"])
                     ch[11] = d["device_type"]
+                if "dt8_mask" in cmd:
+                    ch[4] = int(cmd["dt8_mask"]) & 0x0F
                 if "groups_mask" in cmd:
                     d["groups"] = int(cmd["groups_mask"]) & 0xFFFF
                     ch[10] = d["groups"]
@@ -413,6 +416,15 @@ class LabState:
                     if ch[2] > 0
                     else round(ch[16] / 10.0)
                 )
+
+        # Recompute group levels from dimmable members (or all members if switch-only group)
+        for g in range(16):
+            dim_members = [c[2] for c in self.channels if c[0] and (c[10] & (1 << g)) and not (c[18] or c[11] == 7)]
+            all_members = [c[2] for c in self.channels if c[0] and (c[10] & (1 << g))]
+            if dim_members:
+                self.groups[g] = dim_members[0] if target == "grp" and idx == g else max(dim_members)
+            else:
+                self.groups[g] = max(all_members) if all_members else 0
 
     def live_json(self) -> dict:
         present_cnt = sum(1 for c in self.channels if c[0])

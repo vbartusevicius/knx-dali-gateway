@@ -43,94 +43,76 @@
   <main class="workspace">
     <!-- TAB 1: OVERVIEW -->
     <section id="panel-overview" class="tab-panel active">
-      <!-- Top Summary Strip (Proportional: Lamps & Power wide, DALI/KNX/MQTT compact, Stats 2-row) -->
-      <div class="summary-strip">
-        <div class="summary-item">
-          <span class="summary-label">Lamps</span>
-          <div class="summary-val-row">
-            <strong class="summary-val" id="sum-lamps">0 / 64</strong>
-            <span class="summary-tag err" id="sum-lamps-err" style="display:none">0 errors</span>
-          </div>
-          <span class="summary-sub" id="sum-comm-state">0 are on</span>
+      <!-- Slim 1-Line Hardware Status Bar (Shelly Pro / UniFi style) -->
+      <div class="status-strip">
+        <div class="stat-pill">
+          <span class="stat-lbl">Lamps</span>
+          <strong class="mono" id="sum-lamps">0/64</strong>
+          <span class="stat-sub" id="sum-comm-state">0 on</span>
+          <span class="summary-tag err" id="sum-lamps-err" style="display:none">0 errors</span>
         </div>
-
-        <div class="summary-item">
-          <span class="summary-label">Power</span>
-          <div class="summary-val-row">
-            <strong class="summary-val" id="pwr-active-w">0.0 W</strong>
-            <span class="summary-tag" id="pwr-daily-kwh">0.00 kWh/d</span>
-          </div>
-          <span class="summary-sub" id="pwr-standby-w">Lamps 0.0W • Idle 0.0W</span>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">Power</span>
+          <strong class="mono" id="pwr-active-w">0.0 W</strong>
+          <span class="stat-sub" id="pwr-standby-w">(Idle 0.0W)</span>
+          <span class="summary-tag" id="pwr-daily-kwh" style="display:none">0.00 kWh/d</span>
         </div>
-
-        <div class="summary-item compact-box">
-          <span class="summary-label">DALI Supply</span>
-          <div class="summary-val-row">
-            <strong class="summary-val ok" id="pwr-psu-state">ON</strong>
-            <button class="btn btn-xs" id="btn-rearm-psu" onclick="sendCmd({action:'reset_psu'})" style="display:none">Reset</button>
-          </div>
-          <span class="summary-sub" id="pwr-psu-sub">Internal</span>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">DALI Supply</span>
+          <strong class="mono ok" id="pwr-psu-state">ON</strong>
+          <span class="stat-sub" id="pwr-psu-sub" style="display:none"></span>
+          <button class="btn btn-xs" id="btn-rearm-psu" onclick="sendCmd({action:'reset_psu'})" style="display:none">Reset</button>
         </div>
-
-        <div class="summary-item compact-box">
-          <span class="summary-label">KNX</span>
-          <div class="summary-val-row">
-            <strong class="summary-val ok" id="sum-knx-state">ON</strong>
-          </div>
-          <span class="summary-sub mono" id="sum-knx-ia">1.1.20</span>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">KNX</span>
+          <strong class="mono ok" id="sum-knx-state">ON</strong>
+          <span class="stat-sub mono" id="sum-knx-ia">1.1.20</span>
         </div>
-
-        <div class="summary-item compact-box">
-          <span class="summary-label">MQTT</span>
-          <div class="summary-val-row">
-            <strong class="summary-val" id="sum-mqtt-state">OFF</strong>
-          </div>
-          <span class="summary-sub" id="sum-mqtt-sub">Offline</span>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">MQTT</span>
+          <strong class="mono" id="sum-mqtt-state">OFF</strong>
+          <span class="stat-sub" id="sum-mqtt-sub" style="display:none"></span>
         </div>
-
-        <div class="summary-item stats-box">
-          <span class="summary-label">Stats</span>
-          <div class="stats-kv"><span>Uptime</span><strong class="mono" id="sum-uptime">0m</strong></div>
-          <div class="stats-kv"><span>Free RAM</span><strong class="mono" id="sum-ram">-- KB</strong></div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">Uptime</span>
+          <strong class="mono" id="sum-uptime">0m</strong>
+          <span class="stat-sub mono" id="sum-ram">229 KB</span>
         </div>
       </div>
 
-      <!-- Master-Detail Layout: 64-Lamp Grid + Selected Lamp Inspector -->
+      <!-- Master-Detail Layout: 64-Lamp Grid + Compact Progressive-Disclosure Inspector -->
       <div class="master-detail">
         <div class="matrix-pane">
           <div class="matrix-header">
-            <div class="filter-pills">
-              <button class="pill-btn active" data-filter="all" onclick="setLampFilter('all',this)">All <span id="cnt-all">64</span></button>
-              <button class="pill-btn" data-filter="present" onclick="setLampFilter('present',this)">Installed <span id="cnt-present">0</span></button>
-              <button class="pill-btn" data-filter="on" onclick="setLampFilter('on',this)">On <span id="cnt-on">0</span></button>
-              <button class="pill-btn" data-filter="fault" onclick="setLampFilter('fault',this)">Errors <span id="cnt-fault">0</span></button>
-            </div>
             <div class="btn-row">
-              <button class="btn btn-sm" title="Query all 64 addresses on the DALI bus" onclick="sendCmd({action:'scan_bus'})">Scan Bus</button>
+              <div class="filter-pills">
+                <button class="pill-btn active" data-filter="all" onclick="setLampFilter('all',this)">All <span id="cnt-all">64</span></button>
+                <button class="pill-btn" data-filter="present" onclick="setLampFilter('present',this)">Installed <span id="cnt-present">0</span></button>
+                <button class="pill-btn" data-filter="on" onclick="setLampFilter('on',this)">On <span id="cnt-on">0</span></button>
+                <button class="pill-btn" data-filter="fault" onclick="setLampFilter('fault',this)">Errors <span id="cnt-fault">0</span></button>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="filter-pills">
+                <button class="pill-btn" data-filter="sensors" onclick="setLampFilter('sensors',this)">Sensors &amp; Buttons <span id="cnt-sensors">0</span></button>
+              </div>
+            </div>
+            <div class="btn-row" id="bus-action-btns">
+              <button class="btn btn-sm" title="Query all 64 addresses on the DALI bus" onclick="sendCmd({action:'scan_bus'})">Scan</button>
               <button class="btn btn-sm" title="Assign free short addresses to newly wired unaddressed ballasts" onclick="sendCmd({action:'assign_addresses',mode:'new'})">Address New</button>
             </div>
           </div>
           <div class="lamps-grid" id="lamps-grid"></div>
+          <div class="inputs-grid" id="inputs-grid" style="display:none"></div>
         </div>
 
         <aside class="inspector-pane" id="inspector-pane">
           <div id="inspector-content"></div>
         </aside>
-      </div>
-
-      <!-- DALI-2 Sensors & Buttons -->
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>DALI-2 Sensors &amp; Buttons</h2>
-            <p class="subtext">Discovered input devices on the DALI bus.</p>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Scan Sensors</button>
-            <button class="btn btn-sm" onclick="sendCmd({action:'assign_inputs',mode:'new'})">Address New</button>
-          </div>
-        </div>
-        <div class="inputs-grid" id="inputs-grid"></div>
       </div>
     </section>
 
