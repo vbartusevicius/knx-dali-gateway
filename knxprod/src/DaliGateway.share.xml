@@ -28,11 +28,12 @@
               </ParameterType>
               <ParameterType Id="%AID%_PT-ColourControl" Name="ColourControl">
                 <TypeRestriction Base="Value" SizeInBit="8">
-                  <Enumeration Id="%ENID%" Text="None (brightness only)" Value="0" />
-                  <Enumeration Id="%ENID%" Text="Colour temperature (Tc)" Value="1" />
-                  <Enumeration Id="%ENID%" Text="RGB" Value="2" />
-                  <Enumeration Id="%ENID%" Text="RGBW" Value="3" />
-                  <Enumeration Id="%ENID%" Text="xy chromaticity" Value="4" />
+                  <Enumeration Id="%ENID%" Text="Dimmable (brightness only, DT0..DT6)" Value="0" />
+                  <Enumeration Id="%ENID%" Text="Colour temperature (DT8 Tc)" Value="1" />
+                  <Enumeration Id="%ENID%" Text="RGB (DT8)" Value="2" />
+                  <Enumeration Id="%ENID%" Text="RGBW (DT8)" Value="3" />
+                  <Enumeration Id="%ENID%" Text="xy chromaticity (DT8)" Value="4" />
+                  <Enumeration Id="%ENID%" Text="Switch only (non-dimmable on/off, DT7)" Value="5" />
                   <Enumeration Id="%ENID%" Text="Unused (hide channel objects)" Value="255" />
                 </TypeRestriction>
               </ParameterType>

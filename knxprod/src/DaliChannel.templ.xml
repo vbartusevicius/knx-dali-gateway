@@ -155,10 +155,14 @@
                   <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 != 255">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
+                  </when>
+                </choose>
+                <choose>
+                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 &lt; 5">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
                   </when>
                 </choose>
                 <choose>

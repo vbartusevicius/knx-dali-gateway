@@ -192,9 +192,25 @@ void test_ha_discovery_and_mqtt_command_codec() {
         0, network::format_ha_channel_discovery_topic("homeassistant", "gw01", ch, topic, sizeof(topic)));
     TEST_ASSERT_EQUAL_STRING("homeassistant/light/gw01_ch05/config", topic);
 
-    TEST_ASSERT_GREATER_THAN_UINT32(0, network::format_ha_channel_discovery_payload(
-                                           "knx_dali", "gw01", ch, caps, payload, sizeof(payload)));
+    TEST_ASSERT_GREATER_THAN_UINT32(
+        0, network::format_ha_channel_discovery_payload("knx_dali", "gw01", ch, caps, payload,
+                                                        sizeof(payload), "192.168.1.42", "26.10.15.1915"));
     TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"rgb\",\"color_temp\",\"brightness\""));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"via_device\":\"gw01\""));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"ids\":[\"gw01_ch05\"]"));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"cu\":\"http://192.168.1.42/?ch=5\""));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"sw\":\"26.10.15.1915\""));
+
+    network::HaDeviceMeta meta{"knx_dali", "gw01", "192.168.1.42", "26.10.15.1915"};
+    TEST_ASSERT_GREATER_THAN_UINT32(
+        0, network::format_ha_gateway_power_discovery_payload(meta, payload, sizeof(payload)));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"cu\":\"http://192.168.1.42/\""));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "total_power_w"));
+
+    TEST_ASSERT_GREATER_THAN_UINT32(
+        0, network::format_ha_channel_fault_discovery_payload(meta, ch, payload, sizeof(payload)));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"via_device\":\"gw01\""));
+    TEST_ASSERT_NOT_NULL(std::strstr(payload, "\"dev_cla\":\"problem\""));
 
     const char* msg = "{\"state\":\"ON\",\"brightness\":190}";
     const auto cmd =

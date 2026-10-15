@@ -3,11 +3,12 @@
 #include <cstdio>
 #include <cstring>
 
-#include <esp_app_desc.h>
 #include <esp_heap_caps.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
+
+#include "firmware/Version.hpp"
 
 namespace gateway::firmware {
 namespace {
@@ -184,9 +185,9 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
         if (ch.details.groups == 0) {
             ch.details.groups = lighting.configuration().group_masks[i];
         }
-        if (present_bits.test(i)) {
-            total_deciwatts += lighting.effective_power_deciwatts(addr);
-        }
+        ch.effective_power_deciwatts =
+            present_bits.test(i) ? lighting.effective_power_deciwatts(addr) : std::uint16_t{0};
+        total_deciwatts += ch.effective_power_deciwatts;
         if (ch.level > 0) {
             oled_state_.gear_on.set(i);
             ++on_count;
@@ -201,9 +202,18 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
     }
 
     unsigned input_devs = 0;
+    const auto& dev_inv = comm.devices();
     for (unsigned i = 0; i < 64; ++i) {
+        input_instance_types_[i].fill(0);
         if ((inputs_.present[i / 8] & (1U << (i % 8))) != 0) {
             ++input_devs;
+            const auto cnt = dev_inv.instance_count(static_cast<std::uint8_t>(i)).value_or(0);
+            const unsigned n_inst = cnt < 8U ? cnt : 8U;
+            for (unsigned inst = 0; inst < n_inst; ++inst) {
+                input_instance_types_[i][inst] =
+                    dev_inv.instance_type(static_cast<std::uint8_t>(i), static_cast<std::uint8_t>(inst))
+                        .value_or(0);
+            }
         }
     }
     input_device_count_ = static_cast<std::uint8_t>(input_devs);
@@ -299,6 +309,16 @@ bool RuntimeState::consume_psu_reset_request() noexcept {
     return req;
 }
 
+void RuntimeState::record_input_event(std::uint8_t device, std::uint8_t instance, std::uint8_t instance_type,
+                                      std::uint16_t event_info, std::uint32_t now_ms) noexcept {
+    lock();
+    for (std::size_t i = recent_input_events_.size() - 1; i > 0; --i) {
+        recent_input_events_[i] = recent_input_events_[i - 1];
+    }
+    recent_input_events_[0] = {device, instance, instance_type, event_info, now_ms};
+    unlock();
+}
+
 void RuntimeState::next_oled_page(std::uint32_t now_ms) noexcept {
     lock();
     oled_.next_page(now_ms);
@@ -375,7 +395,6 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
         }
     };
 
-    const auto* app = esp_app_get_description();
     const auto* running_part = esp_ota_get_running_partition();
     const std::uint32_t free_heap = esp_get_free_heap_size();
     const std::uint32_t min_heap = esp_get_minimum_free_heap_size();
@@ -385,6 +404,7 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
         "\"fw_version\":\"%s\",\"partition\":\"%s\",\"chip_id\":\"%s\","
         "\"knx\":{\"ia\":%u,\"configured\":%s,\"prog_mode\":%s,\"bus_ok\":%s},"
         "\"dali\":{\"present\":%u,\"active\":%u,\"faulty\":%u,\"inputs\":%u,\"psu_on\":%s,\"psu_short\":%s,"
+        "\"finder_active\":%s,\"finder_ch\":%u,"
         "\"tx_frames\":%lu,\"collisions\":%lu,\"errors\":%lu,\"comm_phase\":\"%s\",\"comm_progress\":%u},"
         "\"net\":{\"wifi_state\":%u,\"ssid\":\"%s\",\"ip\":\"%s\",\"rssi\":%d,\"mqtt\":%s,\"ha\":%s,\"ws\":%"
         "u},"
@@ -392,15 +412,16 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
         "\"oled\":{\"w\":%u,\"h\":%u,\"page\":%u,\"hex\":\"",
         static_cast<unsigned long>(now_ms / 1000U),
         static_cast<unsigned long long>(log_.current_epoch_ms(now_ms)), static_cast<unsigned long>(free_heap),
-        static_cast<unsigned long>(min_heap), app ? app->version : "0.1.0",
-        running_part ? running_part->label : "ota_0", oled_state_.chip_id.data(),
-        static_cast<unsigned>(oled_state_.knx_individual_address), knx_configured_ ? "true" : "false",
-        oled_state_.knx_prog_mode ? "true" : "false", oled_state_.knx_bus_ok ? "true" : "false",
-        static_cast<unsigned>(oled_state_.present_gear_count),
+        static_cast<unsigned long>(min_heap), kFirmwareVersion, running_part ? running_part->label : "ota_0",
+        oled_state_.chip_id.data(), static_cast<unsigned>(oled_state_.knx_individual_address),
+        knx_configured_ ? "true" : "false", oled_state_.knx_prog_mode ? "true" : "false",
+        oled_state_.knx_bus_ok ? "true" : "false", static_cast<unsigned>(oled_state_.present_gear_count),
         static_cast<unsigned>(oled_state_.active_lamp_count),
         static_cast<unsigned>(oled_state_.faulty_gear_count), static_cast<unsigned>(input_device_count_),
         oled_state_.dali_psu_enabled ? "true" : "false",
         oled_state_.dali_psu_short_tripped ? "true" : "false",
+        oled_state_.lamp_finder_active ? "true" : "false",
+        static_cast<unsigned>(oled_state_.lamp_finder_channel),
         static_cast<unsigned long>(trace_.total_frames()),
         static_cast<unsigned long>(trace_.total_collisions()),
         static_cast<unsigned long>(trace_.total_errors()), phase_str(oled_state_.comm_phase),
@@ -435,7 +456,7 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                                                    ((c.capabilities.rgbwaf_channels >= 4 ? 1U : 0U) << 2U) |
                                                    ((c.capabilities.xy_capable ? 1U : 0U) << 3U))
                                                 : 0U;
-        append("%s[%u,%u,%u,\"%s\",%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]", i == 0 ? "" : ",", p, f,
+        append("%s[%u,%u,%u,\"%s\",%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]", i == 0 ? "" : ",", p, f,
                static_cast<unsigned>(c.level), source_str(c.source), dt8,
                static_cast<unsigned>(c.colour.temperature_kelvin), static_cast<unsigned>(c.colour.r),
                static_cast<unsigned>(c.colour.g), static_cast<unsigned>(c.colour.b),
@@ -444,12 +465,31 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                c.details.use_manual_power_override ? 1U : 0U,
                static_cast<unsigned>(c.details.d4i_active_power_deciwatts),
                static_cast<unsigned>(c.details.full_power_deciwatts),
-               static_cast<unsigned>(c.details.idle_power_centiwatts));
+               static_cast<unsigned>(c.details.idle_power_centiwatts), c.details.power_configured ? 1U : 0U,
+               c.details.switch_only ? 1U : 0U);
     }
     append("%s", "],\"inputs\":[");
     for (unsigned i = 0; i < 64; ++i) {
         const bool pres = (inputs_.present[i / 8] & (1U << (i % 8))) != 0;
-        append("%s[%u,%u]", i == 0 ? "" : ",", pres ? 1U : 0U, static_cast<unsigned>(inputs_.summary[i]));
+        const unsigned cnt = inputs_.summary[i] & 0x1FU;
+        const unsigned n_inst = (pres && cnt < 8U) ? cnt : (pres ? 8U : 0U);
+        append("%s[%u,%u,[", i == 0 ? "" : ",", pres ? 1U : 0U, static_cast<unsigned>(inputs_.summary[i]));
+        for (unsigned inst = 0; inst < n_inst; ++inst) {
+            append("%s%u", inst == 0 ? "" : ",", static_cast<unsigned>(input_instance_types_[i][inst]));
+        }
+        append("%s", "]]");
+    }
+    append("%s", "],\"input_events\":[");
+    bool first_ev = true;
+    for (const auto& ev : recent_input_events_) {
+        if (ev.device >= 64) {
+            continue;
+        }
+        const unsigned age_s = now_ms >= ev.uptime_ms ? ((now_ms - ev.uptime_ms) / 1000U) : 0U;
+        append("%s[%u,%u,%u,%u,%u]", first_ev ? "" : ",", static_cast<unsigned>(ev.device),
+               static_cast<unsigned>(ev.instance), static_cast<unsigned>(ev.instance_type),
+               static_cast<unsigned>(ev.event_info), age_s);
+        first_ev = false;
     }
     append("%s", "]}");
     unlock();
@@ -477,7 +517,8 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         "\"groups\":%u,\"probed\":%s,\"kelvin\":%u,\"r\":%u,\"g\":%u,\"b\":%u,\"w\":%u,"
         "\"xy_x\":%u,\"xy_y\":%u,\"d4i_power_supported\":%s,\"use_manual_power_override\":%s,"
         "\"d4i_active_power_deciwatts\":%u,\"d4i_active_energy_wh\":%lu,"
-        "\"full_power_deciwatts\":%u,\"idle_power_centiwatts\":%u,\"scenes\":[",
+        "\"full_power_deciwatts\":%u,\"idle_power_centiwatts\":%u,"
+        "\"power_configured\":%s,\"switch_only\":%s,\"scenes\":[",
         static_cast<unsigned>(ch), pres ? "true" : "false", flt ? "true" : "false",
         static_cast<unsigned>(c.level), source_str(c.source), static_cast<unsigned>(d.status_byte),
         (d.status_byte & 0x01U) ? "true" : "false", (d.status_byte & 0x02U) ? "true" : "false",
@@ -495,7 +536,8 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         static_cast<unsigned>(c.colour.y), d.d4i_power_supported ? "true" : "false",
         d.use_manual_power_override ? "true" : "false", static_cast<unsigned>(d.d4i_active_power_deciwatts),
         static_cast<unsigned long>(d.d4i_active_energy_wh), static_cast<unsigned>(d.full_power_deciwatts),
-        static_cast<unsigned>(d.idle_power_centiwatts));
+        static_cast<unsigned>(d.idle_power_centiwatts), d.power_configured ? "true" : "false",
+        d.switch_only ? "true" : "false");
     if (n > 0 && static_cast<std::size_t>(n) < out_size) {
         off = static_cast<std::size_t>(n);
     }
@@ -548,16 +590,17 @@ std::size_t RuntimeState::format_trace_json(char* out, std::size_t out_size,
     }
     lock();
     std::size_t off = 0;
+    const std::size_t count = trace_.size();
     off += static_cast<std::size_t>(
         std::snprintf(out + off, out_size - off,
-                      "{\"active\":%s,\"auto_trigger\":%s,\"total_frames\":%lu,\"total_collisions\":%lu,"
-                      "\"total_errors\":%lu,\"entries\":[",
+                      "{\"active\":%s,\"auto_trigger\":%s,\"capacity\":%u,\"buffered\":%u,"
+                      "\"total_frames\":%lu,\"total_collisions\":%lu,\"total_errors\":%lu,\"entries\":[",
                       trace_.active() ? "true" : "false", trace_.auto_trigger_from_dali() ? "true" : "false",
-                      static_cast<unsigned long>(trace_.total_frames()),
+                      static_cast<unsigned>(diagnostics::DaliDebugTrace::capacity),
+                      static_cast<unsigned>(count), static_cast<unsigned long>(trace_.total_frames()),
                       static_cast<unsigned long>(trace_.total_collisions()),
                       static_cast<unsigned long>(trace_.total_errors())));
 
-    const std::size_t count = trace_.size();
     const std::size_t start = count > max_items ? (count - max_items) : 0;
     for (std::size_t idx = 0; idx < count - start; ++idx) {
         const auto& e = trace_.entry_oldest_first(count - 1 - idx);

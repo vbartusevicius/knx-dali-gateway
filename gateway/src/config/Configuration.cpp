@@ -63,6 +63,7 @@ SwitchOn parse_switch_on(std::uint8_t mode, std::uint8_t percent) {
 
 BallastParameters parse_ballast_parameters(const std::uint8_t* block) noexcept {
     BallastParameters bp{};
+    bp.switch_only = (block[CH_fColourControl] == 5U);
     if (block[CH_fMinLevel] >= 1 && block[CH_fMinLevel] <= 100) {
         bp.min_level = percent_to_arc(block[CH_fMinLevel]);
     }

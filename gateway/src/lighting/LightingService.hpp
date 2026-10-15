@@ -100,6 +100,8 @@ struct GearDetails {
     std::array<std::uint8_t, 16> scenes{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     bool probed = false;
+    bool switch_only = false;  // True when DT7 (switching relay) or overridden as On/Off only
+    bool power_configured = false;
     // IEC 62386-252 (D4i Memory Bank 202) native energy/power reporting + manual override:
     bool d4i_power_supported = false;
     bool use_manual_power_override = false;
@@ -120,6 +122,9 @@ struct GearConfig {
     std::uint16_t full_power_deciwatts = 0xFFFF;
     std::uint16_t idle_power_centiwatts = 0xFFFF;
     std::uint8_t use_manual_power_override = 0xFF;  // 0 = false, 1 = true, 0xFF = unchanged
+    std::uint8_t switch_only = 0xFF;                // 0 = false, 1 = true, 0xFF = unchanged
+    std::uint8_t device_type_override = 0xFF;       // 0..8 = override device_type, 0xFF = unchanged
+    std::uint32_t groups_mask = 0xFFFFFFFFU;  // 0..0xFFFF = set 16-bit group mask, 0xFFFFFFFF = unchanged
 };
 
 struct ControlResult {
@@ -127,11 +132,13 @@ struct ControlResult {
     dali::TransportStatus transport_status = dali::TransportStatus::Ok;
     State state{};
     // State of these channels/groups changed during the operation.
-    std::bitset<dali::ShortAddress::capacity> changed_channels{};         // NOLINT(readability-redundant-member-init)
-    std::bitset<dali::Group::capacity> changed_groups{};                  // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::ShortAddress::capacity>
+        changed_channels{};                               // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::Group::capacity> changed_groups{};  // NOLINT(readability-redundant-member-init)
     // Colour state of these channels/groups changed.
-    std::bitset<dali::ShortAddress::capacity> changed_colour_channels{};  // NOLINT(readability-redundant-member-init)
-    std::bitset<dali::Group::capacity> changed_colour_groups{};           // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::ShortAddress::capacity>
+        changed_colour_channels{};                               // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::Group::capacity> changed_colour_groups{};  // NOLINT(readability-redundant-member-init)
 };
 
 // Lighting use cases: set level on channel/group/broadcast, read back, recover

@@ -10,377 +10,200 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KNX-DALI Gateway — Console &amp; Diagnostics</title>
+  <title>KNX-DALI Gateway</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <!-- Top Bar -->
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-badge">KNX ⇄ DALI-2</span>
-      <div>
-        <h1>KNX-DALI Gateway</h1>
-        <p class="subtitle" id="hdr-sub">ESP32-C6 • Wired KNX TP + Multi-Master DALI-2 / DT8</p>
+    <div class="topbar-left">
+      <div class="logo-mark">KNX<span>⇄</span>DALI</div>
+      <div class="device-meta">
+        <span class="device-title">KNX-DALI Gateway</span>
+        <span class="device-sub" id="hdr-meta">v26.10.15.1915</span>
       </div>
     </div>
-    <div class="status-pills">
-      <span class="pill" id="pill-ws"><span class="dot"></span>WS: Connecting</span>
-      <span class="pill" id="pill-knx">KNX: --</span>
-      <span class="pill" id="pill-dali">DALI: --/64</span>
-      <span class="pill" id="pill-mqtt">MQTT: --</span>
-      <span class="pill" id="pill-uptime">UP: --</span>
+
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="overview">Overview</button>
+      <button class="nav-tab" data-tab="groups">Groups &amp; Scenes</button>
+      <button class="nav-tab" data-tab="logs">Errors &amp; Bus Log</button>
+      <button class="nav-tab" data-tab="settings">Settings</button>
+      <button class="nav-tab" data-tab="firmware">Firmware</button>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="scenario-bar" id="scenario-bar" title="Switch test scenario">
+        <span class="scenario-label">Scenario:</span>
+        <select id="scenario-select" onchange="applyScenario(this.value)">
+          <option value="mixed">Mixed Lamps &amp; Types (24 Devices)</option>
+          <option value="full64">Full 64 Lamps (All Addressed)</option>
+          <option value="faults">Faults &amp; Bus Short Emergency</option>
+          <option value="finder">Lamp Finder &amp; Scan Active</option>
+          <option value="empty">First Boot (Uncommissioned)</option>
+        </select>
+      </div>
+      <span class="conn-badge" id="pill-ws"><span class="status-dot"></span><span id="ws-text">Connecting</span></span>
     </div>
   </header>
 
-  <nav class="tabbar">
-    <button class="tab active" data-tab="monitoring">Live Monitoring</button>
-    <button class="tab" data-tab="configuration">Configuration</button>
-    <button class="tab" data-tab="logs">Logs &amp; Debug</button>
-    <button class="tab" data-tab="firmware">Firmware Update</button>
-  </nav>
-
-  <main class="container">
-    <!-- PANEL 1: LIVE MONITORING -->
-    <section id="panel-monitoring" class="panel active">
-      <div class="grid-top">
-        <div class="card front-panel-card">
-          <div class="card-header">
-            <h2>Front Panel Live Mirror (OLED + SK6805 LEDs)</h2>
-            <div class="btn-group">
-              <button class="btn btn-sm" id="btn-oled-page">SW2 FUNC (Next Page)</button>
-              <button class="btn btn-sm" id="btn-oled-geom">128×64 ⇄ 64×128</button>
-            </div>
+  <main class="workspace">
+    <!-- TAB 1: OVERVIEW -->
+    <section id="panel-overview" class="tab-panel active">
+      <!-- Top Summary Strip (Proportional: Lamps & Power wide, DALI/KNX/MQTT compact, Stats 2-row) -->
+      <div class="summary-strip">
+        <div class="summary-item">
+          <span class="summary-label">Lamps</span>
+          <div class="summary-val-row">
+            <strong class="summary-val" id="sum-lamps">0 / 64</strong>
+            <span class="summary-tag err" id="sum-lamps-err" style="display:none">0 errors</span>
           </div>
-          <div class="front-panel-wrap">
-            <div class="oled-bezel">
-              <canvas id="oled-canvas" width="128" height="64"></canvas>
-              <div class="oled-caption" id="oled-meta">SSD1306 128×64 • Page 1/3</div>
-            </div>
-            <div class="leds-column">
-              <div class="led-item"><span class="led-dot" id="led-0"></span><span>D1 STATUS</span></div>
-              <div class="led-item"><span class="led-dot" id="led-1"></span><span>D2 KNX</span></div>
-              <div class="led-item"><span class="led-dot" id="led-2"></span><span>D3 DALI</span></div>
-            </div>
-          </div>
+          <span class="summary-sub" id="sum-comm-state">0 are on</span>
         </div>
 
-        <div class="card broadcast-card">
-          <div class="card-header">
-            <h2>Broadcast &amp; Scene Control</h2>
-            <span class="badge" id="comm-status-badge">Commissioning: Idle</span>
+        <div class="summary-item">
+          <span class="summary-label">Power</span>
+          <div class="summary-val-row">
+            <strong class="summary-val" id="pwr-active-w">0.0 W</strong>
+            <span class="summary-tag" id="pwr-daily-kwh">0.00 kWh/d</span>
           </div>
-          <div class="broadcast-controls">
-            <div class="control-row">
-              <span class="label">Broadcast All Lamps:</span>
-              <button class="btn btn-primary" onclick="sendCmd({action:'switch_on',target:'broadcast'})">ALL ON</button>
-              <button class="btn" onclick="sendCmd({action:'switch_off',target:'broadcast'})">ALL OFF</button>
-              <input type="range" min="0" max="254" value="254" id="bcast-level"
-                onchange="sendCmd({action:'set_level',target:'broadcast',level:Number(this.value)})">
-              <span class="mono" id="bcast-level-val">254</span>
-            </div>
-            <div class="control-row">
-              <span class="label">Broadcast CCT / RGB:</span>
-              <input type="range" min="2000" max="6500" step="50" value="4000" id="bcast-cct" class="cct-range"
-                onchange="sendCmd({action:'set_cct',target:'broadcast',kelvin:Number(this.value)})">
-              <span class="mono" id="bcast-cct-val">4000K</span>
-              <input type="color" value="#ffaa44" id="bcast-rgb" title="Broadcast DT8 RGB Colour"
-                onchange="sendHexRgb('broadcast',0,this.value)">
-            </div>
-            <div class="scenes-bar" id="scenes-bar"></div>
+          <span class="summary-sub" id="pwr-standby-w">Lamps 0.0W • Idle 0.0W</span>
+        </div>
+
+        <div class="summary-item compact-box">
+          <span class="summary-label">DALI Supply</span>
+          <div class="summary-val-row">
+            <strong class="summary-val ok" id="pwr-psu-state">ON</strong>
+            <button class="btn btn-xs" id="btn-rearm-psu" onclick="sendCmd({action:'reset_psu'})" style="display:none">Reset</button>
           </div>
+          <span class="summary-sub" id="pwr-psu-sub">Internal</span>
+        </div>
+
+        <div class="summary-item compact-box">
+          <span class="summary-label">KNX</span>
+          <div class="summary-val-row">
+            <strong class="summary-val ok" id="sum-knx-state">ON</strong>
+          </div>
+          <span class="summary-sub mono" id="sum-knx-ia">1.1.20</span>
+        </div>
+
+        <div class="summary-item compact-box">
+          <span class="summary-label">MQTT</span>
+          <div class="summary-val-row">
+            <strong class="summary-val" id="sum-mqtt-state">OFF</strong>
+          </div>
+          <span class="summary-sub" id="sum-mqtt-sub">Offline</span>
+        </div>
+
+        <div class="summary-item stats-box">
+          <span class="summary-label">Stats</span>
+          <div class="stats-kv"><span>Uptime</span><strong class="mono" id="sum-uptime">0m</strong></div>
+          <div class="stats-kv"><span>Free RAM</span><strong class="mono" id="sum-ram">-- KB</strong></div>
         </div>
       </div>
 
+      <!-- Master-Detail Layout: 64-Lamp Grid + Selected Lamp Inspector -->
+      <div class="master-detail">
+        <div class="matrix-pane">
+          <div class="matrix-header">
+            <div class="filter-pills">
+              <button class="pill-btn active" data-filter="all" onclick="setLampFilter('all',this)">All <span id="cnt-all">64</span></button>
+              <button class="pill-btn" data-filter="present" onclick="setLampFilter('present',this)">Installed <span id="cnt-present">0</span></button>
+              <button class="pill-btn" data-filter="on" onclick="setLampFilter('on',this)">On <span id="cnt-on">0</span></button>
+              <button class="pill-btn" data-filter="fault" onclick="setLampFilter('fault',this)">Errors <span id="cnt-fault">0</span></button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-sm" title="Query all 64 addresses on the DALI bus" onclick="sendCmd({action:'scan_bus'})">Scan Bus</button>
+              <button class="btn btn-sm" title="Assign free short addresses to newly wired unaddressed ballasts" onclick="sendCmd({action:'assign_addresses',mode:'new'})">Address New</button>
+            </div>
+          </div>
+          <div class="lamps-grid" id="lamps-grid"></div>
+        </div>
+
+        <aside class="inspector-pane" id="inspector-pane">
+          <div id="inspector-content"></div>
+        </aside>
+      </div>
+
+      <!-- DALI-2 Sensors & Buttons -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-head">
           <div>
-            <h2>DALI Power &amp; Energy Monitor (D4i IEC 62386-252 Memory Bank 202 + Manual Curve)</h2>
-            <p class="muted">Reads native power/energy from D4i (Part 252) ballasts when supported, or computes power from 100% Lamp Power + Ballast Idle Power (with per-ballast override).</p>
+            <h2>DALI-2 Sensors &amp; Buttons</h2>
+            <p class="subtext">Discovered input devices on the DALI bus.</p>
           </div>
-          <div class="inline-controls">
-            <span class="muted" style="font-size:12px">Default 100% Lamp (W):</span>
-            <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
-            <span class="muted" style="font-size:12px">Default Ballast Idle (W):</span>
-            <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
-            <button class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU</button>
+          <div class="btn-row">
+            <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Scan Sensors</button>
+            <button class="btn btn-sm" onclick="sendCmd({action:'assign_inputs',mode:'new'})">Address New</button>
           </div>
         </div>
-        <div class="power-metrics-grid">
-          <div class="metric-box">
-            <span class="metric-label">DALI Bus Supply (REM3)</span>
-            <span class="metric-value" id="pwr-psu-state">16.0 V ACTIVE</span>
-            <span class="metric-sub" id="pwr-psu-sub">Short-circuit protection armed (&gt;80 ms cutoff)</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Total Lighting &amp; Ballast Power</span>
-            <span class="metric-value" id="pwr-active-w">0.0 W</span>
-            <span class="metric-sub" id="pwr-standby-w">100% Lamp output: 0.0 W • Ballast idle: 0.0 W</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Est. Daily Consumption &amp; Bus Health</span>
-            <span class="metric-value" id="pwr-daily-kwh">0.00 kWh/d</span>
-            <span class="metric-sub" id="pwr-bus-health">TX: 0 frames • Collisions: 0</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2>DALI Ballasts / Drivers &amp; Lamps (64 Short Addresses A00..A63)</h2>
-          <div class="filter-bar">
-            <button class="btn btn-sm active" data-filter="all" onclick="setLampFilter('all',this)">All (64)</button>
-            <button class="btn btn-sm" data-filter="present" onclick="setLampFilter('present',this)">Present</button>
-            <button class="btn btn-sm" data-filter="on" onclick="setLampFilter('on',this)">Active ON</button>
-            <button class="btn btn-sm" data-filter="fault" onclick="setLampFilter('fault',this)">Faults</button>
-            <button class="btn btn-sm" onclick="sendCmd({action:'find_lamp',target:'broadcast',mode:'stop'})">Stop Finder</button>
-            <button class="btn btn-sm" onclick="sendCmd({action:'scan_bus'})">Scan DALI Bus</button>
-          </div>
-        </div>
-        <div class="lamps-grid" id="lamps-grid"></div>
-      </div>
-
-      <div class="grid-two">
-        <div class="card">
-          <div class="card-header">
-            <h2>DALI Groups (G00..G15)</h2>
-          </div>
-          <div class="groups-grid" id="groups-grid"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h2>DALI-2 Input Devices (Part 103 Multi-Master)</h2>
-            <button class="btn btn-sm" onclick="sendCmd({action:'scan_inputs'})">Scan Inputs</button>
-          </div>
-          <div class="inputs-grid" id="inputs-grid"></div>
-        </div>
+        <div class="inputs-grid" id="inputs-grid"></div>
       </div>
     </section>
 
-    <!-- PANEL 2: CONFIGURATION -->
-    <section id="panel-configuration" class="panel">
-      <div class="grid-two">
-        <div class="card">
-          <div class="card-header">
-            <h2>WiFi &amp; Setup Portal Configuration</h2>
+    <!-- TAB 2: GROUPS & SCENES -->
+    <section id="panel-groups" class="tab-panel">
+      <!-- Top Full-Width Bar: Scenes -->
+      <div class="card">
+        <div class="scenes-toolbar">
+          <div>
+            <h2>Scenes</h2>
+            <p class="subtext">Recall a saved lighting scene across the bus, or save the current lamp brightness levels into a scene.</p>
           </div>
-          <form id="form-config" onsubmit="saveConfig(event)">
-            <label class="field-check">
-              <input type="checkbox" id="cfg-wifi-enabled" checked>
-              <span>Enable WiFi Radio (KNX/DALI control always runs independently)</span>
-            </label>
-            <label class="field-check">
-              <input type="checkbox" id="cfg-ap-fallback" checked>
-              <span>Enable SoftAP Setup Portal Fallback (SSID: <code id="cfg-ap-ssid-preview">KNX-DALI-SETUP-f5aa11f</code>)</span>
-            </label>
-            <label class="field-check">
-              <input type="checkbox" id="cfg-wifi-ps" checked>
-              <span>Enable DTIM Modem Sleep (recommended for KNX bus power budget)</span>
-            </label>
-            <div class="field">
-              <span>WiFi Station SSID</span>
-              <input type="text" id="cfg-wifi-ssid" maxlength="32" placeholder="Home-IoT-24G">
-            </div>
-            <div class="field">
-              <span>WiFi Password</span>
-              <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="WPA2/WPA3 Password">
-            </div>
-            <div class="field">
-              <span>Device Hostname / Unique Node Prefix (Chip ID <code id="cfg-chip-id-preview">f5aa11f</code> is appended automatically in MQTT/HA)</span>
-              <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
-            </div>
-
-            <hr class="sep">
-            <h3>MQTT &amp; Home Assistant Auto-Discovery</h3>
-            <label class="field-check">
-              <input type="checkbox" id="cfg-mqtt-enabled">
-              <span>Enable MQTT Client (auto-reconnects with exponential backoff)</span>
-            </label>
-            <label class="field-check">
-              <input type="checkbox" id="cfg-ha-enabled" checked>
-              <span>Publish Home Assistant MQTT Auto-Discovery topics</span>
-            </label>
-            <div class="field-row">
-              <div class="field">
-                <span>MQTT Broker Host / IP</span>
-                <input type="text" id="cfg-mqtt-host" maxlength="64" placeholder="192.168.1.10">
-              </div>
-              <div class="field" style="max-width:120px">
-                <span>Port</span>
-                <input type="number" id="cfg-mqtt-port" min="1" max="65535" value="1883">
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <span>MQTT Username</span>
-                <input type="text" id="cfg-mqtt-user" maxlength="32">
-              </div>
-              <div class="field">
-                <span>MQTT Password</span>
-                <input type="password" id="cfg-mqtt-pass" maxlength="64">
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <span>MQTT Base Topic</span>
-                <input type="text" id="cfg-mqtt-base" maxlength="32" value="knx_dali">
-              </div>
-              <div class="field">
-                <span>HA Discovery Prefix</span>
-                <input type="text" id="cfg-ha-prefix" maxlength="32" value="homeassistant">
-              </div>
-            </div>
-
-            <hr class="sep">
-            <h3>Hardware, Front-Panel OLED &amp; DALI Bus Supply</h3>
-            <div class="field-row">
-              <div class="field">
-                <span>Front-Panel OLED Display Type</span>
-                <select id="cfg-oled-geom">
-                  <option value="0">Auto (V3 — 0.96" 64×128 Portrait)</option>
-                  <option value="2">V3 — 0.96" Winstar/SSD1312 64×128 Portrait (14×28 mm)</option>
-                  <option value="1">V1 / V2 — 0.96" Winstar 128×64 Landscape SSD1306</option>
-                  <option value="3">Disabled (OLED Off)</option>
-                </select>
-              </div>
-              <div class="field" style="max-width:160px">
-                <span>OLED Sleep (s, 0=Always On)</span>
-                <input type="number" id="cfg-oled-sleep" min="0" max="3600" value="60">
-              </div>
-            </div>
-            <label class="field-check">
-              <input type="checkbox" id="cfg-dali-psu" checked>
-              <span>Enable Internal DALI Bus PSU (REM3-2415S/A/CTRL via D1/GPIO1; latches OFF on bus short)</span>
-            </label>
-            <div style="margin-bottom:10px">
-              <button type="button" class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU After Short Trip</button>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Save &amp; Apply Configuration</button>
-              <span id="cfg-save-msg" class="save-msg"></span>
-            </div>
-          </form>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h2>DALI Commissioning &amp; Maintenance</h2>
-          </div>
-          <p class="muted">
-            ETS owns the authoritative KNX association &amp; group configuration. Commissioning commands below run through the same serialized DALI worker queue as ETS function properties.
-          </p>
-          <div class="action-list">
-            <div class="action-item">
-              <div>
-                <strong>Scan DALI Control Gear (0..63)</strong>
-                <p>Queries presence, status byte, and DT8 colour capabilities on all 64 short addresses.</p>
-              </div>
-              <button class="btn btn-primary" onclick="sendCmd({action:'scan_bus'})">Scan Gear</button>
-            </div>
-            <div class="action-item">
-              <div>
-                <strong>Address Unaddressed DALI Gear</strong>
-                <p>Runs IEC 62386-102 random-address binary search for new ballasts without changing existing addresses.</p>
-              </div>
-              <button class="btn" onclick="sendCmd({action:'assign_addresses',mode:'new'})">Assign New</button>
-            </div>
-            <div class="action-item">
-              <div>
-                <strong>Replace Single Ballast</strong>
-                <p>Assigns one unaddressed replacement ballast to an absent short address and restores its groups &amp; level.</p>
-              </div>
-              <div class="inline-controls">
-                <input type="number" id="replace-addr" min="0" max="63" value="0" style="width:70px">
-                <button class="btn" onclick="sendCmd({action:'replace_device',index:Number(document.getElementById('replace-addr').value)})">Replace</button>
-              </div>
-            </div>
-            <div class="action-item">
-              <div>
-                <strong>Scan &amp; Address DALI-2 Input Devices (Part 103)</strong>
-                <p>Inventories 24-bit multi-master sensors/buttons (301/303/304) and configures instance event filters.</p>
-              </div>
-              <div class="inline-controls">
-                <button class="btn" onclick="sendCmd({action:'scan_inputs'})">Scan Inputs</button>
-                <button class="btn" onclick="sendCmd({action:'assign_inputs',mode:'new'})">Assign New</button>
-              </div>
-            </div>
-            <div class="action-item">
-              <div>
-                <strong>Synchronize Gateway Wall-Clock Time</strong>
-                <p>Syncs browser UTC epoch to the gateway so persistent error logs and DALI debug traces record exact wall-clock timestamps.</p>
-              </div>
-              <button class="btn" onclick="syncGatewayTime()">Sync Browser Time</button>
+          <div class="scenes-actions">
+            <div class="scenes-grid" id="scenes-bar"></div>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-sm" onclick="recallSelectedScene()">Recall Scene</button>
+              <button class="btn btn-sm" onclick="storeSelectedScene()">Save Current Levels to Scene</button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Master-Detail Layout: 16 DALI Groups List (Left) + Selected Group Lamp Assignment (Right) -->
+      <div class="groups-split">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>DALI Groups</h2>
+              <p class="subtext">Select any group to assign or remove lamps. Empty groups have no dimming controls.</p>
+            </div>
+          </div>
+          <div class="groups-list" id="groups-grid"></div>
+        </div>
+
+        <aside class="card group-detail-pane" id="group-detail-pane">
+          <div id="group-detail-content"></div>
+        </aside>
       </div>
     </section>
 
-    <!-- PANEL 3: LOGS & DEBUG -->
-    <section id="panel-logs" class="panel">
+    <!-- TAB 3: ERRORS & BUS LOG -->
+    <section id="panel-logs" class="tab-panel">
       <div class="card">
-        <div class="card-header">
+        <div class="card-head">
           <div>
-            <h2>DALI Live Debug Session (256-Frame Circular Buffer)</h2>
-            <p class="muted">Captures 16-bit gear commands/queries, 8-bit backward replies, 24-bit Part 103 events, and collisions with full protocol decoding.</p>
+            <h2>Error History</h2>
+            <p class="subtext">Saved in non-volatile memory across power loss and reboots.</p>
           </div>
-          <div class="btn-group">
-            <label class="field-check inline-check">
-              <input type="checkbox" id="dbg-autotrigger" checked onchange="controlDebug('auto')">
-              <span>Auto-trigger from DALI events/faults</span>
-            </label>
-            <button class="btn btn-primary btn-sm" onclick="controlDebug('start')">Start Capture</button>
-            <button class="btn btn-sm" onclick="controlDebug('stop')">Pause</button>
-            <button class="btn btn-sm" onclick="controlDebug('clear')">Clear</button>
-            <button class="btn btn-sm" onclick="loadDebugTrace()">Refresh</button>
-            <button class="btn btn-sm" onclick="exportJson('dali-trace.json', window.lastTraceData)">Export JSON</button>
-          </div>
-        </div>
-        <div class="trace-stats" id="trace-stats">Session: ACTIVE • Total Frames: 0 • Collisions: 0 • Bus Errors: 0</div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Timestamp</th>
-                <th>Uptime</th>
-                <th>Bits</th>
-                <th>Raw Frame</th>
-                <th>Target</th>
-                <th>Mnemonic</th>
-                <th>Decoded Details &amp; Reply</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="trace-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2>Persistent KNX &amp; DALI Error Log (NVS Non-Volatile Ring Buffer)</h2>
-            <p class="muted">Survives power failures and reboots. Automatically flushed to flash on Critical/Error events and NCN5130 SAVEB power warnings.</p>
-          </div>
-          <div class="btn-group">
+          <div class="btn-row">
             <button class="btn btn-sm" onclick="loadErrorLogs()">Refresh</button>
-            <button class="btn btn-sm" onclick="clearErrorLogs()">Clear Log</button>
-            <button class="btn btn-sm" onclick="exportJson('gateway-error-log.json', window.lastLogData)">Export JSON</button>
+            <button class="btn btn-sm" onclick="clearErrorLogs()">Clear</button>
+            <button class="btn btn-sm" onclick="exportJson('error-log.json', window.lastLogData)">Export JSON</button>
           </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-scroll">
           <table class="data-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Time (UTC / Local)</th>
+                <th>Time</th>
                 <th>Source</th>
-                <th>Severity</th>
-                <th>Error Code &amp; Title</th>
-                <th>Target</th>
+                <th>Level</th>
+                <th>Error</th>
+                <th>Device</th>
                 <th>Count</th>
-                <th>Detail &amp; Recommended Remedy</th>
+                <th>Info</th>
               </tr>
             </thead>
             <tbody id="logs-tbody"></tbody>
@@ -389,90 +212,244 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
       </div>
 
       <div class="card">
-        <div class="card-header">
-          <h2>Descriptive Error Code Reference Catalog</h2>
+        <div class="card-head">
+          <div>
+            <h2>Recent Sensor &amp; Button Events</h2>
+            <p class="subtext">Press a physical DALI-2 button or trigger a sensor to see its Device Address and Instance Number.</p>
+          </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-scroll" style="max-height:220px">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Symbol</th>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Recommended Remedy</th>
+                <th>Device</th>
+                <th>Instance</th>
+                <th>Type</th>
+                <th>Event / Reading</th>
+                <th>When</th>
               </tr>
             </thead>
-            <tbody id="catalog-tbody"></tbody>
+            <tbody id="input-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Live DALI Bus Frame Monitor</h2>
+            <p class="subtext" id="trace-stats">Captures 16-bit lamp commands, 8-bit replies, 24-bit sensor events, and bus collisions.</p>
+          </div>
+          <div class="btn-row">
+            <label class="check-inline">
+              <input type="checkbox" id="dbg-autotrigger" checked onchange="controlDebug('auto')">
+              <span>Auto-capture on error</span>
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="controlDebug('start')">Record</button>
+            <button class="btn btn-sm" onclick="controlDebug('stop')">Pause</button>
+            <button class="btn btn-sm" onclick="controlDebug('clear')">Clear</button>
+            <button class="btn btn-sm" onclick="loadDebugTrace()">Refresh</button>
+            <button class="btn btn-sm" onclick="exportJson('dali-frames.json', window.lastTraceData)">Export JSON</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time</th>
+                <th>Uptime</th>
+                <th>Size</th>
+                <th>Hex</th>
+                <th>Target</th>
+                <th>Command</th>
+                <th>Details</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="trace-tbody"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- PANEL 4: FIRMWARE UPDATE -->
-    <section id="panel-firmware" class="panel">
-      <div class="grid-two">
+    <!-- TAB 4: SETTINGS (SINGLE-COLUMN LAYOUT WITH 3 SEPARATE PANELS) -->
+    <section id="panel-settings" class="tab-panel">
+      <form id="form-config" onsubmit="saveConfig(event)" class="single-col-layout stack-col">
+        <!-- Panel 1: WiFi Setup -->
         <div class="card">
-          <div class="card-header">
-            <h2>Application Firmware Update (<code>firmware.bin</code>)</h2>
+          <div class="card-head">
+            <div>
+              <h2>WiFi Setup</h2>
+              <p class="subtext">KNX and DALI control works independently even with WiFi turned off.</p>
+            </div>
           </div>
-          <p class="muted">
-            Streams a compiled ESP32-C6 application binary (<code>.pio/build/release_c6/firmware.bin</code>) directly to the inactive OTA slot (<code>ota_0</code> / <code>ota_1</code>), verifies the ESP-IDF image header, and switches the boot partition.
-          </p>
-          <div class="sys-info-box" id="fw-sys-info">
-            <div><strong>Running Version:</strong> <span id="info-fw-ver">--</span></div>
-            <div><strong>Active Partition:</strong> <span id="info-part">--</span></div>
-            <div><strong>Free / Min Heap:</strong> <span id="info-heap">--</span></div>
+          <div class="form-stack">
+            <label class="check-row">
+              <input type="checkbox" id="cfg-wifi-enabled" checked>
+              <span>Enable WiFi</span>
+            </label>
+            <label class="check-row">
+              <input type="checkbox" id="cfg-wifi-ps" checked>
+              <span>Low-power WiFi sleep</span>
+            </label>
+            <label class="field">
+              <span>WiFi Network (SSID)</span>
+              <input type="text" id="cfg-wifi-ssid" maxlength="32" placeholder="MyNetwork">
+            </label>
+            <label class="field">
+              <span>WiFi Password</span>
+              <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="Password">
+            </label>
           </div>
-          <div class="upload-box">
-            <input type="file" id="file-firmware" accept=".bin">
-            <button class="btn btn-primary" onclick="uploadOta('firmware')">Upload &amp; Flash Firmware (.bin)</button>
-          </div>
-          <div class="progress-wrap">
-            <div class="progress-bar" id="prog-firmware" style="width:0%"></div>
-          </div>
-          <div class="upload-status" id="status-firmware">Select a valid ESP32-C6 firmware.bin file.</div>
         </div>
 
+        <!-- Panel 2: MQTT -->
         <div class="card">
-          <div class="card-header">
-            <h2>Web UI / LittleFS Partition Update (<code>littlefs.bin</code>)</h2>
-          </div>
-          <p class="muted">
-            Uploads a packed Web UI filesystem image (<code>gateway/build/littlefs.bin</code>) directly to the 2 MB <code>storage</code> flash partition (<code>0x420000</code>) and hot-reloads the HTML/CSS/JS assets without rebooting.
-          </p>
-          <div class="upload-box">
-            <input type="file" id="file-littlefs" accept=".bin">
-            <button class="btn btn-primary" onclick="uploadOta('littlefs')">Upload &amp; Flash LittleFS (.bin)</button>
-          </div>
-          <div class="progress-wrap">
-            <div class="progress-bar" id="prog-littlefs" style="width:0%"></div>
-          </div>
-          <div class="upload-status" id="status-littlefs">Select a littlefs.bin filesystem image.</div>
-
-          <hr class="sep">
-          <div class="action-item">
+          <div class="card-head">
             <div>
-              <strong>Configuration-Preserving Device Reboot</strong>
-              <p>Restarts the ESP32-C6 and TP-UART link while retaining all KNX associations, NVS target levels, and error logs.</p>
+              <h2>MQTT &amp; Home Assistant</h2>
+              <p class="subtext">Automatically publishes the gateway and all installed lamps to Home Assistant when connected.</p>
             </div>
-            <button class="btn" onclick="rebootDevice()">Reboot Gateway</button>
+          </div>
+          <div class="form-stack">
+            <label class="check-row">
+              <input type="checkbox" id="cfg-mqtt-enabled">
+              <span>Connect to MQTT Broker</span>
+            </label>
+            <label class="field">
+              <span>Device Name (Chip ID <code id="cfg-chip-id-preview">f5aa11f</code> is appended automatically)</span>
+              <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
+            </label>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Broker Address</span>
+                <input type="text" id="cfg-mqtt-host" maxlength="64" placeholder="192.168.1.10">
+              </label>
+              <label class="field">
+                <span>Port</span>
+                <input type="number" id="cfg-mqtt-port" min="1" max="65535" value="1883">
+              </label>
+            </div>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Username</span>
+                <input type="text" id="cfg-mqtt-user" maxlength="32">
+              </label>
+              <label class="field">
+                <span>Password</span>
+                <input type="password" id="cfg-mqtt-pass" maxlength="64">
+              </label>
+            </div>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Base Topic</span>
+                <input type="text" id="cfg-mqtt-base" maxlength="32" value="knx_dali">
+              </label>
+              <label class="field">
+                <span>Home Assistant Prefix</span>
+                <input type="text" id="cfg-ha-prefix" maxlength="32" value="homeassistant">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Device Settings -->
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>Device Settings</h2>
+              <p class="subtext">Front display, DALI bus supply, default power calculation, and system clock.</p>
+            </div>
+          </div>
+          <div class="form-stack">
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Front OLED Screen</span>
+                <select id="cfg-oled-geom">
+                  <option value="0">Auto (V3 — 64×128 Portrait)</option>
+                  <option value="2">V3 — 64×128 Portrait</option>
+                  <option value="1">V1 / V2 — 128×64 Landscape</option>
+                  <option value="3">Off</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Screen Sleep (s, 0 = never)</span>
+                <input type="number" id="cfg-oled-sleep" min="0" max="3600" value="60">
+              </label>
+            </div>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Default Lamp Power at 100% (W)</span>
+                <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" onchange="if(latestState)handleLiveState(latestState)">
+              </label>
+              <label class="field">
+                <span>Default Ballast Idle Power (W)</span>
+                <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" onchange="if(latestState)handleLiveState(latestState)">
+              </label>
+            </div>
+            <label class="check-row">
+              <input type="checkbox" id="cfg-dali-psu" checked>
+              <span>Use internal DALI bus power supply (cuts off on short circuit)</span>
+            </label>
+            <div class="action-row" style="margin-top:4px">
+              <div>
+                <strong>System Clock</strong>
+                <p>Sync gateway time from your browser for error log timestamps.</p>
+              </div>
+              <button type="button" class="btn btn-sm" onclick="syncGatewayTime()">Sync Clock</button>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save All Settings</button>
+              <span id="cfg-save-msg" class="save-msg"></span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- TAB 5: FIRMWARE (SINGLE-COLUMN LAYOUT) -->
+    <section id="panel-firmware" class="tab-panel">
+      <div class="single-col-layout">
+        <div class="card">
+          <div class="info-list">
+            <div class="info-pair"><span>Current Firmware Version</span><strong class="mono" id="info-fw-ver">26.10.15.1915</strong></div>
+            <div class="info-pair"><span>Active Partition</span><strong class="mono" id="info-part">ota_0</strong></div>
+          </div>
+
+          <div class="fw-block">
+            <h2>Firmware Update (<code>firmware.bin</code>)</h2>
+            <p class="subtext">Upload a compiled firmware binary to update the gateway application.</p>
+            <div class="upload-row">
+              <input type="file" id="file-firmware" accept=".bin">
+              <button class="btn btn-primary" onclick="uploadOta('firmware')">Upload Firmware</button>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="prog-firmware" style="width:0%"></div></div>
+            <div class="subtext" id="status-firmware">Select a firmware.bin file.</div>
+          </div>
+
+          <div class="fw-block">
+            <h2>Web Interface Update (<code>littlefs.bin</code>)</h2>
+            <p class="subtext">Upload a packed web interface image without erasing your settings.</p>
+            <div class="upload-row">
+              <input type="file" id="file-littlefs" accept=".bin">
+              <button class="btn btn-primary" onclick="uploadOta('littlefs')">Upload Web UI</button>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="prog-littlefs" style="width:0%"></div></div>
+            <div class="subtext" id="status-littlefs">Select a littlefs.bin file.</div>
+          </div>
+
+          <div class="action-row" style="margin-top:16px">
+            <div>
+              <strong>Restart Gateway</strong>
+              <p>Reboots the controller while keeping all saved settings.</p>
+            </div>
+            <button class="btn" onclick="rebootDevice()">Restart</button>
           </div>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- BALLAST INSPECTOR MODAL -->
-  <div class="modal-backdrop" id="gear-modal" style="display:none">
-    <div class="modal">
-      <div class="card-header">
-        <h2 id="modal-title">Ballast Inspector — A00</h2>
-        <button class="btn btn-sm" onclick="closeGearModal()">Close ✕</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-    </div>
-  </div>
 
   <script src="app.js"></script>
 </body>
@@ -481,19 +458,22 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
 inline constexpr std::size_t index_html_size = sizeof(index_html_data) - 1;
 
 inline constexpr const char app_css_data[] = R"WEBUI(:root {
-  --bg: #0b0f17;
-  --bg-card: #131a26;
-  --bg-elevated: #1b2434;
-  --border: #263248;
-  --text: #e6edf3;
-  --muted: #8b9bb4;
-  --primary: #38bdf8;
-  --primary-hover: #0ea5e9;
-  --ok: #22c55e;
+  --bg: #0f1116;
+  --surface: #161921;
+  --surface-2: #1d222c;
+  --surface-3: #252b38;
+  --border: #282f3d;
+  --border-light: #343d4f;
+  --text: #eceff4;
+  --text-2: #9aa4b5;
+  --text-3: #697386;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --ok: #10b981;
   --warn: #f59e0b;
   --err: #ef4444;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 * {
@@ -506,236 +486,914 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Topbar */
 .topbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 14px 20px;
-  background: var(--bg-card);
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
 }
 
-.brand {
+.topbar-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.brand-badge {
-  background: linear-gradient(135deg, #0284c7, #2563eb);
-  color: #fff;
+.logo-mark {
+  background: var(--surface-3);
+  border: 1px solid var(--border-light);
+  color: var(--text);
+  font-family: var(--mono);
   font-weight: 700;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  letter-spacing: 0.4px;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
 }
 
-.brand h1 {
-  font-size: 18px;
-  font-weight: 700;
+.logo-mark span {
+  color: var(--accent);
+  margin: 0 2px;
 }
 
-.subtitle {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.status-pills {
+.device-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+.device-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+
+.device-sub {
+  font-size: 11px;
+  color: var(--text-2);
   font-family: var(--mono);
 }
 
-.pill .dot {
-  width: 8px;
-  height: 8px;
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  height: 100%;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.nav-tab:hover {
+  color: var(--text);
+}
+
+.nav-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scenario-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+}
+
+.scenario-label {
+  color: var(--text-2);
+}
+
+.scenario-bar select {
+  background: transparent;
+  color: var(--text);
+  border: none;
+  font-size: 11.5px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+.conn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--warn);
 }
 
-.pill.ok .dot {
+.conn-badge.ok .status-dot {
   background: var(--ok);
 }
 
-.pill.err .dot {
+.conn-badge.err .status-dot {
   background: var(--err);
 }
 
-.tabbar {
-  display: flex;
-  gap: 4px;
-  padding: 0 20px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-}
-
-.tab {
-  background: transparent;
-  color: var(--muted);
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tab:hover {
-  color: var(--text);
-}
-
-.tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-
-.container {
-  max-width: 1480px;
+/* Main Workspace */
+.workspace {
+  max-width: 1520px;
   margin: 0 auto;
-  padding: 18px 20px 40px;
+  padding: 16px 20px 36px;
 }
 
-.panel {
+.tab-panel {
   display: none;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-.panel.active {
+.tab-panel.active {
   display: flex;
 }
 
-.grid-top,
-.grid-two {
+/* Summary Strip */
+.summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1.55fr 1.55fr 0.68fr 0.62fr 0.58fr 1.02fr;
+  gap: 10px;
 }
 
-.power-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+.summary-item.compact-box {
+  padding: 10px 11px;
+}
+
+.summary-item.stats-box {
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.stats-kv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.stats-kv strong {
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+/* Groups & Scenes Layout */
+.scenes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.scenes-toolbar h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scenes-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
-.metric-box {
-  background: var(--bg-elevated);
+.scenes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scene-pill {
+  background: var(--surface-2);
+  color: var(--text-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.scene-pill:hover {
+  border-color: var(--border-light);
+  color: var(--text);
+}
+
+.scene-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.groups-split {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.groups-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.group-row {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.group-row:hover {
+  border-color: var(--border-light);
+}
+
+.group-row.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.group-row.empty {
+  opacity: 0.65;
+  padding: 6px 12px;
+}
+
+.group-detail-pane {
+  position: sticky;
+  top: 66px;
+}
+
+.group-lamps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.group-lamp-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 8px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s;
 }
 
-.metric-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--muted);
+.group-lamp-item:hover {
+  border-color: var(--border-light);
 }
 
-.metric-value {
-  font-size: 20px;
-  font-weight: 700;
-  font-family: var(--mono);
-  color: var(--primary);
+.group-lamp-item.member {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: var(--accent);
 }
 
-.metric-sub {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.cct-range {
-  accent-color: #fbbf24;
-}
-
-.color-swatch {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  vertical-align: middle;
-}
-
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-}
-
-.card-header {
+.matrix-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
-.card-header h2 {
-  font-size: 15px;
+.three-col-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.single-col-layout {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.fw-block {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fw-block h2 {
+  font-size: 14px;
   font-weight: 600;
 }
 
-.muted {
-  color: var(--muted);
-  font-size: 12.5px;
-  margin-bottom: 10px;
+.summary-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 3px;
 }
 
-.btn-group,
-.filter-bar,
-.inline-controls {
+.summary-label {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.summary-val-row {
   display: flex;
+  align-items: baseline;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.summary-val {
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.summary-val.ok {
+  color: var(--ok);
+}
+
+.summary-val.err {
+  color: var(--err);
+}
+
+.summary-tag {
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.summary-tag.ok {
+  color: var(--ok);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.summary-tag.err {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.summary-sub {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.oled-mini-box {
+  padding: 8px 12px;
+}
+
+.oled-mini-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#oled-canvas {
+  background: #05070a;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+.oled-mini-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.led-row {
+  display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.btn {
-  background: var(--bg-elevated);
-  color: var(--text);
+.led-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.oled-meta-txt {
+  font-size: 11px;
+  color: var(--text-2);
+  font-family: var(--mono);
+  margin-left: 2px;
+}
+
+/* Toolbar Card */
+.toolbar-card {
+  background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-right: 4px;
+}
+
+.slider-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
   border-radius: 6px;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+.slider-inline input[type="range"] {
+  width: 90px;
+}
+
+.color-input {
+  width: 28px;
+  height: 26px;
+  padding: 1px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   cursor: pointer;
 }
 
-.btn:hover {
-  border-color: var(--primary);
+.filter-pills {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
 }
 
-.btn.active,
-.btn-primary {
-  background: #0284c7;
-  border-color: #38bdf8;
+.pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pill-btn span {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-left: 3px;
+}
+
+.pill-btn.active {
+  background: var(--accent);
   color: #fff;
+}
+
+.pill-btn.active span {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.segmented-control {
+  display: flex;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segmented-control .pill-btn {
+  flex: 1;
+  text-align: center;
+  padding: 5px 10px;
+}
+
+/* Master-Detail Split Layout */
+.master-detail {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 14px;
+  align-items: start;
+}
+
+.matrix-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.lamps-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Compact 64-Lamp Tile */
+.lamp-tile {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  user-select: none;
+  position: relative;
+}
+
+.lamp-tile:hover {
+  border-color: var(--border-light);
+}
+
+.lamp-tile.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.lamp-tile.on {
+  background: #1a2232;
+  border-color: #2f4369;
+}
+
+.lamp-tile.fault {
+  border-color: var(--err);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+@keyframes finder-pulse {
+  0%, 100% {
+    border-color: var(--warn);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.65), 0 0 12px rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.18);
+  }
+  50% {
+    border-color: var(--border-light);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    background: var(--surface-2);
+  }
+}
+
+.lamp-tile.finding {
+  animation: finder-pulse 0.9s infinite ease-in-out;
+}
+
+.lamp-tile.absent {
+  opacity: 0.42;
+}
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.tile-addr {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.tile-pwr-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.lamp-tile.on .tile-pwr-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.tile-bar-track {
+  height: 4px;
+  background: #0d1015;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tile-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.15s;
+}
+
+.tile-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 11.5px;
+  font-family: var(--mono);
+  color: var(--text-2);
+}
+
+.tile-status {
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.tile-type {
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.tile-err-tag {
+  color: var(--err);
+  font-weight: 600;
+}
+
+/* Right-Hand Inspector Pane */
+.inspector-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  position: sticky;
+  top: 66px;
+}
+
+.insp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.insp-title {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+.insp-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.insp-section {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insp-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.insp-sec-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.insp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.insp-row input[type="range"] {
+  flex: 1;
+}
+
+.swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.color-preset {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.chip:hover {
+  border-color: var(--border-light);
+  color: var(--text-2);
+}
+
+.chip.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Cards & Common Elements */
+.two-col-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.stack-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.subtext {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
 }
 
 .btn-sm {
@@ -743,179 +1401,102 @@ body {
   font-size: 12px;
 }
 
-.front-panel-wrap {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  flex-wrap: wrap;
+.btn-xs {
+  padding: 3px 7px;
+  font-size: 11px;
 }
 
-.oled-bezel {
-  background: #05070b;
-  border: 2px solid #2d3b55;
-  border-radius: 8px;
+.badge {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.badge.ok {
+  color: var(--ok);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.badge.warn {
+  color: var(--warn);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.badge.err {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Groups & Scenes Grids */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.group-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-#oled-canvas {
-  width: 256px;
-  height: 128px;
-  image-rendering: pixelated;
-  background: #020408;
+.group-card.on {
+  border-color: #2f4369;
 }
 
-.oled-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.leds-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.led-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.led-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #002800;
-  border: 1px solid #3b4b66;
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-}
-
-.broadcast-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.control-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.control-row .label {
-  min-width: 140px;
-  color: var(--muted);
-}
-
-.control-row input[type="range"] {
-  flex: 1;
-  min-width: 120px;
-}
-
-.scenes-bar {
+.scenes-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 6px;
 }
 
-.lamps-grid {
+.inputs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+/* Forms */
+.form-stack {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.lamp-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.form-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-2);
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
-.lamp-card.on {
-  border-color: #0284c7;
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+.form-section-title:first-child {
+  border-top: none;
+  padding-top: 0;
 }
 
-.lamp-card.fault {
-  border-color: var(--err);
-}
-
-.lamp-card.absent {
-  opacity: 0.55;
-}
-
-.lamp-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.lamp-title {
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.badges {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  font-size: 10.5px;
-  font-family: var(--mono);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #243046;
-  color: var(--text);
-}
-
-.badge.ok {
-  background: rgba(34, 197, 94, 0.18);
-  color: #4ade80;
-}
-
-.badge.warn {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-}
-
-.badge.err {
-  background: rgba(239, 68, 68, 0.22);
-  color: #f87171;
-}
-
-.lamp-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.lamp-slider-row input[type="range"] {
-  flex: 1;
-}
-
-.groups-grid {
+.form-grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.inputs-grid {
+.form-grid-3 {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
 }
 
@@ -923,180 +1504,174 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 10px;
-  flex: 1;
-}
-
-.field span {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 11.5px;
+  color: var(--text-2);
 }
 
 .field input,
-.field select,
-.inline-controls input {
-  background: var(--bg-elevated);
+.field select {
+  background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 10px;
-  font-size: 13px;
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-family: var(--font);
 }
 
-.field-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
-.field-check {
-  display: flex;
+.check-row,
+.check-inline {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: var(--text);
   cursor: pointer;
 }
 
-.inline-check {
-  margin-bottom: 0;
-  margin-right: 8px;
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
 }
 
-.sep {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 14px 0;
+.save-msg {
+  color: var(--ok);
+  font-size: 12px;
 }
 
-h3 {
-  font-size: 13.5px;
-  margin-bottom: 10px;
-  color: var(--primary);
-}
-
-.action-list {
+.action-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.action-item {
+.action-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 10px;
-  background: var(--bg-elevated);
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
+  padding: 10px 12px;
 }
 
-.action-item p {
-  font-size: 12px;
-  color: var(--muted);
+.action-row p {
+  font-size: 11.5px;
+  color: var(--text-2);
+  margin-top: 2px;
 }
 
-.table-wrap {
+/* Tables */
+.table-scroll {
   overflow-x: auto;
-  max-height: 420px;
+  max-height: 360px;
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .data-table th,
 .data-table td {
-  padding: 8px 10px;
   text-align: left;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
+  vertical-align: top;
 }
 
 .data-table th {
-  background: var(--bg-elevated);
-  color: var(--muted);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: 11px;
   position: sticky;
   top: 0;
 }
 
-.mono {
-  font-family: var(--mono);
-}
-
-.trace-stats {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.sys-info-box {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+.info-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-family: var(--mono);
-  font-size: 12.5px;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
 }
 
-.upload-box {
+.info-pair {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.upload-row {
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 10px;
 }
 
-.progress-wrap {
-  width: 100%;
-  height: 10px;
-  background: var(--bg-elevated);
+.progress-track {
+  height: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.progress-bar {
+.progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0284c7, #22c55e);
-  transition: width 0.15s ease;
+  background: var(--accent);
+  transition: width 0.2s;
 }
 
-.upload-status {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted);
+.cct-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff9e3d 0%, #ffd180 35%, #fff4db 65%, #b8deff 100%);
+  outline: none;
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 7, 14, 0.78);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  padding: 16px;
+.cct-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--cct-thumb, #ffd180);
+  border: 2px solid #0f1116;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+  cursor: pointer;
 }
 
-.modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 18px;
-  max-width: 680px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+@media (max-width: 1180px) {
+  .summary-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .master-detail {
+    grid-template-columns: 1fr;
+  }
+  .lamps-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 )WEBUI";
 inline constexpr std::size_t app_css_size = sizeof(app_css_data) - 1;
@@ -1104,111 +1679,44 @@ inline constexpr std::size_t app_css_size = sizeof(app_css_data) - 1;
 inline constexpr const char app_js_data[] = R"WEBUI("use strict";
 
 let ws = null;
+let mockMode = false;
 let lampFilter = "all";
+let selectedCh = 0;
+let selectedGrp = 0;
+let selectedScene = 0;
+let renderedInspectorCh = -1;
+let renderedInspectorSig = "";
+let selectedColorModeByCh = {};
 let latestState = null;
+let channelDetailsCache = {};
 window.lastLogData = { entries: [] };
 window.lastTraceData = { entries: [] };
 
-function initTabs() {
-  document.querySelectorAll(".tabbar .tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tabbar .tab").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const target = document.getElementById("panel-" + btn.dataset.tab);
-      if (target) target.classList.add("active");
-      if (btn.dataset.tab === "configuration") loadConfig();
-      if (btn.dataset.tab === "logs") {
-        loadDebugTrace();
-        loadErrorLogs();
-        loadErrorCatalog();
-      }
-    });
-  });
+// IEC 62386-201..209 DALI Device Types
+const DEVICE_TYPE_NAMES = {
+  0: "Fluorescent Lamp (DT0)",
+  1: "Emergency Light (DT1)",
+  2: "Discharge / Arc Lamp (DT2)",
+  3: "Low-Voltage Halogen (DT3)",
+  4: "Incandescent Dimmer (DT4)",
+  5: "0–10 V Converter (DT5)",
+  6: "LED Driver (DT6)",
+  7: "Relay Switch On/Off (DT7)",
+  8: "Color / Tunable LED (DT8)",
+};
 
-  const scenesBar = document.getElementById("scenes-bar");
-  for (let s = 0; s < 16; s++) {
-    const b = document.createElement("button");
-    b.className = "btn btn-sm mono";
-    b.textContent = "S" + String(s + 1).padStart(2, "0");
-    b.title = "Click: Recall Scene #" + (s + 1) + " | Shift+Click: Store Current Levels to Scene #" + (s + 1);
-    b.onclick = (ev) => {
-      if (ev.shiftKey) {
-        sendCmd({ action: "store_scene", scene: s });
-      } else {
-        sendCmd({ action: "recall_scene", scene: s });
-      }
-    };
-    scenesBar.appendChild(b);
-  }
+const DEVICE_TYPE_SHORT = {
+  0: "Fluor",
+  1: "Emerg",
+  2: "Arc",
+  3: "Halogen",
+  4: "Incand",
+  5: "0-10V",
+  6: "LED",
+  7: "Switch",
+  8: "LED",
+};
 
-  document.getElementById("bcast-level").addEventListener("input", (e) => {
-    document.getElementById("bcast-level-val").textContent = e.target.value;
-  });
-  document.getElementById("bcast-cct").addEventListener("input", (e) => {
-    document.getElementById("bcast-cct-val").textContent = e.target.value + "K";
-  });
-  document.getElementById("btn-oled-page").onclick = () => sendCmd({ action: "oled_page" });
-  document.getElementById("btn-oled-geom").onclick = () => sendCmd({ action: "oled_toggle" });
-}
-
-function formatIa(ia) {
-  if (!ia || ia === 0xffff) return "UNPROG";
-  return ((ia >> 12) & 0xf) + "." + ((ia >> 8) & 0xf) + "." + (ia & 0xff);
-}
-
-function formatUptime(sec) {
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (d > 0) return `${d}d ${String(h).padStart(2, "0")}h`;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
-function formatTimestamp(epochMs, uptimeMs) {
-  if (epochMs && epochMs > 1700000000000) {
-    return new Date(epochMs).toISOString().replace("T", " ").slice(0, 19) + " UTC";
-  }
-  return `T+${(uptimeMs / 1000).toFixed(2)}s`;
-}
-
-function renderOledCanvas(oled) {
-  if (!oled || !oled.hex) return;
-  const canvas = document.getElementById("oled-canvas");
-  const w = oled.w || 128;
-  const h = oled.h || 32;
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = (w * 2) + "px";
-    canvas.style.height = (h * 2) + "px";
-  }
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(w, h);
-  const hex = oled.hex;
-  const fg = h === 64 ? [56, 189, 248] : [248, 250, 252];
-  for (let page = 0; page < h / 8; page++) {
-    for (let x = 0; x < w; x++) {
-      const idx = (page * w + x) * 2;
-      const byte = parseInt(hex.slice(idx, idx + 2), 16) || 0;
-      for (let bit = 0; bit < 8; bit++) {
-        const y = page * 8 + bit;
-        const p = (y * w + x) * 4;
-        const on = (byte & (1 << bit)) !== 0;
-        img.data[p] = on ? fg[0] : 5;
-        img.data[p + 1] = on ? fg[1] : 7;
-        img.data[p + 2] = on ? fg[2] : 11;
-        img.data[p + 3] = 255;
-      }
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  document.getElementById("oled-meta").textContent =
-    `OLED ${w}×${h} • Page ${(oled.page || 0) + 1}/3`;
-}
-
-// IEC 62386-102 Table 15 & 16 human-readable Fade Time / Fade Rate tables
 const FADE_TIME_LABELS = [
   "0 — No fade (<0.7 s)",
   "1 — 0.7 s",
@@ -1247,11 +1755,28 @@ const FADE_RATE_LABELS = [
   "15 — 2.8 steps/s (90.5 s)",
 ];
 
-// IEC 62386-102 §9.1 logarithmic dimming curve: X(n) = 10^((n - 254) / (253/3))
+const COLOR_PRESETS = [
+  { name: "Warm White", r: 255, g: 190, b: 110, hex: "#ffbe6e" },
+  { name: "Daylight", r: 240, g: 248, b: 255, hex: "#f0f8ff" },
+  { name: "Amber", r: 255, g: 140, b: 20, hex: "#ff8c14" },
+  { name: "Coral Red", r: 244, g: 63, b: 94, hex: "#f43f5e" },
+  { name: "Emerald", r: 16, g: 185, b: 129, hex: "#10b981" },
+  { name: "Sky Blue", r: 56, g: 189, b: 248, hex: "#38bdf8" },
+  { name: "Indigo", r: 99, g: 102, b: 241, hex: "#6366f1" },
+  { name: "Violet", r: 168, g: 85, b: 247, hex: "#a855f7" },
+];
+
 function daliArcToPowerRatio(arc) {
   if (!arc || arc <= 0) return 0.0;
   if (arc >= 254) return 1.0;
   return Math.pow(10, (arc - 254) / (253 / 3));
+}
+
+function kelvinToCss(k) {
+  if (!k || k <= 2700) return "#ffb454";
+  if (k <= 3500) return "#ffd180";
+  if (k <= 4500) return "#fff1d0";
+  return "#cfe8ff";
 }
 
 function rgbToHex(r, g, b) {
@@ -1259,41 +1784,28 @@ function rgbToHex(r, g, b) {
   return "#" + to2(r) + to2(g) + to2(b);
 }
 
-function sendHexRgb(target, index, hex) {
-  const clean = (hex || "#ffffff").replace("#", "");
-  const r = parseInt(clean.slice(0, 2), 16) || 0;
-  const g = parseInt(clean.slice(2, 4), 16) || 0;
-  const b = parseInt(clean.slice(4, 6), 16) || 0;
-  sendCmd({ action: "set_rgb", target, index, r, g, b });
+function formatIa(ia) {
+  if (!ia || ia === 0xffff) return "Unprogrammed";
+  return ((ia >> 12) & 0xf) + "." + ((ia >> 8) & 0xf) + "." + (ia & 0xff);
 }
 
-function formatGroupList(mask) {
-  if (!mask) return "No groups";
-  const list = [];
-  for (let g = 0; g < 16; g++) {
-    if (mask & (1 << g)) list.push("G" + String(g).padStart(2, "0"));
+function formatUptime(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatTimestamp(epochMs, uptimeMs) {
+  if (epochMs && epochMs > 1700000000000) {
+    return new Date(epochMs).toISOString().replace("T", " ").slice(0, 19);
   }
-  return list.join(", ");
+  return `+${(uptimeMs / 1000).toFixed(1)}s`;
 }
 
-function setLampFilter(filter, btn) {
-  lampFilter = filter;
-  document.querySelectorAll(".filter-bar .btn").forEach((b) => b.classList.remove("active"));
-  if (btn) btn.classList.add("active");
-  if (latestState) renderLamps(latestState.channels || []);
-}
-
-function decodeStatusBits(st) {
-  const flags = [];
-  if (st & 0x01) flags.push("GEAR_FAIL");
-  if (st & 0x02) flags.push("LAMP_FAIL");
-  if (st & 0x08) flags.push("LIMIT_ERR");
-  if (st & 0x10) flags.push("FADING");
-  if (st & 0x20) flags.push("RESET");
-  if (st & 0x80) flags.push("PWR_CYC");
-  return flags;
-}
-
+// Honors 0 W when powerConfigured is true!
 function channelPowerBreakdown(ch, defaultFullW, defaultIdleW) {
   const [
     present,
@@ -1307,316 +1819,1024 @@ function channelPowerBreakdown(ch, defaultFullW, defaultIdleW) {
     ,
     ,
     ,
-    ,
+    devType,
     d4iSupported,
     manualOverride,
     d4iPowerDeciwatts,
     fullPowerDeciwatts,
     idlePowerCentiwatts,
+    powerConfigured,
+    switchOnly,
   ] = ch;
   if (!present) return { totalW: 0, lampW: 0, idleW: 0, source: "off" };
   if (d4iSupported && !manualOverride) {
     const w = (d4iPowerDeciwatts || 0) / 10.0;
     return { totalW: w, lampW: w, idleW: 0, source: "D4i" };
   }
-  const fullW = fullPowerDeciwatts > 0 ? fullPowerDeciwatts / 10.0 : defaultFullW;
-  const idleW = idlePowerCentiwatts > 0 ? idlePowerCentiwatts / 100.0 : defaultIdleW;
-  const lampW = level > 0 ? fullW * daliArcToPowerRatio(level) : 0.0;
+  const fullW = powerConfigured ? (fullPowerDeciwatts || 0) / 10.0 : defaultFullW;
+  const idleW = powerConfigured ? (idlePowerCentiwatts || 0) / 100.0 : defaultIdleW;
+  const isSwitch = Boolean(switchOnly || devType === 7);
+  const ratio = level > 0 ? (isSwitch ? 1.0 : daliArcToPowerRatio(level)) : 0.0;
+  const lampW = fullW * ratio;
   return { totalW: idleW + lampW, lampW, idleW, source: "calc" };
 }
 
-function renderLamps(channels) {
+function decodeTypeShort(dt8, devType, switchOnly) {
+  if (switchOnly || devType === 7) return "Switch";
+  const base = DEVICE_TYPE_SHORT[devType] || `DT${devType}`;
+  if (dt8 & 4) return `${base}·RGBW`;
+  if (dt8 & 2) return `${base}·RGB`;
+  if (dt8 & 1) return `${base}·CCT`;
+  if (dt8 & 8) return `${base}·XY`;
+  return base;
+}
+
+function initUi() {
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.has("ch")) {
+    const c = Number(urlParams.get("ch"));
+    if (c >= 0 && c < 64) selectedCh = c;
+  }
+
+  document.querySelectorAll(".nav-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      const target = document.getElementById("panel-" + btn.dataset.tab);
+      if (target) target.classList.add("active");
+      if (btn.dataset.tab === "settings") loadConfig();
+      if (btn.dataset.tab === "logs") {
+        loadErrorLogs();
+        loadDebugTrace();
+      }
+    });
+  });
+}
+
+function setLampFilter(filter, btn) {
+  lampFilter = filter;
+  document.querySelectorAll(".filter-pills .pill-btn").forEach((b) => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  if (latestState) renderLampsGrid(latestState.channels || []);
+}
+
+function selectLamp(idx) {
+  selectedCh = idx;
+  renderedInspectorCh = -1;
+  if (latestState) {
+    renderLampsGrid(latestState.channels || []);
+    renderInspector(idx, true);
+  }
+}
+
+function setInspectorColorMode(chIdx, mode) {
+  selectedColorModeByCh[chIdx] = mode;
+  renderInspector(chIdx, true);
+}
+
+function previewCctSlider(chIdx, kelvin) {
+  const k = Number(kelvin) || 4000;
+  const col = kelvinToCss(k);
+  selectedColorModeByCh[chIdx] = "cct";
+  const slider = document.getElementById("insp-cct-slider");
+  const label = document.getElementById("insp-cct-val");
+  if (slider) {
+    slider.style.setProperty("--cct-thumb", col);
+    slider.style.accentColor = col;
+  }
+  if (label) label.textContent = `${k}K`;
+  if (latestState && latestState.channels && latestState.channels[chIdx]) {
+    latestState.channels[chIdx][5] = k;
+    latestState.channels[chIdx][6] = 0;
+    latestState.channels[chIdx][7] = 0;
+    latestState.channels[chIdx][8] = 0;
+    renderLampsGrid(latestState.channels);
+  }
+}
+
+function lampErrorCode(faulty, statusByte) {
+  if (statusByte & 0x02) return "E106";
+  if (statusByte & 0x01) return "E107";
+  if (statusByte & 0x08) return "E108";
+  if (faulty) return "E104";
+  return "";
+}
+
+function renderLampsGrid(channels) {
   const grid = document.getElementById("lamps-grid");
   grid.innerHTML = "";
   const nomWatts = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
   const idleWatts = Number(document.getElementById("idle-watts")?.value ?? 0.4);
+
+  let cntPresent = 0;
+  let cntOn = 0;
+  let cntFault = 0;
+  channels.forEach((ch) => {
+    const [present, faulty, level, , , , , , , statusByte] = ch;
+    if (present) cntPresent++;
+    if (level > 0) cntOn++;
+    if (faulty || (statusByte & 0x03) !== 0) cntFault++;
+  });
+  document.getElementById("cnt-all").textContent = String(channels.length);
+  document.getElementById("cnt-present").textContent = String(cntPresent);
+  document.getElementById("cnt-on").textContent = String(cntOn);
+  document.getElementById("cnt-fault").textContent = String(cntFault);
+
   channels.forEach((ch, idx) => {
     const [
       present,
       faulty,
       level,
-      source,
+      ,
       dt8,
       kelvin,
       r,
       g,
       b,
       statusByte,
-      groupsMask,
+      ,
       devType,
-      d4iSupported,
-      manualOverride,
+      ,
+      ,
+      ,
+      ,
+      ,
+      ,
+      switchOnly,
     ] = ch;
+    const hasErr = Boolean(faulty || (statusByte & 0x03) !== 0);
     if (lampFilter === "present" && !present) return;
     if (lampFilter === "on" && level === 0) return;
-    if (lampFilter === "fault" && !faulty && (statusByte & 0x03) === 0) return;
+    if (lampFilter === "fault" && !hasErr) return;
 
+    const isSwitch = Boolean(switchOnly || devType === 7);
     const pct = Math.round((level * 100) / 254);
     const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
-    const liveWatts = present ? pwr.totalW.toFixed(1) : "0.0";
-    const card = document.createElement("div");
-    card.className =
-      "lamp-card" + (level > 0 ? " on" : "") + (faulty ? " fault" : "") + (!present ? " absent" : "");
-
-    const statusFlags = decodeStatusBits(statusByte);
     const addrStr = "A" + String(idx).padStart(2, "0");
 
-    // Detailed DT6 & DT8 capability badges + D4i badge
-    const dtBadges = [];
-    if (devType === 6 || !dt8) dtBadges.push('<span class="badge">DT6 Dim</span>');
-    if (dt8 & 1) dtBadges.push('<span class="badge">DT8 Tc</span>');
-    if (dt8 & 4) dtBadges.push('<span class="badge">DT8 RGBW</span>');
-    else if (dt8 & 2) dtBadges.push('<span class="badge">DT8 RGB</span>');
-    if (dt8 & 8) dtBadges.push('<span class="badge">DT8 XY</span>');
-    if (d4iSupported) {
-      dtBadges.push(
-        `<span class="badge ${manualOverride ? "warn" : "ok"}">${manualOverride ? "D4i (Overridden)" : "D4i MB202"}</span>`
-      );
+    let barColor = "#3b82f6";
+    if (hasErr) barColor = "#ef4444";
+    else if ((dt8 & 6) && (r || g || b)) barColor = rgbToHex(r, g, b);
+    else if (dt8 & 1) barColor = kelvinToCss(kelvin || 4000);
+
+    const isFinding = Boolean(
+      latestState &&
+        latestState.dali &&
+        latestState.dali.finder_active &&
+        latestState.dali.finder_ch === idx
+    );
+    const tile = document.createElement("div");
+    tile.className =
+      "lamp-tile" +
+      (idx === selectedCh ? " selected" : "") +
+      (isFinding ? " finding" : "") +
+      (level > 0 ? " on" : "") +
+      (hasErr ? " fault" : "") +
+      (!present ? " absent" : "");
+    tile.onclick = () => selectLamp(idx);
+
+    const errCode = lampErrorCode(faulty, statusByte);
+    const statusTxt = isFinding
+      ? '<span style="color:var(--warn);font-weight:600">BLINK</span>'
+      : hasErr
+        ? `<span class="tile-err-tag">ERR: ${errCode}</span>`
+        : !present
+          ? "Free"
+          : isSwitch
+            ? level > 0
+              ? "ON"
+              : "Off"
+            : level > 0
+              ? `${pct}%`
+              : "Off";
+
+    tile.innerHTML = `
+      <div class="tile-head">
+        <span class="tile-addr">${addrStr}</span>
+        <button class="tile-pwr-btn" title="${level > 0 ? "Turn Off" : "Turn On"}"
+          onclick="event.stopPropagation();sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${idx}})">⏻</button>
+      </div>
+      <div class="tile-bar-track">
+        <div class="tile-bar-fill" style="width:${present ? (isSwitch ? (level > 0 ? 100 : 0) : Math.max(level > 0 ? 8 : 0, pct)) : 0}%;background:${barColor}"></div>
+      </div>
+      <div class="tile-foot">
+        <span class="tile-status">${statusTxt}</span>
+        <span class="tile-type">${present ? `${pwr.totalW.toFixed(1)}W · ${decodeTypeShort(dt8, devType, isSwitch)}` : "—"}</span>
+      </div>
+    `;
+    grid.appendChild(tile);
+  });
+}
+
+function renderInspector(chIdx, forceRebuild = false) {
+  const pane = document.getElementById("inspector-content");
+  if (!latestState || !latestState.channels || !latestState.channels[chIdx]) return;
+  const ch = latestState.channels[chIdx];
+  const [
+    present,
+    faulty,
+    level,
+    ,
+    dt8,
+    kelvin,
+    r,
+    g,
+    b,
+    statusByte,
+    groupsMask,
+    devType,
+    d4iSupported,
+    manualOverride,
+    d4iPowerDeciwatts,
+    fullPowerDeciwatts,
+    idlePowerCentiwatts,
+    powerConfigured,
+    switchOnly,
+  ] = ch;
+
+  const addrStr = "A" + String(chIdx).padStart(2, "0");
+  const isSwitch = Boolean(switchOnly || devType === 7);
+  const pct = Math.round((level * 100) / 254);
+  const nomWatts = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
+  const idleWatts = Number(document.getElementById("idle-watts")?.value ?? 0.4);
+  const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
+  const hasErr = Boolean(faulty || (statusByte & 0x03) !== 0);
+
+  // Structural signature: only rebuild the Inspector DOM when the selected channel or its structural capabilities change
+  const sig = `${chIdx}:${present}:${dt8}:${devType}:${d4iSupported}:${isSwitch}`;
+  if (!forceRebuild && renderedInspectorCh === chIdx && renderedInspectorSig === sig) {
+    // Update live readouts in-place without clobbering form inputs or sliders being dragged
+    const activeEl = document.activeElement;
+    const briText = document.getElementById("insp-bri-text");
+    if (briText) {
+      briText.textContent = `${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W`;
     }
-
-    const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#ffd28a";
-
-    let colourControls = "";
-    if (dt8 & 1) {
+    const toggleBtn = document.getElementById("insp-toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.className = "btn btn-sm " + (level > 0 ? "btn-primary" : "");
+      toggleBtn.textContent = level > 0 ? "Turn Off" : "Turn On";
+      toggleBtn.onclick = () =>
+        sendCmd({ action: level > 0 ? "switch_off" : "switch_on", target: "ch", index: chIdx });
+    }
+    const briSlider = document.getElementById("insp-bri-slider");
+    if (briSlider && activeEl !== briSlider) {
+      briSlider.value = String(level);
+    }
+    const cctSlider = document.getElementById("insp-cct-slider");
+    if (cctSlider && activeEl !== cctSlider) {
       const kVal = kelvin || 4000;
-      const mirek = Math.round(1000000 / kVal);
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px;min-width:28px">CCT</span>
-          <input type="range" class="cct-range" min="2000" max="6500" step="100" value="${kVal}"
-            onchange="sendCmd({action:'set_cct',target:'ch',index:${idx},kelvin:Number(this.value)})">
-          <span class="mono" style="font-size:11px;min-width:74px;text-align:right">${kVal}K (${mirek}M)</span>
-        </div>`;
+      const col = kelvinToCss(kVal);
+      cctSlider.value = String(kVal);
+      cctSlider.style.setProperty("--cct-thumb", col);
+      cctSlider.style.accentColor = col;
+      const cctVal = document.getElementById("insp-cct-val");
+      if (cctVal) cctVal.textContent = `${kVal}K`;
     }
-    if (dt8 & 6) {
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px;min-width:28px">RGB</span>
-          <input type="color" value="${hexColor}" onchange="sendHexRgb('ch',${idx},this.value)">
-          <span class="mono" style="font-size:11px;color:#8b9bb4">${r || 0},${g || 0},${b || 0}</span>
-          ${
-            dt8 & 4
-              ? `<span class="mono" style="font-size:11px;margin-left:auto">W:</span>
-                 <input type="range" min="0" max="254" value="0" style="max-width:70px"
-                   onchange="sendCmd({action:'set_rgbw',target:'ch',index:${idx},r:${r || 0},g:${g || 0},b:${b || 0},w:Number(this.value)})">`
-              : ""
-          }
-        </div>`;
+    const pwrBadge = document.getElementById("insp-pwr-badge");
+    if (pwrBadge) {
+      pwrBadge.textContent =
+        d4iSupported && !manualOverride
+          ? `D4i Ballast: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
+          : `${pwr.totalW.toFixed(1)} W (Lamp ${pwr.lampW.toFixed(1)}W + Idle ${pwr.idleW.toFixed(2)}W)`;
     }
-    if (dt8 & 8) {
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px">CIE xy:</span>
-          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:20480,y:21500,brightness:${level || 200}})">D65 White</button>
-          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:29000,y:26500,brightness:${level || 200}})">Warm 2700K</button>
-          <button class="btn btn-sm" onclick="openGearModal(${idx})">Custom xy…</button>
+    return;
+  }
+  renderedInspectorCh = chIdx;
+  renderedInspectorSig = sig;
+
+  const d = channelDetailsCache[chIdx] || {
+    device_type: devType ?? 6,
+    version: 2,
+    physical_min: 1,
+    min_level: 1,
+    max_level: 254,
+    power_on_level: 254,
+    system_failure_level: 254,
+    fade_time: 4,
+    fade_rate: 7,
+    groups: groupsMask || 0,
+    scenes: Array(16).fill(255),
+    xy_x: 20480,
+    xy_y: 21500,
+    d4i_power_supported: Boolean(d4iSupported),
+    use_manual_power_override: Boolean(manualOverride),
+    d4i_active_power_deciwatts: d4iPowerDeciwatts || 0,
+    full_power_deciwatts: powerConfigured ? fullPowerDeciwatts : Math.round(nomWatts * 10),
+    idle_power_centiwatts: powerConfigured ? idlePowerCentiwatts : Math.round(idleWatts * 100),
+    power_configured: Boolean(powerConfigured),
+    switch_only: isSwitch,
+  };
+
+  const badges = [];
+  badges.push(
+    `<span class="badge ${present ? "ok" : ""}">${present ? "Installed" : "Empty Address"}</span>`
+  );
+  badges.push(`<span class="badge">${DEVICE_TYPE_NAMES[devType] || `Device Type ${devType}`}</span>`);
+  if (!isSwitch) {
+    if (dt8 & 1) badges.push('<span class="badge">CCT</span>');
+    if (dt8 & 4) badges.push('<span class="badge">RGBW</span>');
+    else if (dt8 & 2) badges.push('<span class="badge">RGB</span>');
+    if (dt8 & 8) badges.push('<span class="badge">CIE xy</span>');
+  }
+  if (hasErr) {
+    const errCode = lampErrorCode(faulty, statusByte);
+    const reason = (statusByte & 0x02) ? "Lamp Failure" : (statusByte & 0x01) ? "Ballast Fault" : "No Reply";
+    badges.push(`<span class="badge err">${errCode}: ${reason}</span>`);
+  }
+
+  let colorHtml = "";
+  if (!isSwitch && dt8) {
+    const availModes = [];
+    if (dt8 & 1) availModes.push({ id: "cct", label: "White (CCT)" });
+    if (dt8 & 6) availModes.push({ id: "rgb", label: dt8 & 4 ? "Color (RGBW)" : "Color (RGB)" });
+    if (dt8 & 8) availModes.push({ id: "xy", label: "CIE xy" });
+
+    let activeMode = selectedColorModeByCh[chIdx];
+    if (!activeMode || !availModes.some((m) => m.id === activeMode)) {
+      if ((dt8 & 6) && (r || g || b)) activeMode = "rgb";
+      else if (dt8 & 1) activeMode = "cct";
+      else activeMode = availModes[0].id;
+      selectedColorModeByCh[chIdx] = activeMode;
+    }
+
+    const modeTabsHtml =
+      availModes.length > 1
+        ? `<div class="segmented-control" style="margin-bottom:6px">
+             ${availModes
+               .map(
+                 (m) =>
+                   `<button type="button" class="pill-btn ${activeMode === m.id ? "active" : ""}"
+                      onclick="setInspectorColorMode(${chIdx},'${m.id}')">${m.label}</button>`
+               )
+               .join("")}
+           </div>`
+        : "";
+
+    let bodyHtml = "";
+    if (activeMode === "cct") {
+      const kVal = kelvin || 4000;
+      const kCol = kelvinToCss(kVal);
+      bodyHtml = `
+        <div class="insp-row">
+          <input type="range" id="insp-cct-slider" class="cct-range" min="2000" max="6500" step="100" value="${kVal}"
+            style="--cct-thumb:${kCol};accent-color:${kCol}"
+            oninput="previewCctSlider(${chIdx},this.value)"
+            onchange="sendCmd({action:'set_cct',target:'ch',index:${chIdx},kelvin:Number(this.value)})">
+          <span class="mono" id="insp-cct-val" style="min-width:52px;text-align:right">${kVal}K</span>
+        </div>
+        <div class="btn-row">
+          ${[2700, 3000, 4000, 5000, 6500]
+            .map(
+              (k) =>
+                `<button class="btn btn-xs" onclick="previewCctSlider(${chIdx},${k});sendCmd({action:'set_cct',target:'ch',index:${chIdx},kelvin:${k}})">${k}K</button>`
+            )
+            .join("")}
+        </div>`;
+    } else if (activeMode === "rgb") {
+      const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#38bdf8";
+      const wVal = d.w || 0;
+      const wPct = Math.round((wVal * 100) / 254);
+      bodyHtml = `
+        <div class="swatch-row">
+          ${COLOR_PRESETS.map(
+            (p) =>
+              `<button class="color-preset" style="background:${p.hex}" title="${p.name}"
+                 onclick="sendCmd({action:'set_rgb',target:'ch',index:${chIdx},r:${p.r},g:${p.g},b:${p.b}})"></button>`
+          ).join("")}
+          <input type="color" class="color-input" value="${hexColor}" onchange="sendHexRgb('ch',${chIdx},this.value)">
+          <span class="mono" style="font-size:11px;color:var(--text-2)">RGB: ${r || 0}, ${g || 0}, ${b || 0}</span>
+        </div>
+        ${
+          dt8 & 4
+            ? `<div class="insp-row" style="margin-top:4px">
+                 <span style="font-size:11.5px;color:var(--text-2)">Dedicated White LED (W)</span>
+                 <input type="range" min="0" max="254" value="${wVal}"
+                   oninput="document.getElementById('insp-w-val').textContent=Math.round(this.value*100/254)+'%'"
+                   onchange="sendCmd({action:'set_rgbw',target:'ch',index:${chIdx},r:${r || 0},g:${g || 0},b:${b || 0},w:Number(this.value)})">
+                 <span class="mono" id="insp-w-val" style="min-width:36px;text-align:right">${wPct}%</span>
+               </div>`
+            : ""
+        }`;
+    } else if (activeMode === "xy") {
+      const xyX = ((d.xy_x || 20480) / 65535).toFixed(3);
+      const xyY = ((d.xy_y || 21500) / 65535).toFixed(3);
+      bodyHtml = `
+        <div class="form-grid-3">
+          <label class="field"><span>x (0..0.8)</span><input type="number" id="insp-xy-x" min="0" max="0.8" step="0.005" value="${xyX}"></label>
+          <label class="field"><span>y (0..0.8)</span><input type="number" id="insp-xy-y" min="0" max="0.8" step="0.005" value="${xyY}"></label>
+          <div class="field" style="justify-content:flex-end">
+            <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${chIdx},x:Math.round(Number(document.getElementById('insp-xy-x').value)*65535),y:Math.round(Number(document.getElementById('insp-xy-y').value)*65535),brightness:${level || 200}})">Apply</button>
+          </div>
         </div>`;
     }
 
-    card.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">${addrStr} <span class="color-swatch" style="background:${level > 0 ? hexColor : "#1f2937"}"></span></span>
-        <div class="badges">
-          <span class="badge ${present ? "ok" : ""}">${present ? "PRESENT" : "ABSENT"}</span>
-          ${dtBadges.join("")}
-          <span class="badge ${source === "readback" ? "ok" : "warn"}">${source}</span>
-          ${faulty ? '<span class="badge err">FAULT</span>' : ""}
+    colorHtml = `
+      <div class="insp-section">
+        <div class="insp-row">
+          <span class="insp-sec-title">Color Mode</span>
         </div>
+        ${modeTabsHtml}
+        ${bodyHtml}
+      </div>`;
+  }
+
+  const dtTypeOptions = Object.entries(DEVICE_TYPE_NAMES)
+    .map(
+      ([k, label]) =>
+        `<option value="${k}" ${Number(devType) === Number(k) ? "selected" : ""}>${label}</option>`
+    )
+    .join("");
+
+  const ftOptions = FADE_TIME_LABELS.map(
+    (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
+  ).join("");
+  const frOptions = FADE_RATE_LABELS.slice(1)
+    .map(
+      (lbl, i) =>
+        `<option value="${i + 1}" ${d.fade_rate === i + 1 ? "selected" : ""}>${lbl}</option>`
+    )
+    .join("");
+
+  const fullWVal = (
+    (powerConfigured ? fullPowerDeciwatts : Math.round(nomWatts * 10)) / 10
+  ).toFixed(1);
+  const idleWVal = (
+    (powerConfigured ? idlePowerCentiwatts : Math.round(idleWatts * 100)) / 100
+  ).toFixed(2);
+
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Lamp ${addrStr}</div>
+        <div class="insp-badges">${badges.join("")}</div>
       </div>
-      <div class="lamp-slider-row">
-        <button class="btn btn-sm" onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${idx}})">${level > 0 ? "OFF" : "ON"}</button>
-        <input type="range" min="0" max="254" value="${level}"
-          onchange="sendCmd({action:'set_level',target:'ch',index:${idx},level:Number(this.value)})">
-        <span class="mono" style="min-width:74px;text-align:right">${pct}% • ${liveWatts}W</span>
+      <div class="btn-row">
+        <button class="btn btn-xs" title="Blink lamp on/off to locate it in the room" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'blink'})">Blink</button>
+        <button class="btn btn-xs" title="Smoothly pulse lamp" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'pulse'})">Pulse</button>
+        <button class="btn btn-xs" title="Stop blinking and restore previous level" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'stop'})">Stop</button>
       </div>
-      ${colourControls}
-      <div class="lamp-top" style="margin-top:2px">
-        <span class="mono" style="font-size:11px;color:#8b9bb4">
-          ARC:${level}/254 • ${formatGroupList(groupsMask)}
-          ${statusFlags.length ? " • " + statusFlags.join(",") : ""}
-        </span>
-        <div class="btn-group">
-          <button class="btn btn-sm" title="Lamp Finder: Blink ON/OFF (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'blink'})">Blink</button>
-          <button class="btn btn-sm" title="Lamp Finder: Smooth Breathing Pulse (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'pulse'})">Pulse</button>
-          <button class="btn btn-sm" title="Ballast Inspector, DT6/DT8 Registers &amp; Parameter Tuning" onclick="openGearModal(${idx})">Inspect / Tune</button>
-        </div>
+    </div>
+
+    <div class="insp-section">
+      <div class="insp-row">
+        <span class="insp-sec-title">${isSwitch ? "Switch Control (Non-Dimmable)" : "Brightness"}</span>
+        <span class="mono" id="insp-bri-text">${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W</span>
       </div>
-    `;
-    grid.appendChild(card);
+      <div class="insp-row">
+        <button id="insp-toggle-btn" class="btn btn-sm ${level > 0 ? "btn-primary" : ""}"
+          onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${chIdx}})">${level > 0 ? "Turn Off" : "Turn On"}</button>
+        <input type="range" id="insp-bri-slider" min="0" max="254" value="${level}" ${isSwitch ? "disabled title='Dimming disabled for Switch-Only device'" : ""}
+          onchange="sendCmd({action:'set_level',target:'ch',index:${chIdx},level:Number(this.value)})">
+      </div>
+    </div>
+
+    ${colorHtml}
+
+    <div class="insp-section">
+      <span class="insp-sec-title">Device Type &amp; Dimming Mode</span>
+      <label class="field">
+        <span>DALI Device Type (Reported by ballast, overridable here or in ETS)</span>
+        <select id="gm-devtype">${dtTypeOptions}</select>
+      </label>
+      <label class="check-row" style="font-size:12px">
+        <input type="checkbox" id="gm-switch-only" ${isSwitch ? "checked" : ""}>
+        <span>On/Off switch only (disable brightness dimming)</span>
+      </label>
+    </div>
+
+    <div class="insp-section">
+      <div class="insp-row">
+        <span class="insp-sec-title">Power</span>
+        <span id="insp-pwr-badge" class="badge ${d4iSupported && !manualOverride ? "ok" : ""}">${
+          d4iSupported && !manualOverride
+            ? `D4i Ballast: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
+            : `${pwr.totalW.toFixed(1)} W (Lamp ${pwr.lampW.toFixed(1)}W + Idle ${pwr.idleW.toFixed(2)}W)`
+        }</span>
+      </div>
+      <div class="form-grid-2">
+        <label class="field">
+          <span>Lamp at 100% (W)</span>
+          <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${fullWVal}">
+        </label>
+        <label class="field">
+          <span>Ballast Idle (W)</span>
+          <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${idleWVal}">
+        </label>
+      </div>
+      ${
+        d4iSupported
+          ? `<label class="check-row" style="font-size:11.5px;color:var(--text-2)">
+               <input type="checkbox" id="gm-pwr-override" ${manualOverride ? "checked" : ""}>
+               <span>Use calculated power instead of D4i ballast reporting</span>
+             </label>`
+          : ""
+      }
+    </div>
+
+    ${
+      !isSwitch
+        ? `<div class="insp-section">
+             <span class="insp-sec-title">Dimming Limits &amp; Fade</span>
+             <div class="form-grid-2">
+               <label class="field"><span>Min Level (1..254)</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></label>
+               <label class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></label>
+             </div>
+             <div class="form-grid-2">
+               <label class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></label>
+               <label class="field"><span>Bus-Fail Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></label>
+             </div>
+             <div class="form-grid-2">
+               <label class="field"><span>Fade Time</span><select id="gm-ft">${ftOptions}</select></label>
+               <label class="field"><span>Fade Rate</span><select id="gm-fr">${frOptions}</select></label>
+             </div>
+           </div>`
+        : ""
+    }
+
+    <div class="insp-section">
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="saveGearParams(${chIdx})">Save Settings</button>
+        <button class="btn btn-sm" onclick="queryChannelDetails(${chIdx})">Read from Ballast</button>
+        ${
+          !present || hasErr
+            ? `<button class="btn btn-sm" title="Assigns a newly connected unaddressed replacement ballast on the bus to ${addrStr} and restores its groups &amp; settings"
+                 onclick="sendCmd({action:'replace_device',index:${chIdx}})">Assign New Ballast to ${addrStr}</button>`
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
+async function queryChannelDetails(chIdx) {
+  try {
+    await sendCmd({ action: "query_gear", index: chIdx });
+    const res = await fetch(`/api/channel?ch=${chIdx}`);
+    if (res.ok) {
+      channelDetailsCache[chIdx] = await res.json();
+      renderInspector(chIdx, true);
+    }
+  } catch (_) {}
+}
+
+async function saveGearParams(ch) {
+  const fullW = Math.round(Number(document.getElementById("gm-full-w").value) * 10);
+  const idleW = Math.round(Number(document.getElementById("gm-idle-w").value) * 100);
+  const overEl = document.getElementById("gm-pwr-override");
+  const swOnly = document.getElementById("gm-switch-only").checked;
+  const devType = Number(document.getElementById("gm-devtype").value);
+
+  const payload = {
+    action: "configure_gear",
+    index: ch,
+    device_type: devType,
+    switch_only: swOnly,
+    full_power_deciwatts: fullW,
+    idle_power_centiwatts: idleW,
+    use_manual_power_override: overEl ? overEl.checked : false,
+  };
+  const minEl = document.getElementById("gm-min");
+  if (minEl) {
+    payload.min_level = Number(minEl.value);
+    payload.max_level = Number(document.getElementById("gm-max").value);
+    payload.power_on_level = Number(document.getElementById("gm-pon").value);
+    payload.system_failure_level = Number(document.getElementById("gm-fail").value);
+    payload.fade_time = Number(document.getElementById("gm-ft").value);
+    payload.fade_rate = Number(document.getElementById("gm-fr").value);
+  }
+  await sendCmd(payload);
+  renderedInspectorCh = -1;
+  renderInspector(ch, true);
+}
+
+function sendHexRgb(target, index, hex) {
+  const clean = (hex || "#ffffff").replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) || 0;
+  const g = parseInt(clean.slice(2, 4), 16) || 0;
+  const b = parseInt(clean.slice(4, 6), 16) || 0;
+  sendCmd({ action: "set_rgb", target, index, r, g, b });
+}
+
+function selectGroup(grpIdx) {
+  selectedGrp = grpIdx;
+  if (latestState) renderGroups(latestState.groups || [], latestState.channels || []);
+}
+
+async function toggleLampInGroup(chIdx, grpIdx) {
+  if (!latestState || !latestState.channels || !latestState.channels[chIdx]) return;
+  const curMask = latestState.channels[chIdx][10] || 0;
+  const nextMask = curMask ^ (1 << grpIdx);
+  latestState.channels[chIdx][10] = nextMask;
+  await sendCmd({
+    action: "configure_gear",
+    index: chIdx,
+    groups_mask: nextMask,
   });
 }
 
-function renderGroups(groups) {
-  const grid = document.getElementById("groups-grid");
-  grid.innerHTML = "";
+function renderGroups(groups, channels) {
+  const list = document.getElementById("groups-grid");
+  list.innerHTML = "";
+
   groups.forEach((lvl, idx) => {
+    const members = [];
+    (channels || []).forEach((ch, cIdx) => {
+      if (ch[0] && (ch[10] & (1 << idx))) {
+        members.push("A" + String(cIdx).padStart(2, "0"));
+      }
+    });
+    const isSel = idx === selectedGrp;
+    const gCode = "G" + String(idx).padStart(2, "0");
     const pct = Math.round((lvl * 100) / 254);
-    const el = document.createElement("div");
-    el.className = "lamp-card" + (lvl > 0 ? " on" : "");
-    el.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">Group G${String(idx).padStart(2, "0")}</span>
-        <div class="btn-group">
-          <button class="btn btn-sm" title="Blink Group" onclick="sendCmd({action:'find_lamp',target:'grp',index:${idx},mode:'blink'})">Blink</button>
-          <span class="badge">${pct}% (${lvl})</span>
-        </div>
+    const tile = document.createElement("div");
+    tile.className =
+      "lamp-tile" +
+      (isSel ? " selected" : "") +
+      (members.length > 0 && lvl > 0 ? " on" : "") +
+      (members.length === 0 ? " absent" : "");
+    tile.onclick = () => selectGroup(idx);
+
+    tile.innerHTML = `
+      <div class="tile-head">
+        <span class="tile-addr">${gCode}</span>
+        ${
+          members.length > 0
+            ? `<button class="tile-pwr-btn" title="${lvl > 0 ? "Turn Group Off" : "Turn Group On"}"
+                 onclick="event.stopPropagation();sendCmd({action:'${lvl > 0 ? "switch_off" : "switch_on"}',target:'grp',index:${idx}})">⏻</button>`
+            : ""
+        }
       </div>
-      <div class="lamp-slider-row">
-        <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${idx}})">ON</button>
-        <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${idx}})">OFF</button>
-        <input type="range" min="0" max="254" value="${lvl}"
-          onchange="sendCmd({action:'set_level',target:'grp',index:${idx},level:Number(this.value)})">
-        <input type="color" value="#ffd28a" title="Group DT8 RGB Colour" onchange="sendHexRgb('grp',${idx},this.value)">
+      <div class="tile-bar-track">
+        <div class="tile-bar-fill" style="width:${members.length > 0 ? Math.max(lvl > 0 ? 8 : 0, pct) : 0}%;background:#3b82f6"></div>
+      </div>
+      <div class="tile-foot">
+        <span class="tile-status">${members.length === 0 ? "Empty" : lvl > 0 ? `${pct}%` : "Off"}</span>
+        <span class="tile-type">${members.length} lamp${members.length === 1 ? "" : "s"}</span>
       </div>
     `;
-    grid.appendChild(el);
+    list.appendChild(tile);
   });
+
+  renderGroupDetail(selectedGrp, groups[selectedGrp] || 0, channels || []);
 }
 
-function renderInputs(inputs) {
+function renderGroupDetail(grpIdx, lvl, channels) {
+  const pane = document.getElementById("group-detail-content");
+  if (!pane) return;
+  const gName = "G" + String(grpIdx).padStart(2, "0");
+  const members = [];
+  const lampTiles = [];
+
+  channels.forEach((ch, cIdx) => {
+    const [present, , , , dt8, , , , , , groupsMask, devType, , , , , , , switchOnly] = ch;
+    if (!present) return;
+    const isMember = (groupsMask & (1 << grpIdx)) !== 0;
+    const isSwitch = Boolean(switchOnly || devType === 7);
+    const addrStr = "A" + String(cIdx).padStart(2, "0");
+    if (isMember) members.push(addrStr);
+
+    lampTiles.push(`
+      <div class="group-lamp-item ${isMember ? "member" : ""}" onclick="toggleLampInGroup(${cIdx},${grpIdx})">
+        <div class="tile-head">
+          <strong class="mono">${addrStr}</strong>
+          <span class="mono" style="font-size:11px;color:${isMember ? "var(--accent)" : "var(--text-3)"}">${isMember ? "✓ In group" : "+ Add"}</span>
+        </div>
+        <div class="tile-head">
+          <span class="tile-type">${decodeTypeShort(dt8, devType, isSwitch)}</span>
+          <button type="button" class="btn btn-xs" style="padding:1px 5px;font-size:10px"
+            title="Blink ${addrStr}"
+            onclick="event.stopPropagation();sendCmd({action:'find_lamp',target:'ch',index:${cIdx},mode:'blink'})">Blink</button>
+        </div>
+      </div>
+    `);
+  });
+
+  const pct = Math.round((lvl * 100) / 254);
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Group ${gName}</div>
+        <div class="insp-badges">
+          <span class="badge ${members.length > 0 ? "ok" : ""}">${members.length} lamp${members.length === 1 ? "" : "s"} assigned</span>
+        </div>
+      </div>
+      ${
+        members.length > 0
+          ? `<div class="btn-row">
+               <button class="btn btn-xs" onclick="sendCmd({action:'find_lamp',target:'grp',index:${grpIdx},mode:'blink'})">Blink Group</button>
+             </div>`
+          : ""
+      }
+    </div>
+
+    ${
+      members.length > 0
+        ? `<div class="insp-section">
+             <div class="insp-row">
+               <span class="insp-sec-title">Group Brightness</span>
+               <span class="mono">${pct}% (${lvl}/254)</span>
+             </div>
+             <div class="insp-row">
+               <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${grpIdx}})">All On</button>
+               <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${grpIdx}})">All Off</button>
+               <input type="range" min="0" max="254" value="${lvl}"
+                 onchange="sendCmd({action:'set_level',target:'grp',index:${grpIdx},level:Number(this.value)})">
+             </div>
+           </div>`
+        : ""
+    }
+
+    <div class="insp-section">
+      <span class="insp-sec-title">Assign Installed Lamps to ${gName}</span>
+      <p class="subtext">Click any lamp below to add or remove it from ${gName}. Use Blink to check which physical light it is.</p>
+      <div class="group-lamps-grid">
+        ${lampTiles.join("") || '<span class="subtext">No installed lamps found.</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function selectScenePill(s) {
+  selectedScene = s;
+  if (latestState) renderScenes(latestState);
+}
+
+function recallSelectedScene() {
+  sendCmd({ action: "recall_scene", scene: selectedScene });
+}
+
+function storeSelectedScene() {
+  sendCmd({ action: "store_scene", scene: selectedScene });
+}
+
+function renderScenes(data) {
+  const scenesBar = document.getElementById("scenes-bar");
+  scenesBar.innerHTML = "";
+  const activeScenes = Array.isArray(data.active_scenes) ? data.active_scenes : null;
+  for (let s = 0; s < 16; s++) {
+    if (activeScenes && activeScenes.length > 0 && !activeScenes.includes(s)) {
+      continue;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "scene-pill" + (s === selectedScene ? " active" : "");
+    b.textContent = "Scene " + (s + 1);
+    b.onclick = () => {
+      selectScenePill(s);
+      sendCmd({ action: "recall_scene", scene: s });
+    };
+    scenesBar.appendChild(b);
+  }
+}
+
+function decodeInputEvent(type, info) {
+  if (type === 1) {
+    // Part 301 Push button
+    if (info & 0x04) return "Short Press";
+    if (info & 0x08) return "Double Press";
+    if (info & 0x10) return "Long Press Start";
+    if (info & 0x20) return "Long Press Repeat";
+    if (info & 0x40) return "Long Press Stop";
+    return `Button (0x${info.toString(16)})`;
+  }
+  if (type === 3) {
+    // Part 303 Occupancy sensor
+    if (info & 0x08) return "Movement Detected";
+    if (info & 0x02) return "Occupied";
+    if (info & 0x01) return "Vacant";
+    return `Occupancy (0x${info.toString(16)})`;
+  }
+  if (type === 4) {
+    // Part 304 Light sensor
+    return `${info} lx`;
+  }
+  return `Event 0x${info.toString(16)}`;
+}
+
+function inputTypeName(type) {
+  if (type === 1) return "Push Button";
+  if (type === 2) return "Switch";
+  if (type === 3) return "Occupancy";
+  if (type === 4) return "Light Sensor";
+  return `Type ${type}`;
+}
+
+// Show ONLY discovered DALI-2 sensors & buttons + live instance events
+function renderInputs(inputs, inputEvents) {
   const grid = document.getElementById("inputs-grid");
   grid.innerHTML = "";
   let any = false;
   inputs.forEach((item, idx) => {
-    const [present, summary] = item;
-    if (!present && idx >= 8) return;
+    const [present, summary, instTypes] = item;
+    if (!present) return;
     any = true;
     const instCount = summary & 0x1f;
-    const types = [];
-    if (summary & 0x20) types.push("301-Btn");
-    if (summary & 0x40) types.push("303-Occ");
-    if (summary & 0x80) types.push("304-Lux");
+    const instBadges = [];
+    if (Array.isArray(instTypes) && instTypes.length > 0) {
+      instTypes.forEach((t, iIdx) => {
+        instBadges.push(
+          `<span class="chip">I${String(iIdx).padStart(2, "0")}: ${inputTypeName(t)}</span>`
+        );
+      });
+    } else {
+      if (summary & 0x20) instBadges.push('<span class="chip">Push Button</span>');
+      if (summary & 0x40) instBadges.push('<span class="chip">Occupancy</span>');
+      if (summary & 0x80) instBadges.push('<span class="chip">Light Sensor</span>');
+    }
     const el = document.createElement("div");
-    el.className = "lamp-card" + (!present ? " absent" : "");
+    el.className = "group-card";
     el.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">DEV${String(idx).padStart(2, "0")}</span>
-        <span class="badge ${present ? "ok" : ""}">${present ? instCount + " inst" : "Absent"}</span>
+      <div class="tile-head">
+        <strong class="mono">D${String(idx).padStart(2, "0")}</strong>
+        <span class="badge ok">${instCount} inst</span>
       </div>
-      <div class="mono" style="font-size:11px;color:#8b9bb4">${types.join(" ") || "No instances"}</div>
+      <div class="chips-wrap">${instBadges.join("")}</div>
     `;
     grid.appendChild(el);
   });
   if (!any) {
-    grid.innerHTML = '<div class="muted">No DALI-2 input devices scanned yet.</div>';
+    grid.innerHTML = '<div class="subtext">No DALI-2 sensors or buttons found on the bus.</div>';
   }
+
+  const tbody = document.getElementById("input-events-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  const evs = inputEvents || [];
+  if (evs.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5" class="subtext">No recent sensor/button events yet. Press a DALI-2 button to see its address and instance here.</td></tr>';
+    return;
+  }
+  evs.forEach((ev) => {
+    const [dev, inst, type, info, ageS] = ev;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono"><strong>${dev}</strong> <span class="subtext">(D${String(dev).padStart(2, "0")})</span></td>
+      <td class="mono"><strong>${inst}</strong> <span class="subtext">(I${String(inst).padStart(2, "0")})</span></td>
+      <td><span class="badge">${inputTypeName(type)}</span></td>
+      <td><strong>${decodeInputEvent(type, info)}</strong></td>
+      <td class="mono">${ageS === 0 ? "Just now" : `${ageS}s ago`}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-function updatePowerMonitor(data) {
+function handleLiveState(data) {
+  latestState = data;
+  const chipId = data.chip_id || "f5aa11f";
+  const fwVer = data.fw_version || "26.10.15.1915";
+  const iaStr = formatIa(data.knx.ia);
+
+  // Header shows only firmware version
+  document.getElementById("hdr-meta").textContent = `v${fwVer}`;
+
+  const chipPreview = document.getElementById("cfg-chip-id-preview");
+  if (chipPreview) chipPreview.textContent = chipId;
+
+  // 1. Lamps card
   const d = data.dali || {};
-  const channels = data.channels || [];
+  document.getElementById("sum-lamps").textContent = `${d.present || 0} / 64`;
+  const errTag = document.getElementById("sum-lamps-err");
+  if ((d.faulty || 0) > 0) {
+    errTag.style.display = "inline-block";
+    errTag.textContent = `${d.faulty} error${d.faulty === 1 ? "" : "s"}`;
+  } else {
+    errTag.style.display = "none";
+  }
+  const activeCnt = d.active || 0;
+  document.getElementById("sum-comm-state").textContent =
+    d.comm_phase && d.comm_phase !== "idle"
+      ? `Scanning (${d.comm_progress}%)`
+      : `${activeCnt} ${activeCnt === 1 ? "is" : "are"} on`;
+
+  // 2. Power card
   const nomW = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
   const idleWDefault = Number(document.getElementById("idle-watts")?.value ?? 0.4);
-
-  const psuEl = document.getElementById("pwr-psu-state");
-  const psuSub = document.getElementById("pwr-psu-sub");
-  if (d.psu_short) {
-    psuEl.textContent = "SHORT TRIPPED!";
-    psuEl.style.color = "var(--err)";
-    psuSub.textContent = "REM3 latched OFF (>80 ms low) — fix wiring & Re-Arm";
-  } else if (d.psu_on) {
-    psuEl.textContent = "16.0 V ACTIVE";
-    psuEl.style.color = "var(--ok)";
-    psuSub.textContent = "Internal REM3-2415S/A/CTRL supply armed";
-  } else {
-    psuEl.textContent = "EXTERNAL PSU";
-    psuEl.style.color = "var(--primary)";
-    psuSub.textContent = "Internal REM3 disabled via GPIO1";
-  }
-
   let activeW = 0;
   let standbyW = 0;
-  let d4iCount = 0;
-  channels.forEach((ch) => {
+  (data.channels || []).forEach((ch) => {
     const p = channelPowerBreakdown(ch, nomW, idleWDefault);
     if (p.source === "off") return;
-    if (p.source === "D4i") d4iCount++;
     activeW += p.lampW;
     standbyW += p.idleW;
   });
   const totalW = activeW + standbyW;
   const dailyKwh = (totalW * 24) / 1000;
   document.getElementById("pwr-active-w").textContent = `${totalW.toFixed(1)} W`;
-  document.getElementById("pwr-standby-w").textContent =
-    `Lamp output: ${activeW.toFixed(1)} W • Ballast idle: ${standbyW.toFixed(2)} W (${d4iCount} D4i native)`;
   document.getElementById("pwr-daily-kwh").textContent = `${dailyKwh.toFixed(2)} kWh/d`;
-  document.getElementById("pwr-bus-health").textContent =
-    `TX: ${d.tx_frames || 0} frames • Collisions: ${d.collisions || 0}`;
-}
+  document.getElementById("pwr-standby-w").textContent =
+    `Lamps ${activeW.toFixed(1)}W • Idle ${standbyW.toFixed(1)}W`;
 
-function handleLiveState(data) {
-  latestState = data;
-  const chipId = data.chip_id || "f5aa11f";
-  const apPreview = document.getElementById("cfg-ap-ssid-preview");
-  if (apPreview) apPreview.textContent = `KNX-DALI-SETUP-${chipId}`;
-  const chipPreview = document.getElementById("cfg-chip-id-preview");
-  if (chipPreview) chipPreview.textContent = chipId;
-
-  const knxPill = document.getElementById("pill-knx");
-  knxPill.textContent = `KNX: ${formatIa(data.knx.ia)} ${data.knx.prog_mode ? "[PROG]" : data.knx.bus_ok ? "OK" : "SAVEB!"}`;
-  knxPill.className = "pill " + (data.knx.bus_ok ? "ok" : "err");
-
-  const daliPill = document.getElementById("pill-dali");
-  daliPill.textContent = `DALI: ${data.dali.present}/64 ON:${data.dali.active} FLT:${data.dali.faulty}`;
-  daliPill.className = "pill " + (data.dali.faulty > 0 || data.dali.psu_short ? "err" : "ok");
-
-  const mqttPill = document.getElementById("pill-mqtt");
-  mqttPill.textContent = `MQTT: ${data.net.mqtt ? "ONLINE" : "OFF"} (${data.net.ip})`;
-  mqttPill.className = "pill " + (data.net.mqtt ? "ok" : "");
-
-  document.getElementById("pill-uptime").textContent = `UP: ${formatUptime(data.uptime_s)}`;
-  document.getElementById("comm-status-badge").textContent =
-    `Commissioning: ${data.dali.comm_phase.toUpperCase()} (${data.dali.comm_progress}%)`;
-
-  if (data.leds) {
-    data.leds.forEach((rgb, i) => {
-      const dot = document.getElementById("led-" + i);
-      if (dot) {
-        const c = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-        dot.style.background = c;
-        dot.style.boxShadow = `0 0 10px ${c}`;
-      }
-    });
+  // 3. DALI Bus Supply card (compact)
+  const psuEl = document.getElementById("pwr-psu-state");
+  const psuSub = document.getElementById("pwr-psu-sub");
+  const rearmBtn = document.getElementById("btn-rearm-psu");
+  if (d.psu_short) {
+    psuEl.textContent = "SHORT";
+    psuEl.className = "summary-val err";
+    psuSub.textContent = "Short circuit";
+    rearmBtn.style.display = "inline-block";
+  } else if (d.psu_on) {
+    psuEl.textContent = "ON";
+    psuEl.className = "summary-val ok";
+    psuSub.textContent = "Internal";
+    rearmBtn.style.display = "none";
+  } else {
+    psuEl.textContent = "EXT";
+    psuEl.className = "summary-val";
+    psuSub.textContent = "External";
+    rearmBtn.style.display = "none";
   }
 
-  updatePowerMonitor(data);
-  renderOledCanvas(data.oled);
-  renderLamps(data.channels || []);
-  renderGroups(data.groups || []);
-  renderInputs(data.inputs || []);
+  // 4. KNX card (compact)
+  const knxSt = document.getElementById("sum-knx-state");
+  knxSt.textContent = data.knx.bus_ok ? (data.knx.prog_mode ? "PROG" : "ON") : "OFF";
+  knxSt.className = "summary-val " + (data.knx.bus_ok ? "ok" : "err");
+  document.getElementById("sum-knx-ia").textContent = iaStr;
 
-  document.getElementById("info-fw-ver").textContent = data.fw_version || "0.1.0";
+  // 5. MQTT card (compact)
+  const mqttSt = document.getElementById("sum-mqtt-state");
+  mqttSt.textContent = data.net.mqtt ? "ON" : "OFF";
+  mqttSt.className = "summary-val " + (data.net.mqtt ? "ok" : "");
+  document.getElementById("sum-mqtt-sub").textContent = data.net.mqtt ? "Online" : "Offline";
+
+  // 6. Stats card (2-row Uptime + Free RAM)
+  document.getElementById("sum-uptime").textContent = formatUptime(data.uptime_s || 0);
+  document.getElementById("sum-ram").textContent =
+    `${Math.round((data.free_heap || 0) / 1024)} KB`;
+
+  renderLampsGrid(data.channels || []);
+  renderInspector(selectedCh);
+  renderGroups(data.groups || [], data.channels || []);
+  renderScenes(data);
+  renderInputs(data.inputs || [], data.input_events || []);
+
+  document.getElementById("info-fw-ver").textContent = fwVer;
   document.getElementById("info-part").textContent = data.partition || "ota_0";
-  document.getElementById("info-heap").textContent =
-    `${Math.round((data.free_heap || 0) / 1024)} KB free / ${Math.round((data.min_heap || 0) / 1024)} KB min`;
 }
 
-function connectWebSocket() {
-  const proto = location.protocol === "https:" ? "wss:" : "ws:";
-  const url = `${proto}//${location.host}/ws`;
-  const wsPill = document.getElementById("pill-ws");
+async function applyScenario(name) {
   try {
-    ws = new WebSocket(url);
-  } catch (_) {
-    setTimeout(connectWebSocket, 2000);
-    return;
-  }
-  ws.onopen = () => {
-    wsPill.innerHTML = '<span class="dot"></span>WS: Live';
-    wsPill.className = "pill ok";
-    syncGatewayTime();
-  };
-  ws.onmessage = (ev) => {
-    try {
-      const msg = JSON.parse(ev.data);
-      if (msg.type === "live") handleLiveState(msg);
-    } catch (_) {}
-  };
-  ws.onclose = () => {
-    wsPill.innerHTML = '<span class="dot"></span>WS: Reconnecting';
-    wsPill.className = "pill err";
-    setTimeout(connectWebSocket, 2000);
-  };
+    const res = await fetch("/api/scenario", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario: name }),
+    });
+    if (res.ok) {
+      const st = await res.json();
+      handleLiveState(st);
+      loadErrorLogs();
+      loadDebugTrace();
+    }
+  } catch (_) {}
+}
+
+function connectLive() {
+  const wsPill = document.getElementById("pill-ws");
+  const wsText = document.getElementById("ws-text");
+
+  fetch("/api/state")
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((st) => {
+      mockMode = true;
+      wsPill.className = "conn-badge ok";
+      wsText.textContent = "Simulated Lab";
+      handleLiveState(st);
+      setInterval(async () => {
+        try {
+          const r = await fetch("/api/state");
+          if (r.ok) handleLiveState(await r.json());
+        } catch (_) {}
+      }, 1000);
+    })
+    .catch(() => {
+      document.getElementById("scenario-bar").style.display = "none";
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const url = `${proto}//${location.host}/ws`;
+      try {
+        ws = new WebSocket(url);
+      } catch (_) {
+        setTimeout(connectLive, 2000);
+        return;
+      }
+      ws.onopen = () => {
+        wsPill.className = "conn-badge ok";
+        wsText.textContent = "Live";
+        syncGatewayTime();
+      };
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === "live") handleLiveState(msg);
+        } catch (_) {}
+      };
+      ws.onclose = () => {
+        wsPill.className = "conn-badge err";
+        wsText.textContent = "Reconnecting";
+        setTimeout(connectLive, 2000);
+      };
+    });
 }
 
 async function sendCmd(payload) {
@@ -1624,11 +2844,15 @@ async function sendCmd(payload) {
     ws.send(JSON.stringify(payload));
     return;
   }
-  await fetch("/api/command", {
+  const res = await fetch("/api/command", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+  if (mockMode && res.ok) {
+    const r = await fetch("/api/state");
+    if (r.ok) handleLiveState(await r.json());
+  }
 }
 
 async function syncGatewayTime() {
@@ -1641,160 +2865,39 @@ async function syncGatewayTime() {
   } catch (_) {}
 }
 
-async function openGearModal(ch) {
-  const modal = document.getElementById("gear-modal");
-  const body = document.getElementById("modal-body");
-  document.getElementById("modal-title").textContent =
-    `Ballast Inspector & Parameter Tuning — A${String(ch).padStart(2, "0")}`;
-  body.innerHTML = '<p class="muted">Querying DALI ballast registers...</p>';
-  modal.style.display = "flex";
-
-  await fetch("/api/command", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "query_gear", index: ch }),
-  });
-  const res = await fetch(`/api/channel?ch=${ch}`);
-  const d = await res.json();
-
-  const ftOptions = FADE_TIME_LABELS.map(
-    (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
-  ).join("");
-  const frOptions = FADE_RATE_LABELS.slice(1)
-    .map(
-      (lbl, idx) =>
-        `<option value="${idx + 1}" ${d.fade_rate === idx + 1 ? "selected" : ""}>${lbl}</option>`
-    )
-    .join("");
-  const xyX = ((d.xy_x || 20480) / 65535).toFixed(4);
-  const xyY = ((d.xy_y || 21500) / 65535).toFixed(4);
-
-  body.innerHTML = `
-    <div class="sys-info-box">
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-        <span class="badge ${d.gear_failure ? "err" : "ok"}">Driver: ${d.gear_failure ? "FAULT" : "OK"}</span>
-        <span class="badge ${d.lamp_failure ? "err" : "ok"}">Lamp: ${d.lamp_failure ? "FAILURE" : "OK"}</span>
-        <span class="badge ${d.arc_on ? "ok" : ""}">Arc: ${d.arc_on ? "ON" : "OFF"}</span>
-        <span class="badge ${d.limit_error ? "warn" : ""}">Limit: ${d.limit_error ? "OUT OF RANGE" : "OK"}</span>
-        <span class="badge">DT${d.device_type} (v${d.version})</span>
-        <span class="badge">Phys Min: ${d.physical_min} (${(daliArcToPowerRatio(d.physical_min) * 100).toFixed(2)}%)</span>
-      </div>
-      <div><strong>Group Memberships (G00..G15):</strong> ${formatGroupList(d.groups)}</div>
-      <div><strong>Scene Levels (S01..S16):</strong> ${(d.scenes || []).map((v, i) => `S${String(i + 1).padStart(2, "0")}:${v === 255 ? "MASK" : Math.round((v * 100) / 254) + "%"}`).join(" • ")}</div>
-    </div>
-    <h3 style="margin:10px 0 6px;font-size:13px">DT6 Operating Limits &amp; Fade Curve (IEC 62386-102)</h3>
-    <div class="field-row">
-      <div class="field"><span>Min Level (1..254, PhysMin=${d.physical_min})</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></div>
-      <div class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></div>
-      <div class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><span>System-Failure Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></div>
-      <div class="field"><span>Fade Time (IEC 62386 Table 15)</span><select id="gm-ft">${ftOptions}</select></div>
-      <div class="field"><span>Fade Rate (IEC 62386 Table 16)</span><select id="gm-fr">${frOptions}</select></div>
-    </div>
-    <h3 style="margin:10px 0 6px;font-size:13px">Power Reporting &amp; Manual Calculation (IEC 62386-252 D4i MB202 vs Manual)</h3>
-    <div class="sys-info-box" style="margin-bottom:8px">
-      <div><strong>Native D4i Power (Memory Bank 202):</strong> ${
-        d.d4i_power_supported
-          ? `<span class="badge ok">Supported</span> ${((d.d4i_active_power_deciwatts || 0) / 10).toFixed(1)} W • Energy: ${d.d4i_active_energy_wh || 0} Wh`
-          : '<span class="badge">Not supported by ballast (uses 100% + Idle calculation below)</span>'
-      }</div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <span>Lamp Power at 100% Brightness (W)</span>
-        <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${((d.full_power_deciwatts || 150) / 10).toFixed(1)}">
-      </div>
-      <div class="field">
-        <span>Ballast Idle / Standby Power (W)</span>
-        <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${((d.idle_power_centiwatts || 40) / 100).toFixed(2)}">
-      </div>
-    </div>
-    <label class="field-check" style="margin:4px 0 8px">
-      <input type="checkbox" id="gm-pwr-override" ${d.use_manual_power_override ? "checked" : ""}>
-      <span>Override native D4i power reporting with calculated (100% Lamp + Ballast Idle) power</span>
-    </label>
-    <h3 style="margin:10px 0 6px;font-size:13px">DT8 Colour Control (IEC 62386-209: Tc / RGBW / CIE 1931 xy)</h3>
-    <div class="field-row">
-      <div class="field">
-        <span>Tunable White CCT (K)</span>
-        <input type="number" min="1800" max="8000" step="100" value="${d.kelvin || 4000}"
-          onchange="sendCmd({action:'set_cct',target:'ch',index:${ch},kelvin:Number(this.value)})">
-      </div>
-      <div class="field">
-        <span>CIE 1931 x (0.00..0.80)</span>
-        <input type="number" id="gm-xy-x" min="0" max="0.8" step="0.005" value="${xyX}">
-      </div>
-      <div class="field">
-        <span>CIE 1931 y (0.00..0.80)</span>
-        <input type="number" id="gm-xy-y" min="0" max="0.8" step="0.005" value="${xyY}">
-      </div>
-      <div class="field" style="justify-content:flex-end">
-        <button class="btn" type="button" onclick="sendCmd({action:'set_xy',target:'ch',index:${ch},x:Math.round(Number(document.getElementById('gm-xy-x').value)*65535),y:Math.round(Number(document.getElementById('gm-xy-y').value)*65535),brightness:${d.level || 200}})">Apply CIE xy</button>
-      </div>
-    </div>
-    <div class="btn-group" style="margin-top:10px">
-      <button class="btn btn-primary" onclick="saveGearParams(${ch})">Write DT6 Parameters to Ballast (DTR0 + 2x Store)</button>
-      <button class="btn" onclick="openGearModal(${ch})">Re-Query Registers</button>
-    </div>
-  `;
-}
-
-async function saveGearParams(ch) {
-  await sendCmd({
-    action: "configure_gear",
-    index: ch,
-    min_level: Number(document.getElementById("gm-min").value),
-    max_level: Number(document.getElementById("gm-max").value),
-    power_on_level: Number(document.getElementById("gm-pon").value),
-    system_failure_level: Number(document.getElementById("gm-fail").value),
-    fade_time: Number(document.getElementById("gm-ft").value),
-    fade_rate: Number(document.getElementById("gm-fr").value),
-    full_power_deciwatts: Math.round(Number(document.getElementById("gm-full-w").value) * 10),
-    idle_power_centiwatts: Math.round(Number(document.getElementById("gm-idle-w").value) * 100),
-    use_manual_power_override: document.getElementById("gm-pwr-override").checked,
-  });
-  closeGearModal();
-}
-
-function closeGearModal() {
-  document.getElementById("gear-modal").style.display = "none";
-}
-
 async function loadConfig() {
-  const res = await fetch("/api/config");
-  const c = await res.json();
-  document.getElementById("cfg-wifi-enabled").checked = !!c.wifi_enabled;
-  document.getElementById("cfg-ap-fallback").checked = !!c.ap_fallback_enabled;
-  document.getElementById("cfg-wifi-ps").checked = !!c.wifi_power_save;
-  document.getElementById("cfg-wifi-ssid").value = c.wifi_ssid || "";
-  document.getElementById("cfg-wifi-pass").value = c.wifi_password || "";
-  document.getElementById("cfg-hostname").value = c.hostname || "knx-dali-gw";
-  document.getElementById("cfg-mqtt-enabled").checked = !!c.mqtt_enabled;
-  document.getElementById("cfg-ha-enabled").checked = !!c.ha_discovery_enabled;
-  document.getElementById("cfg-mqtt-host").value = c.mqtt_host || "";
-  document.getElementById("cfg-mqtt-port").value = c.mqtt_port || 1883;
-  document.getElementById("cfg-mqtt-user").value = c.mqtt_username || "";
-  document.getElementById("cfg-mqtt-pass").value = c.mqtt_password || "";
-  document.getElementById("cfg-mqtt-base").value = c.mqtt_base_topic || "knx_dali";
-  document.getElementById("cfg-ha-prefix").value = c.ha_discovery_prefix || "homeassistant";
-  document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
-  document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
-  document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+  try {
+    const res = await fetch("/api/config");
+    const c = await res.json();
+    document.getElementById("cfg-wifi-enabled").checked = !!c.wifi_enabled;
+    document.getElementById("cfg-wifi-ps").checked = !!c.wifi_power_save;
+    document.getElementById("cfg-wifi-ssid").value = c.wifi_ssid || "";
+    document.getElementById("cfg-wifi-pass").value = c.wifi_password || "";
+    document.getElementById("cfg-hostname").value = c.hostname || "knx-dali-gw";
+    document.getElementById("cfg-mqtt-enabled").checked = !!c.mqtt_enabled;
+    document.getElementById("cfg-mqtt-host").value = c.mqtt_host || "";
+    document.getElementById("cfg-mqtt-port").value = c.mqtt_port || 1883;
+    document.getElementById("cfg-mqtt-user").value = c.mqtt_username || "";
+    document.getElementById("cfg-mqtt-pass").value = c.mqtt_password || "";
+    document.getElementById("cfg-mqtt-base").value = c.mqtt_base_topic || "knx_dali";
+    document.getElementById("cfg-ha-prefix").value = c.ha_discovery_prefix || "homeassistant";
+    document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
+    document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
+    document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+  } catch (_) {}
 }
 
 async function saveConfig(ev) {
   ev.preventDefault();
   const payload = {
     wifi_enabled: document.getElementById("cfg-wifi-enabled").checked,
-    ap_fallback_enabled: document.getElementById("cfg-ap-fallback").checked,
+    ap_fallback_enabled: true,
     wifi_power_save: document.getElementById("cfg-wifi-ps").checked,
     wifi_ssid: document.getElementById("cfg-wifi-ssid").value,
     wifi_password: document.getElementById("cfg-wifi-pass").value,
     hostname: document.getElementById("cfg-hostname").value,
     mqtt_enabled: document.getElementById("cfg-mqtt-enabled").checked,
-    ha_discovery_enabled: document.getElementById("cfg-ha-enabled").checked,
+    ha_discovery_enabled: true,
     mqtt_host: document.getElementById("cfg-mqtt-host").value,
     mqtt_port: Number(document.getElementById("cfg-mqtt-port").value),
     mqtt_username: document.getElementById("cfg-mqtt-user").value,
@@ -1811,37 +2914,42 @@ async function saveConfig(ev) {
     body: JSON.stringify(payload),
   });
   const msg = document.getElementById("cfg-save-msg");
-  msg.textContent = "Saved to NVS & applied.";
+  msg.textContent = "Settings saved.";
   setTimeout(() => (msg.textContent = ""), 3000);
 }
 
 async function loadDebugTrace() {
-  const res = await fetch("/api/debug");
-  const d = await res.json();
-  window.lastTraceData = d;
-  document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
-  document.getElementById("trace-stats").textContent =
-    `Session: ${d.active ? "ACTIVE (Recording)" : "PAUSED"} • Total Frames: ${d.total_frames} • Collisions: ${d.total_collisions} • Bus Errors: ${d.total_errors}`;
-  const tbody = document.getElementById("trace-tbody");
-  tbody.innerHTML = "";
-  (d.entries || []).forEach((e) => {
-    const tr = document.createElement("tr");
-    const hexW = e.bits === 24 ? 6 : 4;
-    const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
-    const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
-    tr.innerHTML = `
-      <td class="mono">${e.seq}</td>
-      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-      <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
-      <td class="mono">${e.bits}-bit</td>
-      <td class="mono">${rawHex}</td>
-      <td class="mono"><strong>${e.target}</strong></td>
-      <td class="mono">${e.mnemonic}</td>
-      <td class="mono">${e.detail}</td>
-      <td><span class="badge ${stClass}">${e.status}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  try {
+    const res = await fetch("/api/debug");
+    const d = await res.json();
+    window.lastTraceData = d;
+    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
+    const cap = d.capacity || 512;
+    const buf = d.buffered ?? (d.entries ? d.entries.length : 0);
+    const over = d.total_frames > buf ? d.total_frames - buf : 0;
+    document.getElementById("trace-stats").textContent =
+      `${d.active ? "Recording on gateway (continues with browser closed)" : "Paused"} • Buffer: ${buf}/${cap} frames${over > 0 ? ` (${over} older overwritten)` : ""} • ${d.total_collisions} collisions`;
+    const tbody = document.getElementById("trace-tbody");
+    tbody.innerHTML = "";
+    (d.entries || []).forEach((e) => {
+      const tr = document.createElement("tr");
+      const hexW = e.bits === 24 ? 6 : 4;
+      const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
+      const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
+      tr.innerHTML = `
+        <td class="mono">${e.seq}</td>
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
+        <td class="mono">${e.bits}-bit</td>
+        <td class="mono">${rawHex}</td>
+        <td class="mono"><strong>${e.target}</strong></td>
+        <td class="mono">${e.mnemonic}</td>
+        <td class="mono">${e.detail}</td>
+        <td><span class="badge ${stClass}">${e.status}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (_) {}
 }
 
 async function controlDebug(action) {
@@ -1855,27 +2963,29 @@ async function controlDebug(action) {
 }
 
 async function loadErrorLogs() {
-  const res = await fetch("/api/logs");
-  const d = await res.json();
-  window.lastLogData = d;
-  const tbody = document.getElementById("logs-tbody");
-  tbody.innerHTML = "";
-  (d.entries || []).forEach((e) => {
-    const tr = document.createElement("tr");
-    const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
-    const addrStr = e.address === 65535 ? "SYS/BUS" : `A${String(e.address & 63).padStart(2, "0")}`;
-    tr.innerHTML = `
-      <td class="mono">${e.seq}</td>
-      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-      <td class="mono">${e.source}</td>
-      <td><span class="badge ${sevClass}">${e.severity}</span></td>
-      <td><strong>E${e.code}: ${e.title}</strong><br><span class="mono muted">${e.symbol}</span></td>
-      <td class="mono">${addrStr}</td>
-      <td class="mono">×${e.count}</td>
-      <td><div>${e.detail}</div><div class="muted">${e.description} — <em>Remedy: ${e.remedy}</em></div></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  try {
+    const res = await fetch("/api/logs");
+    const d = await res.json();
+    window.lastLogData = d;
+    const tbody = document.getElementById("logs-tbody");
+    tbody.innerHTML = "";
+    (d.entries || []).forEach((e) => {
+      const tr = document.createElement("tr");
+      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
+      const addrStr = e.address === 65535 ? "Bus / System" : `Lamp A${String(e.address & 63).padStart(2, "0")}`;
+      tr.innerHTML = `
+        <td class="mono">${e.seq}</td>
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono">${e.source}</td>
+        <td><span class="badge ${sevClass}">${e.severity}</span></td>
+        <td><strong>E${e.code}: ${e.title}</strong></td>
+        <td class="mono">${addrStr}</td>
+        <td class="mono">×${e.count}</td>
+        <td><div>${e.description || e.detail}</div><div class="subtext">${e.remedy}</div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (_) {}
 }
 
 async function clearErrorLogs() {
@@ -1883,27 +2993,8 @@ async function clearErrorLogs() {
   await loadErrorLogs();
 }
 
-async function loadErrorCatalog() {
-  const tbody = document.getElementById("catalog-tbody");
-  if (tbody.children.length > 0) return;
-  const res = await fetch("/api/errors");
-  const items = await res.json();
-  items.forEach((c) => {
-    if (c.code === 0) return;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="mono"><strong>E${c.code}</strong></td>
-      <td class="mono">${c.symbol}</td>
-      <td><strong>${c.title}</strong></td>
-      <td>${c.description}</td>
-      <td>${c.remedy}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
 function exportJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj || {}, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -1911,52 +3002,49 @@ function exportJson(filename, obj) {
 }
 
 function uploadOta(target) {
-  const input = document.getElementById("file-" + target);
+  const fileInput = document.getElementById("file-" + target);
+  const prog = document.getElementById("prog-" + target);
   const status = document.getElementById("status-" + target);
-  const bar = document.getElementById("prog-" + target);
-  if (!input.files || !input.files[0]) {
+  if (!fileInput.files || fileInput.files.length === 0) {
     status.textContent = "Please choose a .bin file first.";
     return;
   }
-  const file = input.files[0];
-  bar.style.width = "0%";
+  const file = fileInput.files[0];
   status.textContent = `Uploading ${file.name} (${Math.round(file.size / 1024)} KB)...`;
+  prog.style.width = "0%";
 
   const xhr = new XMLHttpRequest();
   xhr.open("POST", `/api/ota/${target}`, true);
-  xhr.setRequestHeader("Content-Type", "application/octet-stream");
-  xhr.upload.onprogress = (e) => {
-    if (e.lengthComputable) {
-      const pct = Math.round((e.loaded * 100) / e.total);
-      bar.style.width = pct + "%";
-      status.textContent = `Uploading ${file.name}: ${pct}% (${Math.round(e.loaded / 1024)} / ${Math.round(e.total / 1024)} KB)`;
+  xhr.upload.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      prog.style.width = Math.round((ev.loaded * 100) / ev.total) + "%";
     }
   };
   xhr.onload = () => {
     if (xhr.status === 200) {
-      bar.style.width = "100%";
+      prog.style.width = "100%";
       status.textContent =
         target === "firmware"
-          ? "Firmware verified & flashed! Gateway is rebooting..."
-          : "LittleFS partition flashed & mounted! Reloading UI...";
-      if (target === "littlefs") setTimeout(() => location.reload(), 1500);
+          ? "Firmware updated. Gateway is restarting..."
+          : "Web interface updated. Reloading...";
+      setTimeout(() => location.reload(), 3000);
     } else {
-      status.textContent = `Upload failed (HTTP ${xhr.status}): ${xhr.responseText}`;
+      status.textContent = `Update failed (${xhr.status}): ${xhr.responseText}`;
     }
   };
   xhr.onerror = () => {
-    status.textContent = "Network error during binary upload.";
+    status.textContent = "Upload connection interrupted.";
   };
   xhr.send(file);
 }
 
 async function rebootDevice() {
-  await sendCmd({ action: "reboot" });
+  await fetch("/api/reboot", { method: "POST" });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  connectWebSocket();
+document.addEventListener("DOMContentLoaded", () => {
+  initUi();
+  connectLive();
 });
 )WEBUI";
 inline constexpr std::size_t app_js_size = sizeof(app_js_data) - 1;

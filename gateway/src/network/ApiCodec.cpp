@@ -237,6 +237,15 @@ std::optional<control::Command> parse_api_command_json(const char* json, std::si
         if (const auto v = read_bool(buf, "use_manual_power_override")) {
             gcfg.use_manual_power_override = *v ? 1U : 0U;
         }
+        if (const auto v = read_bool(buf, "switch_only")) {
+            gcfg.switch_only = *v ? 1U : 0U;
+        }
+        if (const auto v = read_int(buf, "device_type"); v && *v >= 0 && *v <= 8) {
+            gcfg.device_type_override = static_cast<std::uint8_t>(*v);
+        }
+        if (const auto v = read_int(buf, "groups_mask"); v && *v >= 0 && *v <= 65535) {
+            gcfg.groups_mask = static_cast<std::uint32_t>(*v);
+        }
         return control::ConfigureGear{*s, gcfg};
     }
 

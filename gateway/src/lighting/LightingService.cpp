@@ -49,9 +49,21 @@ LightingService::LightingService(dali::Transport& transport, storage::LevelStore
 
 void LightingService::configure(const config::Configuration& configuration) noexcept {
     config_ = configuration;
+    for (std::size_t i = 0; i < gear_details_.size(); ++i) {
+        if (config_.ballasts[i].switch_only) {
+            gear_details_[i].switch_only = true;
+            gear_details_[i].device_type = 7;
+        }
+    }
 }
 
 ControlResult LightingService::set_level(dali::Address address, dali::ArcLevel target) {
+    if (const auto ch = address.as_short()) {
+        const auto& det = gear_details_[ch->value()];
+        if ((det.switch_only || det.device_type == 7U) && target.value() > 0U) {
+            target = *dali::ArcLevel::from(dali::ArcLevel::maximum);
+        }
+    }
     return apply_level(address, target);
 }
 
@@ -889,7 +901,8 @@ std::uint16_t LightingService::effective_power_deciwatts(dali::ShortAddress addr
     if (details.d4i_power_supported && !details.use_manual_power_override) {
         return details.d4i_active_power_deciwatts;
     }
-    if (details.full_power_deciwatts == 0 && details.idle_power_centiwatts == 0) {
+    if (!details.power_configured && details.full_power_deciwatts == 0 &&
+        details.idle_power_centiwatts == 0) {
         return 0;
     }
     const auto st = channel_states_[address.value()];
@@ -919,6 +932,9 @@ ControlResult LightingService::query_gear_details(dali::ShortAddress address) {
     if (const auto dev_type = transport_.query(address, dali::cmd::query_device_type);
         dev_type.status == dali::TransportStatus::Ok && dev_type.value) {
         details.device_type = *dev_type.value;
+        if (details.device_type == 7U || config_.ballasts[address.value()].switch_only) {
+            details.switch_only = true;
+        }
     }
     if (const auto ver = transport_.query(address, dali::cmd::query_version_number);
         ver.status == dali::TransportStatus::Ok && ver.value) {
@@ -1093,12 +1109,44 @@ ControlResult LightingService::configure_gear(dali::ShortAddress address, const 
     }
     if (cfg.full_power_deciwatts != 0xFFFFU) {
         details.full_power_deciwatts = cfg.full_power_deciwatts;
+        details.power_configured = true;
     }
     if (cfg.idle_power_centiwatts != 0xFFFFU) {
         details.idle_power_centiwatts = cfg.idle_power_centiwatts;
+        details.power_configured = true;
     }
     if (cfg.use_manual_power_override <= 1U) {
         details.use_manual_power_override = (cfg.use_manual_power_override != 0U);
+    }
+    if (cfg.switch_only <= 1U) {
+        details.switch_only = (cfg.switch_only != 0U);
+    }
+    if (cfg.device_type_override <= 8U) {
+        details.device_type = cfg.device_type_override;
+        details.switch_only = (cfg.device_type_override == 7U);
+    }
+    if (cfg.groups_mask <= 0xFFFFU) {
+        const auto desired = static_cast<std::uint16_t>(cfg.groups_mask);
+        std::uint16_t current = details.groups;
+        if (const auto grp = transport_.read_groups(address);
+            grp.status == dali::TransportStatus::Ok && grp.groups) {
+            current = *grp.groups;
+        }
+        const auto diff = static_cast<std::uint16_t>(current ^ desired);
+        for (unsigned g = 0; g < dali::Group::capacity; ++g) {
+            if ((diff & (1U << g)) == 0) {
+                continue;
+            }
+            const bool member = (desired & (1U << g)) != 0;
+            const auto st = transport_.set_group_membership(address, *dali::Group::from(g), member);
+            if (st != dali::TransportStatus::Ok) {
+                result.error = ControlError::TransportFailure;
+                result.transport_status = st;
+                return result;
+            }
+        }
+        details.groups = desired;
+        config_.group_masks[address.value()] = desired;
     }
     details.probed = true;
     return result;

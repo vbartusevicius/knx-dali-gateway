@@ -1,111 +1,44 @@
 "use strict";
 
 let ws = null;
+let mockMode = false;
 let lampFilter = "all";
+let selectedCh = 0;
+let selectedGrp = 0;
+let selectedScene = 0;
+let renderedInspectorCh = -1;
+let renderedInspectorSig = "";
+let selectedColorModeByCh = {};
 let latestState = null;
+let channelDetailsCache = {};
 window.lastLogData = { entries: [] };
 window.lastTraceData = { entries: [] };
 
-function initTabs() {
-  document.querySelectorAll(".tabbar .tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tabbar .tab").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const target = document.getElementById("panel-" + btn.dataset.tab);
-      if (target) target.classList.add("active");
-      if (btn.dataset.tab === "configuration") loadConfig();
-      if (btn.dataset.tab === "logs") {
-        loadDebugTrace();
-        loadErrorLogs();
-        loadErrorCatalog();
-      }
-    });
-  });
+// IEC 62386-201..209 DALI Device Types
+const DEVICE_TYPE_NAMES = {
+  0: "Fluorescent Lamp (DT0)",
+  1: "Emergency Light (DT1)",
+  2: "Discharge / Arc Lamp (DT2)",
+  3: "Low-Voltage Halogen (DT3)",
+  4: "Incandescent Dimmer (DT4)",
+  5: "0–10 V Converter (DT5)",
+  6: "LED Driver (DT6)",
+  7: "Relay Switch On/Off (DT7)",
+  8: "Color / Tunable LED (DT8)",
+};
 
-  const scenesBar = document.getElementById("scenes-bar");
-  for (let s = 0; s < 16; s++) {
-    const b = document.createElement("button");
-    b.className = "btn btn-sm mono";
-    b.textContent = "S" + String(s + 1).padStart(2, "0");
-    b.title = "Click: Recall Scene #" + (s + 1) + " | Shift+Click: Store Current Levels to Scene #" + (s + 1);
-    b.onclick = (ev) => {
-      if (ev.shiftKey) {
-        sendCmd({ action: "store_scene", scene: s });
-      } else {
-        sendCmd({ action: "recall_scene", scene: s });
-      }
-    };
-    scenesBar.appendChild(b);
-  }
+const DEVICE_TYPE_SHORT = {
+  0: "Fluor",
+  1: "Emerg",
+  2: "Arc",
+  3: "Halogen",
+  4: "Incand",
+  5: "0-10V",
+  6: "LED",
+  7: "Switch",
+  8: "LED",
+};
 
-  document.getElementById("bcast-level").addEventListener("input", (e) => {
-    document.getElementById("bcast-level-val").textContent = e.target.value;
-  });
-  document.getElementById("bcast-cct").addEventListener("input", (e) => {
-    document.getElementById("bcast-cct-val").textContent = e.target.value + "K";
-  });
-  document.getElementById("btn-oled-page").onclick = () => sendCmd({ action: "oled_page" });
-  document.getElementById("btn-oled-geom").onclick = () => sendCmd({ action: "oled_toggle" });
-}
-
-function formatIa(ia) {
-  if (!ia || ia === 0xffff) return "UNPROG";
-  return ((ia >> 12) & 0xf) + "." + ((ia >> 8) & 0xf) + "." + (ia & 0xff);
-}
-
-function formatUptime(sec) {
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (d > 0) return `${d}d ${String(h).padStart(2, "0")}h`;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
-function formatTimestamp(epochMs, uptimeMs) {
-  if (epochMs && epochMs > 1700000000000) {
-    return new Date(epochMs).toISOString().replace("T", " ").slice(0, 19) + " UTC";
-  }
-  return `T+${(uptimeMs / 1000).toFixed(2)}s`;
-}
-
-function renderOledCanvas(oled) {
-  if (!oled || !oled.hex) return;
-  const canvas = document.getElementById("oled-canvas");
-  const w = oled.w || 128;
-  const h = oled.h || 32;
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = (w * 2) + "px";
-    canvas.style.height = (h * 2) + "px";
-  }
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(w, h);
-  const hex = oled.hex;
-  const fg = h === 64 ? [56, 189, 248] : [248, 250, 252];
-  for (let page = 0; page < h / 8; page++) {
-    for (let x = 0; x < w; x++) {
-      const idx = (page * w + x) * 2;
-      const byte = parseInt(hex.slice(idx, idx + 2), 16) || 0;
-      for (let bit = 0; bit < 8; bit++) {
-        const y = page * 8 + bit;
-        const p = (y * w + x) * 4;
-        const on = (byte & (1 << bit)) !== 0;
-        img.data[p] = on ? fg[0] : 5;
-        img.data[p + 1] = on ? fg[1] : 7;
-        img.data[p + 2] = on ? fg[2] : 11;
-        img.data[p + 3] = 255;
-      }
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  document.getElementById("oled-meta").textContent =
-    `OLED ${w}×${h} • Page ${(oled.page || 0) + 1}/3`;
-}
-
-// IEC 62386-102 Table 15 & 16 human-readable Fade Time / Fade Rate tables
 const FADE_TIME_LABELS = [
   "0 — No fade (<0.7 s)",
   "1 — 0.7 s",
@@ -144,11 +77,28 @@ const FADE_RATE_LABELS = [
   "15 — 2.8 steps/s (90.5 s)",
 ];
 
-// IEC 62386-102 §9.1 logarithmic dimming curve: X(n) = 10^((n - 254) / (253/3))
+const COLOR_PRESETS = [
+  { name: "Warm White", r: 255, g: 190, b: 110, hex: "#ffbe6e" },
+  { name: "Daylight", r: 240, g: 248, b: 255, hex: "#f0f8ff" },
+  { name: "Amber", r: 255, g: 140, b: 20, hex: "#ff8c14" },
+  { name: "Coral Red", r: 244, g: 63, b: 94, hex: "#f43f5e" },
+  { name: "Emerald", r: 16, g: 185, b: 129, hex: "#10b981" },
+  { name: "Sky Blue", r: 56, g: 189, b: 248, hex: "#38bdf8" },
+  { name: "Indigo", r: 99, g: 102, b: 241, hex: "#6366f1" },
+  { name: "Violet", r: 168, g: 85, b: 247, hex: "#a855f7" },
+];
+
 function daliArcToPowerRatio(arc) {
   if (!arc || arc <= 0) return 0.0;
   if (arc >= 254) return 1.0;
   return Math.pow(10, (arc - 254) / (253 / 3));
+}
+
+function kelvinToCss(k) {
+  if (!k || k <= 2700) return "#ffb454";
+  if (k <= 3500) return "#ffd180";
+  if (k <= 4500) return "#fff1d0";
+  return "#cfe8ff";
 }
 
 function rgbToHex(r, g, b) {
@@ -156,41 +106,28 @@ function rgbToHex(r, g, b) {
   return "#" + to2(r) + to2(g) + to2(b);
 }
 
-function sendHexRgb(target, index, hex) {
-  const clean = (hex || "#ffffff").replace("#", "");
-  const r = parseInt(clean.slice(0, 2), 16) || 0;
-  const g = parseInt(clean.slice(2, 4), 16) || 0;
-  const b = parseInt(clean.slice(4, 6), 16) || 0;
-  sendCmd({ action: "set_rgb", target, index, r, g, b });
+function formatIa(ia) {
+  if (!ia || ia === 0xffff) return "Unprogrammed";
+  return ((ia >> 12) & 0xf) + "." + ((ia >> 8) & 0xf) + "." + (ia & 0xff);
 }
 
-function formatGroupList(mask) {
-  if (!mask) return "No groups";
-  const list = [];
-  for (let g = 0; g < 16; g++) {
-    if (mask & (1 << g)) list.push("G" + String(g).padStart(2, "0"));
+function formatUptime(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatTimestamp(epochMs, uptimeMs) {
+  if (epochMs && epochMs > 1700000000000) {
+    return new Date(epochMs).toISOString().replace("T", " ").slice(0, 19);
   }
-  return list.join(", ");
+  return `+${(uptimeMs / 1000).toFixed(1)}s`;
 }
 
-function setLampFilter(filter, btn) {
-  lampFilter = filter;
-  document.querySelectorAll(".filter-bar .btn").forEach((b) => b.classList.remove("active"));
-  if (btn) btn.classList.add("active");
-  if (latestState) renderLamps(latestState.channels || []);
-}
-
-function decodeStatusBits(st) {
-  const flags = [];
-  if (st & 0x01) flags.push("GEAR_FAIL");
-  if (st & 0x02) flags.push("LAMP_FAIL");
-  if (st & 0x08) flags.push("LIMIT_ERR");
-  if (st & 0x10) flags.push("FADING");
-  if (st & 0x20) flags.push("RESET");
-  if (st & 0x80) flags.push("PWR_CYC");
-  return flags;
-}
-
+// Honors 0 W when powerConfigured is true!
 function channelPowerBreakdown(ch, defaultFullW, defaultIdleW) {
   const [
     present,
@@ -204,316 +141,1024 @@ function channelPowerBreakdown(ch, defaultFullW, defaultIdleW) {
     ,
     ,
     ,
-    ,
+    devType,
     d4iSupported,
     manualOverride,
     d4iPowerDeciwatts,
     fullPowerDeciwatts,
     idlePowerCentiwatts,
+    powerConfigured,
+    switchOnly,
   ] = ch;
   if (!present) return { totalW: 0, lampW: 0, idleW: 0, source: "off" };
   if (d4iSupported && !manualOverride) {
     const w = (d4iPowerDeciwatts || 0) / 10.0;
     return { totalW: w, lampW: w, idleW: 0, source: "D4i" };
   }
-  const fullW = fullPowerDeciwatts > 0 ? fullPowerDeciwatts / 10.0 : defaultFullW;
-  const idleW = idlePowerCentiwatts > 0 ? idlePowerCentiwatts / 100.0 : defaultIdleW;
-  const lampW = level > 0 ? fullW * daliArcToPowerRatio(level) : 0.0;
+  const fullW = powerConfigured ? (fullPowerDeciwatts || 0) / 10.0 : defaultFullW;
+  const idleW = powerConfigured ? (idlePowerCentiwatts || 0) / 100.0 : defaultIdleW;
+  const isSwitch = Boolean(switchOnly || devType === 7);
+  const ratio = level > 0 ? (isSwitch ? 1.0 : daliArcToPowerRatio(level)) : 0.0;
+  const lampW = fullW * ratio;
   return { totalW: idleW + lampW, lampW, idleW, source: "calc" };
 }
 
-function renderLamps(channels) {
+function decodeTypeShort(dt8, devType, switchOnly) {
+  if (switchOnly || devType === 7) return "Switch";
+  const base = DEVICE_TYPE_SHORT[devType] || `DT${devType}`;
+  if (dt8 & 4) return `${base}·RGBW`;
+  if (dt8 & 2) return `${base}·RGB`;
+  if (dt8 & 1) return `${base}·CCT`;
+  if (dt8 & 8) return `${base}·XY`;
+  return base;
+}
+
+function initUi() {
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.has("ch")) {
+    const c = Number(urlParams.get("ch"));
+    if (c >= 0 && c < 64) selectedCh = c;
+  }
+
+  document.querySelectorAll(".nav-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      const target = document.getElementById("panel-" + btn.dataset.tab);
+      if (target) target.classList.add("active");
+      if (btn.dataset.tab === "settings") loadConfig();
+      if (btn.dataset.tab === "logs") {
+        loadErrorLogs();
+        loadDebugTrace();
+      }
+    });
+  });
+}
+
+function setLampFilter(filter, btn) {
+  lampFilter = filter;
+  document.querySelectorAll(".filter-pills .pill-btn").forEach((b) => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  if (latestState) renderLampsGrid(latestState.channels || []);
+}
+
+function selectLamp(idx) {
+  selectedCh = idx;
+  renderedInspectorCh = -1;
+  if (latestState) {
+    renderLampsGrid(latestState.channels || []);
+    renderInspector(idx, true);
+  }
+}
+
+function setInspectorColorMode(chIdx, mode) {
+  selectedColorModeByCh[chIdx] = mode;
+  renderInspector(chIdx, true);
+}
+
+function previewCctSlider(chIdx, kelvin) {
+  const k = Number(kelvin) || 4000;
+  const col = kelvinToCss(k);
+  selectedColorModeByCh[chIdx] = "cct";
+  const slider = document.getElementById("insp-cct-slider");
+  const label = document.getElementById("insp-cct-val");
+  if (slider) {
+    slider.style.setProperty("--cct-thumb", col);
+    slider.style.accentColor = col;
+  }
+  if (label) label.textContent = `${k}K`;
+  if (latestState && latestState.channels && latestState.channels[chIdx]) {
+    latestState.channels[chIdx][5] = k;
+    latestState.channels[chIdx][6] = 0;
+    latestState.channels[chIdx][7] = 0;
+    latestState.channels[chIdx][8] = 0;
+    renderLampsGrid(latestState.channels);
+  }
+}
+
+function lampErrorCode(faulty, statusByte) {
+  if (statusByte & 0x02) return "E106";
+  if (statusByte & 0x01) return "E107";
+  if (statusByte & 0x08) return "E108";
+  if (faulty) return "E104";
+  return "";
+}
+
+function renderLampsGrid(channels) {
   const grid = document.getElementById("lamps-grid");
   grid.innerHTML = "";
   const nomWatts = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
   const idleWatts = Number(document.getElementById("idle-watts")?.value ?? 0.4);
+
+  let cntPresent = 0;
+  let cntOn = 0;
+  let cntFault = 0;
+  channels.forEach((ch) => {
+    const [present, faulty, level, , , , , , , statusByte] = ch;
+    if (present) cntPresent++;
+    if (level > 0) cntOn++;
+    if (faulty || (statusByte & 0x03) !== 0) cntFault++;
+  });
+  document.getElementById("cnt-all").textContent = String(channels.length);
+  document.getElementById("cnt-present").textContent = String(cntPresent);
+  document.getElementById("cnt-on").textContent = String(cntOn);
+  document.getElementById("cnt-fault").textContent = String(cntFault);
+
   channels.forEach((ch, idx) => {
     const [
       present,
       faulty,
       level,
-      source,
+      ,
       dt8,
       kelvin,
       r,
       g,
       b,
       statusByte,
-      groupsMask,
+      ,
       devType,
-      d4iSupported,
-      manualOverride,
+      ,
+      ,
+      ,
+      ,
+      ,
+      ,
+      switchOnly,
     ] = ch;
+    const hasErr = Boolean(faulty || (statusByte & 0x03) !== 0);
     if (lampFilter === "present" && !present) return;
     if (lampFilter === "on" && level === 0) return;
-    if (lampFilter === "fault" && !faulty && (statusByte & 0x03) === 0) return;
+    if (lampFilter === "fault" && !hasErr) return;
 
+    const isSwitch = Boolean(switchOnly || devType === 7);
     const pct = Math.round((level * 100) / 254);
     const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
-    const liveWatts = present ? pwr.totalW.toFixed(1) : "0.0";
-    const card = document.createElement("div");
-    card.className =
-      "lamp-card" + (level > 0 ? " on" : "") + (faulty ? " fault" : "") + (!present ? " absent" : "");
-
-    const statusFlags = decodeStatusBits(statusByte);
     const addrStr = "A" + String(idx).padStart(2, "0");
 
-    // Detailed DT6 & DT8 capability badges + D4i badge
-    const dtBadges = [];
-    if (devType === 6 || !dt8) dtBadges.push('<span class="badge">DT6 Dim</span>');
-    if (dt8 & 1) dtBadges.push('<span class="badge">DT8 Tc</span>');
-    if (dt8 & 4) dtBadges.push('<span class="badge">DT8 RGBW</span>');
-    else if (dt8 & 2) dtBadges.push('<span class="badge">DT8 RGB</span>');
-    if (dt8 & 8) dtBadges.push('<span class="badge">DT8 XY</span>');
-    if (d4iSupported) {
-      dtBadges.push(
-        `<span class="badge ${manualOverride ? "warn" : "ok"}">${manualOverride ? "D4i (Overridden)" : "D4i MB202"}</span>`
-      );
+    let barColor = "#3b82f6";
+    if (hasErr) barColor = "#ef4444";
+    else if ((dt8 & 6) && (r || g || b)) barColor = rgbToHex(r, g, b);
+    else if (dt8 & 1) barColor = kelvinToCss(kelvin || 4000);
+
+    const isFinding = Boolean(
+      latestState &&
+        latestState.dali &&
+        latestState.dali.finder_active &&
+        latestState.dali.finder_ch === idx
+    );
+    const tile = document.createElement("div");
+    tile.className =
+      "lamp-tile" +
+      (idx === selectedCh ? " selected" : "") +
+      (isFinding ? " finding" : "") +
+      (level > 0 ? " on" : "") +
+      (hasErr ? " fault" : "") +
+      (!present ? " absent" : "");
+    tile.onclick = () => selectLamp(idx);
+
+    const errCode = lampErrorCode(faulty, statusByte);
+    const statusTxt = isFinding
+      ? '<span style="color:var(--warn);font-weight:600">BLINK</span>'
+      : hasErr
+        ? `<span class="tile-err-tag">ERR: ${errCode}</span>`
+        : !present
+          ? "Free"
+          : isSwitch
+            ? level > 0
+              ? "ON"
+              : "Off"
+            : level > 0
+              ? `${pct}%`
+              : "Off";
+
+    tile.innerHTML = `
+      <div class="tile-head">
+        <span class="tile-addr">${addrStr}</span>
+        <button class="tile-pwr-btn" title="${level > 0 ? "Turn Off" : "Turn On"}"
+          onclick="event.stopPropagation();sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${idx}})">⏻</button>
+      </div>
+      <div class="tile-bar-track">
+        <div class="tile-bar-fill" style="width:${present ? (isSwitch ? (level > 0 ? 100 : 0) : Math.max(level > 0 ? 8 : 0, pct)) : 0}%;background:${barColor}"></div>
+      </div>
+      <div class="tile-foot">
+        <span class="tile-status">${statusTxt}</span>
+        <span class="tile-type">${present ? `${pwr.totalW.toFixed(1)}W · ${decodeTypeShort(dt8, devType, isSwitch)}` : "—"}</span>
+      </div>
+    `;
+    grid.appendChild(tile);
+  });
+}
+
+function renderInspector(chIdx, forceRebuild = false) {
+  const pane = document.getElementById("inspector-content");
+  if (!latestState || !latestState.channels || !latestState.channels[chIdx]) return;
+  const ch = latestState.channels[chIdx];
+  const [
+    present,
+    faulty,
+    level,
+    ,
+    dt8,
+    kelvin,
+    r,
+    g,
+    b,
+    statusByte,
+    groupsMask,
+    devType,
+    d4iSupported,
+    manualOverride,
+    d4iPowerDeciwatts,
+    fullPowerDeciwatts,
+    idlePowerCentiwatts,
+    powerConfigured,
+    switchOnly,
+  ] = ch;
+
+  const addrStr = "A" + String(chIdx).padStart(2, "0");
+  const isSwitch = Boolean(switchOnly || devType === 7);
+  const pct = Math.round((level * 100) / 254);
+  const nomWatts = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
+  const idleWatts = Number(document.getElementById("idle-watts")?.value ?? 0.4);
+  const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
+  const hasErr = Boolean(faulty || (statusByte & 0x03) !== 0);
+
+  // Structural signature: only rebuild the Inspector DOM when the selected channel or its structural capabilities change
+  const sig = `${chIdx}:${present}:${dt8}:${devType}:${d4iSupported}:${isSwitch}`;
+  if (!forceRebuild && renderedInspectorCh === chIdx && renderedInspectorSig === sig) {
+    // Update live readouts in-place without clobbering form inputs or sliders being dragged
+    const activeEl = document.activeElement;
+    const briText = document.getElementById("insp-bri-text");
+    if (briText) {
+      briText.textContent = `${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W`;
     }
-
-    const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#ffd28a";
-
-    let colourControls = "";
-    if (dt8 & 1) {
+    const toggleBtn = document.getElementById("insp-toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.className = "btn btn-sm " + (level > 0 ? "btn-primary" : "");
+      toggleBtn.textContent = level > 0 ? "Turn Off" : "Turn On";
+      toggleBtn.onclick = () =>
+        sendCmd({ action: level > 0 ? "switch_off" : "switch_on", target: "ch", index: chIdx });
+    }
+    const briSlider = document.getElementById("insp-bri-slider");
+    if (briSlider && activeEl !== briSlider) {
+      briSlider.value = String(level);
+    }
+    const cctSlider = document.getElementById("insp-cct-slider");
+    if (cctSlider && activeEl !== cctSlider) {
       const kVal = kelvin || 4000;
-      const mirek = Math.round(1000000 / kVal);
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px;min-width:28px">CCT</span>
-          <input type="range" class="cct-range" min="2000" max="6500" step="100" value="${kVal}"
-            onchange="sendCmd({action:'set_cct',target:'ch',index:${idx},kelvin:Number(this.value)})">
-          <span class="mono" style="font-size:11px;min-width:74px;text-align:right">${kVal}K (${mirek}M)</span>
-        </div>`;
+      const col = kelvinToCss(kVal);
+      cctSlider.value = String(kVal);
+      cctSlider.style.setProperty("--cct-thumb", col);
+      cctSlider.style.accentColor = col;
+      const cctVal = document.getElementById("insp-cct-val");
+      if (cctVal) cctVal.textContent = `${kVal}K`;
     }
-    if (dt8 & 6) {
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px;min-width:28px">RGB</span>
-          <input type="color" value="${hexColor}" onchange="sendHexRgb('ch',${idx},this.value)">
-          <span class="mono" style="font-size:11px;color:#8b9bb4">${r || 0},${g || 0},${b || 0}</span>
-          ${
-            dt8 & 4
-              ? `<span class="mono" style="font-size:11px;margin-left:auto">W:</span>
-                 <input type="range" min="0" max="254" value="0" style="max-width:70px"
-                   onchange="sendCmd({action:'set_rgbw',target:'ch',index:${idx},r:${r || 0},g:${g || 0},b:${b || 0},w:Number(this.value)})">`
-              : ""
-          }
-        </div>`;
+    const pwrBadge = document.getElementById("insp-pwr-badge");
+    if (pwrBadge) {
+      pwrBadge.textContent =
+        d4iSupported && !manualOverride
+          ? `D4i Ballast: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
+          : `${pwr.totalW.toFixed(1)} W (Lamp ${pwr.lampW.toFixed(1)}W + Idle ${pwr.idleW.toFixed(2)}W)`;
     }
-    if (dt8 & 8) {
-      colourControls += `
-        <div class="lamp-slider-row">
-          <span class="mono" style="font-size:11px">CIE xy:</span>
-          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:20480,y:21500,brightness:${level || 200}})">D65 White</button>
-          <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${idx},x:29000,y:26500,brightness:${level || 200}})">Warm 2700K</button>
-          <button class="btn btn-sm" onclick="openGearModal(${idx})">Custom xy…</button>
+    return;
+  }
+  renderedInspectorCh = chIdx;
+  renderedInspectorSig = sig;
+
+  const d = channelDetailsCache[chIdx] || {
+    device_type: devType ?? 6,
+    version: 2,
+    physical_min: 1,
+    min_level: 1,
+    max_level: 254,
+    power_on_level: 254,
+    system_failure_level: 254,
+    fade_time: 4,
+    fade_rate: 7,
+    groups: groupsMask || 0,
+    scenes: Array(16).fill(255),
+    xy_x: 20480,
+    xy_y: 21500,
+    d4i_power_supported: Boolean(d4iSupported),
+    use_manual_power_override: Boolean(manualOverride),
+    d4i_active_power_deciwatts: d4iPowerDeciwatts || 0,
+    full_power_deciwatts: powerConfigured ? fullPowerDeciwatts : Math.round(nomWatts * 10),
+    idle_power_centiwatts: powerConfigured ? idlePowerCentiwatts : Math.round(idleWatts * 100),
+    power_configured: Boolean(powerConfigured),
+    switch_only: isSwitch,
+  };
+
+  const badges = [];
+  badges.push(
+    `<span class="badge ${present ? "ok" : ""}">${present ? "Installed" : "Empty Address"}</span>`
+  );
+  badges.push(`<span class="badge">${DEVICE_TYPE_NAMES[devType] || `Device Type ${devType}`}</span>`);
+  if (!isSwitch) {
+    if (dt8 & 1) badges.push('<span class="badge">CCT</span>');
+    if (dt8 & 4) badges.push('<span class="badge">RGBW</span>');
+    else if (dt8 & 2) badges.push('<span class="badge">RGB</span>');
+    if (dt8 & 8) badges.push('<span class="badge">CIE xy</span>');
+  }
+  if (hasErr) {
+    const errCode = lampErrorCode(faulty, statusByte);
+    const reason = (statusByte & 0x02) ? "Lamp Failure" : (statusByte & 0x01) ? "Ballast Fault" : "No Reply";
+    badges.push(`<span class="badge err">${errCode}: ${reason}</span>`);
+  }
+
+  let colorHtml = "";
+  if (!isSwitch && dt8) {
+    const availModes = [];
+    if (dt8 & 1) availModes.push({ id: "cct", label: "White (CCT)" });
+    if (dt8 & 6) availModes.push({ id: "rgb", label: dt8 & 4 ? "Color (RGBW)" : "Color (RGB)" });
+    if (dt8 & 8) availModes.push({ id: "xy", label: "CIE xy" });
+
+    let activeMode = selectedColorModeByCh[chIdx];
+    if (!activeMode || !availModes.some((m) => m.id === activeMode)) {
+      if ((dt8 & 6) && (r || g || b)) activeMode = "rgb";
+      else if (dt8 & 1) activeMode = "cct";
+      else activeMode = availModes[0].id;
+      selectedColorModeByCh[chIdx] = activeMode;
+    }
+
+    const modeTabsHtml =
+      availModes.length > 1
+        ? `<div class="segmented-control" style="margin-bottom:6px">
+             ${availModes
+               .map(
+                 (m) =>
+                   `<button type="button" class="pill-btn ${activeMode === m.id ? "active" : ""}"
+                      onclick="setInspectorColorMode(${chIdx},'${m.id}')">${m.label}</button>`
+               )
+               .join("")}
+           </div>`
+        : "";
+
+    let bodyHtml = "";
+    if (activeMode === "cct") {
+      const kVal = kelvin || 4000;
+      const kCol = kelvinToCss(kVal);
+      bodyHtml = `
+        <div class="insp-row">
+          <input type="range" id="insp-cct-slider" class="cct-range" min="2000" max="6500" step="100" value="${kVal}"
+            style="--cct-thumb:${kCol};accent-color:${kCol}"
+            oninput="previewCctSlider(${chIdx},this.value)"
+            onchange="sendCmd({action:'set_cct',target:'ch',index:${chIdx},kelvin:Number(this.value)})">
+          <span class="mono" id="insp-cct-val" style="min-width:52px;text-align:right">${kVal}K</span>
+        </div>
+        <div class="btn-row">
+          ${[2700, 3000, 4000, 5000, 6500]
+            .map(
+              (k) =>
+                `<button class="btn btn-xs" onclick="previewCctSlider(${chIdx},${k});sendCmd({action:'set_cct',target:'ch',index:${chIdx},kelvin:${k}})">${k}K</button>`
+            )
+            .join("")}
+        </div>`;
+    } else if (activeMode === "rgb") {
+      const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#38bdf8";
+      const wVal = d.w || 0;
+      const wPct = Math.round((wVal * 100) / 254);
+      bodyHtml = `
+        <div class="swatch-row">
+          ${COLOR_PRESETS.map(
+            (p) =>
+              `<button class="color-preset" style="background:${p.hex}" title="${p.name}"
+                 onclick="sendCmd({action:'set_rgb',target:'ch',index:${chIdx},r:${p.r},g:${p.g},b:${p.b}})"></button>`
+          ).join("")}
+          <input type="color" class="color-input" value="${hexColor}" onchange="sendHexRgb('ch',${chIdx},this.value)">
+          <span class="mono" style="font-size:11px;color:var(--text-2)">RGB: ${r || 0}, ${g || 0}, ${b || 0}</span>
+        </div>
+        ${
+          dt8 & 4
+            ? `<div class="insp-row" style="margin-top:4px">
+                 <span style="font-size:11.5px;color:var(--text-2)">Dedicated White LED (W)</span>
+                 <input type="range" min="0" max="254" value="${wVal}"
+                   oninput="document.getElementById('insp-w-val').textContent=Math.round(this.value*100/254)+'%'"
+                   onchange="sendCmd({action:'set_rgbw',target:'ch',index:${chIdx},r:${r || 0},g:${g || 0},b:${b || 0},w:Number(this.value)})">
+                 <span class="mono" id="insp-w-val" style="min-width:36px;text-align:right">${wPct}%</span>
+               </div>`
+            : ""
+        }`;
+    } else if (activeMode === "xy") {
+      const xyX = ((d.xy_x || 20480) / 65535).toFixed(3);
+      const xyY = ((d.xy_y || 21500) / 65535).toFixed(3);
+      bodyHtml = `
+        <div class="form-grid-3">
+          <label class="field"><span>x (0..0.8)</span><input type="number" id="insp-xy-x" min="0" max="0.8" step="0.005" value="${xyX}"></label>
+          <label class="field"><span>y (0..0.8)</span><input type="number" id="insp-xy-y" min="0" max="0.8" step="0.005" value="${xyY}"></label>
+          <div class="field" style="justify-content:flex-end">
+            <button class="btn btn-sm" onclick="sendCmd({action:'set_xy',target:'ch',index:${chIdx},x:Math.round(Number(document.getElementById('insp-xy-x').value)*65535),y:Math.round(Number(document.getElementById('insp-xy-y').value)*65535),brightness:${level || 200}})">Apply</button>
+          </div>
         </div>`;
     }
 
-    card.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">${addrStr} <span class="color-swatch" style="background:${level > 0 ? hexColor : "#1f2937"}"></span></span>
-        <div class="badges">
-          <span class="badge ${present ? "ok" : ""}">${present ? "PRESENT" : "ABSENT"}</span>
-          ${dtBadges.join("")}
-          <span class="badge ${source === "readback" ? "ok" : "warn"}">${source}</span>
-          ${faulty ? '<span class="badge err">FAULT</span>' : ""}
+    colorHtml = `
+      <div class="insp-section">
+        <div class="insp-row">
+          <span class="insp-sec-title">Color Mode</span>
         </div>
+        ${modeTabsHtml}
+        ${bodyHtml}
+      </div>`;
+  }
+
+  const dtTypeOptions = Object.entries(DEVICE_TYPE_NAMES)
+    .map(
+      ([k, label]) =>
+        `<option value="${k}" ${Number(devType) === Number(k) ? "selected" : ""}>${label}</option>`
+    )
+    .join("");
+
+  const ftOptions = FADE_TIME_LABELS.map(
+    (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
+  ).join("");
+  const frOptions = FADE_RATE_LABELS.slice(1)
+    .map(
+      (lbl, i) =>
+        `<option value="${i + 1}" ${d.fade_rate === i + 1 ? "selected" : ""}>${lbl}</option>`
+    )
+    .join("");
+
+  const fullWVal = (
+    (powerConfigured ? fullPowerDeciwatts : Math.round(nomWatts * 10)) / 10
+  ).toFixed(1);
+  const idleWVal = (
+    (powerConfigured ? idlePowerCentiwatts : Math.round(idleWatts * 100)) / 100
+  ).toFixed(2);
+
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Lamp ${addrStr}</div>
+        <div class="insp-badges">${badges.join("")}</div>
       </div>
-      <div class="lamp-slider-row">
-        <button class="btn btn-sm" onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${idx}})">${level > 0 ? "OFF" : "ON"}</button>
-        <input type="range" min="0" max="254" value="${level}"
-          onchange="sendCmd({action:'set_level',target:'ch',index:${idx},level:Number(this.value)})">
-        <span class="mono" style="min-width:74px;text-align:right">${pct}% • ${liveWatts}W</span>
+      <div class="btn-row">
+        <button class="btn btn-xs" title="Blink lamp on/off to locate it in the room" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'blink'})">Blink</button>
+        <button class="btn btn-xs" title="Smoothly pulse lamp" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'pulse'})">Pulse</button>
+        <button class="btn btn-xs" title="Stop blinking and restore previous level" onclick="sendCmd({action:'find_lamp',target:'ch',index:${chIdx},mode:'stop'})">Stop</button>
       </div>
-      ${colourControls}
-      <div class="lamp-top" style="margin-top:2px">
-        <span class="mono" style="font-size:11px;color:#8b9bb4">
-          ARC:${level}/254 • ${formatGroupList(groupsMask)}
-          ${statusFlags.length ? " • " + statusFlags.join(",") : ""}
-        </span>
-        <div class="btn-group">
-          <button class="btn btn-sm" title="Lamp Finder: Blink ON/OFF (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'blink'})">Blink</button>
-          <button class="btn btn-sm" title="Lamp Finder: Smooth Breathing Pulse (30s, restores previous level)" onclick="sendCmd({action:'find_lamp',target:'ch',index:${idx},mode:'pulse'})">Pulse</button>
-          <button class="btn btn-sm" title="Ballast Inspector, DT6/DT8 Registers &amp; Parameter Tuning" onclick="openGearModal(${idx})">Inspect / Tune</button>
-        </div>
+    </div>
+
+    <div class="insp-section">
+      <div class="insp-row">
+        <span class="insp-sec-title">${isSwitch ? "Switch Control (Non-Dimmable)" : "Brightness"}</span>
+        <span class="mono" id="insp-bri-text">${isSwitch ? (level > 0 ? "ON" : "OFF") : `${pct}% (${level}/254)`} • ${pwr.totalW.toFixed(1)} W</span>
       </div>
-    `;
-    grid.appendChild(card);
+      <div class="insp-row">
+        <button id="insp-toggle-btn" class="btn btn-sm ${level > 0 ? "btn-primary" : ""}"
+          onclick="sendCmd({action:'${level > 0 ? "switch_off" : "switch_on"}',target:'ch',index:${chIdx}})">${level > 0 ? "Turn Off" : "Turn On"}</button>
+        <input type="range" id="insp-bri-slider" min="0" max="254" value="${level}" ${isSwitch ? "disabled title='Dimming disabled for Switch-Only device'" : ""}
+          onchange="sendCmd({action:'set_level',target:'ch',index:${chIdx},level:Number(this.value)})">
+      </div>
+    </div>
+
+    ${colorHtml}
+
+    <div class="insp-section">
+      <span class="insp-sec-title">Device Type &amp; Dimming Mode</span>
+      <label class="field">
+        <span>DALI Device Type (Reported by ballast, overridable here or in ETS)</span>
+        <select id="gm-devtype">${dtTypeOptions}</select>
+      </label>
+      <label class="check-row" style="font-size:12px">
+        <input type="checkbox" id="gm-switch-only" ${isSwitch ? "checked" : ""}>
+        <span>On/Off switch only (disable brightness dimming)</span>
+      </label>
+    </div>
+
+    <div class="insp-section">
+      <div class="insp-row">
+        <span class="insp-sec-title">Power</span>
+        <span id="insp-pwr-badge" class="badge ${d4iSupported && !manualOverride ? "ok" : ""}">${
+          d4iSupported && !manualOverride
+            ? `D4i Ballast: ${((d4iPowerDeciwatts || 0) / 10).toFixed(1)} W`
+            : `${pwr.totalW.toFixed(1)} W (Lamp ${pwr.lampW.toFixed(1)}W + Idle ${pwr.idleW.toFixed(2)}W)`
+        }</span>
+      </div>
+      <div class="form-grid-2">
+        <label class="field">
+          <span>Lamp at 100% (W)</span>
+          <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${fullWVal}">
+        </label>
+        <label class="field">
+          <span>Ballast Idle (W)</span>
+          <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${idleWVal}">
+        </label>
+      </div>
+      ${
+        d4iSupported
+          ? `<label class="check-row" style="font-size:11.5px;color:var(--text-2)">
+               <input type="checkbox" id="gm-pwr-override" ${manualOverride ? "checked" : ""}>
+               <span>Use calculated power instead of D4i ballast reporting</span>
+             </label>`
+          : ""
+      }
+    </div>
+
+    ${
+      !isSwitch
+        ? `<div class="insp-section">
+             <span class="insp-sec-title">Dimming Limits &amp; Fade</span>
+             <div class="form-grid-2">
+               <label class="field"><span>Min Level (1..254)</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></label>
+               <label class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></label>
+             </div>
+             <div class="form-grid-2">
+               <label class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></label>
+               <label class="field"><span>Bus-Fail Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></label>
+             </div>
+             <div class="form-grid-2">
+               <label class="field"><span>Fade Time</span><select id="gm-ft">${ftOptions}</select></label>
+               <label class="field"><span>Fade Rate</span><select id="gm-fr">${frOptions}</select></label>
+             </div>
+           </div>`
+        : ""
+    }
+
+    <div class="insp-section">
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="saveGearParams(${chIdx})">Save Settings</button>
+        <button class="btn btn-sm" onclick="queryChannelDetails(${chIdx})">Read from Ballast</button>
+        ${
+          !present || hasErr
+            ? `<button class="btn btn-sm" title="Assigns a newly connected unaddressed replacement ballast on the bus to ${addrStr} and restores its groups &amp; settings"
+                 onclick="sendCmd({action:'replace_device',index:${chIdx}})">Assign New Ballast to ${addrStr}</button>`
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
+async function queryChannelDetails(chIdx) {
+  try {
+    await sendCmd({ action: "query_gear", index: chIdx });
+    const res = await fetch(`/api/channel?ch=${chIdx}`);
+    if (res.ok) {
+      channelDetailsCache[chIdx] = await res.json();
+      renderInspector(chIdx, true);
+    }
+  } catch (_) {}
+}
+
+async function saveGearParams(ch) {
+  const fullW = Math.round(Number(document.getElementById("gm-full-w").value) * 10);
+  const idleW = Math.round(Number(document.getElementById("gm-idle-w").value) * 100);
+  const overEl = document.getElementById("gm-pwr-override");
+  const swOnly = document.getElementById("gm-switch-only").checked;
+  const devType = Number(document.getElementById("gm-devtype").value);
+
+  const payload = {
+    action: "configure_gear",
+    index: ch,
+    device_type: devType,
+    switch_only: swOnly,
+    full_power_deciwatts: fullW,
+    idle_power_centiwatts: idleW,
+    use_manual_power_override: overEl ? overEl.checked : false,
+  };
+  const minEl = document.getElementById("gm-min");
+  if (minEl) {
+    payload.min_level = Number(minEl.value);
+    payload.max_level = Number(document.getElementById("gm-max").value);
+    payload.power_on_level = Number(document.getElementById("gm-pon").value);
+    payload.system_failure_level = Number(document.getElementById("gm-fail").value);
+    payload.fade_time = Number(document.getElementById("gm-ft").value);
+    payload.fade_rate = Number(document.getElementById("gm-fr").value);
+  }
+  await sendCmd(payload);
+  renderedInspectorCh = -1;
+  renderInspector(ch, true);
+}
+
+function sendHexRgb(target, index, hex) {
+  const clean = (hex || "#ffffff").replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) || 0;
+  const g = parseInt(clean.slice(2, 4), 16) || 0;
+  const b = parseInt(clean.slice(4, 6), 16) || 0;
+  sendCmd({ action: "set_rgb", target, index, r, g, b });
+}
+
+function selectGroup(grpIdx) {
+  selectedGrp = grpIdx;
+  if (latestState) renderGroups(latestState.groups || [], latestState.channels || []);
+}
+
+async function toggleLampInGroup(chIdx, grpIdx) {
+  if (!latestState || !latestState.channels || !latestState.channels[chIdx]) return;
+  const curMask = latestState.channels[chIdx][10] || 0;
+  const nextMask = curMask ^ (1 << grpIdx);
+  latestState.channels[chIdx][10] = nextMask;
+  await sendCmd({
+    action: "configure_gear",
+    index: chIdx,
+    groups_mask: nextMask,
   });
 }
 
-function renderGroups(groups) {
-  const grid = document.getElementById("groups-grid");
-  grid.innerHTML = "";
+function renderGroups(groups, channels) {
+  const list = document.getElementById("groups-grid");
+  list.innerHTML = "";
+
   groups.forEach((lvl, idx) => {
+    const members = [];
+    (channels || []).forEach((ch, cIdx) => {
+      if (ch[0] && (ch[10] & (1 << idx))) {
+        members.push("A" + String(cIdx).padStart(2, "0"));
+      }
+    });
+    const isSel = idx === selectedGrp;
+    const gCode = "G" + String(idx).padStart(2, "0");
     const pct = Math.round((lvl * 100) / 254);
-    const el = document.createElement("div");
-    el.className = "lamp-card" + (lvl > 0 ? " on" : "");
-    el.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">Group G${String(idx).padStart(2, "0")}</span>
-        <div class="btn-group">
-          <button class="btn btn-sm" title="Blink Group" onclick="sendCmd({action:'find_lamp',target:'grp',index:${idx},mode:'blink'})">Blink</button>
-          <span class="badge">${pct}% (${lvl})</span>
-        </div>
+    const tile = document.createElement("div");
+    tile.className =
+      "lamp-tile" +
+      (isSel ? " selected" : "") +
+      (members.length > 0 && lvl > 0 ? " on" : "") +
+      (members.length === 0 ? " absent" : "");
+    tile.onclick = () => selectGroup(idx);
+
+    tile.innerHTML = `
+      <div class="tile-head">
+        <span class="tile-addr">${gCode}</span>
+        ${
+          members.length > 0
+            ? `<button class="tile-pwr-btn" title="${lvl > 0 ? "Turn Group Off" : "Turn Group On"}"
+                 onclick="event.stopPropagation();sendCmd({action:'${lvl > 0 ? "switch_off" : "switch_on"}',target:'grp',index:${idx}})">⏻</button>`
+            : ""
+        }
       </div>
-      <div class="lamp-slider-row">
-        <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${idx}})">ON</button>
-        <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${idx}})">OFF</button>
-        <input type="range" min="0" max="254" value="${lvl}"
-          onchange="sendCmd({action:'set_level',target:'grp',index:${idx},level:Number(this.value)})">
-        <input type="color" value="#ffd28a" title="Group DT8 RGB Colour" onchange="sendHexRgb('grp',${idx},this.value)">
+      <div class="tile-bar-track">
+        <div class="tile-bar-fill" style="width:${members.length > 0 ? Math.max(lvl > 0 ? 8 : 0, pct) : 0}%;background:#3b82f6"></div>
+      </div>
+      <div class="tile-foot">
+        <span class="tile-status">${members.length === 0 ? "Empty" : lvl > 0 ? `${pct}%` : "Off"}</span>
+        <span class="tile-type">${members.length} lamp${members.length === 1 ? "" : "s"}</span>
       </div>
     `;
-    grid.appendChild(el);
+    list.appendChild(tile);
   });
+
+  renderGroupDetail(selectedGrp, groups[selectedGrp] || 0, channels || []);
 }
 
-function renderInputs(inputs) {
+function renderGroupDetail(grpIdx, lvl, channels) {
+  const pane = document.getElementById("group-detail-content");
+  if (!pane) return;
+  const gName = "G" + String(grpIdx).padStart(2, "0");
+  const members = [];
+  const lampTiles = [];
+
+  channels.forEach((ch, cIdx) => {
+    const [present, , , , dt8, , , , , , groupsMask, devType, , , , , , , switchOnly] = ch;
+    if (!present) return;
+    const isMember = (groupsMask & (1 << grpIdx)) !== 0;
+    const isSwitch = Boolean(switchOnly || devType === 7);
+    const addrStr = "A" + String(cIdx).padStart(2, "0");
+    if (isMember) members.push(addrStr);
+
+    lampTiles.push(`
+      <div class="group-lamp-item ${isMember ? "member" : ""}" onclick="toggleLampInGroup(${cIdx},${grpIdx})">
+        <div class="tile-head">
+          <strong class="mono">${addrStr}</strong>
+          <span class="mono" style="font-size:11px;color:${isMember ? "var(--accent)" : "var(--text-3)"}">${isMember ? "✓ In group" : "+ Add"}</span>
+        </div>
+        <div class="tile-head">
+          <span class="tile-type">${decodeTypeShort(dt8, devType, isSwitch)}</span>
+          <button type="button" class="btn btn-xs" style="padding:1px 5px;font-size:10px"
+            title="Blink ${addrStr}"
+            onclick="event.stopPropagation();sendCmd({action:'find_lamp',target:'ch',index:${cIdx},mode:'blink'})">Blink</button>
+        </div>
+      </div>
+    `);
+  });
+
+  const pct = Math.round((lvl * 100) / 254);
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Group ${gName}</div>
+        <div class="insp-badges">
+          <span class="badge ${members.length > 0 ? "ok" : ""}">${members.length} lamp${members.length === 1 ? "" : "s"} assigned</span>
+        </div>
+      </div>
+      ${
+        members.length > 0
+          ? `<div class="btn-row">
+               <button class="btn btn-xs" onclick="sendCmd({action:'find_lamp',target:'grp',index:${grpIdx},mode:'blink'})">Blink Group</button>
+             </div>`
+          : ""
+      }
+    </div>
+
+    ${
+      members.length > 0
+        ? `<div class="insp-section">
+             <div class="insp-row">
+               <span class="insp-sec-title">Group Brightness</span>
+               <span class="mono">${pct}% (${lvl}/254)</span>
+             </div>
+             <div class="insp-row">
+               <button class="btn btn-sm" onclick="sendCmd({action:'switch_on',target:'grp',index:${grpIdx}})">All On</button>
+               <button class="btn btn-sm" onclick="sendCmd({action:'switch_off',target:'grp',index:${grpIdx}})">All Off</button>
+               <input type="range" min="0" max="254" value="${lvl}"
+                 onchange="sendCmd({action:'set_level',target:'grp',index:${grpIdx},level:Number(this.value)})">
+             </div>
+           </div>`
+        : ""
+    }
+
+    <div class="insp-section">
+      <span class="insp-sec-title">Assign Installed Lamps to ${gName}</span>
+      <p class="subtext">Click any lamp below to add or remove it from ${gName}. Use Blink to check which physical light it is.</p>
+      <div class="group-lamps-grid">
+        ${lampTiles.join("") || '<span class="subtext">No installed lamps found.</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function selectScenePill(s) {
+  selectedScene = s;
+  if (latestState) renderScenes(latestState);
+}
+
+function recallSelectedScene() {
+  sendCmd({ action: "recall_scene", scene: selectedScene });
+}
+
+function storeSelectedScene() {
+  sendCmd({ action: "store_scene", scene: selectedScene });
+}
+
+function renderScenes(data) {
+  const scenesBar = document.getElementById("scenes-bar");
+  scenesBar.innerHTML = "";
+  const activeScenes = Array.isArray(data.active_scenes) ? data.active_scenes : null;
+  for (let s = 0; s < 16; s++) {
+    if (activeScenes && activeScenes.length > 0 && !activeScenes.includes(s)) {
+      continue;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "scene-pill" + (s === selectedScene ? " active" : "");
+    b.textContent = "Scene " + (s + 1);
+    b.onclick = () => {
+      selectScenePill(s);
+      sendCmd({ action: "recall_scene", scene: s });
+    };
+    scenesBar.appendChild(b);
+  }
+}
+
+function decodeInputEvent(type, info) {
+  if (type === 1) {
+    // Part 301 Push button
+    if (info & 0x04) return "Short Press";
+    if (info & 0x08) return "Double Press";
+    if (info & 0x10) return "Long Press Start";
+    if (info & 0x20) return "Long Press Repeat";
+    if (info & 0x40) return "Long Press Stop";
+    return `Button (0x${info.toString(16)})`;
+  }
+  if (type === 3) {
+    // Part 303 Occupancy sensor
+    if (info & 0x08) return "Movement Detected";
+    if (info & 0x02) return "Occupied";
+    if (info & 0x01) return "Vacant";
+    return `Occupancy (0x${info.toString(16)})`;
+  }
+  if (type === 4) {
+    // Part 304 Light sensor
+    return `${info} lx`;
+  }
+  return `Event 0x${info.toString(16)}`;
+}
+
+function inputTypeName(type) {
+  if (type === 1) return "Push Button";
+  if (type === 2) return "Switch";
+  if (type === 3) return "Occupancy";
+  if (type === 4) return "Light Sensor";
+  return `Type ${type}`;
+}
+
+// Show ONLY discovered DALI-2 sensors & buttons + live instance events
+function renderInputs(inputs, inputEvents) {
   const grid = document.getElementById("inputs-grid");
   grid.innerHTML = "";
   let any = false;
   inputs.forEach((item, idx) => {
-    const [present, summary] = item;
-    if (!present && idx >= 8) return;
+    const [present, summary, instTypes] = item;
+    if (!present) return;
     any = true;
     const instCount = summary & 0x1f;
-    const types = [];
-    if (summary & 0x20) types.push("301-Btn");
-    if (summary & 0x40) types.push("303-Occ");
-    if (summary & 0x80) types.push("304-Lux");
+    const instBadges = [];
+    if (Array.isArray(instTypes) && instTypes.length > 0) {
+      instTypes.forEach((t, iIdx) => {
+        instBadges.push(
+          `<span class="chip">I${String(iIdx).padStart(2, "0")}: ${inputTypeName(t)}</span>`
+        );
+      });
+    } else {
+      if (summary & 0x20) instBadges.push('<span class="chip">Push Button</span>');
+      if (summary & 0x40) instBadges.push('<span class="chip">Occupancy</span>');
+      if (summary & 0x80) instBadges.push('<span class="chip">Light Sensor</span>');
+    }
     const el = document.createElement("div");
-    el.className = "lamp-card" + (!present ? " absent" : "");
+    el.className = "group-card";
     el.innerHTML = `
-      <div class="lamp-top">
-        <span class="lamp-title">DEV${String(idx).padStart(2, "0")}</span>
-        <span class="badge ${present ? "ok" : ""}">${present ? instCount + " inst" : "Absent"}</span>
+      <div class="tile-head">
+        <strong class="mono">D${String(idx).padStart(2, "0")}</strong>
+        <span class="badge ok">${instCount} inst</span>
       </div>
-      <div class="mono" style="font-size:11px;color:#8b9bb4">${types.join(" ") || "No instances"}</div>
+      <div class="chips-wrap">${instBadges.join("")}</div>
     `;
     grid.appendChild(el);
   });
   if (!any) {
-    grid.innerHTML = '<div class="muted">No DALI-2 input devices scanned yet.</div>';
+    grid.innerHTML = '<div class="subtext">No DALI-2 sensors or buttons found on the bus.</div>';
   }
+
+  const tbody = document.getElementById("input-events-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  const evs = inputEvents || [];
+  if (evs.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5" class="subtext">No recent sensor/button events yet. Press a DALI-2 button to see its address and instance here.</td></tr>';
+    return;
+  }
+  evs.forEach((ev) => {
+    const [dev, inst, type, info, ageS] = ev;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono"><strong>${dev}</strong> <span class="subtext">(D${String(dev).padStart(2, "0")})</span></td>
+      <td class="mono"><strong>${inst}</strong> <span class="subtext">(I${String(inst).padStart(2, "0")})</span></td>
+      <td><span class="badge">${inputTypeName(type)}</span></td>
+      <td><strong>${decodeInputEvent(type, info)}</strong></td>
+      <td class="mono">${ageS === 0 ? "Just now" : `${ageS}s ago`}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-function updatePowerMonitor(data) {
+function handleLiveState(data) {
+  latestState = data;
+  const chipId = data.chip_id || "f5aa11f";
+  const fwVer = data.fw_version || "26.10.15.1915";
+  const iaStr = formatIa(data.knx.ia);
+
+  // Header shows only firmware version
+  document.getElementById("hdr-meta").textContent = `v${fwVer}`;
+
+  const chipPreview = document.getElementById("cfg-chip-id-preview");
+  if (chipPreview) chipPreview.textContent = chipId;
+
+  // 1. Lamps card
   const d = data.dali || {};
-  const channels = data.channels || [];
+  document.getElementById("sum-lamps").textContent = `${d.present || 0} / 64`;
+  const errTag = document.getElementById("sum-lamps-err");
+  if ((d.faulty || 0) > 0) {
+    errTag.style.display = "inline-block";
+    errTag.textContent = `${d.faulty} error${d.faulty === 1 ? "" : "s"}`;
+  } else {
+    errTag.style.display = "none";
+  }
+  const activeCnt = d.active || 0;
+  document.getElementById("sum-comm-state").textContent =
+    d.comm_phase && d.comm_phase !== "idle"
+      ? `Scanning (${d.comm_progress}%)`
+      : `${activeCnt} ${activeCnt === 1 ? "is" : "are"} on`;
+
+  // 2. Power card
   const nomW = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
   const idleWDefault = Number(document.getElementById("idle-watts")?.value ?? 0.4);
-
-  const psuEl = document.getElementById("pwr-psu-state");
-  const psuSub = document.getElementById("pwr-psu-sub");
-  if (d.psu_short) {
-    psuEl.textContent = "SHORT TRIPPED!";
-    psuEl.style.color = "var(--err)";
-    psuSub.textContent = "REM3 latched OFF (>80 ms low) — fix wiring & Re-Arm";
-  } else if (d.psu_on) {
-    psuEl.textContent = "16.0 V ACTIVE";
-    psuEl.style.color = "var(--ok)";
-    psuSub.textContent = "Internal REM3-2415S/A/CTRL supply armed";
-  } else {
-    psuEl.textContent = "EXTERNAL PSU";
-    psuEl.style.color = "var(--primary)";
-    psuSub.textContent = "Internal REM3 disabled via GPIO1";
-  }
-
   let activeW = 0;
   let standbyW = 0;
-  let d4iCount = 0;
-  channels.forEach((ch) => {
+  (data.channels || []).forEach((ch) => {
     const p = channelPowerBreakdown(ch, nomW, idleWDefault);
     if (p.source === "off") return;
-    if (p.source === "D4i") d4iCount++;
     activeW += p.lampW;
     standbyW += p.idleW;
   });
   const totalW = activeW + standbyW;
   const dailyKwh = (totalW * 24) / 1000;
   document.getElementById("pwr-active-w").textContent = `${totalW.toFixed(1)} W`;
-  document.getElementById("pwr-standby-w").textContent =
-    `Lamp output: ${activeW.toFixed(1)} W • Ballast idle: ${standbyW.toFixed(2)} W (${d4iCount} D4i native)`;
   document.getElementById("pwr-daily-kwh").textContent = `${dailyKwh.toFixed(2)} kWh/d`;
-  document.getElementById("pwr-bus-health").textContent =
-    `TX: ${d.tx_frames || 0} frames • Collisions: ${d.collisions || 0}`;
-}
+  document.getElementById("pwr-standby-w").textContent =
+    `Lamps ${activeW.toFixed(1)}W • Idle ${standbyW.toFixed(1)}W`;
 
-function handleLiveState(data) {
-  latestState = data;
-  const chipId = data.chip_id || "f5aa11f";
-  const apPreview = document.getElementById("cfg-ap-ssid-preview");
-  if (apPreview) apPreview.textContent = `KNX-DALI-SETUP-${chipId}`;
-  const chipPreview = document.getElementById("cfg-chip-id-preview");
-  if (chipPreview) chipPreview.textContent = chipId;
-
-  const knxPill = document.getElementById("pill-knx");
-  knxPill.textContent = `KNX: ${formatIa(data.knx.ia)} ${data.knx.prog_mode ? "[PROG]" : data.knx.bus_ok ? "OK" : "SAVEB!"}`;
-  knxPill.className = "pill " + (data.knx.bus_ok ? "ok" : "err");
-
-  const daliPill = document.getElementById("pill-dali");
-  daliPill.textContent = `DALI: ${data.dali.present}/64 ON:${data.dali.active} FLT:${data.dali.faulty}`;
-  daliPill.className = "pill " + (data.dali.faulty > 0 || data.dali.psu_short ? "err" : "ok");
-
-  const mqttPill = document.getElementById("pill-mqtt");
-  mqttPill.textContent = `MQTT: ${data.net.mqtt ? "ONLINE" : "OFF"} (${data.net.ip})`;
-  mqttPill.className = "pill " + (data.net.mqtt ? "ok" : "");
-
-  document.getElementById("pill-uptime").textContent = `UP: ${formatUptime(data.uptime_s)}`;
-  document.getElementById("comm-status-badge").textContent =
-    `Commissioning: ${data.dali.comm_phase.toUpperCase()} (${data.dali.comm_progress}%)`;
-
-  if (data.leds) {
-    data.leds.forEach((rgb, i) => {
-      const dot = document.getElementById("led-" + i);
-      if (dot) {
-        const c = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-        dot.style.background = c;
-        dot.style.boxShadow = `0 0 10px ${c}`;
-      }
-    });
+  // 3. DALI Bus Supply card (compact)
+  const psuEl = document.getElementById("pwr-psu-state");
+  const psuSub = document.getElementById("pwr-psu-sub");
+  const rearmBtn = document.getElementById("btn-rearm-psu");
+  if (d.psu_short) {
+    psuEl.textContent = "SHORT";
+    psuEl.className = "summary-val err";
+    psuSub.textContent = "Short circuit";
+    rearmBtn.style.display = "inline-block";
+  } else if (d.psu_on) {
+    psuEl.textContent = "ON";
+    psuEl.className = "summary-val ok";
+    psuSub.textContent = "Internal";
+    rearmBtn.style.display = "none";
+  } else {
+    psuEl.textContent = "EXT";
+    psuEl.className = "summary-val";
+    psuSub.textContent = "External";
+    rearmBtn.style.display = "none";
   }
 
-  updatePowerMonitor(data);
-  renderOledCanvas(data.oled);
-  renderLamps(data.channels || []);
-  renderGroups(data.groups || []);
-  renderInputs(data.inputs || []);
+  // 4. KNX card (compact)
+  const knxSt = document.getElementById("sum-knx-state");
+  knxSt.textContent = data.knx.bus_ok ? (data.knx.prog_mode ? "PROG" : "ON") : "OFF";
+  knxSt.className = "summary-val " + (data.knx.bus_ok ? "ok" : "err");
+  document.getElementById("sum-knx-ia").textContent = iaStr;
 
-  document.getElementById("info-fw-ver").textContent = data.fw_version || "0.1.0";
+  // 5. MQTT card (compact)
+  const mqttSt = document.getElementById("sum-mqtt-state");
+  mqttSt.textContent = data.net.mqtt ? "ON" : "OFF";
+  mqttSt.className = "summary-val " + (data.net.mqtt ? "ok" : "");
+  document.getElementById("sum-mqtt-sub").textContent = data.net.mqtt ? "Online" : "Offline";
+
+  // 6. Stats card (2-row Uptime + Free RAM)
+  document.getElementById("sum-uptime").textContent = formatUptime(data.uptime_s || 0);
+  document.getElementById("sum-ram").textContent =
+    `${Math.round((data.free_heap || 0) / 1024)} KB`;
+
+  renderLampsGrid(data.channels || []);
+  renderInspector(selectedCh);
+  renderGroups(data.groups || [], data.channels || []);
+  renderScenes(data);
+  renderInputs(data.inputs || [], data.input_events || []);
+
+  document.getElementById("info-fw-ver").textContent = fwVer;
   document.getElementById("info-part").textContent = data.partition || "ota_0";
-  document.getElementById("info-heap").textContent =
-    `${Math.round((data.free_heap || 0) / 1024)} KB free / ${Math.round((data.min_heap || 0) / 1024)} KB min`;
 }
 
-function connectWebSocket() {
-  const proto = location.protocol === "https:" ? "wss:" : "ws:";
-  const url = `${proto}//${location.host}/ws`;
-  const wsPill = document.getElementById("pill-ws");
+async function applyScenario(name) {
   try {
-    ws = new WebSocket(url);
-  } catch (_) {
-    setTimeout(connectWebSocket, 2000);
-    return;
-  }
-  ws.onopen = () => {
-    wsPill.innerHTML = '<span class="dot"></span>WS: Live';
-    wsPill.className = "pill ok";
-    syncGatewayTime();
-  };
-  ws.onmessage = (ev) => {
-    try {
-      const msg = JSON.parse(ev.data);
-      if (msg.type === "live") handleLiveState(msg);
-    } catch (_) {}
-  };
-  ws.onclose = () => {
-    wsPill.innerHTML = '<span class="dot"></span>WS: Reconnecting';
-    wsPill.className = "pill err";
-    setTimeout(connectWebSocket, 2000);
-  };
+    const res = await fetch("/api/scenario", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario: name }),
+    });
+    if (res.ok) {
+      const st = await res.json();
+      handleLiveState(st);
+      loadErrorLogs();
+      loadDebugTrace();
+    }
+  } catch (_) {}
+}
+
+function connectLive() {
+  const wsPill = document.getElementById("pill-ws");
+  const wsText = document.getElementById("ws-text");
+
+  fetch("/api/state")
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((st) => {
+      mockMode = true;
+      wsPill.className = "conn-badge ok";
+      wsText.textContent = "Simulated Lab";
+      handleLiveState(st);
+      setInterval(async () => {
+        try {
+          const r = await fetch("/api/state");
+          if (r.ok) handleLiveState(await r.json());
+        } catch (_) {}
+      }, 1000);
+    })
+    .catch(() => {
+      document.getElementById("scenario-bar").style.display = "none";
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const url = `${proto}//${location.host}/ws`;
+      try {
+        ws = new WebSocket(url);
+      } catch (_) {
+        setTimeout(connectLive, 2000);
+        return;
+      }
+      ws.onopen = () => {
+        wsPill.className = "conn-badge ok";
+        wsText.textContent = "Live";
+        syncGatewayTime();
+      };
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === "live") handleLiveState(msg);
+        } catch (_) {}
+      };
+      ws.onclose = () => {
+        wsPill.className = "conn-badge err";
+        wsText.textContent = "Reconnecting";
+        setTimeout(connectLive, 2000);
+      };
+    });
 }
 
 async function sendCmd(payload) {
@@ -521,11 +1166,15 @@ async function sendCmd(payload) {
     ws.send(JSON.stringify(payload));
     return;
   }
-  await fetch("/api/command", {
+  const res = await fetch("/api/command", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+  if (mockMode && res.ok) {
+    const r = await fetch("/api/state");
+    if (r.ok) handleLiveState(await r.json());
+  }
 }
 
 async function syncGatewayTime() {
@@ -538,160 +1187,39 @@ async function syncGatewayTime() {
   } catch (_) {}
 }
 
-async function openGearModal(ch) {
-  const modal = document.getElementById("gear-modal");
-  const body = document.getElementById("modal-body");
-  document.getElementById("modal-title").textContent =
-    `Ballast Inspector & Parameter Tuning — A${String(ch).padStart(2, "0")}`;
-  body.innerHTML = '<p class="muted">Querying DALI ballast registers...</p>';
-  modal.style.display = "flex";
-
-  await fetch("/api/command", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "query_gear", index: ch }),
-  });
-  const res = await fetch(`/api/channel?ch=${ch}`);
-  const d = await res.json();
-
-  const ftOptions = FADE_TIME_LABELS.map(
-    (lbl, i) => `<option value="${i}" ${d.fade_time === i ? "selected" : ""}>${lbl}</option>`
-  ).join("");
-  const frOptions = FADE_RATE_LABELS.slice(1)
-    .map(
-      (lbl, idx) =>
-        `<option value="${idx + 1}" ${d.fade_rate === idx + 1 ? "selected" : ""}>${lbl}</option>`
-    )
-    .join("");
-  const xyX = ((d.xy_x || 20480) / 65535).toFixed(4);
-  const xyY = ((d.xy_y || 21500) / 65535).toFixed(4);
-
-  body.innerHTML = `
-    <div class="sys-info-box">
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-        <span class="badge ${d.gear_failure ? "err" : "ok"}">Driver: ${d.gear_failure ? "FAULT" : "OK"}</span>
-        <span class="badge ${d.lamp_failure ? "err" : "ok"}">Lamp: ${d.lamp_failure ? "FAILURE" : "OK"}</span>
-        <span class="badge ${d.arc_on ? "ok" : ""}">Arc: ${d.arc_on ? "ON" : "OFF"}</span>
-        <span class="badge ${d.limit_error ? "warn" : ""}">Limit: ${d.limit_error ? "OUT OF RANGE" : "OK"}</span>
-        <span class="badge">DT${d.device_type} (v${d.version})</span>
-        <span class="badge">Phys Min: ${d.physical_min} (${(daliArcToPowerRatio(d.physical_min) * 100).toFixed(2)}%)</span>
-      </div>
-      <div><strong>Group Memberships (G00..G15):</strong> ${formatGroupList(d.groups)}</div>
-      <div><strong>Scene Levels (S01..S16):</strong> ${(d.scenes || []).map((v, i) => `S${String(i + 1).padStart(2, "0")}:${v === 255 ? "MASK" : Math.round((v * 100) / 254) + "%"}`).join(" • ")}</div>
-    </div>
-    <h3 style="margin:10px 0 6px;font-size:13px">DT6 Operating Limits &amp; Fade Curve (IEC 62386-102)</h3>
-    <div class="field-row">
-      <div class="field"><span>Min Level (1..254, PhysMin=${d.physical_min})</span><input type="number" id="gm-min" min="1" max="254" value="${d.min_level}"></div>
-      <div class="field"><span>Max Level (1..254)</span><input type="number" id="gm-max" min="1" max="254" value="${d.max_level}"></div>
-      <div class="field"><span>Power-On Level (0..254)</span><input type="number" id="gm-pon" min="0" max="254" value="${d.power_on_level}"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><span>System-Failure Level (0..254)</span><input type="number" id="gm-fail" min="0" max="254" value="${d.system_failure_level}"></div>
-      <div class="field"><span>Fade Time (IEC 62386 Table 15)</span><select id="gm-ft">${ftOptions}</select></div>
-      <div class="field"><span>Fade Rate (IEC 62386 Table 16)</span><select id="gm-fr">${frOptions}</select></div>
-    </div>
-    <h3 style="margin:10px 0 6px;font-size:13px">Power Reporting &amp; Manual Calculation (IEC 62386-252 D4i MB202 vs Manual)</h3>
-    <div class="sys-info-box" style="margin-bottom:8px">
-      <div><strong>Native D4i Power (Memory Bank 202):</strong> ${
-        d.d4i_power_supported
-          ? `<span class="badge ok">Supported</span> ${((d.d4i_active_power_deciwatts || 0) / 10).toFixed(1)} W • Energy: ${d.d4i_active_energy_wh || 0} Wh`
-          : '<span class="badge">Not supported by ballast (uses 100% + Idle calculation below)</span>'
-      }</div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <span>Lamp Power at 100% Brightness (W)</span>
-        <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${((d.full_power_deciwatts || 150) / 10).toFixed(1)}">
-      </div>
-      <div class="field">
-        <span>Ballast Idle / Standby Power (W)</span>
-        <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${((d.idle_power_centiwatts || 40) / 100).toFixed(2)}">
-      </div>
-    </div>
-    <label class="field-check" style="margin:4px 0 8px">
-      <input type="checkbox" id="gm-pwr-override" ${d.use_manual_power_override ? "checked" : ""}>
-      <span>Override native D4i power reporting with calculated (100% Lamp + Ballast Idle) power</span>
-    </label>
-    <h3 style="margin:10px 0 6px;font-size:13px">DT8 Colour Control (IEC 62386-209: Tc / RGBW / CIE 1931 xy)</h3>
-    <div class="field-row">
-      <div class="field">
-        <span>Tunable White CCT (K)</span>
-        <input type="number" min="1800" max="8000" step="100" value="${d.kelvin || 4000}"
-          onchange="sendCmd({action:'set_cct',target:'ch',index:${ch},kelvin:Number(this.value)})">
-      </div>
-      <div class="field">
-        <span>CIE 1931 x (0.00..0.80)</span>
-        <input type="number" id="gm-xy-x" min="0" max="0.8" step="0.005" value="${xyX}">
-      </div>
-      <div class="field">
-        <span>CIE 1931 y (0.00..0.80)</span>
-        <input type="number" id="gm-xy-y" min="0" max="0.8" step="0.005" value="${xyY}">
-      </div>
-      <div class="field" style="justify-content:flex-end">
-        <button class="btn" type="button" onclick="sendCmd({action:'set_xy',target:'ch',index:${ch},x:Math.round(Number(document.getElementById('gm-xy-x').value)*65535),y:Math.round(Number(document.getElementById('gm-xy-y').value)*65535),brightness:${d.level || 200}})">Apply CIE xy</button>
-      </div>
-    </div>
-    <div class="btn-group" style="margin-top:10px">
-      <button class="btn btn-primary" onclick="saveGearParams(${ch})">Write DT6 Parameters to Ballast (DTR0 + 2x Store)</button>
-      <button class="btn" onclick="openGearModal(${ch})">Re-Query Registers</button>
-    </div>
-  `;
-}
-
-async function saveGearParams(ch) {
-  await sendCmd({
-    action: "configure_gear",
-    index: ch,
-    min_level: Number(document.getElementById("gm-min").value),
-    max_level: Number(document.getElementById("gm-max").value),
-    power_on_level: Number(document.getElementById("gm-pon").value),
-    system_failure_level: Number(document.getElementById("gm-fail").value),
-    fade_time: Number(document.getElementById("gm-ft").value),
-    fade_rate: Number(document.getElementById("gm-fr").value),
-    full_power_deciwatts: Math.round(Number(document.getElementById("gm-full-w").value) * 10),
-    idle_power_centiwatts: Math.round(Number(document.getElementById("gm-idle-w").value) * 100),
-    use_manual_power_override: document.getElementById("gm-pwr-override").checked,
-  });
-  closeGearModal();
-}
-
-function closeGearModal() {
-  document.getElementById("gear-modal").style.display = "none";
-}
-
 async function loadConfig() {
-  const res = await fetch("/api/config");
-  const c = await res.json();
-  document.getElementById("cfg-wifi-enabled").checked = !!c.wifi_enabled;
-  document.getElementById("cfg-ap-fallback").checked = !!c.ap_fallback_enabled;
-  document.getElementById("cfg-wifi-ps").checked = !!c.wifi_power_save;
-  document.getElementById("cfg-wifi-ssid").value = c.wifi_ssid || "";
-  document.getElementById("cfg-wifi-pass").value = c.wifi_password || "";
-  document.getElementById("cfg-hostname").value = c.hostname || "knx-dali-gw";
-  document.getElementById("cfg-mqtt-enabled").checked = !!c.mqtt_enabled;
-  document.getElementById("cfg-ha-enabled").checked = !!c.ha_discovery_enabled;
-  document.getElementById("cfg-mqtt-host").value = c.mqtt_host || "";
-  document.getElementById("cfg-mqtt-port").value = c.mqtt_port || 1883;
-  document.getElementById("cfg-mqtt-user").value = c.mqtt_username || "";
-  document.getElementById("cfg-mqtt-pass").value = c.mqtt_password || "";
-  document.getElementById("cfg-mqtt-base").value = c.mqtt_base_topic || "knx_dali";
-  document.getElementById("cfg-ha-prefix").value = c.ha_discovery_prefix || "homeassistant";
-  document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
-  document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
-  document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+  try {
+    const res = await fetch("/api/config");
+    const c = await res.json();
+    document.getElementById("cfg-wifi-enabled").checked = !!c.wifi_enabled;
+    document.getElementById("cfg-wifi-ps").checked = !!c.wifi_power_save;
+    document.getElementById("cfg-wifi-ssid").value = c.wifi_ssid || "";
+    document.getElementById("cfg-wifi-pass").value = c.wifi_password || "";
+    document.getElementById("cfg-hostname").value = c.hostname || "knx-dali-gw";
+    document.getElementById("cfg-mqtt-enabled").checked = !!c.mqtt_enabled;
+    document.getElementById("cfg-mqtt-host").value = c.mqtt_host || "";
+    document.getElementById("cfg-mqtt-port").value = c.mqtt_port || 1883;
+    document.getElementById("cfg-mqtt-user").value = c.mqtt_username || "";
+    document.getElementById("cfg-mqtt-pass").value = c.mqtt_password || "";
+    document.getElementById("cfg-mqtt-base").value = c.mqtt_base_topic || "knx_dali";
+    document.getElementById("cfg-ha-prefix").value = c.ha_discovery_prefix || "homeassistant";
+    document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
+    document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
+    document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+  } catch (_) {}
 }
 
 async function saveConfig(ev) {
   ev.preventDefault();
   const payload = {
     wifi_enabled: document.getElementById("cfg-wifi-enabled").checked,
-    ap_fallback_enabled: document.getElementById("cfg-ap-fallback").checked,
+    ap_fallback_enabled: true,
     wifi_power_save: document.getElementById("cfg-wifi-ps").checked,
     wifi_ssid: document.getElementById("cfg-wifi-ssid").value,
     wifi_password: document.getElementById("cfg-wifi-pass").value,
     hostname: document.getElementById("cfg-hostname").value,
     mqtt_enabled: document.getElementById("cfg-mqtt-enabled").checked,
-    ha_discovery_enabled: document.getElementById("cfg-ha-enabled").checked,
+    ha_discovery_enabled: true,
     mqtt_host: document.getElementById("cfg-mqtt-host").value,
     mqtt_port: Number(document.getElementById("cfg-mqtt-port").value),
     mqtt_username: document.getElementById("cfg-mqtt-user").value,
@@ -708,37 +1236,42 @@ async function saveConfig(ev) {
     body: JSON.stringify(payload),
   });
   const msg = document.getElementById("cfg-save-msg");
-  msg.textContent = "Saved to NVS & applied.";
+  msg.textContent = "Settings saved.";
   setTimeout(() => (msg.textContent = ""), 3000);
 }
 
 async function loadDebugTrace() {
-  const res = await fetch("/api/debug");
-  const d = await res.json();
-  window.lastTraceData = d;
-  document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
-  document.getElementById("trace-stats").textContent =
-    `Session: ${d.active ? "ACTIVE (Recording)" : "PAUSED"} • Total Frames: ${d.total_frames} • Collisions: ${d.total_collisions} • Bus Errors: ${d.total_errors}`;
-  const tbody = document.getElementById("trace-tbody");
-  tbody.innerHTML = "";
-  (d.entries || []).forEach((e) => {
-    const tr = document.createElement("tr");
-    const hexW = e.bits === 24 ? 6 : 4;
-    const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
-    const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
-    tr.innerHTML = `
-      <td class="mono">${e.seq}</td>
-      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-      <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
-      <td class="mono">${e.bits}-bit</td>
-      <td class="mono">${rawHex}</td>
-      <td class="mono"><strong>${e.target}</strong></td>
-      <td class="mono">${e.mnemonic}</td>
-      <td class="mono">${e.detail}</td>
-      <td><span class="badge ${stClass}">${e.status}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  try {
+    const res = await fetch("/api/debug");
+    const d = await res.json();
+    window.lastTraceData = d;
+    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
+    const cap = d.capacity || 512;
+    const buf = d.buffered ?? (d.entries ? d.entries.length : 0);
+    const over = d.total_frames > buf ? d.total_frames - buf : 0;
+    document.getElementById("trace-stats").textContent =
+      `${d.active ? "Recording on gateway (continues with browser closed)" : "Paused"} • Buffer: ${buf}/${cap} frames${over > 0 ? ` (${over} older overwritten)` : ""} • ${d.total_collisions} collisions`;
+    const tbody = document.getElementById("trace-tbody");
+    tbody.innerHTML = "";
+    (d.entries || []).forEach((e) => {
+      const tr = document.createElement("tr");
+      const hexW = e.bits === 24 ? 6 : 4;
+      const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
+      const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
+      tr.innerHTML = `
+        <td class="mono">${e.seq}</td>
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
+        <td class="mono">${e.bits}-bit</td>
+        <td class="mono">${rawHex}</td>
+        <td class="mono"><strong>${e.target}</strong></td>
+        <td class="mono">${e.mnemonic}</td>
+        <td class="mono">${e.detail}</td>
+        <td><span class="badge ${stClass}">${e.status}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (_) {}
 }
 
 async function controlDebug(action) {
@@ -752,27 +1285,29 @@ async function controlDebug(action) {
 }
 
 async function loadErrorLogs() {
-  const res = await fetch("/api/logs");
-  const d = await res.json();
-  window.lastLogData = d;
-  const tbody = document.getElementById("logs-tbody");
-  tbody.innerHTML = "";
-  (d.entries || []).forEach((e) => {
-    const tr = document.createElement("tr");
-    const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
-    const addrStr = e.address === 65535 ? "SYS/BUS" : `A${String(e.address & 63).padStart(2, "0")}`;
-    tr.innerHTML = `
-      <td class="mono">${e.seq}</td>
-      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-      <td class="mono">${e.source}</td>
-      <td><span class="badge ${sevClass}">${e.severity}</span></td>
-      <td><strong>E${e.code}: ${e.title}</strong><br><span class="mono muted">${e.symbol}</span></td>
-      <td class="mono">${addrStr}</td>
-      <td class="mono">×${e.count}</td>
-      <td><div>${e.detail}</div><div class="muted">${e.description} — <em>Remedy: ${e.remedy}</em></div></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  try {
+    const res = await fetch("/api/logs");
+    const d = await res.json();
+    window.lastLogData = d;
+    const tbody = document.getElementById("logs-tbody");
+    tbody.innerHTML = "";
+    (d.entries || []).forEach((e) => {
+      const tr = document.createElement("tr");
+      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
+      const addrStr = e.address === 65535 ? "Bus / System" : `Lamp A${String(e.address & 63).padStart(2, "0")}`;
+      tr.innerHTML = `
+        <td class="mono">${e.seq}</td>
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono">${e.source}</td>
+        <td><span class="badge ${sevClass}">${e.severity}</span></td>
+        <td><strong>E${e.code}: ${e.title}</strong></td>
+        <td class="mono">${addrStr}</td>
+        <td class="mono">×${e.count}</td>
+        <td><div>${e.description || e.detail}</div><div class="subtext">${e.remedy}</div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (_) {}
 }
 
 async function clearErrorLogs() {
@@ -780,27 +1315,8 @@ async function clearErrorLogs() {
   await loadErrorLogs();
 }
 
-async function loadErrorCatalog() {
-  const tbody = document.getElementById("catalog-tbody");
-  if (tbody.children.length > 0) return;
-  const res = await fetch("/api/errors");
-  const items = await res.json();
-  items.forEach((c) => {
-    if (c.code === 0) return;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="mono"><strong>E${c.code}</strong></td>
-      <td class="mono">${c.symbol}</td>
-      <td><strong>${c.title}</strong></td>
-      <td>${c.description}</td>
-      <td>${c.remedy}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
 function exportJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj || {}, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -808,50 +1324,47 @@ function exportJson(filename, obj) {
 }
 
 function uploadOta(target) {
-  const input = document.getElementById("file-" + target);
+  const fileInput = document.getElementById("file-" + target);
+  const prog = document.getElementById("prog-" + target);
   const status = document.getElementById("status-" + target);
-  const bar = document.getElementById("prog-" + target);
-  if (!input.files || !input.files[0]) {
+  if (!fileInput.files || fileInput.files.length === 0) {
     status.textContent = "Please choose a .bin file first.";
     return;
   }
-  const file = input.files[0];
-  bar.style.width = "0%";
+  const file = fileInput.files[0];
   status.textContent = `Uploading ${file.name} (${Math.round(file.size / 1024)} KB)...`;
+  prog.style.width = "0%";
 
   const xhr = new XMLHttpRequest();
   xhr.open("POST", `/api/ota/${target}`, true);
-  xhr.setRequestHeader("Content-Type", "application/octet-stream");
-  xhr.upload.onprogress = (e) => {
-    if (e.lengthComputable) {
-      const pct = Math.round((e.loaded * 100) / e.total);
-      bar.style.width = pct + "%";
-      status.textContent = `Uploading ${file.name}: ${pct}% (${Math.round(e.loaded / 1024)} / ${Math.round(e.total / 1024)} KB)`;
+  xhr.upload.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      prog.style.width = Math.round((ev.loaded * 100) / ev.total) + "%";
     }
   };
   xhr.onload = () => {
     if (xhr.status === 200) {
-      bar.style.width = "100%";
+      prog.style.width = "100%";
       status.textContent =
         target === "firmware"
-          ? "Firmware verified & flashed! Gateway is rebooting..."
-          : "LittleFS partition flashed & mounted! Reloading UI...";
-      if (target === "littlefs") setTimeout(() => location.reload(), 1500);
+          ? "Firmware updated. Gateway is restarting..."
+          : "Web interface updated. Reloading...";
+      setTimeout(() => location.reload(), 3000);
     } else {
-      status.textContent = `Upload failed (HTTP ${xhr.status}): ${xhr.responseText}`;
+      status.textContent = `Update failed (${xhr.status}): ${xhr.responseText}`;
     }
   };
   xhr.onerror = () => {
-    status.textContent = "Network error during binary upload.";
+    status.textContent = "Upload connection interrupted.";
   };
   xhr.send(file);
 }
 
 async function rebootDevice() {
-  await sendCmd({ action: "reboot" });
+  await fetch("/api/reboot", { method: "POST" });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  connectWebSocket();
+document.addEventListener("DOMContentLoaded", () => {
+  initUi();
+  connectLive();
 });

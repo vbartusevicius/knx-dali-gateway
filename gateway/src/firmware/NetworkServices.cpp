@@ -1,6 +1,7 @@
 #include "firmware/NetworkServices.hpp"
 
 #include <array>
+#include <bitset>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -24,6 +25,7 @@
 
 #include "firmware/Board.hpp"
 #include "firmware/RuntimeState.hpp"
+#include "firmware/Version.hpp"
 #include "firmware/WebAssets.hpp"
 #include "network/ApiCodec.hpp"
 #include "network/HaDiscovery.hpp"
@@ -51,7 +53,8 @@ network::ReconnectBackoff g_wifi_backoff{};
 network::ReconnectBackoff g_mqtt_backoff{};
 device::WifiState g_wifi_state = device::WifiState::Off;
 bool g_mqtt_connected = false;
-bool g_ha_published = false;
+bool g_ha_gateway_published = false;
+std::bitset<64> g_ha_published_channels;
 bool g_reload_requested = false;
 bool g_ap_portal_active = false;
 char g_ipv4[16]{"0.0.0.0"};
@@ -571,7 +574,8 @@ void mqtt_event_handler(void*, esp_event_base_t, std::int32_t event_id, void* ev
     switch (static_cast<esp_mqtt_event_id_t>(event_id)) {
     case MQTT_EVENT_CONNECTED: {
         g_mqtt_connected = true;
-        g_ha_published = false;
+        g_ha_gateway_published = false;
+        g_ha_published_channels.reset();
         g_mqtt_backoff.on_connected();
         char topic[64]{};
         std::snprintf(topic, sizeof(topic), "%s/status", cfg.mqtt_base_topic.data());
@@ -619,49 +623,108 @@ void publish_ha_discovery_and_states() noexcept {
     const auto cfg = runtime_state().network_config();
     char node_id[33]{};
     network::format_unique_node_id(cfg.hostname.data(), g_chip_id, node_id, sizeof(node_id));
+    const network::HaDeviceMeta meta{cfg.mqtt_base_topic.data(), node_id, g_ipv4, kFirmwareVersion};
     char topic[128]{};
     char payload[640]{};
 
-    if (cfg.ha_discovery_enabled && !g_ha_published) {
+    if (cfg.ha_discovery_enabled) {
+        // 1. Central Gateway Device entities (published once per MQTT connection)
+        if (!g_ha_gateway_published) {
+            if (network::format_ha_gateway_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, "sensor",
+                                                           "total_power", topic, sizeof(topic)) &&
+                network::format_ha_gateway_power_discovery_payload(meta, payload, sizeof(payload))) {
+                esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+            }
+            if (network::format_ha_gateway_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, "sensor",
+                                                           "total_energy", topic, sizeof(topic)) &&
+                network::format_ha_gateway_energy_discovery_payload(meta, payload, sizeof(payload))) {
+                esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+            }
+            if (network::format_ha_gateway_discovery_topic(cfg.ha_discovery_prefix.data(), node_id,
+                                                           "binary_sensor", "fault", topic, sizeof(topic)) &&
+                network::format_ha_gateway_fault_discovery_payload(meta, payload, sizeof(payload))) {
+                esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+            }
+            g_ha_gateway_published = true;
+        }
+
+        // 2. Only populated lamp addresses (0..63) are registered in HA as linked child devices.
+        // If a lamp is newly discovered during a later scan, register it; if an address is no
+        // longer populated, clear its retained discovery topics with an empty payload.
         for (std::uint8_t i = 0; i < 64; ++i) {
-            if (!runtime_state().channel_present(i)) {
-                continue;
-            }
-            const auto ch = runtime_state().channel(i);
+            const bool present = runtime_state().channel_present(i);
             const auto addr = *dali::ShortAddress::from(i);
-            const auto cap =
-                ch.has_capabilities ? std::optional<dali::ColourCapabilities>(ch.capabilities) : std::nullopt;
-            if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
-                                                           topic, sizeof(topic)) &&
-                network::format_ha_channel_discovery_payload(cfg.mqtt_base_topic.data(), node_id, addr, cap,
-                                                             payload, sizeof(payload))) {
-                esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+            if (present && !g_ha_published_channels.test(i)) {
+                const auto ch = runtime_state().channel(i);
+                const auto cap = ch.has_capabilities
+                                     ? std::optional<dali::ColourCapabilities>(ch.capabilities)
+                                     : std::nullopt;
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "light", "") &&
+                    network::format_ha_channel_discovery_payload(cfg.mqtt_base_topic.data(), node_id, addr,
+                                                                 cap, payload, sizeof(payload), g_ipv4,
+                                                                 kFirmwareVersion)) {
+                    esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+                }
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "sensor", "_power") &&
+                    network::format_ha_channel_power_discovery_payload(meta, addr, payload,
+                                                                       sizeof(payload))) {
+                    esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+                }
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "binary_sensor",
+                                                               "_fault") &&
+                    network::format_ha_channel_fault_discovery_payload(meta, addr, payload,
+                                                                       sizeof(payload))) {
+                    esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
+                }
+                g_ha_published_channels.set(i);
+            } else if (!present && g_ha_published_channels.test(i)) {
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "light", "")) {
+                    esp_mqtt_client_publish(g_mqtt, topic, "", 0, 1, 1);
+                }
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "sensor", "_power")) {
+                    esp_mqtt_client_publish(g_mqtt, topic, "", 0, 1, 1);
+                }
+                if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
+                                                               topic, sizeof(topic), "binary_sensor",
+                                                               "_fault")) {
+                    esp_mqtt_client_publish(g_mqtt, topic, "", 0, 1, 1);
+                }
+                g_ha_published_channels.reset(i);
             }
         }
-        for (std::uint8_t g = 0; g < 16; ++g) {
-            const auto grp = *dali::Group::from(g);
-            if (network::format_ha_group_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, grp, topic,
-                                                         sizeof(topic)) &&
-                network::format_ha_group_discovery_payload(cfg.mqtt_base_topic.data(), node_id, grp, payload,
-                                                           sizeof(payload))) {
-                esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
-            }
-        }
-        g_ha_published = true;
     }
 
+    std::uint16_t total_power_deciwatts = 0;
+    std::uint32_t total_energy_wh = 0;
     for (std::uint8_t i = 0; i < 64; ++i) {
         if (!runtime_state().channel_present(i)) {
             continue;
         }
         const auto ch = runtime_state().channel(i);
+        total_power_deciwatts =
+            static_cast<std::uint16_t>(total_power_deciwatts + ch.effective_power_deciwatts);
+        total_energy_wh += ch.details.d4i_active_energy_wh;
         lighting::State st{dali::ArcLevel::from(ch.level), ch.source};
         std::snprintf(topic, sizeof(topic), "%s/light/ch%02u/state", cfg.mqtt_base_topic.data(),
                       static_cast<unsigned>(i));
         if (network::format_mqtt_channel_state(st, ch.colour, runtime_state().channel_faulty(i), payload,
-                                               sizeof(payload))) {
+                                               sizeof(payload), ch.effective_power_deciwatts,
+                                               ch.details.d4i_active_energy_wh)) {
             esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 0, 1);
         }
+    }
+
+    const auto oled_st = runtime_state().oled_state();
+    std::snprintf(topic, sizeof(topic), "%s/gateway/state", cfg.mqtt_base_topic.data());
+    if (network::format_mqtt_gateway_state(
+            total_power_deciwatts, total_energy_wh, oled_st.active_lamp_count, oled_st.faulty_gear_count,
+            !oled_st.knx_bus_ok || oled_st.dali_psu_short_tripped, payload, sizeof(payload))) {
+        esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 0, 1);
     }
 }
 

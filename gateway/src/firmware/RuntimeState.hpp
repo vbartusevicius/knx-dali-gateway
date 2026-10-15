@@ -25,6 +25,7 @@ struct ChannelSnapshot {
     dali::ColourCapabilities capabilities{};
     bool has_capabilities = false;
     lighting::GearDetails details{};
+    std::uint16_t effective_power_deciwatts = 0;
 };
 
 class NvsLogBackend final : public diagnostics::LogBackend {
@@ -35,6 +36,14 @@ public:
 
 private:
     nvs_handle_t handle_ = 0;
+};
+
+struct InputEventSnapshot {
+    std::uint8_t device = 0xFF;
+    std::uint8_t instance = 0;
+    std::uint8_t instance_type = 0;
+    std::uint16_t event_info = 0;
+    std::uint32_t uptime_ms = 0;
 };
 
 class RuntimeState final {
@@ -58,6 +67,8 @@ public:
     void on_power_fail_saveb(std::uint32_t now_ms) noexcept;
     void request_psu_reset() noexcept;
     [[nodiscard]] bool consume_psu_reset_request() noexcept;
+    void record_input_event(std::uint8_t device, std::uint8_t instance, std::uint8_t instance_type,
+                            std::uint16_t event_info, std::uint32_t now_ms) noexcept;
     void next_oled_page(std::uint32_t now_ms) noexcept;
     void toggle_oled_geometry(std::uint32_t now_ms) noexcept;
 
@@ -94,6 +105,8 @@ private:
     std::array<ChannelSnapshot, 64> channels_{};
     std::array<std::uint8_t, 16> group_levels_{};
     commissioning::InputSnapshot inputs_{};
+    std::array<std::array<std::uint8_t, 8>, 64> input_instance_types_{};
+    std::array<InputEventSnapshot, 8> recent_input_events_{};
     device::LedColours led_colours_{};
     std::uint8_t input_device_count_ = 0;
     std::uint8_t ws_clients_ = 0;

@@ -378,10 +378,12 @@ void dali_task(void* arg) {
                 ESP_LOGD(log_tag, "dali event dropped: 0x%06X", static_cast<unsigned>(event->value));
                 continue;
             }
+            const auto inst_type =
+                wiring.commissioning.devices().instance_type(decoded->address, decoded->instance);
+            runtime_state().record_input_event(decoded->address, decoded->instance, inst_type.value_or(0),
+                                               decoded->info, now);
             std::array<inputs::Action, inputs::InputMapper::max_actions> actions;
-            const auto count = wiring.inputs.map(
-                *decoded, wiring.commissioning.devices().instance_type(decoded->address, decoded->instance),
-                actions);
+            const auto count = wiring.inputs.map(*decoded, inst_type, actions);
             for (std::uint8_t index = 0; index < count; ++index) {
                 const auto& action = actions[index];
                 publish_status(wiring.statuses,

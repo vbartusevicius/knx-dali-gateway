@@ -24,6 +24,7 @@ struct SwitchOn {
 // Per-channel DT6 ballast operating limits & fade curve (IEC 62386-102).
 // 0xFF in fade_time / fade_rate means "keep existing ballast setting".
 struct BallastParameters {
+    bool switch_only = false;                 // True when configured as non-dimmable switch (DT7 / mode 5)
     std::uint8_t min_level = 1;               // DALI arc 1..254
     std::uint8_t max_level = 254;             // DALI arc 1..254
     std::uint8_t power_on_level = 254;        // DALI arc 0..254 or 255 (MASK / last level)
