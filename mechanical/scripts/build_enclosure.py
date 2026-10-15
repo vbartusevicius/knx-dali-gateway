@@ -42,7 +42,9 @@ from enclosure_features import (
     horizontal_capacitor,
     led_windows,
     legs,
+    oled_glass,
     oled_module,
+    oled_panel,
     oled_window,
     pegs,
     screw_tabs,
@@ -441,13 +443,18 @@ def build_cover():
         cover = cover.cut(cylinder(w["x"], w["y"], FRONT_INNER_Z - 1, TOTAL_D - STACK.led_skin_mm, LED_WINDOW))
     for hole in button_holes().values():
         cover = cover.cut(cylinder(hole["x"], hole["y"], *front, BUTTON_HOLE))
-    win, module = oled_window(), oled_module()
+    win, panel, module = oled_window(), oled_panel(), oled_module()
     cover = cover.cut(box(win["cx"] - win["w"] / 2, win["cx"] + win["w"] / 2,
                           win["cy"] - win["h"] / 2, win["cy"] + win["h"] / 2, *front))
     margin = 0.5
     pocket = box(module["cx"] - module["w"] / 2 - margin, module["cx"] + module["w"] / 2 + margin,
                  module["cy"] - module["h"] / 2 - margin, module["cy"] + module["h"] / 2 + margin,
                  FRONT_INNER_Z - 1, FRONT_INNER_Z + STACK.pocket_depth)
+    if panel != oled_glass():
+        g_margin = 0.25
+        pocket = pocket.union(box(panel["cx"] - panel["w"] / 2 - g_margin, panel["cx"] + panel["w"] / 2 + g_margin,
+                                  panel["cy"] - panel["h"] / 2 - g_margin, panel["cy"] + panel["h"] / 2 + g_margin,
+                                  FRONT_INNER_Z - 1, TOTAL_D - 0.6))
     for body in standoff_bodies():
         pocket = pocket.cut(body)
     return cover.cut(pocket)

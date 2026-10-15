@@ -274,6 +274,11 @@ def oled_glass():
     return _oled("glass")
 
 
+def oled_panel():
+    mod = layout_plan("ui")["oled_module"]
+    return _oled("panel" if "panel" in mod else "glass")
+
+
 def oled_module():
     return _oled("outline")
 

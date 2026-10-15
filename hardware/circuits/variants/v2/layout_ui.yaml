@@ -16,12 +16,13 @@ frame:
   pours:
     - { net: GND, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5, y0: 0.5, x1: 31.0, y1: 40.0 } }
 
-# Winstar WEA012864D-03 drawing (p.3): board 27.3 x 27.3, glass 26.7 x 19.26
-# 0.3 from the left and 4.02 from the top edge, header pin 1 (VCC) 6.54 from
-# the left and 1.65 from the top, 2.54 pitch to the right.
+# Winstar WEA012864D-03 drawing (p.3): board 27.3 x 27.3, glass substrate
+# 26.7 x 19.26 (0.3 from left, 4.02 from top), active display area 21.74 x 10.86
+# (2:1 128x64, 2.78 from left, 5.82 from top).
 oled_module:
-  outline: { x: 2.1, y: 12.8, w: 27.3, h: 27.3 }
-  glass: { x: 2.4, y: 16.82, w: 26.7, h: 19.26 }
+  outline: { x: 2.1,  y: 12.8,  w: 27.3,  h: 27.3 }
+  panel:   { x: 2.4,  y: 16.82, w: 26.7,  h: 19.26 }
+  glass:   { x: 4.88, y: 23.42, w: 21.74, h: 10.86 }
 
 case:
   standoffs:
