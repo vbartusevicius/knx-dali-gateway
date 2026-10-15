@@ -319,7 +319,7 @@ class LabState:
                 "status": "OK",
             },
         )
-        if len(self.trace_ring) > 512:
+        if len(self.trace_ring) > 1024:
             self.trace_ring.pop()
 
     def handle_command(self, cmd: dict) -> None:
@@ -591,7 +591,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({
                 "active": self.trace_active if hasattr(self, "trace_active") else LAB.trace_active,
                 "auto_trigger": LAB.trace_auto,
-                "capacity": 512,
+                "capacity": 1024,
                 "buffered": len(LAB.trace_ring),
                 "total_frames": LAB.tx_frames,
                 "total_collisions": LAB.collisions,

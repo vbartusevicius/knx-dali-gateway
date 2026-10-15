@@ -43,7 +43,7 @@ struct DecodedTrace {
 
 class DaliDebugTrace final {
 public:
-    static constexpr std::size_t capacity = 512;
+    static constexpr std::size_t capacity = 1024;
 
     DaliDebugTrace() noexcept = default;
 

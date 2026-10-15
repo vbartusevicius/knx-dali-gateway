@@ -21,8 +21,13 @@ let renderedInspectorSig = "";
 let renderedGrpSig = "";
 let selectedColorModeByCh = {};
 let selectedColorModeByGrp = {};
+let logViewMode = "errors"; // "errors" | "bus"
+let busFrameFilter = "all"; // "all" | "lamps" | "sensors" | "err"
+let selectedLogIndex = 0;
 let latestState = null;
 let channelDetailsCache = {};
+const BROWSER_TRACE_MAX = 10000;
+let browserTraceMap = new Map();
 window.lastLogData = { entries: [] };
 window.lastTraceData = { entries: [] };
 
@@ -1257,27 +1262,6 @@ function renderInputs(inputs, inputEvents) {
   if (!any) {
     grid.innerHTML = '<div class="subtext">No DALI-2 sensors or buttons found on the bus.</div>';
   }
-
-  const tbody = document.getElementById("input-events-tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  if (evs.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="5" class="subtext">No recent sensor/button events yet. Press a DALI-2 button to see its address and instance here.</td></tr>';
-    return;
-  }
-  evs.forEach((ev) => {
-    const [dev, inst, type, info, ageS] = ev;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="mono"><strong>${dev}</strong> <span class="subtext">(D${String(dev).padStart(2, "0")})</span></td>
-      <td class="mono"><strong>${inst}</strong> <span class="subtext">(I${String(inst).padStart(2, "0")})</span></td>
-      <td><span class="badge">${inputTypeName(type)}</span></td>
-      <td><strong>${decodeInputEvent(type, info)}</strong></td>
-      <td class="mono">${ageS === 0 ? "Just now" : `${ageS}s ago`}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 function renderSensorInspector(devIdx) {
@@ -1373,8 +1357,15 @@ function renderSensorInspector(devIdx) {
   `;
 }
 
+let lastSeenTxFrames = -1;
+
 function handleLiveState(data) {
   latestState = data;
+  const dTx = data.dali ? data.dali.tx_frames || 0 : 0;
+  if (lastSeenTxFrames !== dTx) {
+    lastSeenTxFrames = dTx;
+    loadDebugTrace();
+  }
   const chipId = data.chip_id || "f5aa11f";
   const fwVer = data.fw_version || "26.10.15.1915";
   const iaStr = formatIa(data.knx.ia);
@@ -1472,6 +1463,8 @@ function handleLiveState(data) {
 
   document.getElementById("info-fw-ver").textContent = fwVer;
   document.getElementById("info-part").textContent = data.partition || "ota_0";
+  const infoChip = document.getElementById("info-chip-id");
+  if (infoChip) infoChip.textContent = chipId;
 }
 
 async function applyScenario(name) {
@@ -1563,6 +1556,33 @@ async function syncGatewayTime() {
   } catch (_) {}
 }
 
+function selectSettingsSection(sec, btn) {
+  document.querySelectorAll(".settings-nav-item").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".settings-sec").forEach((s) => s.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  const target = document.getElementById("sec-" + sec);
+  if (target) target.classList.add("active");
+}
+
+function toggleSettingsCollapse() {
+  const wifiOn = document.getElementById("cfg-wifi-enabled")?.checked;
+  const mqttOn = document.getElementById("cfg-mqtt-enabled")?.checked;
+  const wifiWrap = document.getElementById("wifi-fields-wrap");
+  const mqttWrap = document.getElementById("mqtt-fields-wrap");
+  if (wifiWrap) wifiWrap.style.display = wifiOn ? "flex" : "none";
+  if (mqttWrap) mqttWrap.style.display = mqttOn ? "flex" : "none";
+  const bWifi = document.getElementById("nav-badge-wifi");
+  if (bWifi) {
+    bWifi.textContent = wifiOn ? "ON" : "OFF";
+    bWifi.className = "badge " + (wifiOn ? "ok" : "");
+  }
+  const bMqtt = document.getElementById("nav-badge-mqtt");
+  if (bMqtt) {
+    bMqtt.textContent = mqttOn ? "ON" : "OFF";
+    bMqtt.className = "badge " + (mqttOn ? "ok" : "");
+  }
+}
+
 async function loadConfig() {
   try {
     const res = await fetch("/api/config");
@@ -1582,6 +1602,7 @@ async function loadConfig() {
     document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
     document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
     document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+    toggleSettingsCollapse();
   } catch (_) {}
 }
 
@@ -1616,41 +1637,270 @@ async function saveConfig(ev) {
   setTimeout(() => (msg.textContent = ""), 3000);
 }
 
+function jumpToDeviceFromLog(targetStr) {
+  if (!targetStr) return;
+  document.querySelectorAll(".nav-tab").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+  const ovBtn = document.querySelector('.nav-tab[data-tab="overview"]');
+  if (ovBtn) ovBtn.classList.add("active");
+  document.getElementById("panel-overview").classList.add("active");
+
+  if (targetStr.startsWith("A")) {
+    const ch = parseInt(targetStr.slice(1), 10);
+    const allPill = document.querySelector('.matrix-header .pill-btn[data-filter="all"]');
+    setLampFilter("all", allPill);
+    if (!Number.isNaN(ch)) selectLamp(ch);
+  } else if (targetStr.startsWith("D")) {
+    const dev = parseInt(targetStr.slice(1), 10);
+    const sensPill = document.querySelector('.matrix-header .pill-btn[data-filter="sensors"]');
+    setLampFilter("sensors", sensPill);
+    if (!Number.isNaN(dev)) selectSensor(dev);
+  }
+}
+
+function setLogViewMode(mode) {
+  logViewMode = mode;
+  selectedLogIndex = 0;
+  document.getElementById("log-mode-errors").classList.toggle("active", mode === "errors");
+  document.getElementById("log-mode-bus").classList.toggle("active", mode === "bus");
+  document.getElementById("bus-filter-div").style.display = mode === "bus" ? "block" : "none";
+  document.getElementById("bus-filter-pills").style.display = mode === "bus" ? "inline-flex" : "none";
+  document.getElementById("log-actions-errors").style.display = mode === "errors" ? "flex" : "none";
+  document.getElementById("log-actions-bus").style.display = mode === "bus" ? "flex" : "none";
+  renderActiveLogTable();
+}
+
+function setBusFrameFilter(filter, btn) {
+  busFrameFilter = filter;
+  selectedLogIndex = 0;
+  document.querySelectorAll("#bus-filter-pills .pill-btn").forEach((b) => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderActiveLogTable();
+}
+
+function selectLogRow(idx) {
+  selectedLogIndex = idx;
+  renderActiveLogTable();
+}
+
+function renderActiveLogTable() {
+  const tbody = document.getElementById("logs-unified-tbody");
+  const pane = document.getElementById("log-inspector-content");
+  if (!tbody || !pane) return;
+  const query = (document.getElementById("log-search")?.value || "").trim().toLowerCase();
+  tbody.innerHTML = "";
+
+  const errEntries = window.lastLogData?.entries || [];
+  const busEntries = window.lastTraceData?.entries || [];
+  const cntErr = document.getElementById("cnt-log-errors");
+  const cntBus = document.getElementById("cnt-log-frames");
+  if (cntErr) cntErr.textContent = String(errEntries.length);
+  if (cntBus) cntBus.textContent = String(busEntries.length);
+
+  if (logViewMode === "errors") {
+    const filtered = errEntries.filter((e) => {
+      if (!query) return true;
+      const addrStr = e.address === 65535 ? "bus system" : `a${String(e.address & 63).padStart(2, "0")}`;
+      const hay = `${addrStr} e${e.code} ${e.title} ${e.source} ${e.detail}`.toLowerCase();
+      return hay.includes(query);
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="subtext">No matching error entries.</td></tr>';
+      pane.innerHTML = '<div class="subtext">Select an error entry on the left to inspect its cause and remedy.</div>';
+      return;
+    }
+    if (selectedLogIndex >= filtered.length) selectedLogIndex = 0;
+
+    filtered.forEach((e, idx) => {
+      const tr = document.createElement("tr");
+      if (idx === selectedLogIndex) tr.className = "selected";
+      tr.onclick = () => selectLogRow(idx);
+      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
+      const targetStr = e.address === 65535 ? "Bus" : `A${String(e.address & 63).padStart(2, "0")}`;
+      tr.innerHTML = `
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono"><strong>${targetStr}</strong></td>
+        <td><strong>E${e.code}: ${e.title}</strong> <span class="subtext">${e.count > 1 ? `(×${e.count})` : ""}</span></td>
+        <td style="text-align:right"><span class="badge ${sevClass}">${e.severity}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const sel = filtered[selectedLogIndex];
+    const sevClass = sel.severity === "INFO" ? "ok" : sel.severity === "WARN" ? "warn" : "err";
+    const isLamp = sel.address !== 65535;
+    const targetStr = isLamp ? `A${String(sel.address & 63).padStart(2, "0")}` : "Bus / System";
+
+    pane.innerHTML = `
+      <div class="insp-header">
+        <div>
+          <div class="insp-title">E${sel.code} — ${sel.title}</div>
+          <div class="insp-badges">
+            <span class="badge ${sevClass}">${sel.severity}</span>
+            <span class="badge">${sel.source}</span>
+            <span class="badge">Count: ×${sel.count}</span>
+          </div>
+        </div>
+        ${
+          isLamp
+            ? `<button class="btn btn-xs btn-primary" onclick="jumpToDeviceFromLog('${targetStr}')">Open ${targetStr} →</button>`
+            : ""
+        }
+      </div>
+
+      <div class="insp-section">
+        <div class="info-pair"><span>Target Device</span><strong class="mono">${targetStr}</strong></div>
+        <div class="info-pair"><span>Timestamp</span><strong class="mono">${formatTimestamp(sel.epoch_ms, sel.uptime_ms)}</strong></div>
+        <div class="info-pair"><span>Trigger Detail</span><strong class="mono">${sel.detail || "—"}</strong></div>
+      </div>
+
+      <div class="insp-section">
+        <span class="insp-sec-title">What Happened</span>
+        <p style="font-size:12.5px;color:var(--text)">${sel.description || sel.detail}</p>
+      </div>
+
+      <div class="insp-section">
+        <span class="insp-sec-title">How to Fix</span>
+        <p style="font-size:12.5px;color:var(--text)">${sel.remedy || "Inspect wiring and device status."}</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Live Bus Monitor mode
+  const filtered = busEntries.filter((e) => {
+    const isSensor = e.bits === 24 || (e.target && (e.target.startsWith("D") || e.target.startsWith("DEV")));
+    const isErr = e.status !== "OK";
+    if (busFrameFilter === "lamps" && isSensor) return false;
+    if (busFrameFilter === "sensors" && !isSensor) return false;
+    if (busFrameFilter === "err" && !isErr) return false;
+    if (query) {
+      const hay = `${e.target} ${e.mnemonic} ${e.detail} ${e.status}`.toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="subtext">No matching DALI bus frames in ring buffer.</td></tr>';
+    pane.innerHTML = '<div class="subtext">Select any bus frame on the left to inspect its decoded fields and raw hex.</div>';
+    return;
+  }
+  if (selectedLogIndex >= filtered.length) selectedLogIndex = 0;
+
+  filtered.forEach((e, idx) => {
+    const tr = document.createElement("tr");
+    if (idx === selectedLogIndex) tr.className = "selected";
+    tr.onclick = () => selectLogRow(idx);
+    const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
+    tr.innerHTML = `
+      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+      <td class="mono"><strong>${e.target}</strong></td>
+      <td class="mono"><strong>${e.mnemonic}</strong> <span style="color:var(--text-2)">${e.detail}</span></td>
+      <td style="text-align:right"><span class="badge ${stClass}">${e.status}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const sel = filtered[selectedLogIndex];
+  const hexW = sel.bits === 24 ? 6 : 4;
+  const rawHex = "0x" + Number(sel.frame).toString(16).toUpperCase().padStart(hexW, "0");
+  const stClass = sel.status === "OK" ? "ok" : sel.status === "TIMEOUT" ? "warn" : "err";
+  const isSensorFrame =
+    sel.bits === 24 || (sel.target && (sel.target.startsWith("D") || sel.target.startsWith("DEV")));
+
+  let etsHelperHtml = "";
+  if (isSensorFrame && sel.target && sel.target.includes("/I")) {
+    const [devPart, instPart] = sel.target.split("/I");
+    const devNum = parseInt(devPart.replace(/\D+/g, ""), 10) || 0;
+    const instNum = parseInt(instPart, 10) || 0;
+    etsHelperHtml = `
+      <div class="insp-section">
+        <span class="insp-sec-title">ETS Input Channel Mapping</span>
+        <div class="info-pair"><span>ETS Device Address</span><strong class="mono">${devNum} (D${String(devNum).padStart(2, "0")})</strong></div>
+        <div class="info-pair"><span>ETS Instance Number</span><strong class="mono">${instNum} (I${String(instNum).padStart(2, "0")})</strong></div>
+      </div>
+    `;
+  }
+
+  const jumpTarget =
+    sel.target && sel.target.startsWith("A")
+      ? sel.target.slice(0, 3)
+      : isSensorFrame && sel.target
+        ? "D" + String(parseInt(sel.target.replace(/\D+/g, ""), 10) || 0).padStart(2, "0")
+        : "";
+
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Frame #${sel.seq} — ${sel.mnemonic}</div>
+        <div class="insp-badges">
+          <span class="badge ${stClass}">${sel.status}</span>
+          <span class="badge">${sel.bits}-bit DALI Frame</span>
+          <span class="badge mono">${rawHex}</span>
+        </div>
+      </div>
+      ${
+        jumpTarget
+          ? `<button class="btn btn-xs btn-primary" onclick="jumpToDeviceFromLog('${jumpTarget}')">Open ${jumpTarget} →</button>`
+          : ""
+      }
+    </div>
+
+    <div class="insp-section">
+      <div class="info-pair"><span>Target</span><strong class="mono">${sel.target}</strong></div>
+      <div class="info-pair"><span>Command / Event</span><strong class="mono">${sel.mnemonic}</strong></div>
+      <div class="info-pair"><span>Decoded Payload</span><strong class="mono">${sel.detail}</strong></div>
+      <div class="info-pair"><span>Raw Frame Hex</span><strong class="mono">${rawHex} (${sel.bits}-bit)</strong></div>
+      <div class="info-pair"><span>Timestamp</span><strong class="mono">${formatTimestamp(sel.epoch_ms, sel.uptime_ms)} (+${(sel.uptime_ms / 1000).toFixed(3)}s)</strong></div>
+    </div>
+
+    ${etsHelperHtml}
+  `;
+}
+
 async function loadDebugTrace() {
   try {
     const res = await fetch("/api/debug");
     const d = await res.json();
-    window.lastTraceData = d;
-    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
-    const cap = d.capacity || 512;
-    const buf = d.buffered ?? (d.entries ? d.entries.length : 0);
-    const over = d.total_frames > buf ? d.total_frames - buf : 0;
-    document.getElementById("trace-stats").textContent =
-      `${d.active ? "Recording on gateway (continues with browser closed)" : "Paused"} • Buffer: ${buf}/${cap} frames${over > 0 ? ` (${over} older overwritten)` : ""} • ${d.total_collisions} collisions`;
-    const tbody = document.getElementById("trace-tbody");
-    tbody.innerHTML = "";
+    // Merge gateway ring buffer frames into the browser's 10,000-row session history
     (d.entries || []).forEach((e) => {
-      const tr = document.createElement("tr");
-      const hexW = e.bits === 24 ? 6 : 4;
-      const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
-      const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
-      tr.innerHTML = `
-        <td class="mono">${e.seq}</td>
-        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-        <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
-        <td class="mono">${e.bits}-bit</td>
-        <td class="mono">${rawHex}</td>
-        <td class="mono"><strong>${e.target}</strong></td>
-        <td class="mono">${e.mnemonic}</td>
-        <td class="mono">${e.detail}</td>
-        <td><span class="badge ${stClass}">${e.status}</span></td>
-      `;
-      tbody.appendChild(tr);
+      if (e && e.seq != null) {
+        browserTraceMap.set(e.seq, e);
+      }
     });
+    if (browserTraceMap.size > BROWSER_TRACE_MAX) {
+      const sortedKeys = Array.from(browserTraceMap.keys()).sort((a, b) => a - b);
+      const dropCount = sortedKeys.length - BROWSER_TRACE_MAX;
+      for (let i = 0; i < dropCount; i++) {
+        browserTraceMap.delete(sortedKeys[i]);
+      }
+    }
+    const mergedEntries = Array.from(browserTraceMap.values()).sort((a, b) => b.seq - a.seq);
+    d.entries = mergedEntries;
+    window.lastTraceData = d;
+
+    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
+    const cap = d.capacity || 1024;
+    const hwBuf = d.buffered ?? 0;
+    const browserCnt = mergedEntries.length;
+    const statsEl = document.getElementById("trace-stats");
+    if (statsEl) {
+      statsEl.textContent =
+        browserCnt > hwBuf
+          ? `${d.active ? "● Recording" : "Paused"} (Device ${hwBuf}/${cap} • Browser ${browserCnt})`
+          : `${d.active ? "● Recording" : "Paused"} (${hwBuf}/${cap})`;
+      statsEl.className = "badge " + (d.active ? "ok" : "warn");
+    }
+    renderActiveLogTable();
   } catch (_) {}
 }
 
 async function controlDebug(action) {
+  if (action === "clear") {
+    browserTraceMap.clear();
+  }
   const autoTrig = document.getElementById("dbg-autotrigger").checked;
   await fetch("/api/debug", {
     method: "POST",
@@ -1665,24 +1915,7 @@ async function loadErrorLogs() {
     const res = await fetch("/api/logs");
     const d = await res.json();
     window.lastLogData = d;
-    const tbody = document.getElementById("logs-tbody");
-    tbody.innerHTML = "";
-    (d.entries || []).forEach((e) => {
-      const tr = document.createElement("tr");
-      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
-      const addrStr = e.address === 65535 ? "Bus / System" : `Lamp A${String(e.address & 63).padStart(2, "0")}`;
-      tr.innerHTML = `
-        <td class="mono">${e.seq}</td>
-        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-        <td class="mono">${e.source}</td>
-        <td><span class="badge ${sevClass}">${e.severity}</span></td>
-        <td><strong>E${e.code}: ${e.title}</strong></td>
-        <td class="mono">${addrStr}</td>
-        <td class="mono">×${e.count}</td>
-        <td><div>${e.description || e.detail}</div><div class="subtext">${e.remedy}</div></td>
-      `;
-      tbody.appendChild(tr);
-    });
+    renderActiveLogTable();
   } catch (_) {}
 }
 
@@ -1699,15 +1932,38 @@ function exportJson(filename, obj) {
   a.click();
 }
 
+function onOtaDragOver(ev, el) {
+  ev.preventDefault();
+  el.classList.add("dragover");
+}
+
+function onOtaDragLeave(el) {
+  el.classList.remove("dragover");
+}
+
+function onOtaDrop(ev, target) {
+  ev.preventDefault();
+  const dropEl = document.getElementById("drop-" + target);
+  if (dropEl) dropEl.classList.remove("dragover");
+  const files = ev.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+  const fileInput = document.getElementById("file-" + target);
+  if (fileInput) {
+    fileInput.files = files;
+    uploadOta(target);
+  }
+}
+
 function uploadOta(target) {
   const fileInput = document.getElementById("file-" + target);
+  const progWrap = document.getElementById("wrap-prog-" + target);
   const prog = document.getElementById("prog-" + target);
   const status = document.getElementById("status-" + target);
   if (!fileInput.files || fileInput.files.length === 0) {
-    status.textContent = "Please choose a .bin file first.";
     return;
   }
   const file = fileInput.files[0];
+  if (progWrap) progWrap.style.display = "block";
   status.textContent = `Uploading ${file.name} (${Math.round(file.size / 1024)} KB)...`;
   prog.style.width = "0%";
 

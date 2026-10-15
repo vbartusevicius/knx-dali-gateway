@@ -160,273 +160,336 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
       </div>
     </section>
 
-    <!-- TAB 3: ERRORS & BUS LOG -->
+    <!-- TAB 3: ERRORS & BUS LOG (UNIFIED MASTER-DETAIL VIEW) -->
     <section id="panel-logs" class="tab-panel">
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>Error History</h2>
-            <p class="subtext">Saved in non-volatile memory across power loss and reboots.</p>
+      <!-- Top Control & Filter Bar -->
+      <div class="toolbar-card">
+        <div class="toolbar-group">
+          <div class="filter-pills">
+            <button class="pill-btn active" id="log-mode-errors" onclick="setLogViewMode('errors')">Errors <span id="cnt-log-errors">0</span></button>
+            <button class="pill-btn" id="log-mode-bus" onclick="setLogViewMode('bus')">Live Bus Monitor <span id="cnt-log-frames">0</span></button>
           </div>
-          <div class="btn-row">
-            <button class="btn btn-sm" onclick="loadErrorLogs()">Refresh</button>
-            <button class="btn btn-sm" onclick="clearErrorLogs()">Clear</button>
-            <button class="btn btn-sm" onclick="exportJson('error-log.json', window.lastLogData)">Export JSON</button>
+
+          <div class="stat-divider" id="bus-filter-div" style="display:none"></div>
+
+          <div class="filter-pills" id="bus-filter-pills" style="display:none">
+            <button class="pill-btn active" data-bfilter="all" onclick="setBusFrameFilter('all',this)">All</button>
+            <button class="pill-btn" data-bfilter="lamps" onclick="setBusFrameFilter('lamps',this)">Lamps</button>
+            <button class="pill-btn" data-bfilter="sensors" onclick="setBusFrameFilter('sensors',this)">Sensors &amp; Buttons</button>
+            <button class="pill-btn" data-bfilter="err" onclick="setBusFrameFilter('err',this)">Collisions / Timeouts</button>
           </div>
+
+          <input type="text" class="search-input" id="log-search" placeholder="Filter by A07, D00, command…" oninput="renderActiveLogTable()">
         </div>
-        <div class="table-scroll">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Time</th>
-                <th>Source</th>
-                <th>Level</th>
-                <th>Error</th>
-                <th>Device</th>
-                <th>Count</th>
-                <th>Info</th>
-              </tr>
-            </thead>
-            <tbody id="logs-tbody"></tbody>
-          </table>
+
+        <!-- Actions for Errors mode -->
+        <div class="btn-row" id="log-actions-errors">
+          <button class="btn btn-sm" onclick="loadErrorLogs()">Refresh</button>
+          <button class="btn btn-sm" onclick="clearErrorLogs()">Clear</button>
+          <button class="btn btn-sm" onclick="exportJson('error-log.json', window.lastLogData)">Export JSON</button>
+        </div>
+
+        <!-- Actions for Live Bus Monitor mode -->
+        <div class="btn-row" id="log-actions-bus" style="display:none">
+          <span class="badge ok" id="trace-stats">Recording (3/512)</span>
+          <label class="check-inline" style="font-size:12px">
+            <input type="checkbox" id="dbg-autotrigger" checked onchange="controlDebug('auto')">
+            <span>Auto on error</span>
+          </label>
+          <button class="btn btn-primary btn-sm" id="btn-trace-rec" onclick="controlDebug('start')">Record</button>
+          <button class="btn btn-sm" id="btn-trace-pause" onclick="controlDebug('stop')">Pause</button>
+          <button class="btn btn-sm" onclick="controlDebug('clear')">Clear</button>
+          <button class="btn btn-sm" onclick="loadDebugTrace()">Refresh</button>
+          <button class="btn btn-sm" onclick="exportJson('dali-frames.json', window.lastTraceData)">Export JSON</button>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>Recent Sensor &amp; Button Events</h2>
-            <p class="subtext">Press a physical DALI-2 button or trigger a sensor to see its Device Address and Instance Number.</p>
+      <!-- Master-Detail Split: Single-Line Log Table (Left) + Entry Inspector (Right) -->
+      <div class="master-detail">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="table-scroll" style="max-height:560px;border:none;border-radius:0">
+            <table class="data-table log-table">
+              <thead>
+                <tr>
+                  <th style="width:155px">Time</th>
+                  <th style="width:110px">Target</th>
+                  <th>Event / Command</th>
+                  <th style="width:95px;text-align:right">Status</th>
+                </tr>
+              </thead>
+              <tbody id="logs-unified-tbody"></tbody>
+            </table>
           </div>
         </div>
-        <div class="table-scroll" style="max-height:220px">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Device</th>
-                <th>Instance</th>
-                <th>Type</th>
-                <th>Event / Reading</th>
-                <th>When</th>
-              </tr>
-            </thead>
-            <tbody id="input-events-tbody"></tbody>
-          </table>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>Live DALI Bus Frame Monitor</h2>
-            <p class="subtext" id="trace-stats">Captures 16-bit lamp commands, 8-bit replies, 24-bit sensor events, and bus collisions.</p>
-          </div>
-          <div class="btn-row">
-            <label class="check-inline">
-              <input type="checkbox" id="dbg-autotrigger" checked onchange="controlDebug('auto')">
-              <span>Auto-capture on error</span>
-            </label>
-            <button class="btn btn-primary btn-sm" onclick="controlDebug('start')">Record</button>
-            <button class="btn btn-sm" onclick="controlDebug('stop')">Pause</button>
-            <button class="btn btn-sm" onclick="controlDebug('clear')">Clear</button>
-            <button class="btn btn-sm" onclick="loadDebugTrace()">Refresh</button>
-            <button class="btn btn-sm" onclick="exportJson('dali-frames.json', window.lastTraceData)">Export JSON</button>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Time</th>
-                <th>Uptime</th>
-                <th>Size</th>
-                <th>Hex</th>
-                <th>Target</th>
-                <th>Command</th>
-                <th>Details</th>
-                <th>Result</th>
-              </tr>
-            </thead>
-            <tbody id="trace-tbody"></tbody>
-          </table>
-        </div>
+        <aside class="inspector-pane" id="log-inspector-pane">
+          <div id="log-inspector-content"></div>
+        </aside>
       </div>
     </section>
 
-    <!-- TAB 4: SETTINGS (SINGLE-COLUMN LAYOUT WITH 3 SEPARATE PANELS) -->
+    <!-- TAB 4: SETTINGS (2-PANE SIDEBAR + SECTION PANEL) -->
     <section id="panel-settings" class="tab-panel">
-      <form id="form-config" onsubmit="saveConfig(event)" class="single-col-layout stack-col">
-        <!-- Panel 1: WiFi Setup -->
-        <div class="card">
-          <div class="card-head">
+      <form id="form-config" onsubmit="saveConfig(event)" class="settings-split">
+        <!-- Left Section Sidebar -->
+        <nav class="card settings-nav">
+          <button type="button" class="settings-nav-item active" data-sec="wifi" onclick="selectSettingsSection('wifi',this)">
             <div>
-              <h2>WiFi Setup</h2>
-              <p class="subtext">KNX and DALI control works independently even with WiFi turned off.</p>
+              <strong>WiFi Network</strong>
+              <span>Station credentials &amp; power save</span>
             </div>
-          </div>
-          <div class="form-stack">
-            <label class="check-row">
-              <input type="checkbox" id="cfg-wifi-enabled" checked>
-              <span>Enable WiFi</span>
-            </label>
-            <label class="check-row">
-              <input type="checkbox" id="cfg-wifi-ps" checked>
-              <span>Low-power WiFi sleep</span>
-            </label>
-            <label class="field">
-              <span>WiFi Network (SSID)</span>
-              <input type="text" id="cfg-wifi-ssid" maxlength="32" placeholder="MyNetwork">
-            </label>
-            <label class="field">
-              <span>WiFi Password</span>
-              <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="Password">
-            </label>
-          </div>
-        </div>
+            <span class="badge ok" id="nav-badge-wifi">ON</span>
+          </button>
+          <button type="button" class="settings-nav-item" data-sec="mqtt" onclick="selectSettingsSection('mqtt',this)">
+            <div>
+              <strong>MQTT &amp; Home Assistant</strong>
+              <span>Broker &amp; auto-discovery</span>
+            </div>
+            <span class="badge" id="nav-badge-mqtt">OFF</span>
+          </button>
+          <button type="button" class="settings-nav-item" data-sec="display" onclick="selectSettingsSection('display',this)">
+            <div>
+              <strong>Display, Supply &amp; Power</strong>
+              <span>OLED screen, DALI supply &amp; default W</span>
+            </div>
+          </button>
+          <button type="button" class="settings-nav-item" data-sec="system" onclick="selectSettingsSection('system',this)">
+            <div>
+              <strong>System &amp; Clock</strong>
+              <span>Time sync &amp; controller restart</span>
+            </div>
+          </button>
+        </nav>
 
-        <!-- Panel 2: MQTT -->
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>MQTT &amp; Home Assistant</h2>
-              <p class="subtext">Automatically publishes the gateway and all installed lamps to Home Assistant when connected.</p>
-            </div>
-          </div>
-          <div class="form-stack">
-            <label class="check-row">
-              <input type="checkbox" id="cfg-mqtt-enabled">
-              <span>Connect to MQTT Broker</span>
-            </label>
-            <label class="field">
-              <span>Device Name (Chip ID <code id="cfg-chip-id-preview">f5aa11f</code> is appended automatically)</span>
-              <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
-            </label>
-            <div class="form-grid-2">
-              <label class="field">
-                <span>Broker Address</span>
-                <input type="text" id="cfg-mqtt-host" maxlength="64" placeholder="192.168.1.10">
-              </label>
-              <label class="field">
-                <span>Port</span>
-                <input type="number" id="cfg-mqtt-port" min="1" max="65535" value="1883">
-              </label>
-            </div>
-            <div class="form-grid-2">
-              <label class="field">
-                <span>Username</span>
-                <input type="text" id="cfg-mqtt-user" maxlength="32">
-              </label>
-              <label class="field">
-                <span>Password</span>
-                <input type="password" id="cfg-mqtt-pass" maxlength="64">
-              </label>
-            </div>
-            <div class="form-grid-2">
-              <label class="field">
-                <span>Base Topic</span>
-                <input type="text" id="cfg-mqtt-base" maxlength="32" value="knx_dali">
-              </label>
-              <label class="field">
-                <span>Home Assistant Prefix</span>
-                <input type="text" id="cfg-ha-prefix" maxlength="32" value="homeassistant">
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 3: Device Settings -->
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>Device Settings</h2>
-              <p class="subtext">Front display, DALI bus supply, default power calculation, and system clock.</p>
-            </div>
-          </div>
-          <div class="form-stack">
-            <div class="form-grid-2">
-              <label class="field">
-                <span>Front OLED Screen</span>
-                <select id="cfg-oled-geom">
-                  <option value="0">Auto (V3 — 64×128 Portrait)</option>
-                  <option value="2">V3 — 64×128 Portrait</option>
-                  <option value="1">V1 / V2 — 128×64 Landscape</option>
-                  <option value="3">Off</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>Screen Sleep (s, 0 = never)</span>
-                <input type="number" id="cfg-oled-sleep" min="0" max="3600" value="60">
-              </label>
-            </div>
-            <div class="form-grid-2">
-              <label class="field">
-                <span>Default Lamp Power at 100% (W)</span>
-                <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" onchange="if(latestState)handleLiveState(latestState)">
-              </label>
-              <label class="field">
-                <span>Default Ballast Idle Power (W)</span>
-                <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" onchange="if(latestState)handleLiveState(latestState)">
-              </label>
-            </div>
-            <label class="check-row">
-              <input type="checkbox" id="cfg-dali-psu" checked>
-              <span>Use internal DALI bus power supply (cuts off on short circuit)</span>
-            </label>
-            <div class="action-row" style="margin-top:4px">
+        <!-- Right Active Section Content -->
+        <div class="card settings-content">
+          <!-- Section 1: WiFi -->
+          <div class="settings-sec active" id="sec-wifi">
+            <div class="card-head">
               <div>
-                <strong>System Clock</strong>
-                <p>Sync gateway time from your browser for error log timestamps.</p>
+                <h2>WiFi Network</h2>
+                <p class="subtext">KNX and DALI lighting control works independently even with WiFi turned off.</p>
               </div>
-              <button type="button" class="btn btn-sm" onclick="syncGatewayTime()">Sync Clock</button>
+              <div class="btn-row">
+                <span id="cfg-save-msg" class="save-msg"></span>
+                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+              </div>
             </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Save All Settings</button>
-              <span id="cfg-save-msg" class="save-msg"></span>
+            <div class="form-stack">
+              <label class="check-row">
+                <input type="checkbox" id="cfg-wifi-enabled" checked onchange="toggleSettingsCollapse()">
+                <span>Enable WiFi</span>
+              </label>
+              <div id="wifi-fields-wrap" class="form-stack">
+                <label class="check-row">
+                  <input type="checkbox" id="cfg-wifi-ps" checked>
+                  <span>Low-power WiFi sleep (recommended when powered from KNX bus)</span>
+                </label>
+                <div class="form-grid-2">
+                  <label class="field">
+                    <span>WiFi Network (SSID)</span>
+                    <input type="text" id="cfg-wifi-ssid" maxlength="32" placeholder="MyNetwork">
+                  </label>
+                  <label class="field">
+                    <span>WiFi Password</span>
+                    <input type="password" id="cfg-wifi-pass" maxlength="64" placeholder="Password">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: MQTT & Home Assistant -->
+          <div class="settings-sec" id="sec-mqtt">
+            <div class="card-head">
+              <div>
+                <h2>MQTT &amp; Home Assistant</h2>
+                <p class="subtext">Automatically publishes the gateway and all installed lamps to Home Assistant when connected.</p>
+              </div>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+              </div>
+            </div>
+            <div class="form-stack">
+              <label class="check-row">
+                <input type="checkbox" id="cfg-mqtt-enabled" onchange="toggleSettingsCollapse()">
+                <span>Connect to MQTT Broker</span>
+              </label>
+              <div id="mqtt-fields-wrap" class="form-stack">
+                <label class="field">
+                  <span>Device Name (Chip ID <code id="cfg-chip-id-preview">f5aa11f</code> is appended automatically)</span>
+                  <input type="text" id="cfg-hostname" maxlength="32" value="knx-dali-gw">
+                </label>
+                <div class="form-grid-2">
+                  <label class="field">
+                    <span>Broker Address</span>
+                    <input type="text" id="cfg-mqtt-host" maxlength="64" placeholder="192.168.1.10">
+                  </label>
+                  <label class="field">
+                    <span>Port</span>
+                    <input type="number" id="cfg-mqtt-port" min="1" max="65535" value="1883">
+                  </label>
+                </div>
+                <div class="form-grid-2">
+                  <label class="field">
+                    <span>Username</span>
+                    <input type="text" id="cfg-mqtt-user" maxlength="32">
+                  </label>
+                  <label class="field">
+                    <span>Password</span>
+                    <input type="password" id="cfg-mqtt-pass" maxlength="64">
+                  </label>
+                </div>
+                <div class="form-grid-2">
+                  <label class="field">
+                    <span>Base Topic</span>
+                    <input type="text" id="cfg-mqtt-base" maxlength="32" value="knx_dali">
+                  </label>
+                  <label class="field">
+                    <span>Home Assistant Prefix</span>
+                    <input type="text" id="cfg-ha-prefix" maxlength="32" value="homeassistant">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Display, Supply & Power -->
+          <div class="settings-sec" id="sec-display">
+            <div class="card-head">
+              <div>
+                <h2>Display, Supply &amp; Power</h2>
+                <p class="subtext">Front OLED display geometry, internal DALI bus power supply, and default lamp wattage.</p>
+              </div>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+              </div>
+            </div>
+            <div class="form-stack">
+              <div class="form-grid-2">
+                <label class="field">
+                  <span>Front OLED Screen</span>
+                  <select id="cfg-oled-geom">
+                    <option value="0">Auto (V3 — 64×128 Portrait)</option>
+                    <option value="2">V3 — 64×128 Portrait</option>
+                    <option value="1">V1 / V2 — 128×64 Landscape</option>
+                    <option value="3">Off</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Screen Sleep (seconds, 0 = never)</span>
+                  <input type="number" id="cfg-oled-sleep" min="0" max="3600" value="60">
+                </label>
+              </div>
+              <div class="form-grid-2">
+                <label class="field">
+                  <span>Default Lamp Power at 100% (W)</span>
+                  <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" onchange="if(latestState)handleLiveState(latestState)">
+                </label>
+                <label class="field">
+                  <span>Default Ballast Idle Power (W)</span>
+                  <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" onchange="if(latestState)handleLiveState(latestState)">
+                </label>
+              </div>
+              <label class="check-row">
+                <input type="checkbox" id="cfg-dali-psu" checked>
+                <span>Use internal DALI bus power supply (cuts off automatically on short circuit)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 4: System & Clock -->
+          <div class="settings-sec" id="sec-system">
+            <div class="card-head">
+              <div>
+                <h2>System &amp; Clock</h2>
+                <p class="subtext">Synchronize the gateway clock for error log timestamps or restart the controller.</p>
+              </div>
+            </div>
+            <div class="action-stack">
+              <div class="action-row">
+                <div>
+                  <strong>System Clock</strong>
+                  <p>Copy current date and time from your browser so error logs show exact timestamps.</p>
+                </div>
+                <button type="button" class="btn btn-sm" onclick="syncGatewayTime()">Sync Clock</button>
+              </div>
+              <div class="action-row">
+                <div>
+                  <strong>Reset DALI Bus Supply</strong>
+                  <p>Re-arms the internal DALI power supply after fixing a bus short circuit.</p>
+                </div>
+                <button type="button" class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Reset Supply</button>
+              </div>
+              <div class="action-row">
+                <div>
+                  <strong>Restart Gateway</strong>
+                  <p>Reboots the controller while preserving all saved settings and lamp states.</p>
+                </div>
+                <button type="button" class="btn btn-sm" onclick="rebootDevice()">Restart</button>
+              </div>
             </div>
           </div>
         </div>
       </form>
     </section>
 
-    <!-- TAB 5: FIRMWARE (SINGLE-COLUMN LAYOUT) -->
+    <!-- TAB 5: FIRMWARE (STATUS STRIP + DRAG & DROP OTA CARDS) -->
     <section id="panel-firmware" class="tab-panel">
-      <div class="single-col-layout">
+      <div class="status-strip">
+        <div class="stat-pill">
+          <span class="stat-lbl">Current Firmware</span>
+          <strong class="mono" id="info-fw-ver">26.10.15.1915</strong>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">Chip ID</span>
+          <strong class="mono" id="info-chip-id">f5aa11f</strong>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-lbl">Active Slot</span>
+          <strong class="mono" id="info-part">ota_0</strong>
+        </div>
+        <div style="margin-left:auto">
+          <button class="btn btn-sm" onclick="rebootDevice()">Restart Gateway</button>
+        </div>
+      </div>
+
+      <div class="two-col-layout">
         <div class="card">
-          <div class="info-list">
-            <div class="info-pair"><span>Current Firmware Version</span><strong class="mono" id="info-fw-ver">26.10.15.1915</strong></div>
-            <div class="info-pair"><span>Active Partition</span><strong class="mono" id="info-part">ota_0</strong></div>
-          </div>
-
-          <div class="fw-block">
-            <h2>Firmware Update (<code>firmware.bin</code>)</h2>
-            <p class="subtext">Upload a compiled firmware binary to update the gateway application.</p>
-            <div class="upload-row">
-              <input type="file" id="file-firmware" accept=".bin">
-              <button class="btn btn-primary" onclick="uploadOta('firmware')">Upload Firmware</button>
-            </div>
-            <div class="progress-track"><div class="progress-fill" id="prog-firmware" style="width:0%"></div></div>
-            <div class="subtext" id="status-firmware">Select a firmware.bin file.</div>
-          </div>
-
-          <div class="fw-block">
-            <h2>Web Interface Update (<code>littlefs.bin</code>)</h2>
-            <p class="subtext">Upload a packed web interface image without erasing your settings.</p>
-            <div class="upload-row">
-              <input type="file" id="file-littlefs" accept=".bin">
-              <button class="btn btn-primary" onclick="uploadOta('littlefs')">Upload Web UI</button>
-            </div>
-            <div class="progress-track"><div class="progress-fill" id="prog-littlefs" style="width:0%"></div></div>
-            <div class="subtext" id="status-littlefs">Select a littlefs.bin file.</div>
-          </div>
-
-          <div class="action-row" style="margin-top:16px">
+          <div class="card-head">
             <div>
-              <strong>Restart Gateway</strong>
-              <p>Reboots the controller while keeping all saved settings.</p>
+              <h2>Application Firmware (<code>firmware.bin</code>)</h2>
+              <p class="subtext">Updates the ESP32-C6 gateway application and restarts into the new partition.</p>
             </div>
-            <button class="btn" onclick="rebootDevice()">Restart</button>
+          </div>
+          <label class="dropzone" id="drop-firmware"
+            ondragover="onOtaDragOver(event,this)" ondragleave="onOtaDragLeave(this)" ondrop="onOtaDrop(event,'firmware')">
+            <input type="file" id="file-firmware" accept=".bin" hidden onchange="uploadOta('firmware')">
+            <strong class="dropzone-title">Drop <code>firmware.bin</code> here or click to select file</strong>
+            <span class="subtext" id="status-firmware">Uploads and flashes immediately upon selection</span>
+          </label>
+          <div class="progress-track" id="wrap-prog-firmware" style="display:none;margin-top:10px">
+            <div class="progress-fill" id="prog-firmware" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>Web Interface (<code>littlefs.bin</code>)</h2>
+              <p class="subtext">Updates the web interface assets without erasing your network or DALI settings.</p>
+            </div>
+          </div>
+          <label class="dropzone" id="drop-littlefs"
+            ondragover="onOtaDragOver(event,this)" ondragleave="onOtaDragLeave(this)" ondrop="onOtaDrop(event,'littlefs')">
+            <input type="file" id="file-littlefs" accept=".bin" hidden onchange="uploadOta('littlefs')">
+            <strong class="dropzone-title">Drop <code>littlefs.bin</code> here or click to select file</strong>
+            <span class="subtext" id="status-littlefs">Uploads and reloads immediately upon selection</span>
+          </label>
+          <div class="progress-track" id="wrap-prog-littlefs" style="display:none;margin-top:10px">
+            <div class="progress-fill" id="prog-littlefs" style="width:0%"></div>
           </div>
         </div>
       </div>
@@ -1638,6 +1701,125 @@ body {
   transition: width 0.2s;
 }
 
+/* Settings 2-Pane Split & Firmware Dropzones */
+.settings-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.settings-nav-item strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.settings-nav-item span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.settings-nav-item:hover {
+  background: var(--surface-2);
+}
+
+.settings-nav-item.active {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: var(--accent);
+}
+
+.settings-sec {
+  display: none;
+}
+
+.settings-sec.active {
+  display: block;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--border-light);
+  border-radius: 8px;
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.dropzone-title {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.search-input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.log-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.log-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.log-table tbody tr.selected {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.log-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cct-range {
   -webkit-appearance: none;
   appearance: none;
@@ -1696,8 +1878,13 @@ let renderedInspectorSig = "";
 let renderedGrpSig = "";
 let selectedColorModeByCh = {};
 let selectedColorModeByGrp = {};
+let logViewMode = "errors"; // "errors" | "bus"
+let busFrameFilter = "all"; // "all" | "lamps" | "sensors" | "err"
+let selectedLogIndex = 0;
 let latestState = null;
 let channelDetailsCache = {};
+const BROWSER_TRACE_MAX = 10000;
+let browserTraceMap = new Map();
 window.lastLogData = { entries: [] };
 window.lastTraceData = { entries: [] };
 
@@ -2932,27 +3119,6 @@ function renderInputs(inputs, inputEvents) {
   if (!any) {
     grid.innerHTML = '<div class="subtext">No DALI-2 sensors or buttons found on the bus.</div>';
   }
-
-  const tbody = document.getElementById("input-events-tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  if (evs.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="5" class="subtext">No recent sensor/button events yet. Press a DALI-2 button to see its address and instance here.</td></tr>';
-    return;
-  }
-  evs.forEach((ev) => {
-    const [dev, inst, type, info, ageS] = ev;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="mono"><strong>${dev}</strong> <span class="subtext">(D${String(dev).padStart(2, "0")})</span></td>
-      <td class="mono"><strong>${inst}</strong> <span class="subtext">(I${String(inst).padStart(2, "0")})</span></td>
-      <td><span class="badge">${inputTypeName(type)}</span></td>
-      <td><strong>${decodeInputEvent(type, info)}</strong></td>
-      <td class="mono">${ageS === 0 ? "Just now" : `${ageS}s ago`}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 function renderSensorInspector(devIdx) {
@@ -3048,8 +3214,15 @@ function renderSensorInspector(devIdx) {
   `;
 }
 
+let lastSeenTxFrames = -1;
+
 function handleLiveState(data) {
   latestState = data;
+  const dTx = data.dali ? data.dali.tx_frames || 0 : 0;
+  if (lastSeenTxFrames !== dTx) {
+    lastSeenTxFrames = dTx;
+    loadDebugTrace();
+  }
   const chipId = data.chip_id || "f5aa11f";
   const fwVer = data.fw_version || "26.10.15.1915";
   const iaStr = formatIa(data.knx.ia);
@@ -3147,6 +3320,8 @@ function handleLiveState(data) {
 
   document.getElementById("info-fw-ver").textContent = fwVer;
   document.getElementById("info-part").textContent = data.partition || "ota_0";
+  const infoChip = document.getElementById("info-chip-id");
+  if (infoChip) infoChip.textContent = chipId;
 }
 
 async function applyScenario(name) {
@@ -3238,6 +3413,33 @@ async function syncGatewayTime() {
   } catch (_) {}
 }
 
+function selectSettingsSection(sec, btn) {
+  document.querySelectorAll(".settings-nav-item").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".settings-sec").forEach((s) => s.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  const target = document.getElementById("sec-" + sec);
+  if (target) target.classList.add("active");
+}
+
+function toggleSettingsCollapse() {
+  const wifiOn = document.getElementById("cfg-wifi-enabled")?.checked;
+  const mqttOn = document.getElementById("cfg-mqtt-enabled")?.checked;
+  const wifiWrap = document.getElementById("wifi-fields-wrap");
+  const mqttWrap = document.getElementById("mqtt-fields-wrap");
+  if (wifiWrap) wifiWrap.style.display = wifiOn ? "flex" : "none";
+  if (mqttWrap) mqttWrap.style.display = mqttOn ? "flex" : "none";
+  const bWifi = document.getElementById("nav-badge-wifi");
+  if (bWifi) {
+    bWifi.textContent = wifiOn ? "ON" : "OFF";
+    bWifi.className = "badge " + (wifiOn ? "ok" : "");
+  }
+  const bMqtt = document.getElementById("nav-badge-mqtt");
+  if (bMqtt) {
+    bMqtt.textContent = mqttOn ? "ON" : "OFF";
+    bMqtt.className = "badge " + (mqttOn ? "ok" : "");
+  }
+}
+
 async function loadConfig() {
   try {
     const res = await fetch("/api/config");
@@ -3257,6 +3459,7 @@ async function loadConfig() {
     document.getElementById("cfg-oled-geom").value = String(c.oled_geometry ?? 0);
     document.getElementById("cfg-oled-sleep").value = c.oled_sleep_seconds ?? 60;
     document.getElementById("cfg-dali-psu").checked = !!c.internal_dali_psu_enabled;
+    toggleSettingsCollapse();
   } catch (_) {}
 }
 
@@ -3291,41 +3494,270 @@ async function saveConfig(ev) {
   setTimeout(() => (msg.textContent = ""), 3000);
 }
 
+function jumpToDeviceFromLog(targetStr) {
+  if (!targetStr) return;
+  document.querySelectorAll(".nav-tab").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+  const ovBtn = document.querySelector('.nav-tab[data-tab="overview"]');
+  if (ovBtn) ovBtn.classList.add("active");
+  document.getElementById("panel-overview").classList.add("active");
+
+  if (targetStr.startsWith("A")) {
+    const ch = parseInt(targetStr.slice(1), 10);
+    const allPill = document.querySelector('.matrix-header .pill-btn[data-filter="all"]');
+    setLampFilter("all", allPill);
+    if (!Number.isNaN(ch)) selectLamp(ch);
+  } else if (targetStr.startsWith("D")) {
+    const dev = parseInt(targetStr.slice(1), 10);
+    const sensPill = document.querySelector('.matrix-header .pill-btn[data-filter="sensors"]');
+    setLampFilter("sensors", sensPill);
+    if (!Number.isNaN(dev)) selectSensor(dev);
+  }
+}
+
+function setLogViewMode(mode) {
+  logViewMode = mode;
+  selectedLogIndex = 0;
+  document.getElementById("log-mode-errors").classList.toggle("active", mode === "errors");
+  document.getElementById("log-mode-bus").classList.toggle("active", mode === "bus");
+  document.getElementById("bus-filter-div").style.display = mode === "bus" ? "block" : "none";
+  document.getElementById("bus-filter-pills").style.display = mode === "bus" ? "inline-flex" : "none";
+  document.getElementById("log-actions-errors").style.display = mode === "errors" ? "flex" : "none";
+  document.getElementById("log-actions-bus").style.display = mode === "bus" ? "flex" : "none";
+  renderActiveLogTable();
+}
+
+function setBusFrameFilter(filter, btn) {
+  busFrameFilter = filter;
+  selectedLogIndex = 0;
+  document.querySelectorAll("#bus-filter-pills .pill-btn").forEach((b) => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderActiveLogTable();
+}
+
+function selectLogRow(idx) {
+  selectedLogIndex = idx;
+  renderActiveLogTable();
+}
+
+function renderActiveLogTable() {
+  const tbody = document.getElementById("logs-unified-tbody");
+  const pane = document.getElementById("log-inspector-content");
+  if (!tbody || !pane) return;
+  const query = (document.getElementById("log-search")?.value || "").trim().toLowerCase();
+  tbody.innerHTML = "";
+
+  const errEntries = window.lastLogData?.entries || [];
+  const busEntries = window.lastTraceData?.entries || [];
+  const cntErr = document.getElementById("cnt-log-errors");
+  const cntBus = document.getElementById("cnt-log-frames");
+  if (cntErr) cntErr.textContent = String(errEntries.length);
+  if (cntBus) cntBus.textContent = String(busEntries.length);
+
+  if (logViewMode === "errors") {
+    const filtered = errEntries.filter((e) => {
+      if (!query) return true;
+      const addrStr = e.address === 65535 ? "bus system" : `a${String(e.address & 63).padStart(2, "0")}`;
+      const hay = `${addrStr} e${e.code} ${e.title} ${e.source} ${e.detail}`.toLowerCase();
+      return hay.includes(query);
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="subtext">No matching error entries.</td></tr>';
+      pane.innerHTML = '<div class="subtext">Select an error entry on the left to inspect its cause and remedy.</div>';
+      return;
+    }
+    if (selectedLogIndex >= filtered.length) selectedLogIndex = 0;
+
+    filtered.forEach((e, idx) => {
+      const tr = document.createElement("tr");
+      if (idx === selectedLogIndex) tr.className = "selected";
+      tr.onclick = () => selectLogRow(idx);
+      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
+      const targetStr = e.address === 65535 ? "Bus" : `A${String(e.address & 63).padStart(2, "0")}`;
+      tr.innerHTML = `
+        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+        <td class="mono"><strong>${targetStr}</strong></td>
+        <td><strong>E${e.code}: ${e.title}</strong> <span class="subtext">${e.count > 1 ? `(×${e.count})` : ""}</span></td>
+        <td style="text-align:right"><span class="badge ${sevClass}">${e.severity}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const sel = filtered[selectedLogIndex];
+    const sevClass = sel.severity === "INFO" ? "ok" : sel.severity === "WARN" ? "warn" : "err";
+    const isLamp = sel.address !== 65535;
+    const targetStr = isLamp ? `A${String(sel.address & 63).padStart(2, "0")}` : "Bus / System";
+
+    pane.innerHTML = `
+      <div class="insp-header">
+        <div>
+          <div class="insp-title">E${sel.code} — ${sel.title}</div>
+          <div class="insp-badges">
+            <span class="badge ${sevClass}">${sel.severity}</span>
+            <span class="badge">${sel.source}</span>
+            <span class="badge">Count: ×${sel.count}</span>
+          </div>
+        </div>
+        ${
+          isLamp
+            ? `<button class="btn btn-xs btn-primary" onclick="jumpToDeviceFromLog('${targetStr}')">Open ${targetStr} →</button>`
+            : ""
+        }
+      </div>
+
+      <div class="insp-section">
+        <div class="info-pair"><span>Target Device</span><strong class="mono">${targetStr}</strong></div>
+        <div class="info-pair"><span>Timestamp</span><strong class="mono">${formatTimestamp(sel.epoch_ms, sel.uptime_ms)}</strong></div>
+        <div class="info-pair"><span>Trigger Detail</span><strong class="mono">${sel.detail || "—"}</strong></div>
+      </div>
+
+      <div class="insp-section">
+        <span class="insp-sec-title">What Happened</span>
+        <p style="font-size:12.5px;color:var(--text)">${sel.description || sel.detail}</p>
+      </div>
+
+      <div class="insp-section">
+        <span class="insp-sec-title">How to Fix</span>
+        <p style="font-size:12.5px;color:var(--text)">${sel.remedy || "Inspect wiring and device status."}</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Live Bus Monitor mode
+  const filtered = busEntries.filter((e) => {
+    const isSensor = e.bits === 24 || (e.target && (e.target.startsWith("D") || e.target.startsWith("DEV")));
+    const isErr = e.status !== "OK";
+    if (busFrameFilter === "lamps" && isSensor) return false;
+    if (busFrameFilter === "sensors" && !isSensor) return false;
+    if (busFrameFilter === "err" && !isErr) return false;
+    if (query) {
+      const hay = `${e.target} ${e.mnemonic} ${e.detail} ${e.status}`.toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="subtext">No matching DALI bus frames in ring buffer.</td></tr>';
+    pane.innerHTML = '<div class="subtext">Select any bus frame on the left to inspect its decoded fields and raw hex.</div>';
+    return;
+  }
+  if (selectedLogIndex >= filtered.length) selectedLogIndex = 0;
+
+  filtered.forEach((e, idx) => {
+    const tr = document.createElement("tr");
+    if (idx === selectedLogIndex) tr.className = "selected";
+    tr.onclick = () => selectLogRow(idx);
+    const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
+    tr.innerHTML = `
+      <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
+      <td class="mono"><strong>${e.target}</strong></td>
+      <td class="mono"><strong>${e.mnemonic}</strong> <span style="color:var(--text-2)">${e.detail}</span></td>
+      <td style="text-align:right"><span class="badge ${stClass}">${e.status}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const sel = filtered[selectedLogIndex];
+  const hexW = sel.bits === 24 ? 6 : 4;
+  const rawHex = "0x" + Number(sel.frame).toString(16).toUpperCase().padStart(hexW, "0");
+  const stClass = sel.status === "OK" ? "ok" : sel.status === "TIMEOUT" ? "warn" : "err";
+  const isSensorFrame =
+    sel.bits === 24 || (sel.target && (sel.target.startsWith("D") || sel.target.startsWith("DEV")));
+
+  let etsHelperHtml = "";
+  if (isSensorFrame && sel.target && sel.target.includes("/I")) {
+    const [devPart, instPart] = sel.target.split("/I");
+    const devNum = parseInt(devPart.replace(/\D+/g, ""), 10) || 0;
+    const instNum = parseInt(instPart, 10) || 0;
+    etsHelperHtml = `
+      <div class="insp-section">
+        <span class="insp-sec-title">ETS Input Channel Mapping</span>
+        <div class="info-pair"><span>ETS Device Address</span><strong class="mono">${devNum} (D${String(devNum).padStart(2, "0")})</strong></div>
+        <div class="info-pair"><span>ETS Instance Number</span><strong class="mono">${instNum} (I${String(instNum).padStart(2, "0")})</strong></div>
+      </div>
+    `;
+  }
+
+  const jumpTarget =
+    sel.target && sel.target.startsWith("A")
+      ? sel.target.slice(0, 3)
+      : isSensorFrame && sel.target
+        ? "D" + String(parseInt(sel.target.replace(/\D+/g, ""), 10) || 0).padStart(2, "0")
+        : "";
+
+  pane.innerHTML = `
+    <div class="insp-header">
+      <div>
+        <div class="insp-title">Frame #${sel.seq} — ${sel.mnemonic}</div>
+        <div class="insp-badges">
+          <span class="badge ${stClass}">${sel.status}</span>
+          <span class="badge">${sel.bits}-bit DALI Frame</span>
+          <span class="badge mono">${rawHex}</span>
+        </div>
+      </div>
+      ${
+        jumpTarget
+          ? `<button class="btn btn-xs btn-primary" onclick="jumpToDeviceFromLog('${jumpTarget}')">Open ${jumpTarget} →</button>`
+          : ""
+      }
+    </div>
+
+    <div class="insp-section">
+      <div class="info-pair"><span>Target</span><strong class="mono">${sel.target}</strong></div>
+      <div class="info-pair"><span>Command / Event</span><strong class="mono">${sel.mnemonic}</strong></div>
+      <div class="info-pair"><span>Decoded Payload</span><strong class="mono">${sel.detail}</strong></div>
+      <div class="info-pair"><span>Raw Frame Hex</span><strong class="mono">${rawHex} (${sel.bits}-bit)</strong></div>
+      <div class="info-pair"><span>Timestamp</span><strong class="mono">${formatTimestamp(sel.epoch_ms, sel.uptime_ms)} (+${(sel.uptime_ms / 1000).toFixed(3)}s)</strong></div>
+    </div>
+
+    ${etsHelperHtml}
+  `;
+}
+
 async function loadDebugTrace() {
   try {
     const res = await fetch("/api/debug");
     const d = await res.json();
-    window.lastTraceData = d;
-    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
-    const cap = d.capacity || 512;
-    const buf = d.buffered ?? (d.entries ? d.entries.length : 0);
-    const over = d.total_frames > buf ? d.total_frames - buf : 0;
-    document.getElementById("trace-stats").textContent =
-      `${d.active ? "Recording on gateway (continues with browser closed)" : "Paused"} • Buffer: ${buf}/${cap} frames${over > 0 ? ` (${over} older overwritten)` : ""} • ${d.total_collisions} collisions`;
-    const tbody = document.getElementById("trace-tbody");
-    tbody.innerHTML = "";
+    // Merge gateway ring buffer frames into the browser's 10,000-row session history
     (d.entries || []).forEach((e) => {
-      const tr = document.createElement("tr");
-      const hexW = e.bits === 24 ? 6 : 4;
-      const rawHex = "0x" + Number(e.frame).toString(16).toUpperCase().padStart(hexW, "0");
-      const stClass = e.status === "OK" ? "ok" : e.status === "TIMEOUT" ? "warn" : "err";
-      tr.innerHTML = `
-        <td class="mono">${e.seq}</td>
-        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-        <td class="mono">${(e.uptime_ms / 1000).toFixed(3)}s</td>
-        <td class="mono">${e.bits}-bit</td>
-        <td class="mono">${rawHex}</td>
-        <td class="mono"><strong>${e.target}</strong></td>
-        <td class="mono">${e.mnemonic}</td>
-        <td class="mono">${e.detail}</td>
-        <td><span class="badge ${stClass}">${e.status}</span></td>
-      `;
-      tbody.appendChild(tr);
+      if (e && e.seq != null) {
+        browserTraceMap.set(e.seq, e);
+      }
     });
+    if (browserTraceMap.size > BROWSER_TRACE_MAX) {
+      const sortedKeys = Array.from(browserTraceMap.keys()).sort((a, b) => a - b);
+      const dropCount = sortedKeys.length - BROWSER_TRACE_MAX;
+      for (let i = 0; i < dropCount; i++) {
+        browserTraceMap.delete(sortedKeys[i]);
+      }
+    }
+    const mergedEntries = Array.from(browserTraceMap.values()).sort((a, b) => b.seq - a.seq);
+    d.entries = mergedEntries;
+    window.lastTraceData = d;
+
+    document.getElementById("dbg-autotrigger").checked = !!d.auto_trigger;
+    const cap = d.capacity || 1024;
+    const hwBuf = d.buffered ?? 0;
+    const browserCnt = mergedEntries.length;
+    const statsEl = document.getElementById("trace-stats");
+    if (statsEl) {
+      statsEl.textContent =
+        browserCnt > hwBuf
+          ? `${d.active ? "● Recording" : "Paused"} (Device ${hwBuf}/${cap} • Browser ${browserCnt})`
+          : `${d.active ? "● Recording" : "Paused"} (${hwBuf}/${cap})`;
+      statsEl.className = "badge " + (d.active ? "ok" : "warn");
+    }
+    renderActiveLogTable();
   } catch (_) {}
 }
 
 async function controlDebug(action) {
+  if (action === "clear") {
+    browserTraceMap.clear();
+  }
   const autoTrig = document.getElementById("dbg-autotrigger").checked;
   await fetch("/api/debug", {
     method: "POST",
@@ -3340,24 +3772,7 @@ async function loadErrorLogs() {
     const res = await fetch("/api/logs");
     const d = await res.json();
     window.lastLogData = d;
-    const tbody = document.getElementById("logs-tbody");
-    tbody.innerHTML = "";
-    (d.entries || []).forEach((e) => {
-      const tr = document.createElement("tr");
-      const sevClass = e.severity === "INFO" ? "ok" : e.severity === "WARN" ? "warn" : "err";
-      const addrStr = e.address === 65535 ? "Bus / System" : `Lamp A${String(e.address & 63).padStart(2, "0")}`;
-      tr.innerHTML = `
-        <td class="mono">${e.seq}</td>
-        <td class="mono">${formatTimestamp(e.epoch_ms, e.uptime_ms)}</td>
-        <td class="mono">${e.source}</td>
-        <td><span class="badge ${sevClass}">${e.severity}</span></td>
-        <td><strong>E${e.code}: ${e.title}</strong></td>
-        <td class="mono">${addrStr}</td>
-        <td class="mono">×${e.count}</td>
-        <td><div>${e.description || e.detail}</div><div class="subtext">${e.remedy}</div></td>
-      `;
-      tbody.appendChild(tr);
-    });
+    renderActiveLogTable();
   } catch (_) {}
 }
 
@@ -3374,15 +3789,38 @@ function exportJson(filename, obj) {
   a.click();
 }
 
+function onOtaDragOver(ev, el) {
+  ev.preventDefault();
+  el.classList.add("dragover");
+}
+
+function onOtaDragLeave(el) {
+  el.classList.remove("dragover");
+}
+
+function onOtaDrop(ev, target) {
+  ev.preventDefault();
+  const dropEl = document.getElementById("drop-" + target);
+  if (dropEl) dropEl.classList.remove("dragover");
+  const files = ev.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+  const fileInput = document.getElementById("file-" + target);
+  if (fileInput) {
+    fileInput.files = files;
+    uploadOta(target);
+  }
+}
+
 function uploadOta(target) {
   const fileInput = document.getElementById("file-" + target);
+  const progWrap = document.getElementById("wrap-prog-" + target);
   const prog = document.getElementById("prog-" + target);
   const status = document.getElementById("status-" + target);
   if (!fileInput.files || fileInput.files.length === 0) {
-    status.textContent = "Please choose a .bin file first.";
     return;
   }
   const file = fileInput.files[0];
+  if (progWrap) progWrap.style.display = "block";
   status.textContent = `Uploading ${file.name} (${Math.round(file.size / 1024)} KB)...`;
   prog.style.width = "0%";
 

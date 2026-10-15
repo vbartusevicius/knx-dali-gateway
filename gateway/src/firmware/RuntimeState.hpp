@@ -83,7 +83,8 @@ public:
     std::size_t format_live_ws_json(char* out, std::size_t out_size, std::uint32_t now_ms) const noexcept;
     std::size_t format_channel_detail_json(std::uint8_t ch, char* out, std::size_t out_size) const noexcept;
     std::size_t format_logs_json(char* out, std::size_t out_size) const noexcept;
-    std::size_t format_trace_json(char* out, std::size_t out_size, std::size_t max_items = 96) const noexcept;
+    std::size_t format_trace_json(char* out, std::size_t out_size,
+                                  std::size_t max_items = 1024) const noexcept;
 
     [[nodiscard]] ChannelSnapshot channel(std::uint8_t index) const noexcept;
     [[nodiscard]] bool channel_present(std::uint8_t index) const noexcept;

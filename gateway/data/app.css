@@ -1197,6 +1197,125 @@ body {
   transition: width 0.2s;
 }
 
+/* Settings 2-Pane Split & Firmware Dropzones */
+.settings-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.settings-nav-item strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.settings-nav-item span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.settings-nav-item:hover {
+  background: var(--surface-2);
+}
+
+.settings-nav-item.active {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: var(--accent);
+}
+
+.settings-sec {
+  display: none;
+}
+
+.settings-sec.active {
+  display: block;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--border-light);
+  border-radius: 8px;
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.dropzone-title {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.search-input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.log-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.log-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.log-table tbody tr.selected {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.log-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cct-range {
   -webkit-appearance: none;
   appearance: none;

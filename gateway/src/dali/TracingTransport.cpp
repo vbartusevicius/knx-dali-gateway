@@ -218,10 +218,15 @@ GearPresence TracingTransport::query_present(ShortAddress address) {
 
 GearStatusRead TracingTransport::query_status(ShortAddress address) {
     const auto res = inner_.query_status(address);
-    ByteRead raw{res.status, res.gear_status};
-    record_query(diagnostics::TraceKind::Query16,
-                 frame::command(Address::short_address(address), cmd::query_status), 16, raw,
-                 address.value());
+    // Only record background QUERY_STATUS in the trace ring buffer when a fault bit is set or transport
+    // failed, so periodic 2s health polling does not overwrite real bus activity overnight.
+    const bool has_fault = res.gear_status && ((*res.gear_status & 0x0BU) != 0U);
+    if (res.status != TransportStatus::Ok || has_fault) {
+        ByteRead raw{res.status, res.gear_status};
+        record_query(diagnostics::TraceKind::Query16,
+                     frame::command(Address::short_address(address), cmd::query_status), 16, raw,
+                     address.value());
+    }
     if (res.status == TransportStatus::Ok && res.gear_status) {
         const auto st = *res.gear_status;
         const auto uptime = now_ms();
