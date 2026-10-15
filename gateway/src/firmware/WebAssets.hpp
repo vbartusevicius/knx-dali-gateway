@@ -93,12 +93,14 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
       <div class="card">
         <div class="card-header">
           <div>
-            <h2>DALI Power, Bus Current &amp; Energy Monitor (REM3-2415S/A/CTRL + IEC 62386-102/252)</h2>
-            <p class="muted">Monitors the isolated 16 V / 250 mA DALI bus supply, short-circuit protection latch, and logarithmic lighting power across all 64 ballasts.</p>
+            <h2>DALI Power &amp; Energy Monitor (D4i IEC 62386-252 Memory Bank 202 + Manual Curve)</h2>
+            <p class="muted">Reads native power/energy from D4i (Part 252) ballasts when supported, or computes power from 100% Lamp Power + Ballast Idle Power (with per-ballast override).</p>
           </div>
           <div class="inline-controls">
-            <span class="muted" style="font-size:12px">Nominal Fixture Wattage (W):</span>
-            <input type="number" id="nominal-watts" min="1" max="200" value="15" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
+            <span class="muted" style="font-size:12px">Default 100% Lamp (W):</span>
+            <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
+            <span class="muted" style="font-size:12px">Default Ballast Idle (W):</span>
+            <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
             <button class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU</button>
           </div>
         </div>
@@ -109,15 +111,9 @@ inline constexpr const char index_html_data[] = R"WEBUI(<!DOCTYPE html>
             <span class="metric-sub" id="pwr-psu-sub">Short-circuit protection armed (&gt;80 ms cutoff)</span>
           </div>
           <div class="metric-box">
-            <span class="metric-label">DALI Bus Current Budget (Max 250 mA)</span>
-            <span class="metric-value" id="pwr-bus-ma">0 mA / 250 mA</span>
-            <div class="progress-wrap" style="margin-top:6px"><div class="progress-bar" id="pwr-bus-bar" style="width:0%"></div></div>
-            <span class="metric-sub" id="pwr-bus-sub">0 gear (2 mA ea) + 0 sensors (5 mA ea)</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Active Lighting Power (IEC 62386 Curve)</span>
+            <span class="metric-label">Total Lighting &amp; Ballast Power</span>
             <span class="metric-value" id="pwr-active-w">0.0 W</span>
-            <span class="metric-sub" id="pwr-standby-w">Standby draw: 0.0 W (0.4 W/driver)</span>
+            <span class="metric-sub" id="pwr-standby-w">100% Lamp output: 0.0 W • Ballast idle: 0.0 W</span>
           </div>
           <div class="metric-box">
             <span class="metric-label">Est. Daily Consumption &amp; Bus Health</span>
@@ -1298,20 +1294,66 @@ function decodeStatusBits(st) {
   return flags;
 }
 
+function channelPowerBreakdown(ch, defaultFullW, defaultIdleW) {
+  const [
+    present,
+    ,
+    level,
+    ,
+    ,
+    ,
+    ,
+    ,
+    ,
+    ,
+    ,
+    ,
+    d4iSupported,
+    manualOverride,
+    d4iPowerDeciwatts,
+    fullPowerDeciwatts,
+    idlePowerCentiwatts,
+  ] = ch;
+  if (!present) return { totalW: 0, lampW: 0, idleW: 0, source: "off" };
+  if (d4iSupported && !manualOverride) {
+    const w = (d4iPowerDeciwatts || 0) / 10.0;
+    return { totalW: w, lampW: w, idleW: 0, source: "D4i" };
+  }
+  const fullW = fullPowerDeciwatts > 0 ? fullPowerDeciwatts / 10.0 : defaultFullW;
+  const idleW = idlePowerCentiwatts > 0 ? idlePowerCentiwatts / 100.0 : defaultIdleW;
+  const lampW = level > 0 ? fullW * daliArcToPowerRatio(level) : 0.0;
+  return { totalW: idleW + lampW, lampW, idleW, source: "calc" };
+}
+
 function renderLamps(channels) {
   const grid = document.getElementById("lamps-grid");
   grid.innerHTML = "";
-  const nomWatts = Number(document.getElementById("nominal-watts")?.value || 15);
+  const nomWatts = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
+  const idleWatts = Number(document.getElementById("idle-watts")?.value ?? 0.4);
   channels.forEach((ch, idx) => {
-    const [present, faulty, level, source, dt8, kelvin, r, g, b, statusByte, groupsMask, devType] = ch;
+    const [
+      present,
+      faulty,
+      level,
+      source,
+      dt8,
+      kelvin,
+      r,
+      g,
+      b,
+      statusByte,
+      groupsMask,
+      devType,
+      d4iSupported,
+      manualOverride,
+    ] = ch;
     if (lampFilter === "present" && !present) return;
     if (lampFilter === "on" && level === 0) return;
     if (lampFilter === "fault" && !faulty && (statusByte & 0x03) === 0) return;
 
     const pct = Math.round((level * 100) / 254);
-    const liveWatts = present
-      ? (level > 0 ? nomWatts * daliArcToPowerRatio(level) + 0.4 : 0.4).toFixed(1)
-      : "0.0";
+    const pwr = channelPowerBreakdown(ch, nomWatts, idleWatts);
+    const liveWatts = present ? pwr.totalW.toFixed(1) : "0.0";
     const card = document.createElement("div");
     card.className =
       "lamp-card" + (level > 0 ? " on" : "") + (faulty ? " fault" : "") + (!present ? " absent" : "");
@@ -1319,13 +1361,18 @@ function renderLamps(channels) {
     const statusFlags = decodeStatusBits(statusByte);
     const addrStr = "A" + String(idx).padStart(2, "0");
 
-    // Detailed DT6 & DT8 capability badges
+    // Detailed DT6 & DT8 capability badges + D4i badge
     const dtBadges = [];
     if (devType === 6 || !dt8) dtBadges.push('<span class="badge">DT6 Dim</span>');
     if (dt8 & 1) dtBadges.push('<span class="badge">DT8 Tc</span>');
     if (dt8 & 4) dtBadges.push('<span class="badge">DT8 RGBW</span>');
     else if (dt8 & 2) dtBadges.push('<span class="badge">DT8 RGB</span>');
     if (dt8 & 8) dtBadges.push('<span class="badge">DT8 XY</span>');
+    if (d4iSupported) {
+      dtBadges.push(
+        `<span class="badge ${manualOverride ? "warn" : "ok"}">${manualOverride ? "D4i (Overridden)" : "D4i MB202"}</span>`
+      );
+    }
 
     const hexColor = (r || g || b) ? rgbToHex(r, g, b) : "#ffd28a";
 
@@ -1458,7 +1505,8 @@ function renderInputs(inputs) {
 function updatePowerMonitor(data) {
   const d = data.dali || {};
   const channels = data.channels || [];
-  const nomW = Number(document.getElementById("nominal-watts")?.value || 15);
+  const nomW = Number(document.getElementById("nominal-watts")?.value ?? 15.0);
+  const idleWDefault = Number(document.getElementById("idle-watts")?.value ?? 0.4);
 
   const psuEl = document.getElementById("pwr-psu-state");
   const psuSub = document.getElementById("pwr-psu-sub");
@@ -1476,31 +1524,21 @@ function updatePowerMonitor(data) {
     psuSub.textContent = "Internal REM3 disabled via GPIO1";
   }
 
-  // IEC 62386-101 bus current: 2 mA per control gear + 5 mA per multi-master input device
-  const gearCnt = d.present || 0;
-  const inpCnt = d.inputs || 0;
-  const busMa = gearCnt * 2 + inpCnt * 5;
-  const busPct = Math.min(100, Math.round((busMa * 100) / 250));
-  document.getElementById("pwr-bus-ma").textContent = `${busMa} mA / 250 mA (${busPct}%)`;
-  document.getElementById("pwr-bus-bar").style.width = `${busPct}%`;
-  document.getElementById("pwr-bus-sub").textContent =
-    `${gearCnt} gear (2 mA ea) + ${inpCnt} input devs (5 mA ea)`;
-
   let activeW = 0;
   let standbyW = 0;
+  let d4iCount = 0;
   channels.forEach((ch) => {
-    const [present, , level] = ch;
-    if (!present) return;
-    standbyW += 0.4;
-    if (level > 0) {
-      activeW += nomW * daliArcToPowerRatio(level);
-    }
+    const p = channelPowerBreakdown(ch, nomW, idleWDefault);
+    if (p.source === "off") return;
+    if (p.source === "D4i") d4iCount++;
+    activeW += p.lampW;
+    standbyW += p.idleW;
   });
   const totalW = activeW + standbyW;
   const dailyKwh = (totalW * 24) / 1000;
   document.getElementById("pwr-active-w").textContent = `${totalW.toFixed(1)} W`;
   document.getElementById("pwr-standby-w").textContent =
-    `Lamp output: ${activeW.toFixed(1)} W • Driver standby: ${standbyW.toFixed(1)} W`;
+    `Lamp output: ${activeW.toFixed(1)} W • Ballast idle: ${standbyW.toFixed(2)} W (${d4iCount} D4i native)`;
   document.getElementById("pwr-daily-kwh").textContent = `${dailyKwh.toFixed(2)} kWh/d`;
   document.getElementById("pwr-bus-health").textContent =
     `TX: ${d.tx_frames || 0} frames • Collisions: ${d.collisions || 0}`;
@@ -1655,6 +1693,28 @@ async function openGearModal(ch) {
       <div class="field"><span>Fade Time (IEC 62386 Table 15)</span><select id="gm-ft">${ftOptions}</select></div>
       <div class="field"><span>Fade Rate (IEC 62386 Table 16)</span><select id="gm-fr">${frOptions}</select></div>
     </div>
+    <h3 style="margin:10px 0 6px;font-size:13px">Power Reporting &amp; Manual Calculation (IEC 62386-252 D4i MB202 vs Manual)</h3>
+    <div class="sys-info-box" style="margin-bottom:8px">
+      <div><strong>Native D4i Power (Memory Bank 202):</strong> ${
+        d.d4i_power_supported
+          ? `<span class="badge ok">Supported</span> ${((d.d4i_active_power_deciwatts || 0) / 10).toFixed(1)} W • Energy: ${d.d4i_active_energy_wh || 0} Wh`
+          : '<span class="badge">Not supported by ballast (uses 100% + Idle calculation below)</span>'
+      }</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <span>Lamp Power at 100% Brightness (W)</span>
+        <input type="number" id="gm-full-w" min="0" max="1000" step="0.1" value="${((d.full_power_deciwatts || 150) / 10).toFixed(1)}">
+      </div>
+      <div class="field">
+        <span>Ballast Idle / Standby Power (W)</span>
+        <input type="number" id="gm-idle-w" min="0" max="50" step="0.05" value="${((d.idle_power_centiwatts || 40) / 100).toFixed(2)}">
+      </div>
+    </div>
+    <label class="field-check" style="margin:4px 0 8px">
+      <input type="checkbox" id="gm-pwr-override" ${d.use_manual_power_override ? "checked" : ""}>
+      <span>Override native D4i power reporting with calculated (100% Lamp + Ballast Idle) power</span>
+    </label>
     <h3 style="margin:10px 0 6px;font-size:13px">DT8 Colour Control (IEC 62386-209: Tc / RGBW / CIE 1931 xy)</h3>
     <div class="field-row">
       <div class="field">
@@ -1691,6 +1751,9 @@ async function saveGearParams(ch) {
     system_failure_level: Number(document.getElementById("gm-fail").value),
     fade_time: Number(document.getElementById("gm-ft").value),
     fade_rate: Number(document.getElementById("gm-fr").value),
+    full_power_deciwatts: Math.round(Number(document.getElementById("gm-full-w").value) * 10),
+    idle_power_centiwatts: Math.round(Number(document.getElementById("gm-idle-w").value) * 100),
+    use_manual_power_override: document.getElementById("gm-pwr-override").checked,
   });
   closeGearModal();
 }

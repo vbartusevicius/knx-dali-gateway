@@ -245,11 +245,19 @@ void test_lighting_service_queries_and_configures_gear_details() {
     cfg.min_level = 20;
     cfg.max_level = 250;
     cfg.fade_time = 4;
+    cfg.full_power_deciwatts = 200;  // 20.0 W at 100%
+    cfg.idle_power_centiwatts = 50;  // 0.50 W idle standby
+    cfg.use_manual_power_override = 1;
     const auto res = service.configure_gear(ch, cfg);
     TEST_ASSERT_EQUAL(static_cast<int>(lighting::ControlError::None), static_cast<int>(res.error));
     TEST_ASSERT_EQUAL_UINT8(20, service.gear_details(ch).min_level);
     TEST_ASSERT_EQUAL_UINT8(250, service.gear_details(ch).max_level);
     TEST_ASSERT_EQUAL_UINT8(4, service.gear_details(ch).fade_time);
+    // At arc level 0 (off), effective power is the 0.5 W ballast idle power (5 deciwatts)
+    TEST_ASSERT_EQUAL_UINT16(5, service.effective_power_deciwatts(ch));
+    // At arc level 254 (100%), effective power is 20.0 W + 0.5 W = 20.5 W (205 deciwatts)
+    (void)service.set_level(dali::Address::short_address(ch), *dali::ArcLevel::from(254));
+    TEST_ASSERT_EQUAL_UINT16(205, service.effective_power_deciwatts(ch));
 }
 
 void test_dali_psu_monitor_latches_off_on_short_until_explicit_reset() {

@@ -86,12 +86,14 @@
       <div class="card">
         <div class="card-header">
           <div>
-            <h2>DALI Power, Bus Current &amp; Energy Monitor (REM3-2415S/A/CTRL + IEC 62386-102/252)</h2>
-            <p class="muted">Monitors the isolated 16 V / 250 mA DALI bus supply, short-circuit protection latch, and logarithmic lighting power across all 64 ballasts.</p>
+            <h2>DALI Power &amp; Energy Monitor (D4i IEC 62386-252 Memory Bank 202 + Manual Curve)</h2>
+            <p class="muted">Reads native power/energy from D4i (Part 252) ballasts when supported, or computes power from 100% Lamp Power + Ballast Idle Power (with per-ballast override).</p>
           </div>
           <div class="inline-controls">
-            <span class="muted" style="font-size:12px">Nominal Fixture Wattage (W):</span>
-            <input type="number" id="nominal-watts" min="1" max="200" value="15" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
+            <span class="muted" style="font-size:12px">Default 100% Lamp (W):</span>
+            <input type="number" id="nominal-watts" min="0" max="500" step="0.5" value="15.0" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
+            <span class="muted" style="font-size:12px">Default Ballast Idle (W):</span>
+            <input type="number" id="idle-watts" min="0" max="20" step="0.05" value="0.40" style="width:68px" onchange="if(latestState)handleLiveState(latestState)">
             <button class="btn btn-sm" onclick="sendCmd({action:'reset_psu'})">Re-Arm DALI PSU</button>
           </div>
         </div>
@@ -102,15 +104,9 @@
             <span class="metric-sub" id="pwr-psu-sub">Short-circuit protection armed (&gt;80 ms cutoff)</span>
           </div>
           <div class="metric-box">
-            <span class="metric-label">DALI Bus Current Budget (Max 250 mA)</span>
-            <span class="metric-value" id="pwr-bus-ma">0 mA / 250 mA</span>
-            <div class="progress-wrap" style="margin-top:6px"><div class="progress-bar" id="pwr-bus-bar" style="width:0%"></div></div>
-            <span class="metric-sub" id="pwr-bus-sub">0 gear (2 mA ea) + 0 sensors (5 mA ea)</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Active Lighting Power (IEC 62386 Curve)</span>
+            <span class="metric-label">Total Lighting &amp; Ballast Power</span>
             <span class="metric-value" id="pwr-active-w">0.0 W</span>
-            <span class="metric-sub" id="pwr-standby-w">Standby draw: 0.0 W (0.4 W/driver)</span>
+            <span class="metric-sub" id="pwr-standby-w">100% Lamp output: 0.0 W • Ballast idle: 0.0 W</span>
           </div>
           <div class="metric-box">
             <span class="metric-label">Est. Daily Consumption &amp; Bus Health</span>

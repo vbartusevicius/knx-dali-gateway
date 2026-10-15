@@ -19,6 +19,8 @@ If:
 CompileFlags:
   CompilationDatabase: .pio/build/native/clangd
   Add:
+    - -Itests
+    - -Itests/support
     - -I.pio/libdeps/native/Unity/src
   Remove:
     - -nostdinc++

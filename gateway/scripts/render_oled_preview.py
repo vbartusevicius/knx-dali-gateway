@@ -27,7 +27,6 @@ int main() {
     st.active_lamp_count = 4;
     st.faulty_gear_count = 15;
     st.lamp_power_watts = 58;
-    st.bus_current_ma = 64;
     for (unsigned i = 0; i < 27; ++i) {
         st.gear_present.set(i);
     }

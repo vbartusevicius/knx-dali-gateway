@@ -166,7 +166,7 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
     oled_state_.faulty_gear_count = static_cast<std::uint8_t>(faulty_bits.count());
 
     unsigned on_count = 0;
-    unsigned sum_arc = 0;
+    unsigned total_deciwatts = 0;
     for (unsigned i = 0; i < 64; ++i) {
         const auto addr = *dali::ShortAddress::from(i);
         const auto st = lighting.state(addr);
@@ -184,18 +184,16 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
         if (ch.details.groups == 0) {
             ch.details.groups = lighting.configuration().group_masks[i];
         }
+        if (present_bits.test(i)) {
+            total_deciwatts += lighting.effective_power_deciwatts(addr);
+        }
         if (ch.level > 0) {
             oled_state_.gear_on.set(i);
             ++on_count;
-            sum_arc += ch.level;
         }
     }
     oled_state_.active_lamp_count = static_cast<std::uint8_t>(on_count);
-    // Estimate active + standby lamp power (default 15 W nominal fixture + 0.4 W/ballast standby)
-    const unsigned standby_tenths_w = static_cast<unsigned>(oled_state_.present_gear_count) * 4U;
-    const unsigned active_tenths_w = (sum_arc * 150U) / 254U;
-    oled_state_.lamp_power_watts =
-        static_cast<std::uint16_t>((standby_tenths_w + active_tenths_w + 5U) / 10U);
+    oled_state_.lamp_power_watts = static_cast<std::uint16_t>((total_deciwatts + 5U) / 10U);
 
     for (unsigned g = 0; g < 16; ++g) {
         const auto st = lighting.state(*dali::Group::from(g));
@@ -209,8 +207,6 @@ void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
         }
     }
     input_device_count_ = static_cast<std::uint8_t>(input_devs);
-    oled_state_.bus_current_ma =
-        static_cast<std::uint16_t>(oled_state_.present_gear_count * 2U + input_devs * 5U);
     oled_state_.comm_phase = snap.progress.phase;
     oled_state_.comm_progress = snap.progress.progress;
     oled_state_.comm_found = snap.progress.found;
@@ -439,12 +435,16 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                                                    ((c.capabilities.rgbwaf_channels >= 4 ? 1U : 0U) << 2U) |
                                                    ((c.capabilities.xy_capable ? 1U : 0U) << 3U))
                                                 : 0U;
-        append("%s[%u,%u,%u,\"%s\",%u,%u,%u,%u,%u,%u,%u,%u]", i == 0 ? "" : ",", p, f,
+        append("%s[%u,%u,%u,\"%s\",%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]", i == 0 ? "" : ",", p, f,
                static_cast<unsigned>(c.level), source_str(c.source), dt8,
                static_cast<unsigned>(c.colour.temperature_kelvin), static_cast<unsigned>(c.colour.r),
                static_cast<unsigned>(c.colour.g), static_cast<unsigned>(c.colour.b),
                static_cast<unsigned>(c.details.status_byte), static_cast<unsigned>(c.details.groups),
-               static_cast<unsigned>(c.details.device_type));
+               static_cast<unsigned>(c.details.device_type), c.details.d4i_power_supported ? 1U : 0U,
+               c.details.use_manual_power_override ? 1U : 0U,
+               static_cast<unsigned>(c.details.d4i_active_power_deciwatts),
+               static_cast<unsigned>(c.details.full_power_deciwatts),
+               static_cast<unsigned>(c.details.idle_power_centiwatts));
     }
     append("%s", "],\"inputs\":[");
     for (unsigned i = 0; i < 64; ++i) {
@@ -475,7 +475,9 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         "\"device_type\":%u,\"version\":%u,\"physical_min\":%u,\"min_level\":%u,\"max_level\":%u,"
         "\"power_on_level\":%u,\"system_failure_level\":%u,\"fade_time\":%u,\"fade_rate\":%u,"
         "\"groups\":%u,\"probed\":%s,\"kelvin\":%u,\"r\":%u,\"g\":%u,\"b\":%u,\"w\":%u,"
-        "\"xy_x\":%u,\"xy_y\":%u,\"scenes\":[",
+        "\"xy_x\":%u,\"xy_y\":%u,\"d4i_power_supported\":%s,\"use_manual_power_override\":%s,"
+        "\"d4i_active_power_deciwatts\":%u,\"d4i_active_energy_wh\":%lu,"
+        "\"full_power_deciwatts\":%u,\"idle_power_centiwatts\":%u,\"scenes\":[",
         static_cast<unsigned>(ch), pres ? "true" : "false", flt ? "true" : "false",
         static_cast<unsigned>(c.level), source_str(c.source), static_cast<unsigned>(d.status_byte),
         (d.status_byte & 0x01U) ? "true" : "false", (d.status_byte & 0x02U) ? "true" : "false",
@@ -490,7 +492,10 @@ std::size_t RuntimeState::format_channel_detail_json(std::uint8_t ch, char* out,
         static_cast<unsigned>(c.colour.temperature_kelvin), static_cast<unsigned>(c.colour.r),
         static_cast<unsigned>(c.colour.g), static_cast<unsigned>(c.colour.b),
         static_cast<unsigned>(c.colour.w), static_cast<unsigned>(c.colour.x),
-        static_cast<unsigned>(c.colour.y));
+        static_cast<unsigned>(c.colour.y), d.d4i_power_supported ? "true" : "false",
+        d.use_manual_power_override ? "true" : "false", static_cast<unsigned>(d.d4i_active_power_deciwatts),
+        static_cast<unsigned long>(d.d4i_active_energy_wh), static_cast<unsigned>(d.full_power_deciwatts),
+        static_cast<unsigned>(d.idle_power_centiwatts));
     if (n > 0 && static_cast<std::size_t>(n) < out_size) {
         off = static_cast<std::size_t>(n);
     }

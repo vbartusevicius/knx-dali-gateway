@@ -2,6 +2,7 @@
 
 #include <array>
 #include <bitset>
+#include <cstdint>
 #include <optional>
 
 #include "config/Configuration.hpp"
@@ -15,14 +16,14 @@ namespace gateway::lighting {
 
 // Where a cached level came from, so a measured value is never confused
 // with an assumed one.
-enum class StateSource {
+enum class StateSource : std::uint8_t {
     Unknown,
     Readback,
     Commanded,
     RestoredCommand
 };
 
-enum class ControlError {
+enum class ControlError : std::uint8_t {
     None,
     TransportFailure,
     NoSavedTarget,
@@ -99,6 +100,14 @@ struct GearDetails {
     std::array<std::uint8_t, 16> scenes{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     bool probed = false;
+    // IEC 62386-252 (D4i Memory Bank 202) native energy/power reporting + manual override:
+    bool d4i_power_supported = false;
+    bool use_manual_power_override = false;
+    std::uint16_t d4i_active_power_deciwatts = 0;  // 0.1 W units read from Memory Bank 202
+    std::uint32_t d4i_active_energy_wh = 0;        // Wh read from Memory Bank 202
+    std::uint16_t full_power_deciwatts = 0;  // User-configured 100% lamp power in 0.1 W (e.g. 150 = 15.0 W)
+    std::uint16_t idle_power_centiwatts =
+        0;  // User-configured ballast idle power in 0.01 W (e.g. 40 = 0.40 W)
 };
 
 struct GearConfig {
@@ -108,6 +117,9 @@ struct GearConfig {
     std::uint8_t system_failure_level = 0xFF;
     std::uint8_t fade_time = 0xFF;
     std::uint8_t fade_rate = 0xFF;
+    std::uint16_t full_power_deciwatts = 0xFFFF;
+    std::uint16_t idle_power_centiwatts = 0xFFFF;
+    std::uint8_t use_manual_power_override = 0xFF;  // 0 = false, 1 = true, 0xFF = unchanged
 };
 
 struct ControlResult {
@@ -115,11 +127,11 @@ struct ControlResult {
     dali::TransportStatus transport_status = dali::TransportStatus::Ok;
     State state{};
     // State of these channels/groups changed during the operation.
-    std::bitset<dali::ShortAddress::capacity> changed_channels{};
-    std::bitset<dali::Group::capacity> changed_groups{};
+    std::bitset<dali::ShortAddress::capacity> changed_channels{};         // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::Group::capacity> changed_groups{};                  // NOLINT(readability-redundant-member-init)
     // Colour state of these channels/groups changed.
-    std::bitset<dali::ShortAddress::capacity> changed_colour_channels{};
-    std::bitset<dali::Group::capacity> changed_colour_groups{};
+    std::bitset<dali::ShortAddress::capacity> changed_colour_channels{};  // NOLINT(readability-redundant-member-init)
+    std::bitset<dali::Group::capacity> changed_colour_groups{};           // NOLINT(readability-redundant-member-init)
 };
 
 // Lighting use cases: set level on channel/group/broadcast, read back, recover
@@ -184,6 +196,7 @@ public:
     [[nodiscard]] ControlResult configure_gear(dali::ShortAddress address, const GearConfig& cfg);
     void record_status_byte(dali::ShortAddress address, std::uint8_t status_byte) noexcept;
     const GearDetails& gear_details(dali::ShortAddress address) const noexcept;
+    [[nodiscard]] std::uint16_t effective_power_deciwatts(dali::ShortAddress address) const noexcept;
     const config::Configuration& configuration() const noexcept { return config_; }
 
 private:

@@ -884,6 +884,26 @@ const GearDetails& LightingService::gear_details(dali::ShortAddress address) con
     return gear_details_[address.value()];
 }
 
+std::uint16_t LightingService::effective_power_deciwatts(dali::ShortAddress address) const noexcept {
+    const auto& details = gear_details_[address.value()];
+    if (details.d4i_power_supported && !details.use_manual_power_override) {
+        return details.d4i_active_power_deciwatts;
+    }
+    if (details.full_power_deciwatts == 0 && details.idle_power_centiwatts == 0) {
+        return 0;
+    }
+    const auto st = channel_states_[address.value()];
+    const std::uint8_t arc = st.level ? st.level->value() : 0U;
+    if (arc == 0) {
+        return static_cast<std::uint16_t>((details.idle_power_centiwatts + 5U) / 10U);
+    }
+    // Convert DALI logarithmic arc (1..254) to linear KNX scaling (1..255), then scale 100% lamp power:
+    const unsigned lin = dali::scaling_from_arc(*dali::ArcLevel::from(arc));
+    const unsigned lamp_centiwatts =
+        (static_cast<unsigned>(details.full_power_deciwatts) * 10U * lin + 127U) / 255U;
+    return static_cast<std::uint16_t>((details.idle_power_centiwatts + lamp_centiwatts + 5U) / 10U);
+}
+
 ControlResult LightingService::query_gear_details(dali::ShortAddress address) {
     ControlResult result{};
     auto& details = gear_details_[address.value()];
@@ -940,6 +960,75 @@ ControlResult LightingService::query_gear_details(dali::ShortAddress address) {
             details.scenes[s] = *sc.value;
         }
     }
+
+    // Probe IEC 62386-252 (D4i Memory Bank 202 — Active Energy & Active Power):
+    // Bank ID at offset 0x02 must equal 202 (0xCA).
+    if (transport_.set_dtr(dali::Dtr::Dtr1, 202U) == dali::TransportStatus::Ok &&
+        transport_.set_dtr(dali::Dtr::Dtr0, 0x02U) == dali::TransportStatus::Ok) {
+        const auto bank_id = transport_.query(address, dali::cmd::read_memory_location);
+        if (bank_id.status == dali::TransportStatus::Ok && bank_id.value && *bank_id.value == 202U) {
+            details.d4i_power_supported = true;
+            const auto read_mb_byte = [&](std::uint8_t offset) -> std::optional<std::uint8_t> {
+                if (transport_.set_dtr(dali::Dtr::Dtr0, offset) != dali::TransportStatus::Ok) {
+                    return std::nullopt;
+                }
+                const auto r = transport_.query(address, dali::cmd::read_memory_location);
+                if (r.status == dali::TransportStatus::Ok) {
+                    return r.value;
+                }
+                return std::nullopt;
+            };
+            const auto decode_scale_factor = [](std::uint8_t raw) -> int {
+                return raw >= 128U ? (static_cast<int>(raw) - 256) : static_cast<int>(raw);
+            };
+            // Active Power: scale factor at 0x0A (int8), 32-bit value at 0x0B..0x0E
+            const auto p_scale = read_mb_byte(0x0AU);
+            const auto p0 = read_mb_byte(0x0BU);
+            const auto p1 = read_mb_byte(0x0CU);
+            const auto p2 = read_mb_byte(0x0DU);
+            const auto p3 = read_mb_byte(0x0EU);
+            if (p_scale && p0 && p1 && p2 && p3) {
+                const std::uint32_t raw_p =
+                    (static_cast<std::uint32_t>(*p0) << 24U) | (static_cast<std::uint32_t>(*p1) << 16U) |
+                    (static_cast<std::uint32_t>(*p2) << 8U) | static_cast<std::uint32_t>(*p3);
+                // Convert raw_p * 10^sf W into 0.1 W (deciwatts = raw_p * 10^(sf + 1))
+                std::uint32_t deciwatts = raw_p;
+                int exp10 = decode_scale_factor(*p_scale) + 1;
+                while (exp10 > 0 && deciwatts < 65535U) {
+                    deciwatts *= 10U;
+                    --exp10;
+                }
+                while (exp10 < 0) {
+                    deciwatts = (deciwatts + 5U) / 10U;
+                    ++exp10;
+                }
+                details.d4i_active_power_deciwatts =
+                    deciwatts > 65535U ? std::uint16_t{65535U} : static_cast<std::uint16_t>(deciwatts);
+            }
+            // Active Energy: scale factor at 0x03 (int8), low 32 bits at 0x06..0x09
+            const auto e_scale = read_mb_byte(0x03U);
+            const auto e0 = read_mb_byte(0x06U);
+            const auto e1 = read_mb_byte(0x07U);
+            const auto e2 = read_mb_byte(0x08U);
+            const auto e3 = read_mb_byte(0x09U);
+            if (e_scale && e0 && e1 && e2 && e3) {
+                std::uint32_t wh = (static_cast<std::uint32_t>(*e0) << 24U) |
+                                   (static_cast<std::uint32_t>(*e1) << 16U) |
+                                   (static_cast<std::uint32_t>(*e2) << 8U) | static_cast<std::uint32_t>(*e3);
+                int exp10 = decode_scale_factor(*e_scale);
+                while (exp10 > 0) {
+                    wh *= 10U;
+                    --exp10;
+                }
+                while (exp10 < 0) {
+                    wh = (wh + 5U) / 10U;
+                    ++exp10;
+                }
+                details.d4i_active_energy_wh = wh;
+            }
+        }
+    }
+
     details.probed = true;
     (void)refresh(address);
     result.state = channel_states_[address.value()];
@@ -1001,6 +1090,15 @@ ControlResult LightingService::configure_gear(dali::ShortAddress address, const 
             return result;
         }
         details.fade_rate = cfg.fade_rate;
+    }
+    if (cfg.full_power_deciwatts != 0xFFFFU) {
+        details.full_power_deciwatts = cfg.full_power_deciwatts;
+    }
+    if (cfg.idle_power_centiwatts != 0xFFFFU) {
+        details.idle_power_centiwatts = cfg.idle_power_centiwatts;
+    }
+    if (cfg.use_manual_power_override <= 1U) {
+        details.use_manual_power_override = (cfg.use_manual_power_override != 0U);
     }
     details.probed = true;
     return result;

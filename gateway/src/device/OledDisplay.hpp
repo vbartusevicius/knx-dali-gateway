@@ -52,7 +52,6 @@ struct OledSystemState {
     std::uint8_t active_lamp_count = 0;
     std::uint8_t faulty_gear_count = 0;
     std::uint16_t lamp_power_watts = 0;
-    std::uint16_t bus_current_ma = 0;
     std::bitset<64> gear_present;
     std::bitset<64> gear_on;
     std::bitset<64> gear_faulty;

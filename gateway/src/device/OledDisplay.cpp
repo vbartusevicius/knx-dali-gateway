@@ -593,8 +593,6 @@ public:
 
             std::snprintf(line, sizeof(line), "PWR: %uW", static_cast<unsigned>(state.lamp_power_watts));
             canvas.draw_text_medium(3, 27, line, true);
-            std::snprintf(line, sizeof(line), "BUS: %umA", static_cast<unsigned>(state.bus_current_ma));
-            canvas.draw_text_medium_right(125, 27, line, true);
 
             std::snprintf(line, sizeof(line), "UP:  %s", up);
             canvas.draw_text_medium(3, 39, line, true);
@@ -780,10 +778,8 @@ public:
             canvas.draw_text_medium(2, 27, line, true);
             std::snprintf(line, sizeof(line), "PWR: %uW", static_cast<unsigned>(state.lamp_power_watts));
             canvas.draw_text_medium(2, 39, line, true);
-            std::snprintf(line, sizeof(line), "BUS: %umA", static_cast<unsigned>(state.bus_current_ma));
-            canvas.draw_text_medium(2, 51, line, true);
             std::snprintf(line, sizeof(line), "UP:  %s", up);
-            canvas.draw_text_medium(2, 63, line, true);
+            canvas.draw_text_medium(2, 51, line, true);
             break;
         }
         }
