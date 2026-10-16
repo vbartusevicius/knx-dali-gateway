@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-10-16T10:22:13",
+    "date": "2026-10-16T13:44:50",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -135,7 +135,7 @@
                     "uuid": "1f0c5499-a2a9-4c1f-a9cd-6da3bb0c4d8a"
                 },
                 {
-                    "description": "Segment of IF_U2 on F.Silkscreen",
+                    "description": "Segment of U202 on F.Silkscreen",
                     "pos": {
                         "x": 39.45,
                         "y": -15.2
@@ -158,7 +158,7 @@
                     "uuid": "1f0c5499-a2a9-4c1f-a9cd-6da3bb0c4d8a"
                 },
                 {
-                    "description": "Segment of IF_U2 on F.Silkscreen",
+                    "description": "Segment of U202 on F.Silkscreen",
                     "pos": {
                         "x": 43.55,
                         "y": -15.2
@@ -181,7 +181,7 @@
                     "uuid": "c6a55452-74bc-4aba-9698-c65dd9f98cca"
                 },
                 {
-                    "description": "Segment of IF_U1 on F.Silkscreen",
+                    "description": "Segment of U201 on F.Silkscreen",
                     "pos": {
                         "x": 53.45,
                         "y": -7.8
@@ -204,7 +204,7 @@
                     "uuid": "c6a55452-74bc-4aba-9698-c65dd9f98cca"
                 },
                 {
-                    "description": "Segment of IF_U1 on F.Silkscreen",
+                    "description": "Segment of U201 on F.Silkscreen",
                     "pos": {
                         "x": 57.55,
                         "y": -7.8
@@ -316,7 +316,7 @@
                         "x": 31.5,
                         "y": -76.5
                     },
-                    "uuid": "32ec984d-f128-4104-8c18-1c3f78082498"
+                    "uuid": "5b16cb51-118c-41b2-ac94-8db44a7d093b"
                 },
                 {
                     "description": "Segment of J3 on F.Silkscreen",
@@ -339,7 +339,7 @@
                         "x": 31.5,
                         "y": -76.5
                     },
-                    "uuid": "32ec984d-f128-4104-8c18-1c3f78082498"
+                    "uuid": "5b16cb51-118c-41b2-ac94-8db44a7d093b"
                 },
                 {
                     "description": "Segment of J3 on F.Silkscreen",
@@ -362,7 +362,7 @@
                         "x": 31.5,
                         "y": -76.5
                     },
-                    "uuid": "32ec984d-f128-4104-8c18-1c3f78082498"
+                    "uuid": "5b16cb51-118c-41b2-ac94-8db44a7d093b"
                 },
                 {
                     "description": "Segment of J3 on F.Silkscreen",
@@ -518,503 +518,20 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
-                    "description": "NPTH pad of MB32",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -5.975
-                    },
-                    "uuid": "8e77d2d4-984e-4f30-920e-b2acae81e41f"
-                },
-                {
-                    "description": "NPTH pad of MB30",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -6.575
-                    },
-                    "uuid": "fe7be2c6-6829-4d15-883b-951077b4e639"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB28",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -7.175
-                    },
-                    "uuid": "132ac4de-2bf2-49a9-81e9-a977b4a8a540"
-                },
-                {
-                    "description": "NPTH pad of MB26",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -7.775
-                    },
-                    "uuid": "5b087089-99fb-4c89-9d06-59a1f2c05aa4"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB28",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -7.175
-                    },
-                    "uuid": "132ac4de-2bf2-49a9-81e9-a977b4a8a540"
-                },
-                {
-                    "description": "NPTH pad of MB30",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -6.575
-                    },
-                    "uuid": "fe7be2c6-6829-4d15-883b-951077b4e639"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB10",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -7.775
-                    },
-                    "uuid": "422d5279-0ddf-435a-916e-7de80fb2ca8c"
-                },
-                {
-                    "description": "NPTH pad of MB12",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -7.175
-                    },
-                    "uuid": "6f3a2c8e-3a45-4129-b9d1-1fdd451686ee"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB14",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -6.575
-                    },
-                    "uuid": "3cc7ab1b-3b0c-483b-9bf3-27923a390454"
-                },
-                {
-                    "description": "NPTH pad of MB12",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -7.175
-                    },
-                    "uuid": "6f3a2c8e-3a45-4129-b9d1-1fdd451686ee"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB29",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -6.575
-                    },
-                    "uuid": "0d43fb9e-5eed-4725-bfab-4f58719306d9"
-                },
-                {
-                    "description": "NPTH pad of MB31",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -5.975
-                    },
-                    "uuid": "6ead9969-767c-4740-95a8-34c3efc09556"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB29",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -6.575
-                    },
-                    "uuid": "0d43fb9e-5eed-4725-bfab-4f58719306d9"
-                },
-                {
-                    "description": "NPTH pad of MB27",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -7.175
-                    },
-                    "uuid": "772f1da3-95da-4f0a-907c-a0f1bb0878b4"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB9",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -7.775
-                    },
-                    "uuid": "a44b7c7b-0ed3-485d-b1ce-904139bd713f"
-                },
-                {
-                    "description": "NPTH pad of MB11",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -7.175
-                    },
-                    "uuid": "a80f56b4-8cc5-40b3-be7d-e9ad90645a65"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB8",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -19.725
-                    },
-                    "uuid": "37244bd1-d2ca-4c28-985c-88505a3f3f87"
-                },
-                {
-                    "description": "NPTH pad of MB6",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -20.325
-                    },
-                    "uuid": "d7cccf7d-f07c-4253-b175-16d13bc7f911"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB4",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -20.925
-                    },
-                    "uuid": "4d65d93c-937b-4212-bf14-172baaa8e42d"
-                },
-                {
-                    "description": "NPTH pad of MB2",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -21.525
-                    },
-                    "uuid": "69a43512-74b5-42da-8427-ea2cb364d0fa"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB27",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -7.175
-                    },
-                    "uuid": "772f1da3-95da-4f0a-907c-a0f1bb0878b4"
-                },
-                {
-                    "description": "NPTH pad of MB25",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -7.775
-                    },
-                    "uuid": "f134c150-59ee-4f85-abed-d0e640916e9a"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB24",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -19.725
-                    },
-                    "uuid": "5d6bb438-3509-4cc6-b9ae-958e98511348"
-                },
-                {
-                    "description": "NPTH pad of MB22",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -20.325
-                    },
-                    "uuid": "9906037a-a4df-4d1f-84bb-f542fb439727"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB22",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -20.325
-                    },
-                    "uuid": "9906037a-a4df-4d1f-84bb-f542fb439727"
-                },
-                {
-                    "description": "NPTH pad of MB20",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -20.925
-                    },
-                    "uuid": "a3413f23-69af-4e5c-a144-ec91fef2ec06"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB13",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -6.575
-                    },
-                    "uuid": "569bd763-adf5-47c3-a19f-e47e74db4e5c"
-                },
-                {
-                    "description": "NPTH pad of MB11",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -7.175
-                    },
-                    "uuid": "a80f56b4-8cc5-40b3-be7d-e9ad90645a65"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB21",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -20.325
-                    },
-                    "uuid": "6fbce020-a9a3-4071-8ffc-f6da636b5904"
-                },
-                {
-                    "description": "NPTH pad of MB19",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -20.925
-                    },
-                    "uuid": "73a166c3-dc3b-414c-b31c-55ad3c9a6feb"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB17",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -21.525
-                    },
-                    "uuid": "5e9df5d9-d703-4319-8cef-82fca8104741"
-                },
-                {
-                    "description": "NPTH pad of MB19",
-                    "pos": {
-                        "x": 65.599999,
-                        "y": -20.925
-                    },
-                    "uuid": "73a166c3-dc3b-414c-b31c-55ad3c9a6feb"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB18",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -21.525
-                    },
-                    "uuid": "9931929c-cfbd-4a78-ba51-8adeb519a4c9"
-                },
-                {
-                    "description": "NPTH pad of MB20",
-                    "pos": {
-                        "x": 66.4,
-                        "y": -20.925
-                    },
-                    "uuid": "a3413f23-69af-4e5c-a144-ec91fef2ec06"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB14",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -6.575
-                    },
-                    "uuid": "3cc7ab1b-3b0c-483b-9bf3-27923a390454"
-                },
-                {
-                    "description": "NPTH pad of MB16",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -5.975
-                    },
-                    "uuid": "407e6512-869c-49b4-9557-16bd91abd369"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB5",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -20.325
-                    },
-                    "uuid": "0d141dfe-0748-4af5-8329-4c345e6435e2"
-                },
-                {
-                    "description": "NPTH pad of MB3",
+                    "description": "NPTH pad of MOUSE_BITES",
                     "pos": {
                         "x": 32.1,
                         "y": -20.925
                     },
-                    "uuid": "605c5d13-bc43-4331-887b-c4722fe2a69b"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB5",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -20.325
-                    },
-                    "uuid": "0d141dfe-0748-4af5-8329-4c345e6435e2"
+                    "uuid": "0c633b2d-937b-4718-bcf6-b75657967cca"
                 },
                 {
-                    "description": "NPTH pad of MB7",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -19.725
-                    },
-                    "uuid": "bce49e5e-70b3-4ace-90ac-bed33ceed13e"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB13",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -6.575
-                    },
-                    "uuid": "569bd763-adf5-47c3-a19f-e47e74db4e5c"
-                },
-                {
-                    "description": "NPTH pad of MB15",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -5.975
-                    },
-                    "uuid": "f1486113-41d1-486c-9103-3172e3b5cd5a"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB3",
-                    "pos": {
-                        "x": 32.1,
-                        "y": -20.925
-                    },
-                    "uuid": "605c5d13-bc43-4331-887b-c4722fe2a69b"
-                },
-                {
-                    "description": "NPTH pad of MB1",
+                    "description": "NPTH pad of MOUSE_BITES",
                     "pos": {
                         "x": 32.1,
                         "y": -21.525
                     },
-                    "uuid": "c481c103-d0f9-44ba-a5f1-062354b394f6"
+                    "uuid": "c663ed0c-3ac0-45b9-bc06-09642945b8c0"
                 }
             ],
             "severity": "warning",
@@ -1024,20 +541,135 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
-                    "description": "NPTH pad of MB4",
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -20.925
+                    },
+                    "uuid": "0c633b2d-937b-4718-bcf6-b75657967cca"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -20.325
+                    },
+                    "uuid": "f6201c21-9283-46f7-8195-66583eb68cbe"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -19.725
+                    },
+                    "uuid": "ba56a5c5-c876-483d-963d-0c2d637563a8"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -20.325
+                    },
+                    "uuid": "f6201c21-9283-46f7-8195-66583eb68cbe"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -7.775
+                    },
+                    "uuid": "77af529d-32eb-42b4-abce-3bc09b8a5e71"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -7.175
+                    },
+                    "uuid": "ed07fc7a-cab5-4c67-98c7-c77a0f5bde9f"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -6.575
+                    },
+                    "uuid": "488f455e-b58b-409f-a24b-f86a6a768029"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -7.175
+                    },
+                    "uuid": "ed07fc7a-cab5-4c67-98c7-c77a0f5bde9f"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -5.975
+                    },
+                    "uuid": "0b36e4fa-7b6a-4102-9402-f2837caad560"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.1,
+                        "y": -6.575
+                    },
+                    "uuid": "488f455e-b58b-409f-a24b-f86a6a768029"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -21.525
+                    },
+                    "uuid": "568ec4b6-c236-4578-ab30-25fca3155a1f"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
                     "pos": {
                         "x": 32.9,
                         "y": -20.925
                     },
-                    "uuid": "4d65d93c-937b-4212-bf14-172baaa8e42d"
-                },
-                {
-                    "description": "NPTH pad of MB6",
-                    "pos": {
-                        "x": 32.9,
-                        "y": -20.325
-                    },
-                    "uuid": "d7cccf7d-f07c-4253-b175-16d13bc7f911"
+                    "uuid": "ef71e62f-95ad-47b3-b27a-f7d91e45b15e"
                 }
             ],
             "severity": "warning",
@@ -1047,20 +679,388 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
-                    "description": "NPTH pad of MB23",
+                    "description": "NPTH pad of MOUSE_BITES",
                     "pos": {
-                        "x": 65.599999,
-                        "y": -19.725
+                        "x": 32.9,
+                        "y": -20.325
                     },
-                    "uuid": "3c0bcd6d-a369-4d58-abc9-5ea0cb9d05b8"
+                    "uuid": "390d01ea-29bb-4ed2-bc0a-c47bc34a9315"
                 },
                 {
-                    "description": "NPTH pad of MB21",
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -20.925
+                    },
+                    "uuid": "ef71e62f-95ad-47b3-b27a-f7d91e45b15e"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -20.325
+                    },
+                    "uuid": "390d01ea-29bb-4ed2-bc0a-c47bc34a9315"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -19.725
+                    },
+                    "uuid": "59212775-8b00-4d1b-b354-975e715fae88"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -7.175
+                    },
+                    "uuid": "ad30c479-1d4a-4ee1-9464-b9f33e979ab2"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -7.775
+                    },
+                    "uuid": "b93864a4-8de7-4d9a-b4d9-b2bd3f55d4a3"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -6.575
+                    },
+                    "uuid": "51bceadd-3125-4e24-8f43-e393e77e164d"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -7.175
+                    },
+                    "uuid": "ad30c479-1d4a-4ee1-9464-b9f33e979ab2"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -5.975
+                    },
+                    "uuid": "2090a733-45f2-42f8-8d4c-cc67b6110ebb"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 32.9,
+                        "y": -6.575
+                    },
+                    "uuid": "51bceadd-3125-4e24-8f43-e393e77e164d"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -21.525
+                    },
+                    "uuid": "094e8382-d708-4a54-bf18-6b11e1133b7d"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -20.925
+                    },
+                    "uuid": "f8f6f992-f207-4264-924c-54a933cb6419"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
                     "pos": {
                         "x": 65.599999,
                         "y": -20.325
                     },
-                    "uuid": "6fbce020-a9a3-4071-8ffc-f6da636b5904"
+                    "uuid": "751c32b9-a706-4b18-8ff8-42ee1f9a7d9c"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -20.925
+                    },
+                    "uuid": "f8f6f992-f207-4264-924c-54a933cb6419"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -19.725
+                    },
+                    "uuid": "073215c9-1a60-4477-a7c8-79115cb1d55a"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -20.325
+                    },
+                    "uuid": "751c32b9-a706-4b18-8ff8-42ee1f9a7d9c"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -7.175
+                    },
+                    "uuid": "40fba39c-adaa-469d-be38-4bf1267ba9aa"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -7.775
+                    },
+                    "uuid": "98943f79-f3ca-4cde-816a-593df96bbfe8"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -7.175
+                    },
+                    "uuid": "40fba39c-adaa-469d-be38-4bf1267ba9aa"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -6.575
+                    },
+                    "uuid": "bd131d69-1e41-4c5a-a437-9fc31b541118"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -5.975
+                    },
+                    "uuid": "03e2f142-6c1a-4dba-abc6-f3f9445c8031"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 65.599999,
+                        "y": -6.575
+                    },
+                    "uuid": "bd131d69-1e41-4c5a-a437-9fc31b541118"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -20.925
+                    },
+                    "uuid": "c38087e7-a2eb-4d86-b2f8-f21906d83810"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -21.525
+                    },
+                    "uuid": "fdf55697-b98e-4b39-b67f-217bd206580b"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -20.325
+                    },
+                    "uuid": "1d09c2bf-7e12-46d4-bf16-9367687ddfa8"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -20.925
+                    },
+                    "uuid": "c38087e7-a2eb-4d86-b2f8-f21906d83810"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -20.325
+                    },
+                    "uuid": "1d09c2bf-7e12-46d4-bf16-9367687ddfa8"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -19.725
+                    },
+                    "uuid": "351a3578-e593-4981-bf48-e3d9d4d40b2c"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -7.175
+                    },
+                    "uuid": "f361f655-46fa-4c86-a2bd-a0005138a4cf"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -7.775
+                    },
+                    "uuid": "f8d7b741-3d33-427d-ac19-3a3e5914a720"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -7.175
+                    },
+                    "uuid": "f361f655-46fa-4c86-a2bd-a0005138a4cf"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -6.575
+                    },
+                    "uuid": "fe50e0d6-f617-4110-b251-c8475e51c170"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -5.975
+                    },
+                    "uuid": "af9e77cf-f7b3-4ac5-94d0-c33f084030ac"
+                },
+                {
+                    "description": "NPTH pad of MOUSE_BITES",
+                    "pos": {
+                        "x": 66.4,
+                        "y": -6.575
+                    },
+                    "uuid": "fe50e0d6-f617-4110-b251-c8475e51c170"
                 }
             ],
             "severity": "warning",
@@ -1085,7 +1085,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R1",
+                    "description": "Footprint R201",
                     "pos": {
                         "x": 61.0,
                         "y": -5.0
@@ -1115,7 +1115,7 @@
             "description": "The current configuration does not include the footprint library 'Package_SO'",
             "items": [
                 {
-                    "description": "Footprint IF_U2",
+                    "description": "Footprint U202",
                     "pos": {
                         "x": 41.5,
                         "y": -11.5
@@ -1130,7 +1130,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R6",
+                    "description": "Footprint R206",
                     "pos": {
                         "x": 41.5,
                         "y": -25.0
@@ -1145,7 +1145,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_Q2",
+                    "description": "Footprint Q202",
                     "pos": {
                         "x": 47.3,
                         "y": -24.5
@@ -1175,7 +1175,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_Q3",
+                    "description": "Footprint Q203",
                     "pos": {
                         "x": 37.5,
                         "y": -21.0
@@ -1205,7 +1205,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R6",
+                    "description": "Footprint R106",
                     "pos": {
                         "x": 94.5,
                         "y": -14.3
@@ -1220,7 +1220,7 @@
             "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint UI_D3",
+                    "description": "Footprint D103",
                     "pos": {
                         "x": 90.75,
                         "y": -3.5
@@ -1235,7 +1235,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R8",
+                    "description": "Footprint R208",
                     "pos": {
                         "x": 38.5,
                         "y": -4.6
@@ -1265,7 +1265,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R5",
+                    "description": "Footprint R105",
                     "pos": {
                         "x": 78.0,
                         "y": -13.3
@@ -1295,7 +1295,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_Q4",
+                    "description": "Footprint Q204",
                     "pos": {
                         "x": 41.7,
                         "y": -21.0
@@ -1325,7 +1325,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R4",
+                    "description": "Footprint R104",
                     "pos": {
                         "x": 81.0,
                         "y": -13.3
@@ -1340,7 +1340,7 @@
             "description": "The current configuration does not include the footprint library 'Diode_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_D5",
+                    "description": "Footprint D205",
                     "pos": {
                         "x": 47.5,
                         "y": -20.5
@@ -1460,7 +1460,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C4",
+                    "description": "Footprint C104",
                     "pos": {
                         "x": 83.0,
                         "y": -21.3
@@ -1475,7 +1475,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_Q1",
+                    "description": "Footprint Q201",
                     "pos": {
                         "x": 51.5,
                         "y": -24.5
@@ -1490,7 +1490,7 @@
             "description": "The current configuration does not include the footprint library 'Diode_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_D3",
+                    "description": "Footprint D203",
                     "pos": {
                         "x": 57.0,
                         "y": -19.5
@@ -1505,7 +1505,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C2",
+                    "description": "Footprint C102",
                     "pos": {
                         "x": 84.0,
                         "y": -14.3
@@ -1565,7 +1565,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C1",
+                    "description": "Footprint C101",
                     "pos": {
                         "x": 72.5,
                         "y": -17.8
@@ -1625,7 +1625,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R2",
+                    "description": "Footprint R202",
                     "pos": {
                         "x": 42.0,
                         "y": -4.6
@@ -1640,7 +1640,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C3",
+                    "description": "Footprint C103",
                     "pos": {
                         "x": 87.5,
                         "y": -18.3
@@ -1655,7 +1655,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R3",
+                    "description": "Footprint R203",
                     "pos": {
                         "x": 51.5,
                         "y": -18.0
@@ -1670,7 +1670,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_U3",
+                    "description": "Footprint U103",
                     "pos": {
                         "x": 83.0,
                         "y": -18.3
@@ -1700,7 +1700,7 @@
             "description": "The current configuration does not include the footprint library 'Package_SO'",
             "items": [
                 {
-                    "description": "Footprint IF_U1",
+                    "description": "Footprint U201",
                     "pos": {
                         "x": 55.5,
                         "y": -11.5
@@ -1730,7 +1730,7 @@
             "description": "The current configuration does not include the footprint library 'Diode_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_D4",
+                    "description": "Footprint D204",
                     "pos": {
                         "x": 57.5,
                         "y": -23.5
@@ -1775,7 +1775,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R2",
+                    "description": "Footprint R102",
                     "pos": {
                         "x": 83.0,
                         "y": -23.3
@@ -1850,7 +1850,7 @@
             "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_SW2",
+                    "description": "Footprint SW102",
                     "pos": {
                         "x": 90.75,
                         "y": -8.8
@@ -1925,7 +1925,7 @@
             "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_SW1",
+                    "description": "Footprint SW101",
                     "pos": {
                         "x": 74.75,
                         "y": -8.8
@@ -1940,7 +1940,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C6",
+                    "description": "Footprint C106",
                     "pos": {
                         "x": 82.75,
                         "y": -6.7
@@ -1985,7 +1985,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R3",
+                    "description": "Footprint R103",
                     "pos": {
                         "x": 87.5,
                         "y": -14.3
@@ -2030,7 +2030,7 @@
             "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint UI_D2",
+                    "description": "Footprint D102",
                     "pos": {
                         "x": 82.75,
                         "y": -3.5
@@ -2045,7 +2045,7 @@
             "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_U1",
+                    "description": "Footprint U101",
                     "pos": {
                         "x": 74.0,
                         "y": -15.3
@@ -2090,7 +2090,7 @@
             "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint UI_D1",
+                    "description": "Footprint D101",
                     "pos": {
                         "x": 74.75,
                         "y": -3.5
@@ -2120,7 +2120,7 @@
             "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
             "items": [
                 {
-                    "description": "Footprint UI_J2",
+                    "description": "Footprint J102",
                     "pos": {
                         "x": 75.64,
                         "y": -38.45
@@ -2135,7 +2135,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_R1",
+                    "description": "Footprint R101",
                     "pos": {
                         "x": 79.0,
                         "y": -23.3
@@ -2195,7 +2195,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C5",
+                    "description": "Footprint C105",
                     "pos": {
                         "x": 74.75,
                         "y": -3.5
@@ -2210,7 +2210,7 @@
             "description": "The current configuration does not include the footprint library 'Connector_JST'",
             "items": [
                 {
-                    "description": "Footprint UI_J1",
+                    "description": "Footprint J101",
                     "pos": {
                         "x": 87.0,
                         "y": -3.3
@@ -2225,7 +2225,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R5",
+                    "description": "Footprint R205",
                     "pos": {
                         "x": 51.0,
                         "y": -25.0
@@ -2255,7 +2255,7 @@
             "description": "The current configuration does not include the footprint library 'Diode_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_D1",
+                    "description": "Footprint D201",
                     "pos": {
                         "x": 40.5,
                         "y": -21.2
@@ -2270,7 +2270,7 @@
             "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
             "items": [
                 {
-                    "description": "Footprint IF_J2",
+                    "description": "Footprint J202",
                     "pos": {
                         "x": 62.5,
                         "y": -25.4
@@ -2330,7 +2330,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint UI_C7",
+                    "description": "Footprint C107",
                     "pos": {
                         "x": 96.0,
                         "y": -3.5
@@ -2345,7 +2345,7 @@
             "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint UI_U2",
+                    "description": "Footprint U102",
                     "pos": {
                         "x": 82.75,
                         "y": -26.7
@@ -2390,7 +2390,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R7",
+                    "description": "Footprint R207",
                     "pos": {
                         "x": 46.3,
                         "y": -22.0
@@ -2405,7 +2405,7 @@
             "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
             "items": [
                 {
-                    "description": "Footprint IF_J1",
+                    "description": "Footprint J201",
                     "pos": {
                         "x": 39.69,
                         "y": -2.05
@@ -2435,7 +2435,7 @@
             "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_R4",
+                    "description": "Footprint R204",
                     "pos": {
                         "x": 57.5,
                         "y": -23.5
@@ -2450,7 +2450,7 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_C1",
+                    "description": "Footprint C201",
                     "pos": {
                         "x": 58.0,
                         "y": -19.0
@@ -2495,7 +2495,7 @@
             "description": "The current configuration does not include the footprint library 'Diode_SMD'",
             "items": [
                 {
-                    "description": "Footprint IF_D2",
+                    "description": "Footprint D202",
                     "pos": {
                         "x": 50.5,
                         "y": -17.0
@@ -2527,82 +2527,13 @@
                 {
                     "description": "Segment on F.Silkscreen",
                     "pos": {
-                        "x": 69.4,
-                        "y": -16.82
-                    },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
-                },
-                {
-                    "description": "Segment of UI_U3 on F.Silkscreen",
-                    "pos": {
-                        "x": 83.91,
-                        "y": -16.79
-                    },
-                    "uuid": "edb75a09-e33a-40d8-b08f-ebe28e8fe948"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 69.4,
-                        "y": -16.82
-                    },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
-                },
-                {
-                    "description": "Reference field of UI_C3",
-                    "pos": {
-                        "x": 85.82,
-                        "y": -18.3
-                    },
-                    "uuid": "4b949247-a566-4e9c-bba5-9aa9062e9e11"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "Reference field of UI_R4",
-                    "pos": {
-                        "x": 81.0,
-                        "y": -14.73
-                    },
-                    "uuid": "488c2183-d4f7-43ee-b858-2444d9d31b5f"
-                },
-                {
-                    "description": "Reference field of UI_R5",
-                    "pos": {
-                        "x": 78.0,
-                        "y": -14.73
-                    },
-                    "uuid": "d89d77d0-12e1-4cf7-b387-e15418fba439"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
                         "x": 69.1,
                         "y": -12.8
                     },
                     "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
                 },
                 {
-                    "description": "Segment of UI_R4 on F.Silkscreen",
+                    "description": "Segment of R104 on F.Silkscreen",
                     "pos": {
                         "x": 80.762742,
                         "y": -12.7775
@@ -2617,30 +2548,7 @@
             "description": "Silkscreen clearance",
             "items": [
                 {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 69.1,
-                        "y": -12.8
-                    },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
-                },
-                {
-                    "description": "Reference field of UI_R6",
-                    "pos": {
-                        "x": 93.07,
-                        "y": -14.3
-                    },
-                    "uuid": "bc0fb88f-3a08-4d26-8b53-4979b73b9eed"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "Segment of UI_R5 on F.Silkscreen",
+                    "description": "Segment of R105 on F.Silkscreen",
                     "pos": {
                         "x": 77.762742,
                         "y": -12.7775
@@ -2671,12 +2579,12 @@
                     "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
                 },
                 {
-                    "description": "Segment of UI_U3 on F.Silkscreen",
+                    "description": "Segment of U103 on F.Silkscreen",
                     "pos": {
-                        "x": 82.09,
-                        "y": -16.74
+                        "x": 83.91,
+                        "y": -16.79
                     },
-                    "uuid": "a52e2fb5-c7cd-4c8c-882b-c3768d5e166c"
+                    "uuid": "edb75a09-e33a-40d8-b08f-ebe28e8fe948"
                 }
             ],
             "severity": "warning",
@@ -2694,7 +2602,7 @@
                     "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
                 },
                 {
-                    "description": "Segment of UI_U3 on F.Silkscreen",
+                    "description": "Segment of U103 on F.Silkscreen",
                     "pos": {
                         "x": 83.91,
                         "y": -16.74
@@ -2706,23 +2614,69 @@
             "type": "silk_overlap"
         },
         {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 69.4,
+                        "y": -16.82
+                    },
+                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                },
+                {
+                    "description": "Reference field of C103",
+                    "pos": {
+                        "x": 85.82,
+                        "y": -18.3
+                    },
+                    "uuid": "4b949247-a566-4e9c-bba5-9aa9062e9e11"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 69.4,
+                        "y": -16.82
+                    },
+                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                },
+                {
+                    "description": "Segment of U103 on F.Silkscreen",
+                    "pos": {
+                        "x": 82.09,
+                        "y": -16.74
+                    },
+                    "uuid": "a52e2fb5-c7cd-4c8c-882b-c3768d5e166c"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Reference field of IF_R8",
+                    "description": "Segment on F.Silkscreen",
                     "pos": {
-                        "x": 38.5,
-                        "y": -6.03
+                        "x": 69.4,
+                        "y": -16.82
                     },
-                    "uuid": "f0c67b23-728a-410f-a977-d29332da177e"
+                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
                 },
                 {
-                    "description": "Pad 4 [IF_GND] of IF_U2 on F.Cu",
+                    "description": "Pad 1 [UI_+5V] of C103 on F.Cu",
                     "pos": {
-                        "x": 40.23,
-                        "y": -6.75
+                        "x": 87.5,
+                        "y": -17.35
                     },
-                    "uuid": "9113c5cb-c178-4435-824c-f2a018c9a627"
+                    "uuid": "d307e8d6-8c71-4b53-9a16-649f8cacc72e"
                 }
             ],
             "severity": "warning",
@@ -2732,20 +2686,20 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Footprint text of J1 (KNX-)",
+                    "description": "Segment on F.Silkscreen",
                     "pos": {
-                        "x": 20.5,
-                        "y": -9.25
+                        "x": 69.1,
+                        "y": -12.8
                     },
-                    "uuid": "5889e1ca-0ebe-4b34-95d5-518047ee3aec"
+                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
                 },
                 {
-                    "description": "Pad 2 [GND] of C2 on F.Cu",
+                    "description": "Pad 2 [UI_GND] of R105 on F.Cu",
                     "pos": {
-                        "x": 19.275,
-                        "y": -9.2
+                        "x": 78.825,
+                        "y": -13.3
                     },
-                    "uuid": "2ec197fd-59ac-4ee9-9251-02d802605c7f"
+                    "uuid": "61f86eb8-75ed-43b8-a381-7a05415e1c49"
                 }
             ],
             "severity": "warning",
@@ -2755,20 +2709,66 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Segment of J1 on F.Silkscreen",
+                    "description": "Segment on F.Silkscreen",
                     "pos": {
-                        "x": 18.85,
-                        "y": -7.5
+                        "x": 69.1,
+                        "y": -12.8
                     },
-                    "uuid": "6391d501-e941-45b9-9308-dd605390634f"
+                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
                 },
                 {
-                    "description": "PTH pad 1 [KNX_P] of J1",
+                    "description": "Pad 1 [UI_N$1] of R104 on F.Cu",
                     "pos": {
-                        "x": 26.25,
-                        "y": -7.25
+                        "x": 80.175,
+                        "y": -13.3
                     },
-                    "uuid": "3a1c0bd4-a9fc-44a9-9bb6-a08af6cf8894"
+                    "uuid": "00b7de2f-0348-4159-b021-9de0fe9a70c5"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 69.1,
+                        "y": -12.8
+                    },
+                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                },
+                {
+                    "description": "Pad 2 [UI_GND] of R104 on F.Cu",
+                    "pos": {
+                        "x": 81.825,
+                        "y": -13.3
+                    },
+                    "uuid": "a4f73ad1-df76-46b6-b1ca-42e1bfd9672e"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 69.1,
+                        "y": -12.8
+                    },
+                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                },
+                {
+                    "description": "Pad 1 [UI_N$2] of R105 on F.Cu",
+                    "pos": {
+                        "x": 77.175,
+                        "y": -13.3
+                    },
+                    "uuid": "3e1020bd-1a13-4229-9093-c374ea968c1c"
                 }
             ],
             "severity": "warning",
@@ -2801,20 +2801,20 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Segment on F.Silkscreen",
+                    "description": "Segment of J1 on F.Silkscreen",
                     "pos": {
-                        "x": 69.1,
-                        "y": -12.8
+                        "x": 18.85,
+                        "y": -7.5
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "6391d501-e941-45b9-9308-dd605390634f"
                 },
                 {
-                    "description": "Pad 1 [UI_N$2] of UI_R5 on F.Cu",
+                    "description": "PTH pad 1 [KNX_P] of J1",
                     "pos": {
-                        "x": 77.175,
-                        "y": -13.3
+                        "x": 26.25,
+                        "y": -7.25
                     },
-                    "uuid": "3e1020bd-1a13-4229-9093-c374ea968c1c"
+                    "uuid": "3a1c0bd4-a9fc-44a9-9bb6-a08af6cf8894"
                 }
             ],
             "severity": "warning",
@@ -2824,20 +2824,20 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Segment on F.Silkscreen",
+                    "description": "Footprint text of J1 (KNX-)",
                     "pos": {
-                        "x": 69.1,
-                        "y": -12.8
+                        "x": 20.5,
+                        "y": -9.25
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "5889e1ca-0ebe-4b34-95d5-518047ee3aec"
                 },
                 {
-                    "description": "Pad 2 [UI_GND] of UI_R4 on F.Cu",
+                    "description": "Pad 2 [GND] of C2 on F.Cu",
                     "pos": {
-                        "x": 81.825,
-                        "y": -13.3
+                        "x": 19.275,
+                        "y": -9.2
                     },
-                    "uuid": "a4f73ad1-df76-46b6-b1ca-42e1bfd9672e"
+                    "uuid": "2ec197fd-59ac-4ee9-9251-02d802605c7f"
                 }
             ],
             "severity": "warning",
@@ -2847,66 +2847,20 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "Segment on F.Silkscreen",
+                    "description": "Reference field of R208",
                     "pos": {
-                        "x": 69.1,
-                        "y": -12.8
+                        "x": 38.5,
+                        "y": -6.03
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "f0c67b23-728a-410f-a977-d29332da177e"
                 },
                 {
-                    "description": "Pad 2 [UI_GND] of UI_R5 on F.Cu",
+                    "description": "Pad 4 [INTERFACE_GND] of U202 on F.Cu",
                     "pos": {
-                        "x": 78.825,
-                        "y": -13.3
+                        "x": 40.23,
+                        "y": -6.75
                     },
-                    "uuid": "61f86eb8-75ed-43b8-a381-7a05415e1c49"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_over_copper"
-        },
-        {
-            "description": "Silkscreen clipped by solder mask",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 69.1,
-                        "y": -12.8
-                    },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
-                },
-                {
-                    "description": "Pad 1 [UI_N$1] of UI_R4 on F.Cu",
-                    "pos": {
-                        "x": 80.175,
-                        "y": -13.3
-                    },
-                    "uuid": "00b7de2f-0348-4159-b021-9de0fe9a70c5"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_over_copper"
-        },
-        {
-            "description": "Silkscreen clipped by solder mask",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 69.4,
-                        "y": -16.82
-                    },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
-                },
-                {
-                    "description": "Pad 1 [UI_+5V] of UI_C3 on F.Cu",
-                    "pos": {
-                        "x": 87.5,
-                        "y": -17.35
-                    },
-                    "uuid": "d307e8d6-8c71-4b53-9a16-649f8cacc72e"
+                    "uuid": "9113c5cb-c178-4435-824c-f2a018c9a627"
                 }
             ],
             "severity": "warning",

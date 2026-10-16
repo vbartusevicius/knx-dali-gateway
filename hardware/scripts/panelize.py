@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -26,11 +27,24 @@ HOLE_DIA = 0.5     # mm NPTH mouse-bite drill diameter
 HOLE_OFF_X = 0.60  # mm from sub-board edge into the 2.0 mm tab bridge (clear of edge courtyards)
 HOLE_Y_OFFS = (-0.9, -0.3, 0.3, 0.9)  # 4 mouse-bite holes per tab end (0.6 mm pitch)
 
-PREFIX_MAP = {
-    "main": "",
-    "ui": "UI_",
-    "interface": "IF_",
+# Offset sub-board reference numbers (+100 for ui, +200 for interface) so designators stay
+# standard IPC prefixes (R101, C101, D101, U101) — required by Aisler Smart Match (which
+# requires resistors to start with 'R', capacitors with 'C', diodes with 'D').
+BOARD_REF_OFFSET = {
+    "main": 0,
+    "ui": 100,
+    "interface": 200,
 }
+
+
+def offset_ref(board_name: str, ref: str) -> str:
+    off = BOARD_REF_OFFSET.get(board_name, 0)
+    if off == 0:
+        return ref
+    m = re.match(r"^([A-Za-z]+)(\d+)$", ref)
+    if not m:
+        return f"{board_name.upper()}_{ref}"
+    return f"{m.group(1)}{int(m.group(2)) + off}"
 
 
 def run(*cmd: str) -> None:
@@ -49,21 +63,29 @@ def add_edge_line(pcb: pcbnew.BOARD, x0: float, y0: float, x1: float, y1: float)
     pcb.Add(seg)
 
 
-def add_mouse_bite_hole(pcb: pcbnew.BOARD, x_mm: float, y_mm: float, idx: int) -> None:
+def add_mouse_bite_holes(pcb: pcbnew.BOARD, coords: list[tuple[float, float]]) -> None:
+    """Place all mouse-bite NPTH holes inside a single DNP/Excluded footprint so BOM tools ignore them."""
+    if not coords:
+        return
     fp = pcbnew.FOOTPRINT(pcb)
-    fp.SetReference(f"MB{idx}")
+    fp.SetReference("MOUSE_BITES")
+    fp.SetValue("DNP")
     fp.Reference().SetVisible(False)
     fp.Value().SetVisible(False)
-    fp.SetAttributes(pcbnew.FP_EXCLUDE_FROM_POS_FILES | pcbnew.FP_EXCLUDE_FROM_BOM)
-    pad = pcbnew.PAD(fp)
-    pad.SetNumber("1")
-    pad.SetShape(pcbnew.PAD_SHAPE_CIRCLE)
-    pad.SetAttribute(pcbnew.PAD_ATTRIB_NPTH)
-    pad.SetSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
-    pad.SetDrillSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
-    pad.SetLayerSet(pad.UnplatedHoleMask())
-    fp.Add(pad)
-    fp.SetPosition(pcbnew.VECTOR2I_MM(x_mm, y_mm))
+    fp.SetDNP(True)
+    fp.SetExcludedFromBOM(True)
+    fp.SetExcludedFromPosFiles(True)
+    fp.SetPosition(pcbnew.VECTOR2I_MM(0, 0))
+    for idx, (x_mm, y_mm) in enumerate(coords, start=1):
+        pad = pcbnew.PAD(fp)
+        pad.SetNumber(str(idx))
+        pad.SetShape(pcbnew.PAD_SHAPE_CIRCLE)
+        pad.SetAttribute(pcbnew.PAD_ATTRIB_NPTH)
+        pad.SetSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
+        pad.SetDrillSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
+        pad.SetLayerSet(pad.UnplatedHoleMask())
+        pad.SetPosition(pcbnew.VECTOR2I_MM(x_mm, y_mm))
+        fp.Add(pad)
     pcb.Add(fp)
 
 
@@ -120,11 +142,11 @@ def build_panel(
     combined_parts: list[dict] = []
     for p in json.loads((REPO / "hardware/build" / variant / base_name / "parts.json").read_text()):
         cp = dict(p)
-        cp["ref"] = f"{PREFIX_MAP[base_name]}{p['ref']}"
+        cp["ref"] = offset_ref(base_name, p["ref"])
         combined_parts.append(cp)
 
     for bname in boards[1:]:
-        prefix = PREFIX_MAP.get(bname, f"{bname.upper()}_")
+        net_prefix = f"{bname.upper()}_"
         src, bx0, by0, bw, bh = loaded[bname]
 
         target_x0 = round(cur_right + SLOT_W, 4)
@@ -140,7 +162,7 @@ def build_panel(
             sname = str(net_name)
             if not sname:
                 continue
-            pname = f"{prefix}{sname}"
+            pname = f"{net_prefix}{sname}"
             existing = panel.FindNet(pname)
             if not existing:
                 ni = pcbnew.NETINFO_ITEM(panel, pname)
@@ -151,7 +173,7 @@ def build_panel(
         # Transfer footprints
         for fp in list(src.GetFootprints()):
             src.Remove(fp)
-            fp.SetReference(f"{prefix}{fp.GetReference()}")
+            fp.SetReference(offset_ref(bname, fp.GetReference()))
             for pad in fp.Pads():
                 orig_net = pad.GetNetname()
                 if net_map.get(orig_net):
@@ -188,12 +210,12 @@ def build_panel(
 
         for p in json.loads((REPO / "hardware/build" / variant / bname / "parts.json").read_text()):
             cp = dict(p)
-            cp["ref"] = f"{prefix}{p['ref']}"
+            cp["ref"] = offset_ref(bname, p["ref"])
             combined_parts.append(cp)
 
     # Split ONLY the shared vertical seam edges between board i (x = bx1) and board i+1 (x = next_x0)
     # and bridge them with 2 mouse-bite breakaway tabs + NPTH snap holes
-    mb_idx = 1
+    mb_coords: list[tuple[float, float]] = []
     n = len(placements)
     for i in range(n - 1):
         _, _, _, lx0, ly0, lw, lh = placements[i]
@@ -227,10 +249,10 @@ def build_panel(
             add_edge_line(panel, lx1, tc - hw, rx0, tc - hw)
             add_edge_line(panel, lx1, tc + hw, rx0, tc + hw)
             for dy_h in HOLE_Y_OFFS:
-                add_mouse_bite_hole(panel, lx1 + HOLE_OFF_X, tc + dy_h, mb_idx)
-                mb_idx += 1
-                add_mouse_bite_hole(panel, rx0 - HOLE_OFF_X, tc + dy_h, mb_idx)
-                mb_idx += 1
+                mb_coords.append((lx1 + HOLE_OFF_X, tc + dy_h))
+                mb_coords.append((rx0 - HOLE_OFF_X, tc + dy_h))
+
+    add_mouse_bite_holes(panel, mb_coords)
 
     panel_pcb_path = panel_dir / "panel.kicad_pcb"
     pcbnew.SaveBoard(str(panel_pcb_path), panel)
@@ -288,11 +310,10 @@ def build_panel(
     cpl_rows = []
     check_rows = []
     for bname, dx, dy, _, _, _, _ in placements:
-        prefix = PREFIX_MAP.get(bname, f"{bname.upper()}_")
         for c in board_checks.get(bname, []):
             if c.assembly != "jlc":
                 continue
-            pref = f"{prefix}{c.ref}"
+            pref = offset_ref(bname, c.ref)
             fp = panel.FindFootprintByReference(pref)
             layer = "Bottom" if fp.IsFlipped() else "Top"
             kicad_rot = round(fp.GetOrientationDegrees()) % 360
