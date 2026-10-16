@@ -97,14 +97,15 @@ Detailed electrical and mechanical notes, including the XIAO `D0..D10` pin table
 
 Each release folder (`hardware/releases/v1/`, `v2/`, `v3/`) is a complete, DRC-clean, pinout-verified manufacturing package:
 
-### 1. Order PCBs & SMT Assembly at JLCPCB
-For each board subfolder in the release (`main/`, `ui/`, and `interface/` on V2):
-1. **Upload Gerbers:** `<board>_gerbers.zip`
-   - **V1:** `main` 4 layers (`1.6 mm`), `ui` 2 layers (`1.6 mm`).
-   - **V2:** `main`, `interface`, `ui` 4 layers (`1.6 mm`).
-   - **V3:** `main` 4 layers (**`1.2 mm`**), `ui` 4 layers (`1.6 mm`).
-2. **Enable PCB Assembly (Both Sides):** upload `<board>_bom_jlc.csv` (BOM) and `<board>_cpl_jlc.csv` (Pick & Place / CPL).
-3. **Verify Placement Preview:** `<board>_assembly_check.csv` records the verified JLCPCB footprint, rotation and centre offset for every part. Check `<board>/renders/top.svg` and `bottom.svg` against JLCPCB's 3D preview.
+### 1. Order PCBs & SMT Assembly at JLCPCB (Single Breakaway Panel or Individual Boards)
+Each release includes a **combined breakaway mouse-bite panel (`panel/`)** so you can order the entire gateway as **1 PCB + 1 PCBA job** (paying only one PCB fee, one stencil fee, and one setup fee, then snapping the sub-boards apart by hand):
+
+- **Option A — Single Breakaway Panel (`panel/` — Recommended, Lowest Cost):**
+  1. Upload **`panel/panel_gerbers.zip`** (`55.6 × 78.0 mm` 4-layer `1.2 mm` on **V3**; `98.5 × 76.5 mm` 4-layer `1.6 mm` on **V2** — both under JLCPCB's `100 × 100 mm` tier).
+  2. Enable **PCB Assembly (Both Sides)** and upload **`panel/panel_bom_jlc.csv`** (consolidated BOM) and **`panel/panel_cpl_jlc.csv`** (consolidated Pick & Place).
+- **Option B — Individual Boards (`main/`, `ui/`, and `interface/` on V2):**
+  1. Upload `<board>_gerbers.zip`, `<board>_bom_jlc.csv`, and `<board>_cpl_jlc.csv` per board.
+  2. Check `<board>/renders/top.svg` and `bottom.svg` (or `panel/renders/top.svg` and `bottom.svg`) against JLCPCB's 3D placement preview.
 
 ### 2. Order Hand-Fitted & Off-Board Parts
 - **`assembly_parts.csv`** (at the root of `hardware/releases/<variant>/`, generated automatically from the circuit netlists and `spec.yaml`) lists every part not placed by JLCPCB:

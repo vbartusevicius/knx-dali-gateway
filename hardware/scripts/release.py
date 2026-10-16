@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 
 import jlc_parts
+import panelize
 import pcbnew
 import yaml
 
@@ -142,7 +143,7 @@ def release_board(board, root):
     problems = gate(board, out, checks)
     if problems:
         shutil.rmtree(out)
-        return problems, ([], [])
+        return problems, ([], []), []
     for suffix in (".kicad_pcb", ".kicad_pro", ".kicad_dru"):
         shutil.copy(layout_path(board).with_suffix(suffix), out)
     gerbers(board, out)
@@ -154,15 +155,17 @@ def release_board(board, root):
     run("python3", str(REPO / "hardware/scripts/render_board.py"), board, "release")
     renders = REPO / "hardware/build" / VARIANT / board / "render/release"
     shutil.copytree(renders, out / "renders", ignore=shutil.ignore_patterns("drc.json", "zoom_*"))
-    return [], placement
+    return [], placement, checks
 
 
 def main(version, boards=BOARDS):
     root = REPO / "hardware/releases" / version
     root.mkdir(parents=True, exist_ok=True)
     failed = False
+    board_checks = {}
     for board in boards:
-        problems, (turned, bottom) = release_board(board, root)
+        problems, (turned, bottom), checks = release_board(board, root)
+        board_checks[board] = checks
         if problems:
             failed = True
             print(f"{board}: NOT released:")
@@ -172,6 +175,12 @@ def main(version, boards=BOARDS):
             print(f"{board}: released; every JLC part lands pin for pin. Rotation differs from KiCad's "
                   f"for {', '.join(turned) or 'none'}; bottom side: {', '.join(bottom) or 'none'} "
                   "(confirm these in JLCPCB's placement preview)")
+    if not failed and tuple(boards) == BOARDS:
+        panel_problems = panelize.build_panel(VARIANT, BOARDS, root, board_checks)
+        if panel_problems:
+            failed = True
+            for problem in panel_problems:
+                print(f"  {problem}")
     with open(root / "assembly_parts.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["Item", "Qty", "Part", "Description", "Source"])
