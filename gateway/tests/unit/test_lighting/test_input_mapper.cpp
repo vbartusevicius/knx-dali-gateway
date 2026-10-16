@@ -24,7 +24,7 @@ using gateway::inputs::InputMapper;
 using gateway::knx::InputObjectFunction;
 namespace device = gateway::dali::device;
 
-constexpr std::uint16_t object(std::uint8_t channel, InputObjectFunction function) {
+std::uint16_t object(std::uint8_t channel, InputObjectFunction function) {
     return gateway::knx::input_object_number(channel, function);
 }
 
