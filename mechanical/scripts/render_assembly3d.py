@@ -21,6 +21,8 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "mechanical/scripts"))
 import build_enclosure as be
 import enclosure_features as ef
+import legend_color_model as lcm
+import oled_page1_bitmap as oled_bmp
 from build_enclosure import box, cylinder
 
 OUT = REPO / "mechanical/build" / ef.VARIANT
@@ -300,13 +302,61 @@ def label(text, position):
     return a
 
 
-def render(name, items, position, focal=(0, 40.5, 25), up=(0, 1, 0), zoom=1.0, labels=()):
+def oled_pixels_actor(z_offset=0.0):
+    """Build a crisp 3D VTK quad-mesh actor for the lit Page 1 OLED pixels inside oled_window()."""
+    win = ef.oled_window()
+    glass = next(b for b in ef.part_boxes() if b["ref"] == "OLED glass")
+    rows = oled_bmp.PAGE1_64X128 if ef.VARIANT == "v3" else oled_bmp.PAGE1_128X64
+    h = len(rows)
+    w = len(rows[0])
+    x0 = win["cx"] - win["w"] / 2
+    y1 = win["cy"] + win["h"] / 2
+    pw = win["w"] / w
+    ph = win["h"] / h
+    z = glass["z1"] + 0.08 + z_offset
+
+    points = vtk.vtkPoints()
+    polys = vtk.vtkCellArray()
+    idx = 0
+    for py, row in enumerate(rows):
+        for px, ch in enumerate(row):
+            if ch != "#":
+                continue
+            px0 = x0 + px * pw + pw * 0.06
+            px1 = x0 + (px + 1) * pw - pw * 0.06
+            py1 = y1 - py * ph - ph * 0.06
+            py0 = y1 - (py + 1) * ph + ph * 0.06
+            points.InsertNextPoint(px0, py0, z)
+            points.InsertNextPoint(px1, py0, z)
+            points.InsertNextPoint(px1, py1, z)
+            points.InsertNextPoint(px0, py1, z)
+            polys.InsertNextCell(3, (idx, idx + 1, idx + 2))
+            polys.InsertNextCell(3, (idx, idx + 2, idx + 3))
+            idx += 4
+
+    data = vtk.vtkPolyData()
+    data.SetPoints(points)
+    data.SetPolys(polys)
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputData(data)
+    a = vtk.vtkActor()
+    a.SetMapper(mapper)
+    rgb = (0.29, 0.87, 0.50) if ef.VARIANT == "v3" else (0.22, 0.74, 0.97)
+    a.GetProperty().SetColor(*rgb)
+    a.GetProperty().SetAmbient(1.0)
+    a.GetProperty().SetDiffuse(0.0)
+    return a
+
+
+def render(name, items, position, focal=(0, 40.5, 25), up=(0, 1, 0), zoom=1.0, labels=(), extra_actors=()):
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(1, 1, 1)
     renderer.SetUseDepthPeeling(1)
     renderer.SetMaximumNumberOfPeels(30)
     for shape, rgb, opacity in items:
         renderer.AddActor(actor(shape, rgb, opacity))
+    for a in extra_actors:
+        renderer.AddActor(a)
     for text, pos in labels:
         renderer.AddActor(label(text, pos))
     window = vtk.vtkRenderWindow()
@@ -375,19 +425,30 @@ def main():
     parts = [(s, c, 1.0) for s, c, _, _ in full_parts]
     supports = [(s, c, 1.0) for s, c in support_solids()]
     boards = [(s, c, 1.0) for s, c in plates]
+    led_lenses = [
+        (cylinder(w["x"], w["y"], ef.TOTAL_D - 0.6, ef.TOTAL_D + 0.02, be.LED_WINDOW), (0.10, 0.88, 0.32), 1.0)
+        for w in ef.led_windows()
+    ]
     inside = boards + parts + supports
+    legend = lcm.legend_bodies()
+    cover_silk = cover.cut(legend)
+    SILK = (0.10, 0.10, 0.12)
     iso = (150, 150, 190)
-    render("front", [(base, CASE, 1.0), (cover, CASE, 1.0)] + inside, (0, 40.5, 300), zoom=1.1)
-    render("iso", [(base, CASE, 1.0), (cover, CASE, 1.0)] + inside, iso)
-    render("inside", [(base, CASE, 0.12), (cover, CASE, 0.12)] + inside, iso)
+    oled_act = oled_pixels_actor(0.0)
+    render("front", [(base, CASE, 1.0), (cover_silk, CASE, 1.0), (legend, SILK, 1.0)] + inside + led_lenses,
+           (0, 40.5, 300), zoom=1.1, extra_actors=(oled_act,))
+    render("iso", [(base, CASE, 1.0), (cover_silk, CASE, 1.0), (legend, SILK, 1.0)] + inside + led_lenses,
+           iso, extra_actors=(oled_act,))
+    render("inside", [(base, CASE, 0.12), (cover, CASE, 0.12)] + inside, iso, extra_actors=(oled_act,))
     keep = box(-40, 0, -20, 100, -20, 80)
     section = [(base.intersect(keep), CASE, 1.0), (cover.intersect(keep), CASE, 1.0)] + inside
     render("section", section, (220, 40.5, 25))
     render("back", [(base, CASE, 1.0)], (60, -60, -200), focal=(0, 40.5, 0))
     main_layer = [b for b in boards if b[1] == MAIN] + [p for p in parts if p[0].val().BoundingBox().zmax < 45]         + [s for s in supports if s[0].val().BoundingBox().zmax < 45]
     ui_layer = [b for b in boards if b[1] == UI] + [p for p in parts if p[0].val().BoundingBox().zmax >= 45]         + [s for s in supports if s[0].val().BoundingBox().zmax >= 45]
-    exploded = shifted([(base, CASE, 1.0)], -35) + main_layer + shifted(ui_layer, 25) + shifted([(cover, CASE, 0.35)], 55)
-    render("exploded", exploded, (190, 140, 220), focal=(0, 40.5, 25))
+    exploded = (shifted([(base, CASE, 1.0)], -35) + main_layer + shifted(ui_layer, 25)
+                + shifted([(cover_silk, CASE, 0.35), (legend, SILK, 0.85)], 55))
+    render("exploded", exploded, (190, 140, 220), focal=(0, 40.5, 25), extra_actors=(oled_pixels_actor(25.0),))
     board_views(plates, full_parts)
 
 

@@ -324,6 +324,8 @@ class LabState:
 
     def handle_command(self, cmd: dict) -> None:
         action = cmd.get("action", "")
+        if action == "sync_time":
+            return
         target = cmd.get("target", "ch")
         idx = int(cmd.get("index", 0))
         self.tx_frames += 1
@@ -538,20 +540,39 @@ class Handler(BaseHTTPRequestHandler):
     }
   };
   document.addEventListener('DOMContentLoaded', () => {
-    const right = document.querySelector('.topbar-right');
-    if (right) {
-      const bar = document.createElement('div');
-      bar.className = 'scenario-bar';
-      bar.innerHTML = `<span class="scenario-label">Scenario:</span>
-        <select onchange="applyScenario(this.value)">
-          <option value="mixed">Mixed Lamps &amp; Types (24 Devices)</option>
-          <option value="full64">Full 64 Lamps (All Addressed)</option>
-          <option value="faults">Faults &amp; Bus Short Emergency</option>
-          <option value="finder">Lamp Finder &amp; Scan Active</option>
-          <option value="empty">First Boot (Uncommissioned)</option>
-        </select>`;
-      right.insertBefore(bar, right.firstChild);
+    const params = new URLSearchParams(location.search);
+    if (!params.has('hide_dev_bar')) {
+      const right = document.querySelector('.topbar-right');
+      if (right) {
+        const bar = document.createElement('div');
+        bar.className = 'scenario-bar';
+        bar.innerHTML = `<span class="scenario-label">Scenario:</span>
+          <select onchange="applyScenario(this.value)">
+            <option value="mixed">Mixed Lamps &amp; Types (24 Devices)</option>
+            <option value="full64">Full 64 Lamps (All Addressed)</option>
+            <option value="faults">Faults &amp; Bus Short Emergency</option>
+            <option value="finder">Lamp Finder &amp; Scan Active</option>
+            <option value="empty">First Boot (Uncommissioned)</option>
+          </select>`;
+        right.insertBefore(bar, right.firstChild);
+      }
     }
+    setTimeout(() => {
+      if (params.has('tab')) {
+        const btn = document.querySelector(`.nav-tab[data-tab="${params.get('tab')}"]`);
+        if (btn) btn.click();
+      }
+      if (params.has('inptab') && typeof setInspectorTab === 'function') {
+        setInspectorTab(params.get('inptab'));
+      }
+      if (params.has('logmode') && typeof setLogViewMode === 'function') {
+        setLogViewMode(params.get('logmode'));
+      }
+      if (params.has('sec') && typeof selectSettingsSection === 'function') {
+        const sBtn = document.querySelector(`.settings-nav-item[data-sec="${params.get('sec')}"]`);
+        selectSettingsSection(params.get('sec'), sBtn);
+      }
+    }, 350);
   });
 })();
 </script>

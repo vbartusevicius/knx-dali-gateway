@@ -210,6 +210,74 @@ def main() -> None:
     OUT_SVG.write_text("\n".join(svg))
     print(f"Wrote {OUT_SVG}")
 
+    # Also write dedicated V1/V2 (128x64 landscape) and V3 (64x128 portrait) showcase strips for README.md
+    strip_items = [
+        ("overview", "1. Status"),
+        ("matrix", "2. 64-Lamp Map"),
+        ("errors", "3. Error Log"),
+        ("info", "4. Device Info"),
+        ("modal_wifi", "WiFi Setup AP"),
+        ("modal_short", "DALI Bus Short"),
+    ]
+
+    # V1/V2 (128x64 landscape, 3x2 grid)
+    v2_svg_path = ROOT / "docs" / "oled-v2-landscape.svg"
+    v2_cell_w = 128 * scale + 28
+    v2_cell_h = 64 * scale + 48
+    v2_w = 24 + 3 * v2_cell_w
+    v2_h = 54 + 2 * v2_cell_h
+    v2 = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {v2_w} {v2_h}" width="{v2_w}" height="{v2_h}" shape-rendering="crispEdges">',
+        '<rect width="100%" height="100%" rx="8" fill="#0d1117"/>',
+        '<text x="24" y="30" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">V1 / V2 Front Display — 0.96" 128×64 Landscape OLED (SSD1306)</text>',
+    ]
+    for i, (key, lbl) in enumerate(strip_items):
+        col, row = i % 3, i // 3
+        bx = 24 + col * v2_cell_w
+        by = 68 + row * v2_cell_h
+        w, h, rows = screens[f"64_{key}"]
+        v2.append(f'<text x="{bx}" y="{by - 10}" fill="#c9d1d9" font-family="monospace" font-size="11.5" font-weight="bold">{lbl}</text>')
+        v2.append(f'<rect x="{bx - 4}" y="{by - 4}" width="{w * scale + 8}" height="{h * scale + 8}" rx="4" fill="#05070a" stroke="#30363d" stroke-width="2"/>')
+        for py, r in enumerate(rows):
+            for px, ch in enumerate(r):
+                if ch == "#":
+                    v2.append(f'<rect x="{bx + px * scale}" y="{by + py * scale}" width="{px_size}" height="{px_size}" fill="#38bdf8"/>')
+    v2.append("</svg>")
+    v2_svg_path.write_text("\n".join(v2))
+    print(f"Wrote {v2_svg_path}")
+
+    # V3 (64x128 portrait, 6-column horizontal strip)
+    v3_svg_path = ROOT / "docs" / "oled-v3-portrait.svg"
+    v3_cell_w = 64 * scale + 24
+    v3_w = 24 + 6 * v3_cell_w
+    v3_h = 84 + 128 * scale
+    v3 = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {v3_w} {v3_h}" width="{v3_w}" height="{v3_h}" shape-rendering="crispEdges">',
+        '<rect width="100%" height="100%" rx="8" fill="#0d1117"/>',
+        '<text x="24" y="30" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">V3 (1-DIN) Front Display — 0.96" 64×128 Portrait OLED (SSD1312)</text>',
+    ]
+    for i, (key, lbl) in enumerate(strip_items):
+        bx = 24 + i * v3_cell_w
+        by = 66
+        w, h, rows = screens[f"64p_{key}"]
+        v3.append(f'<text x="{bx}" y="{by - 10}" fill="#c9d1d9" font-family="monospace" font-size="11.5" font-weight="bold">{lbl}</text>')
+        v3.append(f'<rect x="{bx - 4}" y="{by - 4}" width="{w * scale + 8}" height="{h * scale + 8}" rx="4" fill="#05070a" stroke="#30363d" stroke-width="2"/>')
+        for py, r in enumerate(rows):
+            for px, ch in enumerate(r):
+                if ch == "#":
+                    v3.append(f'<rect x="{bx + px * scale}" y="{by + py * scale}" width="{px_size}" height="{px_size}" fill="#4ade80"/>')
+    v3.append("</svg>")
+    v3_svg_path.write_text("\n".join(v3))
+    print(f"Wrote {v3_svg_path}")
+
+    bmp_py = ROOT.parent / "mechanical" / "scripts" / "oled_page1_bitmap.py"
+    bmp_py.write_text(
+        '"""Page 1 (Status) OLED pixel bitmaps compiled from gateway/src/device/OledDisplay.cpp."""\n\n'
+        f"PAGE1_128X64 = {screens['64_overview'][2]!r}\n\n"
+        f"PAGE1_64X128 = {screens['64p_overview'][2]!r}\n"
+    )
+    print(f"Wrote {bmp_py}")
+
 
 if __name__ == "__main__":
     main()

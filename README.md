@@ -4,9 +4,64 @@ Open-source DIN-rail gateway bridging a wired **KNX TP** line and one **DALI / D
 
 **Status:** pre-hardware prototype (verified in native unit tests, Docker KNX/DALI integration lab, KiCad DRC/isolation checks, JLCPCB footprint/pinout checks, and 3D CadQuery mechanical fit/probe tests; no physical board has been powered on yet, and no KNX or DALI certification is claimed).
 
-| V3 Exploded View (1 DIN, Side-Opening) | V3 Internal View | V2 Section View (2 DIN) |
-| :---: | :---: | :---: |
-| ![V3 Exploded](hardware/releases/v3/enclosure/renders/exploded.png) | ![V3 Inside](hardware/releases/v3/enclosure/renders/inside.png) | ![V2 Section](hardware/releases/v2/enclosure/renders/section.png) |
+| Variant | Side-Opening / Exploded View | Internal View | Front Face (Silk + Page 1 OLED) |
+| :---: | :---: | :---: | :---: |
+| **V3**<br>*(1 DIN, 18 mm)* | ![V3 Exploded](hardware/releases/v3/enclosure/renders/exploded.png) | ![V3 Inside](hardware/releases/v3/enclosure/renders/inside.png) | ![V3 Front](hardware/releases/v3/enclosure/renders/front.png) |
+| **V2**<br>*(2 DIN, 36 mm)* | ![V2 Exploded](hardware/releases/v2/enclosure/renders/exploded.png) | ![V2 Inside](hardware/releases/v2/enclosure/renders/inside.png) | ![V2 Front](hardware/releases/v2/enclosure/renders/front.png) |
+
+---
+
+## Flashing Firmware & Downloads
+
+| Method | Link / Files | Description |
+| --- | --- | --- |
+| **1. Chrome / Edge USB Web Flasher (Recommended for First Install)** | **[Open Web Flasher →](https://vbartusevicius.github.io/knx-dali-gateway/)** | Plug the XIAO ESP32-C6 into USB-C, open in Chrome/Edge, and click **Connect & Install**. Automatically flashes `bootloader.bin`, `partitions.bin`, `firmware.bin`, and `littlefs.bin` in one step via WebSerial (`manifest.json`). |
+| **2. Wireless OTA Update (Web UI)** | [`firmware.bin` & `littlefs.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drag and drop `firmware.bin` (application) or `littlefs.bin` (Web UI) directly onto the **Firmware** tab of the gateway's web interface. |
+| **3. ETS Product Database (`.knxprod`)** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into **ETS 5.7 / ETS 6** (`64` lamp channels with DT6/DT7/DT8 support, `16` DALI groups, broadcast, and `32` DALI-2 input channels = `1,321` group objects). |
+| **4. Hardware Manufacturing Bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Complete 3D-printable STLs/3MFs, STEP CAD assemblies, JLCPCB Gerbers, BOM & CPL pick-and-place files, and off-board `assembly_parts.csv`. |
+
+---
+
+## Web Interface & Diagnostics
+
+The built-in web interface runs directly from the ESP32-C6 (`LittleFS` + embedded fallback, live WebSocket updates, zero cloud dependency):
+
+### 1. Overview — 64-Lamp Bus Grid, DT8 Color Control & D4i / Calculated Power
+![Web UI Overview](gateway/docs/screenshots/webui-overview.png)
+
+- **Whole-Bus 8×8 Matrix (`A00–A63`):** Shows live brightness `%`, DT8 color preview bar (`2000–6500 K` CCT or `RGBW`), per-lamp wattage (native **D4i Part 252** active power when supported by the ballast, or logarithmic arc-power calculation with configurable `100% W` + `Idle W`), Lamp Finder pulsing indicator, and explicit fault codes (`ERR: E106`, `ERR: E107`).
+- **Two-Tab Lamp Inspector (`Control` | `Settings`):**
+  - **`Control`:** Live brightness slider, mutually exclusive DT8 color modes (`White (CCT)` | `Color (RGBW)` | `CIE xy`), and `Blink` / `Pulse` / `Stop` physical lamp finder.
+  - **`Settings`:** Device type (`DT0..DT8`), dimming curve (`Logarithmic` / `Linear`), percentage dimming limits (`Min %`, `Max %`, `Power-On %`, `Bus-Fail %`), `Fade Time`, `Button Dim Speed`, and one-click `Assign New to Axx` ballast replacement.
+- **DALI-2 Sensors & Buttons (`D00–D63`):** Switch the grid view to discovered `IEC 62386-103 / 301–304` push-button couplers, occupancy sensors, and light sensors with per-instance event filters and physical LED identification (`Identify LED`).
+
+### 2. Groups & Scenes — Scene Toolbar, 4×4 Group Matrix & Lamp Assignment
+![Web UI Groups & Scenes](gateway/docs/screenshots/webui-groups.png)
+
+- **Scenes (`1–16`):** Recall or save current lamp levels into any DALI scene.
+- **DALI Groups (`G00–G15`):** Select any group on the left to adjust its group brightness, DT8 group color (`White CCT`, `RGBW`, `CIE xy`), or click installed lamps to add/remove group memberships directly in the ballast's EEPROM.
+
+### 3. Errors & Live DALI Bus Frame Monitor (`1,024`-Row Hardware Ring Buffer + `10,000`-Row Browser Session)
+| Persistent NVS Error History & Remedies | Live DALI Bus Frame Monitor (16-bit & 24-bit) |
+| :---: | :---: |
+| ![Web UI Error Log](gateway/docs/screenshots/webui-logs.png) | ![Web UI Bus Monitor](gateway/docs/screenshots/webui-bus-monitor.png) |
+
+- **Background Hardware Capture:** Captures 16-bit lamp commands, 8-bit replies, 24-bit DALI-2 sensor events, and bus collisions into a `1,024`-row ring buffer on the ESP32-C6 (filtering out routine `OK` health polls so overnight recording preserves real events even with the browser closed) while accumulating up to `10,000` rows in the browser session.
+
+### 4. Settings & Home Assistant Auto-Discovery
+![Web UI Settings](gateway/docs/screenshots/webui-settings.png)
+
+- **Home Assistant MQTT Auto-Discovery:** Publishes one central Gateway device (with total power `W`, energy `Wh`, firmware version, and `Visit` link) and links only populated DALI lamps (`via_device`) with on/off, dimming, DT8 color, per-lamp power sensor, and fault sensor.
+
+---
+
+## Front-Panel OLED Display (V2 Landscape vs. V3 Portrait)
+
+The front-panel OLED automatically adapts between **V1/V2 (`128×64` Landscape SSD1306)** and **V3 (`64×128` Portrait SSD1312)**, providing cabinet-level diagnostics and a 5-second `FUNC` hold shortcut to launch the WiFi setup portal:
+
+![V3 Portrait OLED Screens](gateway/docs/oled-v3-portrait.svg)
+
+![V1/V2 Landscape OLED Screens](gateway/docs/oled-v2-landscape.svg)
 
 ---
 

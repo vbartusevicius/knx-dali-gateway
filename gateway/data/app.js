@@ -208,6 +208,12 @@ function initUi() {
     const c = Number(urlParams.get("ch"));
     if (c >= 0 && c < 64) selectedCh = c;
   }
+  if (urlParams.has("inptab")) {
+    inspectorTab = urlParams.get("inptab");
+  }
+  if (urlParams.has("logmode")) {
+    logViewMode = urlParams.get("logmode");
+  }
 
   document.querySelectorAll(".nav-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -218,11 +224,21 @@ function initUi() {
       if (target) target.classList.add("active");
       if (btn.dataset.tab === "settings") loadConfig();
       if (btn.dataset.tab === "logs") {
+        setLogViewMode(logViewMode);
         loadErrorLogs();
         loadDebugTrace();
       }
     });
   });
+
+  if (urlParams.has("tab")) {
+    const tBtn = document.querySelector(`.nav-tab[data-tab="${urlParams.get("tab")}"]`);
+    if (tBtn) tBtn.click();
+  }
+  if (urlParams.has("sec")) {
+    const sBtn = document.querySelector(`.settings-nav-item[data-sec="${urlParams.get("sec")}"]`);
+    if (sBtn) selectSettingsSection(urlParams.get("sec"), sBtn);
+  }
 }
 
 function setLampFilter(filter, btn) {
