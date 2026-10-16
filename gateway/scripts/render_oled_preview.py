@@ -163,7 +163,7 @@ def main() -> None:
     ]
 
     scale = 3
-    px_size = 2.85
+    px_size = 3
     w128 = 128 * scale
     w64 = 64 * scale
     pair_w = w128 + 24 + w64 + 40

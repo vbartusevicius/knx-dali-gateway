@@ -318,14 +318,20 @@ def oled_pixels_actor(z_offset=0.0):
     points = vtk.vtkPoints()
     polys = vtk.vtkCellArray()
     idx = 0
+    eps = 0.003
     for py, row in enumerate(rows):
-        for px, ch in enumerate(row):
-            if ch != "#":
+        py1 = y1 - py * ph + eps
+        py0 = y1 - (py + 1) * ph - eps
+        px = 0
+        while px < w:
+            if row[px] != "#":
+                px += 1
                 continue
-            px0 = x0 + px * pw + pw * 0.06
-            px1 = x0 + (px + 1) * pw - pw * 0.06
-            py1 = y1 - py * ph - ph * 0.06
-            py0 = y1 - (py + 1) * ph + ph * 0.06
+            end_px = px + 1
+            while end_px < w and row[end_px] == "#":
+                end_px += 1
+            px0 = x0 + px * pw - eps
+            px1 = x0 + end_px * pw + eps
             points.InsertNextPoint(px0, py0, z)
             points.InsertNextPoint(px1, py0, z)
             points.InsertNextPoint(px1, py1, z)
@@ -333,6 +339,7 @@ def oled_pixels_actor(z_offset=0.0):
             polys.InsertNextCell(3, (idx, idx + 1, idx + 2))
             polys.InsertNextCell(3, (idx, idx + 2, idx + 3))
             idx += 4
+            px = end_px
 
     data = vtk.vtkPolyData()
     data.SetPoints(points)
