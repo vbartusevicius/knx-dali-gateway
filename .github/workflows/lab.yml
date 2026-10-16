@@ -1,7 +1,15 @@
 # Docker integration lab, C++ unit/sanitized tests, and ESP32-C6 firmware + LittleFS build.
 name: lab
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Optional release tag to publish (e.g. v26.10.15.2100)"
+        required: false
+        type: string
 
 jobs:
   firmware:
@@ -28,26 +36,47 @@ jobs:
 
       - name: Build ESP32-C6 firmware (dev_c6 and release_c6)
         run: |
-          export FW_VERSION="$(date -u +%y.%m.%d.%H%M)"
+          COMMIT_TS="$(git show -s --format=%ct HEAD)"
+          export FW_VERSION="$(date -u -d "@$COMMIT_TS" +%y.%m.%d.%H%M)"
+          echo "FW_VERSION=$FW_VERSION" >> "$GITHUB_ENV"
           pio run -d gateway -e dev_c6 -e release_c6
           mkdir -p gateway/build/artifacts
           cp gateway/.pio/build/release_c6/firmware.bin gateway/build/artifacts/firmware.bin
-          cp gateway/.pio/build/release_c6/bootloader.bin gateway/build/artifacts/bootloader.bin
-          cp gateway/.pio/build/release_c6/partitions.bin gateway/build/artifacts/partitions.bin
           cp gateway/build/littlefs.bin gateway/build/artifacts/littlefs.bin
+
+      - name: Package Hardware Release Bundles (V1, V2, V3: STLs, 3MF, STEP, Gerbers, JLC BOM/CPL, Parts Lists)
+        run: |
+          mkdir -p gateway/build/artifacts
+          for v in v1 v2 v3; do
+            (cd hardware/releases/$v && zip -r ../../../gateway/build/artifacts/knx-dali-gateway-hardware-${v}.zip . -x "*.DS_Store")
+          done
 
       - uses: actions/upload-artifact@v4
         with:
-          name: firmware-esp32c6
+          name: firmware-and-hardware-bundles
           path: gateway/build/artifacts/
 
-      - name: Attach firmware.bin and littlefs.bin to release
-        if: github.ref_type == 'tag'
+      - name: Publish to GitHub Release on push/merge to main, tag, or manual dispatch
+        if: github.ref == 'refs/heads/main' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.release_tag }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes ""
-          gh release upload "$GITHUB_REF_NAME" gateway/build/artifacts/firmware.bin gateway/build/artifacts/littlefs.bin --clobber
+          if [ -n "$INPUT_TAG" ]; then
+            REL_TAG="$INPUT_TAG"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            REL_TAG="$GITHUB_REF_NAME"
+          else
+            REL_TAG="v${FW_VERSION}"
+          fi
+          gh release view "$REL_TAG" >/dev/null 2>&1 || gh release create "$REL_TAG" --target "$GITHUB_SHA" --title "$REL_TAG" --generate-notes
+          gh release upload "$REL_TAG" \
+            gateway/build/artifacts/firmware.bin \
+            gateway/build/artifacts/littlefs.bin \
+            gateway/build/artifacts/knx-dali-gateway-hardware-v1.zip \
+            gateway/build/artifacts/knx-dali-gateway-hardware-v2.zip \
+            gateway/build/artifacts/knx-dali-gateway-hardware-v3.zip \
+            --clobber
 
   scenarios:
     runs-on: ubuntu-24.04
