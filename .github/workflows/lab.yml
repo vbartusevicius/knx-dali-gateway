@@ -44,7 +44,7 @@ jobs:
           cp gateway/.pio/build/release_c6/firmware.bin gateway/build/artifacts/firmware.bin
           cp gateway/build/littlefs.bin gateway/build/artifacts/littlefs.bin
 
-      - name: Package Hardware Release Bundles (V1, V2, V3: STLs, 3MF, STEP, Gerbers, JLC BOM/CPL, Parts Lists)
+      - name: Package Hardware Release Bundles (V1, V2, V3)
         run: |
           mkdir -p gateway/build/artifacts
           for v in v1 v2 v3; do
