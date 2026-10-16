@@ -207,8 +207,8 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Main-to-UI FFC cable",
             "qty": len(ffc_links),
-            "part": "SHOU HAN FFC-0.5-8P-50mm (LCSC C6936295)",
-            "description": f"8-pin 0.5 mm same-side (Type A) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
+            "part": "SHOU HAN FFC-0.5-8P-50mm-B (LCSC C42416274)",
+            "description": f"8-pin 0.5 mm reverse/opposite-side (Type B, 1:1 pin-to-pin between bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
             "source": "LCSC",
         })
     if cable_links:

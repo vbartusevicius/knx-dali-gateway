@@ -24,7 +24,6 @@ REPO = Path("/work")
 SLOT_W = 2.0       # mm routing slot between adjacent sub-boards
 TAB_H = 3.2        # mm vertical width of each mouse-bite breakaway tab
 HOLE_DIA = 0.5     # mm NPTH mouse-bite drill diameter
-HOLE_OFF_X = 0.60  # mm from sub-board edge into the 2.0 mm tab bridge (clear of edge courtyards)
 HOLE_Y_OFFS = (-0.9, -0.3, 0.3, 0.9)  # 4 mouse-bite holes per tab end (0.6 mm pitch)
 
 # Offset sub-board reference numbers (+100 for ui, +200 for interface) so designators stay
@@ -245,12 +244,13 @@ def build_panel(
         add_edge_line(panel, rx0, t2 + hw, rx0, ry1)
 
         # Add horizontal tab bridges and 4 NPTH mouse-bite holes per tab end
+        hole_off_x = 0.15 if variant != "v2" else 0.55
         for tc in (t1, t2):
             add_edge_line(panel, lx1, tc - hw, rx0, tc - hw)
             add_edge_line(panel, lx1, tc + hw, rx0, tc + hw)
             for dy_h in HOLE_Y_OFFS:
-                mb_coords.append((lx1 + HOLE_OFF_X, tc + dy_h))
-                mb_coords.append((rx0 - HOLE_OFF_X, tc + dy_h))
+                mb_coords.append((lx1 + hole_off_x, tc + dy_h))
+                mb_coords.append((rx0 - hole_off_x, tc + dy_h))
 
     add_mouse_bite_holes(panel, mb_coords)
 

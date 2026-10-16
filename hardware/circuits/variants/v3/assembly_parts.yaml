@@ -51,9 +51,10 @@
   source: any
 - item: Main-to-UI FFC cable
   qty: 1
-  part: SHOU HAN FFC-0.5-8P-50mm (LCSC C6936295)
-  description: 8-pin 0.5 mm same-side (Type A) FFC, 50 mm (0.3 mm insert thickness);
-    main J4 <-> ui J1
+  part: SHOU HAN FFC-0.5-8P-50mm-B (LCSC C42416274)
+  description: 8-pin 0.5 mm reverse/opposite-side (Type B, 1:1 pin-to-pin between
+    bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); main J4 <-> ui
+    J1
   source: LCSC
 - item: DALI supply jumper caps
   qty: 2

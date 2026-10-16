@@ -87,7 +87,7 @@ All three variants share the same circuit blocks (`hardware/circuits/blocks/`), 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **V1** (`v1`) | **3 DIN** (`54 mm`) | **2** (`main`, `ui`) | 10-pin JST-SH cable | `MX126-5.0-02P` screw | `PST 1,0` KNX + `MX126` AUX screw | Winstar `WEA012864D-03` 0.96" 128×64 (4-pin THT) | 2 × `2.5×10` screws + UI snaps | [`hardware/releases/v1/`](hardware/releases/v1/README.md) |
 | **V2** (`v2`) | **2 DIN** (`36 mm`) | **3** (`main`, `interface`, `ui`) | 10-pin JST-SH cable + `1×4` & `1×3` B2B headers | `MX126-5.0-02P` screw | `PST 1,0` KNX + `MX126` AUX screw | Winstar `WEA012864D-03` 0.96" 128×64 (4-pin THT) | 2 × `2.5×10` screws + UI snaps | [`hardware/releases/v2/`](hardware/releases/v2/README.md) |
-| **V3** (`v3`) | **1 DIN** (`18 mm`) | **2** (`main` two-sided vertical, `ui`) | 8-pin `0.5 mm` FFC (`50 mm`, `C6936295`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`) | Two `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | 0.96" `64×128` portrait `SSD1312` (`QG-6428TSWCG02`, `14 × 28 mm`, 14-pin `0.5 mm` ZIF `C2856800`, no soldering) | Side-opening clamshell with 4 side snap-clicks + UI snaps | [`hardware/releases/v3/`](hardware/releases/v3/README.md) |
+| **V3** (`v3`) | **1 DIN** (`18 mm`) | **2** (`main` two-sided vertical, `ui`) | 8-pin `0.5 mm` Type B FFC (`50 mm`, `C42416274`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`) | Two `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | 0.96" `64×128` portrait `SSD1312` (`QG-6428TSWCG02`, `14 × 28 mm`, 14-pin `0.5 mm` ZIF `C2856800`, no soldering) | Side-opening clamshell with 4 side snap-clicks + UI snaps | [`hardware/releases/v3/`](hardware/releases/v3/README.md) |
 
 Detailed electrical and mechanical notes, including the XIAO `D0..D10` pin table, LED chain indexing, and ADC button ladder voltages: [`hardware/docs/variants.md`](hardware/docs/variants.md).
 
@@ -113,7 +113,7 @@ Each release includes a **combined breakaway mouse-bite panel (`panel/`)** so yo
   - **RECOM `REM3-2415S/A/CTRL`** isolated DC-DC converter (`main U3`).
   - **Phoenix Contact `PST 1,0/2-5,75 R32` (`1574200`)** pin strips + mating **red/black KNX plug (`1574300`)** and (on V3) **yellow/white AUX plug (`1574299`)**.
   - **OLED display:** Winstar `WEA012864DWPP3N00003` (0.96" `128×64` 4-pin THT on V1/V2) or **`QG-6428TSWCG02` / `JLX12864OLED-S096W`** (0.96" `64×128` portrait `SSD1312`, `14.0 × 28.0 mm`, 14-pin `0.5 mm` ZIF plug-in flex tail on V3, adhered with `1.0 mm` double-sided foam tape onto the cover's backing rails — zero hand-soldering on the V3 UI board).
-  - **Board-to-board cable** (`50 mm` 8-pin `0.5 mm` FFC `C6936295` on V3; `100 mm` 10-pin JST-SH cable on V1/V2) and two `2.54 mm` jumper caps (`C100114`) for `JP1`.
+  - **Board-to-board cable** (`50 mm` 8-pin `0.5 mm` Type B reverse FFC `C42416274` on V3; `100 mm` 10-pin JST-SH cable on V1/V2) and two `2.54 mm` jumper caps (`C100114`) for `JP1`.
 
 ### 3. 3D-Print the DIN-Rail Enclosure (`enclosure/`)
 Each release's `enclosure/` directory contains:
