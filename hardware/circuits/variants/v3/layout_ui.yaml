@@ -1,4 +1,4 @@
-# V3 UI board, 4 layers, 1.6 mm, inside the 1-DIN front protrusion (13.8 x
+# V3 UI board, 4 layers, 1.2 mm, inside the 1-DIN front protrusion (13.8 x
 # 40.5 mm, with a 1.0 x 8.4 mm cutout at the top edge x 2.7..11.1, y 39.5..40.5
 # for the OLED flex cable). Front: 0.96" 64x128 SSD1312 portrait I2C OLED panel
 # (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 mm, y 11.5..39.5, supported
@@ -14,7 +14,7 @@ frame:
   size: { x: 13.8, y: 40.5 }
   outline: [[0.0, 0.0], [13.8, 0.0], [13.8, 40.5], [11.1, 40.5], [11.1, 39.5], [2.7, 39.5], [2.7, 40.5], [0.0, 40.5]]
   copper_layers: 4
-  thickness: 1.6
+  thickness: 1.2
   min_drill: 0.2
   min_track: 0.12
   edge_clearance: 0.3

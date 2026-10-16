@@ -10,19 +10,21 @@ no longer matches this release.
 
 | Board | Size | Layers | Thickness | Position in the case | Folder |
 |---|---|---|---|---|---|
+| **Breakaway Panel (`panel`)** | **55.6 x 78.0 mm** | **4** | **1.2 mm** | **Combined `main` + `ui` on one PCB with mouse-bite breakaway tabs (1 PCB + 1 PCBA order)** | **`panel/`** |
 | Main (`main`) | 39.8 x 78.0 mm | 4 | 1.2 mm | vertical along the left side wall (two-sided): tall parts on the front (+x: KNX/AUX/DALI push-in pin strips, 470 uF SMD cap, 220 uH inductor, XIAO on 5 mm sockets with 5 V buck underneath, REM3-2415S/A/CTRL, JP1, DALI bridge/pass transistor/optocouplers, UI FFC), low SMD parts on the back (-x, inside the THT solder-tail shadow: NCN5130 + crystal + passives, DALI TX/RX passives & transistors) | `main/` |
-| UI (`ui`) | 13.8 x 40.5 mm | 4 | 1.6 mm | snapped into the cover protrusion: 0.96" 64x128 portrait SSD1312 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 mm) plugged into a JLC-assembled 14-pin 0.5 mm ZIF FPC connector on the back with 3.3 V charge-pump passives, two Omron B3U-1000P buttons with 1.4 mm protruding caps, three RGB LEDs in a row below the buttons, 8-pin FFC to main | `ui/` |
+| UI (`ui`) | 13.8 x 40.5 mm | 4 | 1.2 mm | snapped into the cover protrusion: 0.96" 64x128 portrait SSD1312 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 mm) plugged into a JLC-assembled 14-pin 0.5 mm ZIF FPC connector on the back with 3.3 V charge-pump passives, two Omron B3U-1000P buttons with 1.4 mm protruding caps, three RGB LEDs in a row below the buttons, 8-pin FFC to main | `ui/` |
 
 A single 8-pin 0.5 mm FFC cable (`C6936295`, 50 mm) connects `main` J4 to `ui` J1.
 
 ## Ordering at JLCPCB
 
-1. Upload `<board>_gerbers.zip`:
-   - `main`: 4 layers, **1.2 mm**
-   - `ui`: 4 layers, **1.6 mm**
-2. PCB Assembly, both sides on `main` and `ui`: `<board>_bom_jlc.csv` +
-   `<board>_cpl_jlc.csv`.
-3. `<board>_assembly_check.csv` lists JLCPCB footprint, rotation and stock for
+1. **Recommended — Order as 1 Breakaway Panel (`panel/`):**
+   - Upload `panel/panel_gerbers.zip` and select **4 layers, `1.2 mm` PCB Thickness** on JLCPCB's order page (note: JLCPCB's web form always defaults the thickness radio button to `1.6 mm` until you click **`1.2`**).
+   - Enable **PCB Assembly (Both Sides)** and upload `panel/panel_bom_jlc.csv` + `panel/panel_cpl_jlc.csv`.
+2. **Or Order as Separate Boards (`main/` and `ui/`):**
+   - Upload `main/main_gerbers.zip` and `ui/ui_gerbers.zip` (4 layers, **1.2 mm**).
+   - Upload `<board>_bom_jlc.csv` + `<board>_cpl_jlc.csv`.
+3. `<board>_assembly_check.csv` (and `panel/panel_assembly_check.csv`) lists JLCPCB footprint, rotation and stock for
    every part.
 
 ## Hand-fitted parts (`<board>_hand_fit.csv`)

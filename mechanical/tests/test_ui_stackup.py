@@ -5,13 +5,11 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-import yaml
-
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "mechanical/scripts"))
-from ui_stackup import FRONT_OUTER_Z, compute_ui_stackup
+from ui_stackup import FRONT_OUTER_Z, SPEC_DATA, compute_ui_stackup
 
-SPEC = yaml.safe_load((REPO / "hardware/product/spec.yaml").read_text())
+SPEC = SPEC_DATA
 
 
 def test_stackup_fits():

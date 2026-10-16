@@ -50,7 +50,7 @@ boards:
       - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, bridged_by: [supply-off optocoupler] }
   ui:
     plane: parallel-to-front
-    thickness: 1.6
+    thickness: 1.2
     z: 55.4
     max_outline: { width: 13.8, height: 40.5 }
   interconnects:
@@ -63,7 +63,7 @@ boards:
       pins: 8
 
 front_ui:
-  board_z: 53.79
+  board_z: 54.19
   board_top_z: 55.39
   oled:
     header_gap: 4.06      # CFAL12832D-B total 1.45 (board 0.45 + panel 1.00); glass at 60.9

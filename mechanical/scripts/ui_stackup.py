@@ -24,9 +24,10 @@ from product_spec import load_spec
 FRONT_OUTER_Z = 61.0
 WALL = 1.6
 FRONT_INNER_Z = FRONT_OUTER_Z - WALL
-BOARD_THICKNESS = 1.6
+SPEC_DATA = load_spec()
+BOARD_THICKNESS = SPEC_DATA["boards"]["ui"]["thickness"]
 
-OLED = load_spec()["front_ui"]["oled"]
+OLED = SPEC_DATA["front_ui"]["oled"]
 OLED_MODULE_BOARD = OLED["module_board"]
 OLED_PANEL = OLED["panel"]
 OLED_HEADER_PLASTIC_MAX = OLED["header_plastic_max"]
