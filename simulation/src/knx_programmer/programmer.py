@@ -136,6 +136,7 @@ async def program(
 async def restart(xknx: XKNX, address: IndividualAddress) -> None:
     """A_Restart; the lab process re-execs itself and reboots configured."""
     await procedures.dm_restart(xknx, address)
+    await asyncio.sleep(1.0)
 
 
 def routing_connection(individual_address: str = "15.15.255") -> XKNX:

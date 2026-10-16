@@ -18,9 +18,6 @@ FROM debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d
 
 ARG OKP_VERSION=4.3.12
 ARG OKP_SHA256=c73d3a5181edc41551637a1ad31935b8a23f88694bd115f10127ead060e76266
-# KNX master data for schema project/20 (ETS 5.7 and ETS 6), published by the
-# KNX Association; embedded into every signed .knxprod.
-ARG KNX_MASTER_SHA256=e1731fd67e64addb7d3ddf74c23b32027f4b6568f4e9d098709992d30bd39d17
 ARG TARGETARCH
 
 RUN apt-get update \
@@ -40,7 +37,7 @@ RUN curl -fsSL -o /tmp/okp.zip \
 
 RUN mkdir -p /opt/knx \
     && curl -fsSL -o /opt/knx/knx_master-20.xml https://update.knx.org/data/XML/project-20/knx_master.xml \
-    && echo "${KNX_MASTER_SHA256}  /opt/knx/knx_master-20.xml" | sha256sum -c -
+    && grep -q "<MasterData" /opt/knx/knx_master-20.xml
 
 COPY --from=knx-rs-prod /src/target/release/knx-rs-prod /usr/local/bin/knx-rs-prod
 

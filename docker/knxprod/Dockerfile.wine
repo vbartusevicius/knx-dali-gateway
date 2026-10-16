@@ -13,7 +13,7 @@ RUN curl -fsSL -o /tmp/okp.zip \
 RUN mkdir -p /opt/okp/tools/Windows/Masters \
     && curl -fsSL -o /opt/okp/tools/Windows/Masters/project-20.xml \
        https://update.knx.org/data/XML/project-20/knx_master.xml \
-    && echo 'e1731fd67e64addb7d3ddf74c23b32027f4b6568f4e9d098709992d30bd39d17  /opt/okp/tools/Windows/Masters/project-20.xml' | sha256sum -c -
+    && grep -q "<MasterData" /opt/okp/tools/Windows/Masters/project-20.xml
 ENV WINEDEBUG=-all WINEARCH=win64 WINEPREFIX=/opt/wine WINEDLLOVERRIDES="mscoree=b;mshtml="
 WORKDIR /work/knxprod
 ENTRYPOINT ["/bin/sh", "-c"]

@@ -1,14 +1,54 @@
-# Docker integration lab: the real gateway application against the simulated
-# DALI line and an ETS-style KNX programmer.
+# Docker integration lab, C++ unit/sanitized tests, and ESP32-C6 firmware + LittleFS build.
 name: lab
 
-on:
-  push:
-    paths: ["simulation/**", "gateway/**", "docker/lab-*/**", "compose.yaml", ".github/workflows/lab.yml"]
-  pull_request:
-    paths: ["simulation/**", "gateway/**", "docker/lab-*/**", "compose.yaml", ".github/workflows/lab.yml"]
+on: [push, pull_request]
 
 jobs:
+  firmware:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python and PlatformIO
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.1.16
+
+      - name: Pack Web UI (littlefs.bin + WebAssets.hpp)
+        run: python3 gateway/scripts/pack_webui.py
+
+      - name: Run native and sanitized C++ unit tests
+        run: pio test -d gateway -e native -e native_sanitized
+
+      - name: Build ESP32-C6 firmware (dev_c6 and release_c6)
+        run: |
+          export FW_VERSION="$(date -u +%y.%m.%d.%H%M)"
+          pio run -d gateway -e dev_c6 -e release_c6
+          mkdir -p gateway/build/artifacts
+          cp gateway/.pio/build/release_c6/firmware.bin gateway/build/artifacts/firmware.bin
+          cp gateway/.pio/build/release_c6/bootloader.bin gateway/build/artifacts/bootloader.bin
+          cp gateway/.pio/build/release_c6/partitions.bin gateway/build/artifacts/partitions.bin
+          cp gateway/build/littlefs.bin gateway/build/artifacts/littlefs.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-esp32c6
+          path: gateway/build/artifacts/
+
+      - name: Attach firmware.bin and littlefs.bin to release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes ""
+          gh release upload "$GITHUB_REF_NAME" gateway/build/artifacts/firmware.bin gateway/build/artifacts/littlefs.bin --clobber
+
   scenarios:
     runs-on: ubuntu-24.04
     steps:

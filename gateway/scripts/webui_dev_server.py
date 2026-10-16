@@ -504,7 +504,59 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         if path in ("/", "/index.html"):
-            data = (DATA_DIR / "index.html").read_bytes()
+            html = (DATA_DIR / "index.html").read_text(encoding="utf-8")
+            # Inject dev-only scenario switcher + WebSocket bridge in memory so
+            # gateway/data/ remains 100% pure production firmware code.
+            dev_shim = """
+<script>
+(function() {
+  class DevWebSocket {
+    constructor() {
+      this.readyState = 1;
+      setTimeout(() => { if (this.onopen) this.onopen(); this._poll(); }, 10);
+      setInterval(() => this._poll(), 1000);
+    }
+    async _poll() {
+      try {
+        const r = await fetch('/api/state');
+        if (r.ok && this.onmessage) this.onmessage({ data: await r.text() });
+      } catch (_) {}
+    }
+    async send(raw) {
+      await fetch('/api/command', { method: 'POST', headers: {'Content-Type':'application/json'}, body: raw });
+      await this._poll();
+    }
+  }
+  DevWebSocket.OPEN = 1;
+  window.WebSocket = DevWebSocket;
+  window.applyScenario = async function(name) {
+    const r = await fetch('/api/scenario', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({scenario: name}) });
+    if (r.ok && typeof handleLiveState === 'function') {
+      handleLiveState(await r.json());
+      if (typeof loadErrorLogs === 'function') loadErrorLogs();
+      if (typeof loadDebugTrace === 'function') loadDebugTrace();
+    }
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    const right = document.querySelector('.topbar-right');
+    if (right) {
+      const bar = document.createElement('div');
+      bar.className = 'scenario-bar';
+      bar.innerHTML = `<span class="scenario-label">Scenario:</span>
+        <select onchange="applyScenario(this.value)">
+          <option value="mixed">Mixed Lamps &amp; Types (24 Devices)</option>
+          <option value="full64">Full 64 Lamps (All Addressed)</option>
+          <option value="faults">Faults &amp; Bus Short Emergency</option>
+          <option value="finder">Lamp Finder &amp; Scan Active</option>
+          <option value="empty">First Boot (Uncommissioned)</option>
+        </select>`;
+      right.insertBefore(bar, right.firstChild);
+    }
+  });
+})();
+</script>
+"""
+            data = html.replace("<script src=\"app.js\"></script>", dev_shim + "<script src=\"app.js\"></script>").encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()

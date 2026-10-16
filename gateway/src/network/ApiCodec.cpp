@@ -130,7 +130,7 @@ std::optional<control::Command> parse_api_command_json(const char* json, std::si
     if (std::strcmp(action, "scan_bus") == 0) {
         return control::ScanBus{};
     }
-    if (std::strcmp(action, "scan_inputs") == 0) {
+    if (std::strcmp(action, "scan_inputs") == 0 || std::strcmp(action, "configure_input") == 0) {
         return control::ScanInputDevices{};
     }
     if (std::strcmp(action, "reset_addresses") == 0) {
@@ -166,7 +166,7 @@ std::optional<control::Command> parse_api_command_json(const char* json, std::si
     }
 
     const int idx = read_int(buf, "index").value_or(-1);
-    if (std::strcmp(action, "identify") == 0) {
+    if (std::strcmp(action, "identify") == 0 || std::strcmp(action, "identify_input") == 0) {
         if (const auto s = dali::ShortAddress::from(static_cast<unsigned>(idx))) {
             return control::IdentifyDevice{*s};
         }

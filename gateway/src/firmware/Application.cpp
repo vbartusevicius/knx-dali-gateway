@@ -346,6 +346,7 @@ void dali_task(void* arg) {
                                                  wiring.inputs, now, *command, &finder);
             log_result(control::address_of(*command), result.result);
             publish_job_result(wiring, result, now);
+            runtime_state().sync_from_worker(wiring.lighting, wiring.commissioning, now, &finder);
         } else if (static_cast<std::int32_t>(now - next_poll) >= 0) {
             next_poll = now + fault_poll_interval_ms;
             if (const auto changed = wiring.commissioning.poll_next()) {
@@ -356,7 +357,7 @@ void dali_task(void* arg) {
                     control::FaultUpdate{*changed, wiring.commissioning.faulty().test(changed->value())});
                 snapshot_forwarder.on_snapshot(wiring.commissioning.snapshot());
             }
-            runtime_state().sync_from_worker(wiring.lighting, wiring.commissioning, now);
+            runtime_state().sync_from_worker(wiring.lighting, wiring.commissioning, now, &finder);
         }
         if (const auto step = finder.poll(now)) {
             const auto res = wiring.lighting.set_level(step->address, step->level);

@@ -45,21 +45,32 @@ async def _wait_device_online(knx: KnxClient, address: str, timeout: float) -> N
 
 
 async def _wait_state_property(knx: KnxClient, address: str, timeout: float) -> None:
-    """The commissioning state property only answers once configured() and
-    the application callbacks are live - a good end-of-startup probe."""
-    from .helpers import commissioning_state
+    """Wait until commissioning startup finishes after restart (PHASE_DONE = 5,
+    input_state populated, and startup status telegrams delivered to knx.incoming)."""
+    from xknx.telegram.apci import GroupValueResponse, GroupValueWrite
+
+    from .helpers import commissioning_state, input_state
 
     deadline = asyncio.get_event_loop().time() + timeout
     while True:
         try:
-            await commissioning_state(knx, address)
-            return
+            state = await commissioning_state(knx, address)
+            in_st = await input_state(knx, address)
+            has_group_telegram = any(
+                isinstance(t.payload, (GroupValueWrite, GroupValueResponse))
+                for t in list(knx.incoming._queue)
+            )
+            if state.get("phase") == 5 and in_st["present"][0] != 0 and has_group_telegram:
+                await asyncio.sleep(0.5)
+                return
         except Exception as exc:
             if asyncio.get_event_loop().time() > deadline:
                 raise TimeoutError(
                     f"commissioning state never answered on {address}"
                 ) from exc
-            await asyncio.sleep(0.5)
+        if asyncio.get_event_loop().time() > deadline:
+            raise TimeoutError(f"commissioning startup did not finish on {address}")
+        await asyncio.sleep(0.5)
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")

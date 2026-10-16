@@ -13,6 +13,7 @@
 #include "device/StatusLeds.hpp"
 #include "diagnostics/DaliDebugTrace.hpp"
 #include "diagnostics/DiagnosticLog.hpp"
+#include "lighting/LampFinder.hpp"
 #include "lighting/LightingService.hpp"
 #include "network/NetworkConfig.hpp"
 
@@ -55,7 +56,7 @@ public:
     [[nodiscard]] network::NetworkConfig network_config() const noexcept;
 
     void sync_from_worker(const lighting::LightingService& lighting, const commissioning::Commissioning& comm,
-                          std::uint32_t now_ms) noexcept;
+                          std::uint32_t now_ms, const lighting::LampFinder* finder = nullptr) noexcept;
 
     void update_knx_state(std::uint16_t ia, bool configured, bool prog_mode, bool bus_ok,
                           device::PanelHint hint, std::uint32_t now_ms) noexcept;

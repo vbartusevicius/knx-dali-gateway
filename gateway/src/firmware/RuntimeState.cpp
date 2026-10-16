@@ -153,8 +153,16 @@ network::NetworkConfig RuntimeState::network_config() const noexcept {
 }
 
 void RuntimeState::sync_from_worker(const lighting::LightingService& lighting,
-                                    const commissioning::Commissioning& comm, std::uint32_t now_ms) noexcept {
+                                    const commissioning::Commissioning& comm, std::uint32_t now_ms,
+                                    const lighting::LampFinder* finder) noexcept {
     lock();
+    if (finder != nullptr) {
+        oled_state_.lamp_finder_active = finder->active();
+        if (const auto s = finder->target().as_short()) {
+            oled_state_.lamp_finder_channel = s->value();
+        }
+        oled_state_.lamp_finder_smooth = (finder->mode() == lighting::FinderMode::SmoothPulse);
+    }
     const auto& present_bits = comm.present();
     const auto& faulty_bits = comm.faulty();
     const auto snap = comm.snapshot();

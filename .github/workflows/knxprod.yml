@@ -5,15 +5,7 @@
 # signed file and attach it to the GitHub release.
 name: knxprod
 
-on:
-  push:
-    branches: [main]
-    tags: ["v*"]
-    paths: ["knxprod/**", "docker/knxprod/**", "gateway/src/knx/generated/**", "compose.yaml",
-            ".github/workflows/knxprod.yml"]
-  pull_request:
-    paths: ["knxprod/**", "docker/knxprod/**", "gateway/src/knx/generated/**", "compose.yaml",
-            ".github/workflows/knxprod.yml"]
+on: [push, pull_request]
 
 jobs:
   knxprod:

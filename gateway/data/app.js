@@ -1,7 +1,6 @@
 "use strict";
 
 let ws = null;
-let mockMode = false;
 let lampFilter = "all";
 const DT8_COLOR_OPTIONS = [
   { mask: 1, label: "Tunable White (CCT)" },
@@ -1467,67 +1466,33 @@ function handleLiveState(data) {
   if (infoChip) infoChip.textContent = chipId;
 }
 
-async function applyScenario(name) {
-  try {
-    const res = await fetch("/api/scenario", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenario: name }),
-    });
-    if (res.ok) {
-      const st = await res.json();
-      handleLiveState(st);
-      loadErrorLogs();
-      loadDebugTrace();
-    }
-  } catch (_) {}
-}
-
 function connectLive() {
   const wsPill = document.getElementById("pill-ws");
   const wsText = document.getElementById("ws-text");
-
-  fetch("/api/state")
-    .then((r) => (r.ok ? r.json() : Promise.reject()))
-    .then((st) => {
-      mockMode = true;
-      wsPill.className = "conn-badge ok";
-      wsText.textContent = "Simulated Lab";
-      handleLiveState(st);
-      setInterval(async () => {
-        try {
-          const r = await fetch("/api/state");
-          if (r.ok) handleLiveState(await r.json());
-        } catch (_) {}
-      }, 1000);
-    })
-    .catch(() => {
-      document.getElementById("scenario-bar").style.display = "none";
-      const proto = location.protocol === "https:" ? "wss:" : "ws:";
-      const url = `${proto}//${location.host}/ws`;
-      try {
-        ws = new WebSocket(url);
-      } catch (_) {
-        setTimeout(connectLive, 2000);
-        return;
-      }
-      ws.onopen = () => {
-        wsPill.className = "conn-badge ok";
-        wsText.textContent = "Live";
-        syncGatewayTime();
-      };
-      ws.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          if (msg.type === "live") handleLiveState(msg);
-        } catch (_) {}
-      };
-      ws.onclose = () => {
-        wsPill.className = "conn-badge err";
-        wsText.textContent = "Reconnecting";
-        setTimeout(connectLive, 2000);
-      };
-    });
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const url = `${proto}//${location.host}/ws`;
+  try {
+    ws = new WebSocket(url);
+  } catch (_) {
+    setTimeout(connectLive, 2000);
+    return;
+  }
+  ws.onopen = () => {
+    wsPill.className = "conn-badge ok";
+    wsText.textContent = "Live";
+    syncGatewayTime();
+  };
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "live") handleLiveState(msg);
+    } catch (_) {}
+  };
+  ws.onclose = () => {
+    wsPill.className = "conn-badge err";
+    wsText.textContent = "Reconnecting";
+    setTimeout(connectLive, 2000);
+  };
 }
 
 async function sendCmd(payload) {
@@ -1535,15 +1500,11 @@ async function sendCmd(payload) {
     ws.send(JSON.stringify(payload));
     return;
   }
-  const res = await fetch("/api/command", {
+  await fetch("/api/command", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (mockMode && res.ok) {
-    const r = await fetch("/api/state");
-    if (r.ok) handleLiveState(await r.json());
-  }
 }
 
 async function syncGatewayTime() {

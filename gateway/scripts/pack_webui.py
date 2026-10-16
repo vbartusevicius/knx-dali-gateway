@@ -1,11 +1,14 @@
-"""Pack gateway/data/{index.html,app.css,app.js} into gateway/build/littlefs.bin and gateway/src/firmware/WebAssets.hpp."""
+"""Pack gateway/data/{index.html,app.css,app.js} into gateway/build/littlefs.bin
+and gateway/src/firmware/WebAssets.hpp (runs both standalone and as a PlatformIO pre-script)."""
 
 from __future__ import annotations
 
+import inspect
 import struct
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+_SCRIPT_FILE = Path(inspect.getfile(lambda: None)).resolve()
+ROOT = _SCRIPT_FILE.parents[1]
 DATA_DIR = ROOT / "data"
 BUILD_DIR = ROOT / "build"
 HEADER_OUT = ROOT / "src" / "firmware" / "WebAssets.hpp"
@@ -65,10 +68,13 @@ def main() -> None:
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
     bin_path = BUILD_DIR / "littlefs.bin"
     img = build_littlefs_bin()
-    bin_path.write_bytes(img)
-    HEADER_OUT.write_text(build_cpp_header(), encoding="utf-8")
-    print(f"Wrote {bin_path} ({len(img)} bytes) and {HEADER_OUT}")
+    if not bin_path.exists() or bin_path.read_bytes() != img:
+        bin_path.write_bytes(img)
+    hdr = build_cpp_header()
+    if not HEADER_OUT.exists() or HEADER_OUT.read_text(encoding="utf-8") != hdr:
+        HEADER_OUT.write_text(hdr, encoding="utf-8")
+    if __name__ == "__main__":
+        print(f"Wrote {bin_path} ({len(img)} bytes) and {HEADER_OUT}")
 
 
-if __name__ == "__main__":
-    main()
+main()

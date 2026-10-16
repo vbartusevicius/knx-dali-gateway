@@ -11,7 +11,7 @@ export PLATFORMIO_BUILD_DIR=/tmp/pio/build PLATFORMIO_LIBDEPS_DIR=/tmp/pio/libde
 fix=""
 [ "${1:-}" = "--fix" ] && fix="-fix"
 
-sources=$(find src tests -name '*.cpp' -o -name '*.hpp' | grep -v '^src/knx/generated/' | sort)
+sources=$(find src tests -name '*.cpp' -o -name '*.hpp' | grep -v -E '^src/knx/generated/|^src/firmware/WebAssets\.hpp$' | sort)
 if [ -n "$fix" ]; then
     clang-format-19 -i $sources
 else

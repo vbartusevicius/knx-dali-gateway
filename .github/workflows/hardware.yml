@@ -3,13 +3,7 @@
 # itself is a developer step (layout.py <board> route); this only verifies it.
 name: hardware
 
-on:
-  push:
-    paths: ["hardware/**", "mechanical/**", "docker/eda/**", "docker/cad/**", "compose.yaml",
-            ".github/workflows/hardware.yml"]
-  pull_request:
-    paths: ["hardware/**", "mechanical/**", "docker/eda/**", "docker/cad/**", "compose.yaml",
-            ".github/workflows/hardware.yml"]
+on: [push, pull_request]
 
 jobs:
   boards-and-enclosure:
