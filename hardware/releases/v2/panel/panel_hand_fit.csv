@@ -3,4 +3,4 @@ C4,470u 35V,KMG35V470M10*16 LO,"NCN5130 Table 6 C4 470µF 35V storage; D10 L16 P
 J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
 J102,OLED,WEA012864DWPP3N00003,"Winstar WEA012864D-03 (white; L = yellow, B = sky blue), 27.3x27.3 mm, SSD1306 I2C, drawing WEA012864D-03 p.3; lay it face down in the cover pocket, push the UI board over its pins, then solder them from the back"
 U102,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
-U3,REM3-2415S/A/CTRL 24V->15V 3W iso,REM3-2415S/A/CTRL,"RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, 5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"
+U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL (also accepts REM3-2415S/A/CTRL or Mean Well SCWN06B-15 / SCW03B-15)"

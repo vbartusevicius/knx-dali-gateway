@@ -60,6 +60,16 @@ QG-6428TSWCG02:
     "13": OLED_VCOMH
     "14": OLED_VOUT
 
+REC3-2415SRW/H2/A/CTRL:
+  source: >-
+    RECOM REC3-RW / REM3 datasheet ("A" Pinning, Pin Connections, Single with
+    /CTRL option): 1 CTRL (active-low remote on/off referred to -Vin: open or
+    0-1.2 V = DC-DC ON, 3.0-12 V = DC-DC OFF), 2 -Vin (3 -Vin clipped flush),
+    11 NC (clipped flush), 14 +Vout, 16 -Vout, 22 +Vin, 23 +Vin; DIP24,
+    2.54 mm pitch, 15.24 mm between rows (top view).
+  pads: {"1": [0, 0], "2": [0, -2.54], "14": [15.24, -25.4], "16": [15.24, -20.32], "22": [15.24, -5.08], "23": [15.24, -2.54]}
+  names: {"1": CTRL, "2": -Vin, "14": +Vout, "16": -Vout, "22": +Vin, "23": +Vin}
+
 REM3-2415S/A/CTRL:
   source: >-
     RECOM REM3 datasheet (LCSC copy of C6643363, p.6 "A" Pinning, Pin

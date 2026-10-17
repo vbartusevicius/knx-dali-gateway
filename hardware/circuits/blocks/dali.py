@@ -110,25 +110,25 @@ def build(gnd, v3, *, include_interface=True, terminals=True, input_stage=True, 
                       source="spec.yaml terminals.aux_dc"), ref="J2")
     aux_in = aux_protection(gnda, aux_fused, aux_p, j2 if terminals else None) if input_stage else None
 
-    # --- Isolated DC-DC: RECOM REM3-2415S/A (15V output, reinforced) ---
+    # --- Isolated DC-DC: RECOM REC3-2415SRW/H2/A/CTRL (15V output, 2-4kV isolated) ---
     block("dcdc_iso")
     c_aux_in = cap("10u 50V",
-                   src(source="RECOM REM3 datasheet: input cap 10uF"),
+                   src(source="RECOM REC3-RW datasheet: input cap 10uF"),
                    footprint=C0805)
     c_aux_in[1] += aux_p
     c_aux_in[2] += gnda
     if supply_off is not None:
-        u3 = part("gateway", "REM3_DCDC_CTRL", "REM3-2415S/A/CTRL 24V->15V 3W iso", DCDC_REM3_CTRL,
-                  src(mpn="REM3-2415S/A/CTRL", mfr="RECOM", hand=True,
-                      source="RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, "
-                             "5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"))
+        u3 = part("gateway", "REM3_DCDC_CTRL", "REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso", DCDC_REM3_CTRL,
+                  src(mpn="REC3-2415SRW/H2/A/CTRL", mfr="RECOM", hand=True,
+                      source="RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, "
+                             "DIP-24 A-pinning with pin 1 CTRL (also accepts REM3-2415S/A/CTRL or Mean Well SCWN06B-15 / SCW03B-15)"))
         supply_off_switch(gnd, gnda, aux_p, u3["CTRL"], supply_off)
     else:
-        u3 = part("gateway", "REM3_DCDC", "REM3-2415S/A 24V->15V 3W iso",
+        u3 = part("gateway", "REM3_DCDC", "REC3-2415SRW/H2/A 24V->15V 3W iso",
                   DCDC_REM3,
-                  src(mpn="REM3-2415S/A", mfr="RECOM", hand=True,
-                      source="RECOM REM3 datasheet: 18-36V in, 15V 200mA out, "
-                             "5kVAC reinforced 2MOPP, DIP-24 A-pinning"))
+                  src(mpn="REC3-2415SRW/H2/A", mfr="RECOM", hand=True,
+                      source="RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, "
+                             "2kVDC/4kVDC isolated, DIP-24 A-pinning"))
     u3["+Vin"] += aux_p
     u3["-Vin"] += gnda
     u3["+Vout"] += iso15

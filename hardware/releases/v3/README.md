@@ -11,8 +11,8 @@ no longer matches this release.
 | Board | Size | Layers | Thickness | Position in the case | Folder |
 |---|---|---|---|---|---|
 | **Breakaway Panel (`panel`)** | **55.6 x 78.0 mm** | **4** | **1.2 mm** | **Combined `main` + `ui` on one PCB with mouse-bite breakaway tabs (1 PCB + 1 PCBA order)** | **`panel/`** |
-| Main (`main`) | 39.8 x 78.0 mm | 4 | 1.2 mm | vertical along the left side wall (two-sided): tall parts on the front (+x: KNX/AUX/DALI push-in pin strips, 470 uF SMD cap, 220 uH inductor, XIAO on 5 mm sockets with 5 V buck underneath, REM3-2415S/A/CTRL, JP1, DALI bridge/pass transistor/optocouplers, UI FFC), low SMD parts on the back (-x, inside the THT solder-tail shadow: NCN5130 + crystal + passives, DALI TX/RX passives & transistors) | `main/` |
-| UI (`ui`) | 13.8 x 40.5 mm | 4 | 1.2 mm | snapped into the cover protrusion: 0.96" 64x128 portrait SSD1312 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 mm) plugged into a JLC-assembled 14-pin 0.5 mm ZIF FPC connector on the back with 3.3 V charge-pump passives, two Omron B3U-1000P buttons with 1.4 mm protruding caps, three RGB LEDs in a row below the buttons, 8-pin FFC to main | `ui/` |
+| Main (`main`) | 39.8 x 78.0 mm | 4 | 1.2 mm | vertical along the left side wall (two-sided): tall parts on the front (+x: KNX/AUX/DALI push-in pin strips, 470 uF SMD cap, 220 uH inductor, XIAO on 5 mm sockets with 5 V buck underneath, REC3-2415SRW/H2/A/CTRL, JP1, DALI bridge/pass transistor/optocouplers, UI FFC), low SMD parts on the back (-x, inside the THT solder-tail shadow: NCN5130 + crystal + passives, DALI TX/RX passives & transistors) | `main/` |
+| UI (`ui`) | 13.8 x 40.5 mm | 4 | 1.2 mm | snapped into the cover protrusion: 0.96" 64x128 portrait SSD1312 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY, 14.0 x 28.0 mm) soldered to the 14-pad 0.62 mm pitch footprint on the back with 3.3 V charge-pump passives, two Omron B3U-1000P buttons with 1.4 mm protruding caps, three RGB LEDs in a row below the buttons, 8-pin FFC to main | `ui/` |
 
 A single 8-pin 0.5 mm **Type B (reverse / opposite-side contacts)** FFC cable (`SHOU HAN FFC-0.5-8P-50mm-B`, LCSC `C42416274`, 50 mm) connects `main` J4 to `ui` J1 (since both `J4` and `J1` are bottom-contact FFC connectors with Pin 1 on the same side, a Type B reverse cable connects Pin 1 `+3V3` to Pin 1 `+3V3`).
 
@@ -36,11 +36,10 @@ A single 8-pin 0.5 mm **Type B (reverse / opposite-side contacts)** FFC cable (`
   yellow/grey 20-32 V AUX plug (`1574299`, bottom-rear, flush with y=0).
   (`main` J3, the DALI push-in spring terminal `KF142R-5.08-2P`, LCSC `C475144`,
   is JLC-assembled on the top shoulder of `main`.)
-- `main` U3: RECOM **REM3-2415S/A/CTRL** (DIP-24, A pinning with pin 1 CTRL;
-  no minimum load required).
+- `main` U3: RECOM **REC3-2415SRW/H2/A/CTRL** (or **REC3-2415SRW/H4/A/M/CTRL**, DIP-24, A pinning with pin 1 CTRL; clip unused pins 3 and 11 flush before soldering; or Mean Well **SCWN06B-15** / **SCW03B-15** if software PSU shut-off is not needed).
 - `main` U8: Seeed **XIAO ESP32C6 Pre-Soldered (SKU 102010636)** in two 1x7
   5.0 mm female headers (`assembly_parts.csv`).
 
-Off-board parts (including the plug-in **0.96" 64x128 SSD1312** 14-pin ZIF
-OLED, which plugs into the JLC-assembled `FPC-05F-14PH20` ZIF connector `ui` J2
-with zero hand-soldering) are in `assembly_parts.csv`.
+Off-board parts (including the **0.96" 64x128 SSD1312** 14-pin `0.62 mm`-pitch
+OLED `QG-6428TSWCG02` / `NFP1312-15AY`, whose `12.0 mm` flex tail folds through
+the `9.8 mm` top notch on `ui` and solders onto `ui` J2) are in `assembly_parts.csv`.

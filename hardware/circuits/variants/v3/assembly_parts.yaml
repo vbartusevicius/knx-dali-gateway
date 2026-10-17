@@ -5,37 +5,56 @@
   part: Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)
   description: ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two
     5.0 mm female sockets (main U8)
+  mouser: 713-102010636 (or 713-113991254)
+  digikey: 1597-102010636-ND (or 1597-113991254-ND)
+  tme: SEEED-113991254
   source: Seeed Studio / Digi-Key / Mouser
 - item: XIAO sockets (hand-soldered)
   qty: 2
-  part: 1x7 2.54 mm female header, 5.0 mm tall (e.g. Hong Cheng HC-PM254-5.0H)
+  part: 1x7 2.54 mm female header, 5.0 mm tall (e.g. Samtec SLW-107-01-G-S / HC-PM254-5.0H)
   description: 1x7 female header, 2.54 mm, 5.0 mm tall, soldered into main U8; the
     XIAO stays detachable
-  source: LCSC
+  mouser: 200-SLW10701GS (or 855-M20-7890746)
+  digikey: SAM1111-07-ND (or 952-3228-ND)
+  tme: ZL262-40SG (LCSC C2886526)
+  source: Mouser / Digi-Key / TME / LCSC
 - item: Isolated DALI DC-DC converter (hand-soldered)
   qty: 1
-  part: RECOM REM3-2415S/A/CTRL
-  description: 24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24
-    A-pinning with pin 1 CTRL (main U3; no minimum load required)
+  part: RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15
+    without CTRL)
+  description: 24 V -> 15 V 3 W isolated DC-DC converter, DIP-24 A-pinning with pin
+    1 CTRL (main U3; clip unused pins 3 and 11 flush before soldering)
+  mouser: 919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15)
+  digikey: 945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND)
+  tme: REC3-2415SRWZ/H4/A (or SCWN06B-15)
   source: Digi-Key / Mouser / TME
 - item: KNX / AUX PCB pin strips (hand-soldered)
   qty: 2
   part: Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)
   description: "2-pin 5.75 mm pitch \xD8 1.0 mm pin strip soldered into main J1, main\
     \ J2"
+  mouser: 651-1574200
+  digikey: 277-1574200CT-ND
+  tme: '1574200'
   source: Phoenix Contact / Digi-Key / Mouser
 - item: KNX bus plug (red/black)
   qty: 1
-  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)
+  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211
   description: red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip
     (main J1)
-  source: Phoenix Contact / Digi-Key / Mouser
+  mouser: 651-1574300
+  digikey: 277-1574300-ND
+  tme: WAGO 243-211
+  source: Phoenix Contact / Digi-Key / Mouser / WAGO
 - item: AUX 20-32 V plug (yellow/white)
   qty: 1
-  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299)
+  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212
   description: yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75
     pin strip (main J2; 20-32 V for the internal DALI supply only)
-  source: Phoenix Contact / Digi-Key / Mouser
+  mouser: 651-1574299
+  digikey: 277-1574299-ND
+  tme: WAGO 243-212
+  source: Phoenix Contact / Digi-Key / Mouser / WAGO
 - item: OLED display (14-pin 0.62 mm solder FPC)
   qty: 1
   part: QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312
@@ -43,6 +62,9 @@
   description: 0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); 12.0
     mm x 9.3 mm flex tail folds through the 9.8 mm top notch on UI and solders directly
     onto the 14-pad 0.62 mm pitch footprint ui J2
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: AliExpress (1005003749452625) / Panelook / JLX
 - item: OLED mounting tape
   qty: 2
@@ -50,28 +72,43 @@
     pre-applied on NFP1312-15AY)
   description: adheres the left/right back edges of the 14.0 x 28.0 mm 64x128 OLED
     onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: any (included on back of NFP1312-15AY)
 - item: Main-to-UI FFC cable
   qty: 1
-  part: SHOU HAN FFC-0.5-8P-50mm-B (LCSC C42416274)
-  description: 8-pin 0.5 mm reverse/opposite-side (Type B, 1:1 pin-to-pin between
-    bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); main J4 <-> ui
-    J1
-  source: LCSC
+  part: Wuerth 687708050002 / Molex 15166-0076 / GCT 05-08-D-0050-A / SHOU HAN FFC-0.5-8P-50mm-B
+  description: 8-pin 0.5 mm reverse/opposite-side (Type B / Type 2, 1:1 pin-to-pin
+    between bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); main
+    J4 <-> ui J1
+  mouser: 710-687708050002 (or 538-15166-0076)
+  digikey: 732-3911-ND (or WM10282-ND)
+  tme: 05-08-D-0050-A (LCSC C42416274)
+  source: Mouser / Digi-Key / TME / LCSC
 - item: DALI supply jumper caps
   qty: 2
-  part: LCSC C100114
+  part: Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114)
   description: 2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply
     on
-  source: LCSC
+  mouser: 710-60900213421
+  digikey: 732-2703-ND (or S9001-ND)
+  tme: MJ-0-6 (LCSC C100114)
+  source: Mouser / Digi-Key / TME / LCSC
 - item: Case base (snap-fit, no screws)
   qty: 1
   part: enclosure/base.stl
   description: PETG or ASA, 0.2 mm layers, rail channel face down
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: printed
 - item: Case cover (snap-fit, no screws)
   qty: 1
   part: enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)
   description: PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth,
     cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: printed

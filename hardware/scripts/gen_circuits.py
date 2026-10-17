@@ -120,7 +120,7 @@ def collect_assembly_parts(variant, spec):
                 entry["locs"].append(f"{b} {p['ref']}")
 
     items = []
-    # 1. Hand-fitted board parts (XIAO, REM3, PST 1,0 pin strips, THT OLED)
+    # 1. Hand-fitted board parts (XIAO, REC3/REM3, PST 1,0 pin strips, THT OLED)
     if "102010636" in hand_by_mpn:
         locs = ", ".join(hand_by_mpn["102010636"]["locs"])
         sock_h = "5.0 mm" if variant == "v3" else "8.5 mm"
@@ -129,33 +129,46 @@ def collect_assembly_parts(variant, spec):
             "qty": len(hand_by_mpn["102010636"]["locs"]),
             "part": "Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)",
             "description": f"ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two {sock_h} female sockets ({locs})",
+            "mouser": "713-102010636 (or 713-113991254)",
+            "digikey": "1597-102010636-ND (or 1597-113991254-ND)",
+            "tme": "SEEED-113991254",
             "source": "Seeed Studio / Digi-Key / Mouser",
         })
         items.append({
             "item": "XIAO sockets (hand-soldered)",
             "qty": 2 * len(hand_by_mpn["102010636"]["locs"]),
-            "part": "1x7 2.54 mm female header, 5.0 mm tall (e.g. Hong Cheng HC-PM254-5.0H)" if variant == "v3"
+            "part": "1x7 2.54 mm female header, 5.0 mm tall (e.g. Samtec SLW-107-01-G-S / HC-PM254-5.0H)" if variant == "v3"
                     else "PM2.54-1x7PZZ-H8.5 (LCSC C54876729)",
             "description": f"1x7 female header, 2.54 mm, {sock_h} tall, soldered into {locs}; the XIAO stays detachable",
-            "source": "LCSC",
+            "mouser": "200-SLW10701GS (or 855-M20-7890746)" if variant == "v3" else "200-SSW10701GS (or 855-M20-7820746)",
+            "digikey": "SAM1111-07-ND (or 952-3228-ND)" if variant == "v3" else "SAM1123-07-ND (or S7040-ND)",
+            "tme": "ZL262-40SG (LCSC C2886526)" if variant == "v3" else "ZL262-7SG (LCSC C54876729)",
+            "source": "Mouser / Digi-Key / TME / LCSC",
         })
-    if "REM3-2415S/A/CTRL" in hand_by_mpn:
-        locs = ", ".join(hand_by_mpn["REM3-2415S/A/CTRL"]["locs"])
-        items.append({
-            "item": "Isolated DALI DC-DC converter (hand-soldered)",
-            "qty": len(hand_by_mpn["REM3-2415S/A/CTRL"]["locs"]),
-            "part": "RECOM REM3-2415S/A/CTRL",
-            "description": f"24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24 A-pinning with pin 1 CTRL ({locs}; no minimum load required)",
-            "source": "Digi-Key / Mouser / TME",
-        })
+    for dcdc_mpn in ("REC3-2415SRW/H2/A/CTRL", "REM3-2415S/A/CTRL"):
+        if dcdc_mpn in hand_by_mpn:
+            locs = ", ".join(hand_by_mpn[dcdc_mpn]["locs"])
+            items.append({
+                "item": "Isolated DALI DC-DC converter (hand-soldered)",
+                "qty": len(hand_by_mpn[dcdc_mpn]["locs"]),
+                "part": "RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15 without CTRL)",
+                "description": f"24 V -> 15 V 3 W isolated DC-DC converter, DIP-24 A-pinning with pin 1 CTRL ({locs}; clip unused pins 3 and 11 flush before soldering)",
+                "mouser": "919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15)",
+                "digikey": "945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND)",
+                "tme": "REC3-2415SRWZ/H4/A (or SCWN06B-15)",
+                "source": "Digi-Key / Mouser / TME",
+            })
     if "WEA012864DWPP3N00003" in hand_by_mpn:
         locs = ", ".join(hand_by_mpn["WEA012864DWPP3N00003"]["locs"])
         items.append({
             "item": "OLED display module (hand-soldered)",
             "qty": len(hand_by_mpn["WEA012864DWPP3N00003"]["locs"]),
-            "part": "Winstar WEA012864DWPP3N00003",
-            "description": f"0.96 in 128x64 SSD1306 I2C OLED module, 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into {locs}",
-            "source": "Digi-Key / Mouser / TME",
+            "part": "Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik DEP 128064F1-W / Raystar REA012864DWPP3N00003",
+            "description": f"0.96 in 128x64 SSD1306 I2C OLED module (27.3 x 27.3 mm), 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into {locs}",
+            "mouser": "485-326",
+            "digikey": "3086-MDOB128064V2V-WI-ND (RS 225-6202)",
+            "tme": "DEP128064F1-W (or DEP128064F1-Y)",
+            "source": "RS / TME / Digi-Key / Mouser / AliExpress (VCC-GND-SCL-SDA 4-pin)",
         })
     if "1574200" in hand_by_mpn:
         locs = hand_by_mpn["1574200"]["locs"]
@@ -164,22 +177,31 @@ def collect_assembly_parts(variant, spec):
             "qty": len(locs),
             "part": "Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",
             "description": f"2-pin 5.75 mm pitch Ø 1.0 mm pin strip soldered into {', '.join(locs)}",
+            "mouser": "651-1574200",
+            "digikey": "277-1574200CT-ND",
+            "tme": "1574200",
             "source": "Phoenix Contact / Digi-Key / Mouser",
         })
         items.append({
             "item": "KNX bus plug (red/black)",
             "qty": 1,
-            "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)",
+            "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211",
             "description": "red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip (main J1)",
-            "source": "Phoenix Contact / Digi-Key / Mouser",
+            "mouser": "651-1574300",
+            "digikey": "277-1574300-ND",
+            "tme": "WAGO 243-211",
+            "source": "Phoenix Contact / Digi-Key / Mouser / WAGO",
         })
         if any(loc.endswith("J2") for loc in locs):
             items.append({
                 "item": "AUX 20-32 V plug (yellow/white)",
                 "qty": 1,
-                "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299)",
+                "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212",
                 "description": "yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75 pin strip (main J2; 20-32 V for the internal DALI supply only)",
-                "source": "Phoenix Contact / Digi-Key / Mouser",
+                "mouser": "651-1574299",
+                "digikey": "277-1574299-ND",
+                "tme": "WAGO 243-212",
+                "source": "Phoenix Contact / Digi-Key / Mouser / WAGO",
             })
 
     # 2. 0.96" 64x128 SSD1312 OLED + mounting tape (when QG-6428TSWCG02 or FPC-05F-14PH20 is on ui)
@@ -189,6 +211,9 @@ def collect_assembly_parts(variant, spec):
             "qty": 1,
             "part": "QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312 I2C)",
             "description": "0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); 12.0 mm x 9.3 mm flex tail folds through the 9.8 mm top notch on UI and solders directly onto the 14-pad 0.62 mm pitch footprint ui J2",
+            "mouser": "-",
+            "digikey": "-",
+            "tme": "-",
             "source": "AliExpress (1005003749452625) / Panelook / JLX",
         })
         items.append({
@@ -196,6 +221,9 @@ def collect_assembly_parts(variant, spec):
             "qty": 2,
             "part": "3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.4 x 26 mm; pre-applied on NFP1312-15AY)",
             "description": "adheres the left/right back edges of the 14.0 x 28.0 mm 64x128 OLED onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)",
+            "mouser": "-",
+            "digikey": "-",
+            "tme": "-",
             "source": "any (included on back of NFP1312-15AY)",
         })
 
@@ -207,9 +235,12 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Main-to-UI FFC cable",
             "qty": len(ffc_links),
-            "part": "SHOU HAN FFC-0.5-8P-50mm-B (LCSC C42416274)",
-            "description": f"8-pin 0.5 mm reverse/opposite-side (Type B, 1:1 pin-to-pin between bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
-            "source": "LCSC",
+            "part": "Wuerth 687708050002 / Molex 15166-0076 / GCT 05-08-D-0050-A / SHOU HAN FFC-0.5-8P-50mm-B",
+            "description": f"8-pin 0.5 mm reverse/opposite-side (Type B / Type 2, 1:1 pin-to-pin between bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
+            "mouser": "710-687708050002 (or 538-15166-0076)",
+            "digikey": "732-3911-ND (or WM10282-ND)",
+            "tme": "05-08-D-0050-A (LCSC C42416274)",
+            "source": "Mouser / Digi-Key / TME / LCSC",
         })
     if cable_links:
         pairs = ", ".join(f"{lk['from']} {lk.get('refs', {}).get(lk['from'], 'J4')} <-> {lk['to']} {lk.get('refs', {}).get(lk['to'], 'J1')}" for lk in cable_links)
@@ -218,6 +249,9 @@ def collect_assembly_parts(variant, spec):
             "qty": len(cable_links),
             "part": "JST A10SR10SR30K102A",
             "description": f"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); {pairs}",
+            "mouser": "485-4396",
+            "digikey": "455-3086-ND",
+            "tme": "CAB-JST-SH-10P",
             "source": "Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works",
         })
 
@@ -226,19 +260,30 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "DALI supply jumper caps",
             "qty": 2,
-            "part": "LCSC C100114",
+            "part": "Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114)",
             "description": "2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",
-            "source": "LCSC",
+            "mouser": "710-60900213421",
+            "digikey": "732-2703-ND (or S9001-ND)",
+            "tme": "MJ-0-6 (LCSC C100114)",
+            "source": "Mouser / Digi-Key / TME / LCSC",
         })
 
-    # 5. Case screws (when enclosure.screw_tabs is non-empty) and printed case parts
-    screws = spec.get("enclosure", {}).get("screw_tabs", [])
+    # 5. Case screws (when enclosure.screw_tabs or layout_main case.screw_tabs is non-empty) and printed case parts
+    layout_main = yaml.safe_load(
+        (common.REPO_ROOT / f"hardware/circuits/variants/{variant}/layout_main.yaml").read_text()
+    )
+    screws = spec.get("enclosure", {}).get("screw_tabs", None)
+    if screws is None:
+        screws = layout_main.get("case", {}).get("screw_tabs", [])
     if screws:
         items.append({
             "item": "Case screws",
             "qty": len(screws),
             "part": "2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",
             "description": "through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot)",
+            "mouser": "710-97790803111",
+            "digikey": "H742-ND",
+            "tme": "B2.5X10/BN13257",
             "source": "any",
         })
     snap_note = " (snap-fit, no screws)" if not screws else ""
@@ -247,6 +292,9 @@ def collect_assembly_parts(variant, spec):
         "qty": 1,
         "part": "enclosure/base.stl",
         "description": "PETG or ASA, 0.2 mm layers, rail channel face down",
+        "mouser": "-",
+        "digikey": "-",
+        "tme": "-",
         "source": "printed",
     })
     items.append({
@@ -254,6 +302,9 @@ def collect_assembly_parts(variant, spec):
         "qty": 1,
         "part": "enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)",
         "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)",
+        "mouser": "-",
+        "digikey": "-",
+        "tme": "-",
         "source": "printed",
     })
     return items

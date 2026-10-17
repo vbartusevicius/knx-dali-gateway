@@ -5,56 +5,89 @@
   part: Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)
   description: ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two
     8.5 mm female sockets (main U8)
+  mouser: 713-102010636 (or 713-113991254)
+  digikey: 1597-102010636-ND (or 1597-113991254-ND)
+  tme: SEEED-113991254
   source: Seeed Studio / Digi-Key / Mouser
 - item: XIAO sockets (hand-soldered)
   qty: 2
   part: PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
   description: 1x7 female header, 2.54 mm, 8.5 mm tall, soldered into main U8; the
     XIAO stays detachable
-  source: LCSC
+  mouser: 200-SSW10701GS (or 855-M20-7820746)
+  digikey: SAM1123-07-ND (or S7040-ND)
+  tme: ZL262-7SG (LCSC C54876729)
+  source: Mouser / Digi-Key / TME / LCSC
 - item: Isolated DALI DC-DC converter (hand-soldered)
   qty: 1
-  part: RECOM REM3-2415S/A/CTRL
-  description: 24 V -> 15 V 3 W reinforced-isolated medical DC-DC converter, DIP-24
-    A-pinning with pin 1 CTRL (main U3; no minimum load required)
+  part: RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15
+    without CTRL)
+  description: 24 V -> 15 V 3 W isolated DC-DC converter, DIP-24 A-pinning with pin
+    1 CTRL (main U3; clip unused pins 3 and 11 flush before soldering)
+  mouser: 919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15)
+  digikey: 945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND)
+  tme: REC3-2415SRWZ/H4/A (or SCWN06B-15)
   source: Digi-Key / Mouser / TME
 - item: OLED display module (hand-soldered)
   qty: 1
-  part: Winstar WEA012864DWPP3N00003
-  description: 0.96 in 128x64 SSD1306 I2C OLED module, 4-pin header (1 VCC, 2 GND,
-    3 SCL, 4 SDA); sits face-down in the cover pocket and solders into ui J2
-  source: Digi-Key / Mouser / TME
+  part: Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik
+    DEP 128064F1-W / Raystar REA012864DWPP3N00003
+  description: 0.96 in 128x64 SSD1306 I2C OLED module (27.3 x 27.3 mm), 4-pin header
+    (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into
+    ui J2
+  mouser: 485-326
+  digikey: 3086-MDOB128064V2V-WI-ND (RS 225-6202)
+  tme: DEP128064F1-W (or DEP128064F1-Y)
+  source: RS / TME / Digi-Key / Mouser / AliExpress (VCC-GND-SCL-SDA 4-pin)
 - item: KNX PCB pin strip (hand-soldered)
   qty: 1
   part: Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)
   description: "2-pin 5.75 mm pitch \xD8 1.0 mm pin strip soldered into main J1"
+  mouser: 651-1574200
+  digikey: 277-1574200CT-ND
+  tme: '1574200'
   source: Phoenix Contact / Digi-Key / Mouser
 - item: KNX bus plug (red/black)
   qty: 1
-  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300)
+  part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211
   description: red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip
     (main J1)
-  source: Phoenix Contact / Digi-Key / Mouser
+  mouser: 651-1574300
+  digikey: 277-1574300-ND
+  tme: WAGO 243-211
+  source: Phoenix Contact / Digi-Key / Mouser / WAGO
 - item: Main-to-UI cable
   qty: 1
   part: JST A10SR10SR30K102A
   description: SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main
     J4 <-> ui J1
+  mouser: 485-4396
+  digikey: 455-3086-ND
+  tme: CAB-JST-SH-10P
   source: Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works
 - item: DALI supply jumper caps
   qty: 2
-  part: LCSC C100114
+  part: Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114)
   description: 2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply
     on
-  source: LCSC
+  mouser: 710-60900213421
+  digikey: 732-2703-ND (or S9001-ND)
+  tme: MJ-0-6 (LCSC C100114)
+  source: Mouser / Digi-Key / TME / LCSC
 - item: Case base (snap-fit, no screws)
   qty: 1
   part: enclosure/base.stl
   description: PETG or ASA, 0.2 mm layers, rail channel face down
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: printed
 - item: Case cover (snap-fit, no screws)
   qty: 1
   part: enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)
   description: PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth,
     cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
   source: printed

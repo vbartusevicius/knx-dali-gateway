@@ -1,4 +1,4 @@
 Designator,Value,Manufacturer part,Notes
 C4,470u 35V,KMG35V470M10*16 LO,"NCN5130 Table 6 C4 470µF 35V storage; D10 L16 P5; hand-fit lying down from the back: bend both leads 90 deg 3 mm from the body, body axis 7 mm below the board (2 mm air gap) in the base cradles, solder on the front"
 J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
-U3,REM3-2415S/A/CTRL 24V->15V 3W iso,REM3-2415S/A/CTRL,"RECOM REM3 datasheet: 18-36V in, 15V 200mA out, no minimum load, 5kVAC reinforced 2MOPP, DIP-24 A-pinning with CTRL"
+U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL (also accepts REM3-2415S/A/CTRL or Mean Well SCWN06B-15 / SCW03B-15)"

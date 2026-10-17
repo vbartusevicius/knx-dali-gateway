@@ -183,9 +183,18 @@ def main(version, boards=BOARDS):
                 print(f"  {problem}")
     with open(root / "assembly_parts.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["Item", "Qty", "Part", "Description", "Source"])
+        w.writerow(["Item", "Qty", "Part", "Mouser", "DigiKey", "TME", "Description", "Source"])
         for p in yaml.safe_load(assembly_parts_path().read_text()):
-            w.writerow([p["item"], p["qty"], p["part"], p["description"], p["source"]])
+            w.writerow([
+                p["item"],
+                p["qty"],
+                p["part"],
+                p.get("mouser", "-"),
+                p.get("digikey", "-"),
+                p.get("tme", "-"),
+                p["description"],
+                p["source"],
+            ])
     enclosure = REPO / "mechanical/build" / VARIANT
     if enclosure.exists():
         shutil.copytree(enclosure, root / "enclosure", dirs_exist_ok=True,

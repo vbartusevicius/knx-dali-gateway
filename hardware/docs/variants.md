@@ -1,7 +1,7 @@
 # Hardware variants (V1, V2, V3)
 
 All three variants share one set of circuit blocks (`hardware/circuits/blocks/`),
-the same **RECOM `REM3-2415S/A/CTRL`** isolated DALI supply with firmware shut-off,
+the same **RECOM `REC3-2415SRW/H2/A/CTRL`** (or `/H4/A/M/CTRL`) isolated DALI supply with firmware shut-off,
 and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button ladder
 (`gateway/src/firmware/Board.hpp`).
 
@@ -9,14 +9,14 @@ and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button lad
 |---|---|---|---|---|---|---|---|
 | **V1** (`v1`) | 3 DIN (`54 mm`) | 2 (`main`, `ui`) | 10-pin JST-SH cable (`100 mm`) | MaiXu `MX126-5.0-02P` screw | Phoenix `PST 1,0` (KNX) + `MX126` screw (AUX) | Winstar `WEA012864D-03` 0.96" 128x64 (4-pin THT) | 2 x 2.5x10 screws + UI snap hooks |
 | **V2** (`v2`) | 2 DIN (`36 mm`) | 3 (`main`, `interface`, `ui`) | 10-pin JST-SH cable (`100 mm`) + 2 B2B headers (`1x4`, `1x3`) | MaiXu `MX126-5.0-02P` screw | Phoenix `PST 1,0` (KNX) + `MX126` screw (AUX) | Winstar `WEA012864D-03` 0.96" 128x64 (4-pin THT) | 2 x 2.5x10 screws + UI snap hooks |
-| **V3** (`v3`) | 1 DIN (`18 mm`) | 2 (`main` two-sided vertical, `ui`) | 8-pin 0.5 mm FFC (`50 mm`, `C6936295`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`, 250 V 15 A) | Two Phoenix `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | `QG-6428TSWCG02` 0.96" `64×128` portrait `SSD1312` (`14 × 28 mm`, 14-pin 0.5 mm ZIF `C2856800`, no soldering) | Side-opening clamshell with 4 side snap-clicks + UI snaps |
+| **V3** (`v3`) | 1 DIN (`18 mm`) | 2 (`main` two-sided vertical, `ui`) | 8-pin 0.5 mm Type B FFC (`50 mm`, `C42416274`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`, 250 V 15 A) | Two Phoenix `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | `QG-6428TSWCG02` / `NFP1312-15AY` 0.96" `64×128` portrait `SSD1312` (`14 × 28 mm`, 14-pin 0.62 mm solder FPC) | Side-opening clamshell with 4 side snap-clicks + UI snaps |
 
 ## Unified XIAO ESP32-C6 Pin Map (`V1`, `V2`, `V3`)
 
 | XIAO Pin | ESP32-C6 GPIO | Schematic Net | Direction | Function |
 |---|---|---|---|---|
 | **1 (`D0`)** | `GPIO0` | `LED_DATA` | Output (RMT) | Drives the 5 V `SN74AHCT1G125` level-shifter (`U1` on UI) into the 3-LED `SK6805-EC15` chain |
-| **2 (`D1`)** | `GPIO1` | `DALI_SUPPLY_OFF` | Output | High drives the `TLP383` optocoupler (`U4` on `main`) to pull `REM3-2415S/A/CTRL` pin 1 (`CTRL`) to ~5.6 V (supply off); low/Hi-Z = supply on |
+| **2 (`D1`)** | `GPIO1` | `DALI_SUPPLY_OFF` | Output | High drives the `TLP383` optocoupler (`U4` on `main`) to pull `REC3-2415SRW/H2/A/CTRL` pin 1 (`CTRL`) to ~5.6 V (supply off); low/Hi-Z = supply on |
 | **3 (`D2`)** | `GPIO2` (`ADC1_CH2`) | `BTN_LADDER` | Analog in | Reads the two-button resistor ladder on the UI board (`SW1` PRG/RST, `SW2` FUNC) |
 | **4 (`D3`)** | `GPIO21` | `NC` | Unused | Unconnected spare GPIO on all variants |
 | **5 (`D4`)** | `GPIO22` | `I2C_SDA` | I2C | SSD1306 OLED data (`4.7k` pull-up to `+3V3`, I2C address `0x3C`) |
