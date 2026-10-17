@@ -453,7 +453,7 @@ function renderLampsGrid(channels) {
       </div>
       <div class="tile-foot">
         <span class="tile-status">${statusTxt}</span>
-        <span class="tile-type">${present ? `${pwr.totalW.toFixed(1)}W · ${decodeTypeShort(dt8, devType, isSwitch)}` : "—"}</span>
+        <span class="tile-type">${present ? `${pwr.totalW.toFixed(1)}W · ${latestState?.names?.ch?.[String(idx)] || decodeTypeShort(dt8, devType, isSwitch)}` : "—"}</span>
       </div>
     `;
     grid.appendChild(tile);
@@ -702,10 +702,11 @@ function renderInspector(chIdx, forceRebuild = false) {
     (powerConfigured ? idlePowerCentiwatts : Math.round(idleWatts * 100)) / 100
   ).toFixed(2);
 
+  const chName = latestState?.names?.ch?.[String(chIdx)] || "";
   pane.innerHTML = `
     <div class="insp-header">
       <div>
-        <div class="insp-title">Lamp ${addrStr}</div>
+        <div class="insp-title">Lamp ${addrStr}${chName ? ` <span style="font-weight:400;color:var(--text-2);font-size:13px">— ${chName}</span>` : ""}</div>
         <div class="insp-badges">${badges.join("")}</div>
       </div>
       <div class="btn-row">
@@ -739,11 +740,17 @@ function renderInspector(chIdx, forceRebuild = false) {
         `
         : `
           <div class="insp-section">
-            <span class="insp-sec-title">Device Type</span>
-            <label class="field">
-              <span>DALI Device Type</span>
-              <select id="gm-devtype" onchange="onProfileOrSwitchChange(${chIdx})">${dtTypeOptions}</select>
-            </label>
+            <span class="insp-sec-title">Name &amp; Device Type</span>
+            <div class="form-grid-2">
+              <label class="field">
+                <span>Lamp Name (Web UI &amp; HA)</span>
+                <input type="text" id="gm-name" maxlength="23" placeholder="e.g. Kitchen Island" value="${chName}">
+              </label>
+              <label class="field">
+                <span>DALI Device Type</span>
+                <select id="gm-devtype" onchange="onProfileOrSwitchChange(${chIdx})">${dtTypeOptions}</select>
+              </label>
+            </div>
           </div>
 
           <div class="insp-section">
@@ -833,14 +840,22 @@ async function saveGearParams(ch) {
   const fullW = Math.round(Number(document.getElementById("gm-full-w").value) * 10);
   const idleW = Math.round(Number(document.getElementById("gm-idle-w").value) * 100);
   const overEl = document.getElementById("gm-pwr-override");
+  const nameVal = (document.getElementById("gm-name")?.value || "").trim();
   const devType = Number(document.getElementById("gm-devtype").value ?? 6);
   const swOnly = devType === 7;
   const curDt8 = latestState?.channels?.[ch]?.[4] || 0;
   const dt8Mask = devType === 8 ? (curDt8 || 15) : 0;
 
+  if (latestState) {
+    if (!latestState.names) latestState.names = { ch: {}, grp: {} };
+    if (nameVal) latestState.names.ch[String(ch)] = nameVal;
+    else delete latestState.names.ch[String(ch)];
+  }
+
   const payload = {
     action: "configure_gear",
     index: ch,
+    name: nameVal,
     device_type: devType,
     dt8_mask: dt8Mask,
     switch_only: swOnly,
@@ -945,13 +960,25 @@ function renderGroups(groups, channels, forceRebuild = false) {
       </div>
       <div class="tile-foot">
         <span class="tile-status">${members.length === 0 ? "Empty" : lvl > 0 ? `${pct}%` : "Off"}</span>
-        <span class="tile-type">${members.length} lamp${members.length === 1 ? "" : "s"}</span>
+        <span class="tile-type">${latestState?.names?.grp?.[String(idx)] || `${members.length} lamp${members.length === 1 ? "" : "s"}`}</span>
       </div>
     `;
     list.appendChild(tile);
   });
 
   renderGroupDetail(selectedGrp, groups[selectedGrp] || 0, channels || [], forceRebuild);
+}
+
+async function saveGroupName(grpIdx) {
+  const val = (document.getElementById("grp-name-input")?.value || "").trim();
+  if (latestState) {
+    if (!latestState.names) latestState.names = { ch: {}, grp: {} };
+    if (val) latestState.names.grp[String(grpIdx)] = val;
+    else delete latestState.names.grp[String(grpIdx)];
+  }
+  renderedGrpSig = "";
+  await sendCmd({ action: "set_group_name", index: grpIdx, name: val });
+  if (latestState) renderGroups(latestState.groups || [], latestState.channels || [], true);
 }
 
 function renderGroupDetail(grpIdx, lvl, channels, forceRebuild = false) {
@@ -1099,10 +1126,11 @@ function renderGroupDetail(grpIdx, lvl, channels, forceRebuild = false) {
       </div>`;
   }
 
+  const grpCustomName = latestState?.names?.grp?.[String(grpIdx)] || "";
   pane.innerHTML = `
     <div class="insp-header">
       <div>
-        <div class="insp-title">Group ${gName}</div>
+        <div class="insp-title">Group ${gName}${grpCustomName ? ` <span style="font-weight:400;color:var(--text-2);font-size:13px">— ${grpCustomName}</span>` : ""}</div>
         <div class="insp-badges">
           <span class="badge ${members.length > 0 ? "ok" : ""}">${members.length} lamp${members.length === 1 ? "" : "s"} assigned</span>
           ${grpDt8 & 1 ? '<span class="badge">CCT</span>' : ""}
@@ -1110,13 +1138,15 @@ function renderGroupDetail(grpIdx, lvl, channels, forceRebuild = false) {
           ${grpDt8 & 8 ? '<span class="badge">CIE xy</span>' : ""}
         </div>
       </div>
-      ${
-        members.length > 0
-          ? `<div class="btn-row">
-               <button class="btn btn-xs" onclick="sendCmd({action:'find_lamp',target:'grp',index:${grpIdx},mode:'blink'})">Blink Group</button>
-             </div>`
-          : ""
-      }
+      <div class="btn-row">
+        <input type="text" id="grp-name-input" class="search-input" style="width:150px" maxlength="23" placeholder="Group name…" value="${grpCustomName}">
+        <button class="btn btn-xs" onclick="saveGroupName(${grpIdx})">Save Name</button>
+        ${
+          members.length > 0
+            ? `<button class="btn btn-xs" onclick="sendCmd({action:'find_lamp',target:'grp',index:${grpIdx},mode:'blink'})">Blink Group</button>`
+            : ""
+        }
+      </div>
     </div>
 
     ${

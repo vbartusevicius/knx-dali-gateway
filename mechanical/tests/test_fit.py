@@ -57,7 +57,7 @@ def main_height_violations(comps, height_of):
     bad = []
     gap = MIN_GAP if SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail" else AIR
     for ref, comp in comps.items():
-        if ref in REACH_OPENINGS and ef.VARIANT != "v3":
+        if ref in REACH_OPENINGS and ef.VARIANT not in ("v3", "v4"):
             continue
         top, limit = main_part_limits(comp, height_of(ref))
         if comp["side"] == "back" and limit < top + gap - 1e-6:
@@ -91,7 +91,7 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
     """Terminals end 0.2 mm short of the top face: their pads need 0.3 mm to
     the board edge."""
     faces = ef.connector_faces()
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
         assert abs(faces["J1"]) <= FLUSH_TOLERANCE
         assert abs(faces["J2"]) <= FLUSH_TOLERANCE
@@ -102,7 +102,7 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
 
 
 def test_knx_plug_top_below_the_shoulder_face():
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         plug_top = max(b["z1"] for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS)
         assert 0 <= ef.SHOULDER_Z["bottom"] - plug_top <= 8.0
         return
@@ -112,7 +112,7 @@ def test_knx_plug_top_below_the_shoulder_face():
 
 def openings():
     t = ef.terminal_holes()
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         screws = []
         front = [dict(h, w=2.2, h_=2.2, face="front") for h in ef.led_windows()]
         front += [dict(h, w=2.6, h_=2.6, face="front") for h in ef.button_holes().values()]
@@ -196,7 +196,7 @@ def test_contact_check_catches_a_leg_under_a_terminal_pin():
     assert f"{ref} pins" in contact_collisions([{"x": x, "y": y}], comps, "back", 2.5, ef.main_to_enc)
 
 
-@pytest.mark.skipif(ef.VARIANT == "v3", reason="v3 carrier stands against the side wall instead of floor legs")
+@pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 carrier stands against the side wall instead of floor legs")
 def test_main_board_supported_in_all_four_quadrants():
     pts = ef.legs()
     quadrants = {(p["x"] > 0, p["y"] > ef.HIDDEN_H / 2) for p in pts}
@@ -245,7 +245,7 @@ def test_wall_check_catches_a_part_overhanging_the_top_edge():
 
 
 def slot_misses(slots, comps):
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         pads_z = [ef.board_point("main", x, y)[2] for x, y in ef.pad_points(comps["J3"])]
         slot = slots[0]
         return [] if (slot["z0"] <= min(pads_z) and max(pads_z) <= slot["z1"]

@@ -29,7 +29,7 @@ def test_labels_clear_openings_and_each_other(labels):
     assert not hits and not pairs, (hits, pairs, len(boxes))
 
 
-@pytest.mark.skipif(ef.VARIANT == "v3", reason="v3 top shoulder uses a single large DALI title without bracket")
+@pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 top shoulder uses a single large DALI title without bracket")
 def test_dali_bracket_encloses_both_pairs_without_touching_text(labels):
     _, strokes = fl.dali_terminals()
     outline = fl.union(strokes)
@@ -66,7 +66,7 @@ def test_every_marking_is_present(labels):
     texts = [lb.text for lb in labels]
     for expected in ("KNX", "DALI", "PRG/RST", "FUNC", "STATUS"):
         assert expected in texts
-    if ef.VARIANT != "v3":
+    if ef.VARIANT not in ("v3", "v4"):
         assert texts.count("DA") == 2 and texts.count("+") == 2 and texts.count("\u2212") == 2
 
 
@@ -74,7 +74,7 @@ def signs(labels, face):
     return {lb.text: lb for lb in labels if lb.text in ("+", "\u2212") and fl.face_of(lb.y) == face}
 
 
-@pytest.mark.skipif(ef.VARIANT == "v3", reason="v3 puts KNX and AUX on the right side without front +/-")
+@pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 puts KNX and AUX on the right side without front +/-")
 @pytest.mark.parametrize(("ref", "face"), [("J1", "bottom"), ("J2", "top")])
 def test_plus_is_over_pin_1(labels, ref, face):
     """KNX J1 pin 1 is KNX+ and AUX J2 pin 1 the fused + input (blocks/knx.py, blocks/dali.py)."""
@@ -84,7 +84,7 @@ def test_plus_is_over_pin_1(labels, ref, face):
     assert abs(pair["\u2212"].x - pads["2"]) < abs(pair["\u2212"].x - pads["1"])
 
 
-@pytest.mark.skipif(ef.VARIANT == "v3", reason="v3 puts KNX and AUX on the right side without front +/-")
+@pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 puts KNX and AUX on the right side without front +/-")
 @pytest.mark.parametrize("face", ["bottom", "top"])
 def test_signs_side_by_side_share_one_axis(labels, face):
     plus, minus = signs(labels, face).values()

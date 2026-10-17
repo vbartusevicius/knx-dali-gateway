@@ -184,7 +184,7 @@ std::size_t format_ha_channel_discovery_payload(const char* base_topic, const ch
                                                 dali::ShortAddress channel,
                                                 std::optional<dali::ColourCapabilities> capabilities,
                                                 char* out, std::size_t out_size, const char* ipv4,
-                                                const char* sw_version) noexcept {
+                                                const char* sw_version, const char* custom_name) noexcept {
     if (!out || out_size == 0) {
         return 0;
     }
@@ -205,6 +205,12 @@ std::size_t format_ha_channel_discovery_payload(const char* base_topic, const ch
         }
     }
     const unsigned ch = channel.value();
+    char dev_name[48]{};
+    if (custom_name && custom_name[0] != '\0') {
+        std::snprintf(dev_name, sizeof(dev_name), "%s (A%02u)", custom_name, ch);
+    } else {
+        std::snprintf(dev_name, sizeof(dev_name), "DALI Lamp A%02u", ch);
+    }
     const int n =
         std::snprintf(out, out_size,
                       "{\"name\":\"Light\",\"uniq_id\":\"%s_dali_a%02u\","
@@ -213,14 +219,15 @@ std::size_t format_ha_channel_discovery_payload(const char* base_topic, const ch
                       "\"brightness\":true,\"brightness_scale\":254,"
                       "\"supported_color_modes\":[%s],\"min_mireds\":153,\"max_mireds\":500,"
                       "\"dev\":{\"ids\":[\"%s_ch%02u\"],\"via_device\":\"%s\","
-                      "\"name\":\"DALI Lamp A%02u\",\"mdl\":\"DALI Ballast A%02u\","
+                      "\"name\":\"%s\",\"mdl\":\"DALI Ballast A%02u\","
                       "\"mf\":\"OpenKNX-DALI\",\"sw\":\"%s\",\"cu\":\"http://%s/?ch=%u\"}}",
-                      node, ch, base, ch, base, ch, base, modes, node, ch, node, ch, ch, sw, ip, ch);
+                      node, ch, base, ch, base, ch, base, modes, node, ch, node, dev_name, ch, sw, ip, ch);
     return (n > 0 && static_cast<std::size_t>(n) < out_size) ? static_cast<std::size_t>(n) : 0;
 }
 
 std::size_t format_ha_channel_power_discovery_payload(const HaDeviceMeta& meta, dali::ShortAddress channel,
-                                                      char* out, std::size_t out_size) noexcept {
+                                                      char* out, std::size_t out_size,
+                                                      const char* custom_name) noexcept {
     if (!out || out_size == 0) {
         return 0;
     }
@@ -229,20 +236,27 @@ std::size_t format_ha_channel_power_discovery_payload(const HaDeviceMeta& meta, 
     const char* ip = (meta.ipv4 && meta.ipv4[0] != '\0') ? meta.ipv4 : "192.168.4.1";
     const char* sw = meta.sw_version ? meta.sw_version : firmware::kFirmwareVersion;
     const unsigned ch = channel.value();
+    char dev_name[48]{};
+    if (custom_name && custom_name[0] != '\0') {
+        std::snprintf(dev_name, sizeof(dev_name), "%s (A%02u)", custom_name, ch);
+    } else {
+        std::snprintf(dev_name, sizeof(dev_name), "DALI Lamp A%02u", ch);
+    }
     const int n = std::snprintf(out, out_size,
                                 "{\"name\":\"Power\",\"uniq_id\":\"%s_dali_a%02u_power\","
                                 "\"stat_t\":\"%s/light/ch%02u/state\",\"avty_t\":\"%s/status\","
                                 "\"dev_cla\":\"power\",\"unit_of_meas\":\"W\",\"stat_cla\":\"measurement\","
                                 "\"val_tpl\":\"{{ value_json.power_w }}\","
                                 "\"dev\":{\"ids\":[\"%s_ch%02u\"],\"via_device\":\"%s\","
-                                "\"name\":\"DALI Lamp A%02u\",\"mdl\":\"DALI Ballast A%02u\","
+                                "\"name\":\"%s\",\"mdl\":\"DALI Ballast A%02u\","
                                 "\"mf\":\"OpenKNX-DALI\",\"sw\":\"%s\",\"cu\":\"http://%s/?ch=%u\"}}",
-                                node, ch, base, ch, base, node, ch, node, ch, ch, sw, ip, ch);
+                                node, ch, base, ch, base, node, ch, node, dev_name, ch, sw, ip, ch);
     return (n > 0 && static_cast<std::size_t>(n) < out_size) ? static_cast<std::size_t>(n) : 0;
 }
 
 std::size_t format_ha_channel_fault_discovery_payload(const HaDeviceMeta& meta, dali::ShortAddress channel,
-                                                      char* out, std::size_t out_size) noexcept {
+                                                      char* out, std::size_t out_size,
+                                                      const char* custom_name) noexcept {
     if (!out || out_size == 0) {
         return 0;
     }
@@ -251,15 +265,21 @@ std::size_t format_ha_channel_fault_discovery_payload(const HaDeviceMeta& meta, 
     const char* ip = (meta.ipv4 && meta.ipv4[0] != '\0') ? meta.ipv4 : "192.168.4.1";
     const char* sw = meta.sw_version ? meta.sw_version : firmware::kFirmwareVersion;
     const unsigned ch = channel.value();
+    char dev_name[48]{};
+    if (custom_name && custom_name[0] != '\0') {
+        std::snprintf(dev_name, sizeof(dev_name), "%s (A%02u)", custom_name, ch);
+    } else {
+        std::snprintf(dev_name, sizeof(dev_name), "DALI Lamp A%02u", ch);
+    }
     const int n = std::snprintf(out, out_size,
                                 "{\"name\":\"Error\",\"uniq_id\":\"%s_dali_a%02u_fault\","
                                 "\"stat_t\":\"%s/light/ch%02u/state\",\"avty_t\":\"%s/status\","
                                 "\"dev_cla\":\"problem\",\"ent_cat\":\"diagnostic\","
                                 "\"val_tpl\":\"{{ 'ON' if value_json.fault else 'OFF' }}\","
                                 "\"dev\":{\"ids\":[\"%s_ch%02u\"],\"via_device\":\"%s\","
-                                "\"name\":\"DALI Lamp A%02u\",\"mdl\":\"DALI Ballast A%02u\","
+                                "\"name\":\"%s\",\"mdl\":\"DALI Ballast A%02u\","
                                 "\"mf\":\"OpenKNX-DALI\",\"sw\":\"%s\",\"cu\":\"http://%s/?ch=%u\"}}",
-                                node, ch, base, ch, base, node, ch, node, ch, ch, sw, ip, ch);
+                                node, ch, base, ch, base, node, ch, node, dev_name, ch, sw, ip, ch);
     return (n > 0 && static_cast<std::size_t>(n) < out_size) ? static_cast<std::size_t>(n) : 0;
 }
 
@@ -276,7 +296,7 @@ std::size_t format_ha_group_discovery_topic(const char* ha_prefix, const char* n
 
 std::size_t format_ha_group_discovery_payload(const char* base_topic, const char* node_id, dali::Group group,
                                               char* out, std::size_t out_size, const char* ipv4,
-                                              const char* sw_version) noexcept {
+                                              const char* sw_version, const char* custom_name) noexcept {
     if (!out || out_size == 0) {
         return 0;
     }
@@ -285,16 +305,22 @@ std::size_t format_ha_group_discovery_payload(const char* base_topic, const char
     const char* ip = (ipv4 && ipv4[0] != '\0') ? ipv4 : "192.168.4.1";
     const char* sw = sw_version ? sw_version : firmware::kFirmwareVersion;
     const unsigned g = group.value();
+    char grp_name[48]{};
+    if (custom_name && custom_name[0] != '\0') {
+        std::snprintf(grp_name, sizeof(grp_name), "%s (G%02u)", custom_name, g);
+    } else {
+        std::snprintf(grp_name, sizeof(grp_name), "DALI Group G%02u", g);
+    }
     const int n =
         std::snprintf(out, out_size,
-                      "{\"name\":\"DALI Group G%02u\",\"uniq_id\":\"%s_dali_g%02u\","
+                      "{\"name\":\"%s\",\"uniq_id\":\"%s_dali_g%02u\","
                       "\"schema\":\"json\",\"cmd_t\":\"%s/light/grp%02u/set\","
                       "\"stat_t\":\"%s/light/grp%02u/state\",\"avty_t\":\"%s/status\","
                       "\"brightness\":true,\"brightness_scale\":254,"
                       "\"supported_color_modes\":[\"brightness\"],"
                       "\"dev\":{\"ids\":[\"%s\"],\"name\":\"KNX-DALI Gateway (%s)\","
                       "\"mdl\":\"KNX-DALI-GW\",\"mf\":\"OpenKNX-DALI\",\"sw\":\"%s\",\"cu\":\"http://%s/\"}}",
-                      g, node, g, base, g, base, g, base, node, node, sw, ip);
+                      grp_name, node, g, base, g, base, g, base, node, node, sw, ip);
     return (n > 0 && static_cast<std::size_t>(n) < out_size) ? static_cast<std::size_t>(n) : 0;
 }
 

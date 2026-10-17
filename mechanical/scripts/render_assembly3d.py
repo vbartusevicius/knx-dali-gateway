@@ -108,8 +108,8 @@ def realistic_part(b, comp):
         return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0, z0 + 0.55), IVORY),
                 (cylinder(cx, cy, z0 + 0.50, z0 + 0.68, 1.1), (0.10, 0.90, 0.25))]
     if board == "ui" and ref in ("SW1", "SW2"):
-        base_h = 1.4 if ef.VARIANT == "v3" else 3.5
-        cap_d = 2.2 if ef.VARIANT == "v3" else 3.5
+        base_h = 1.4 if ef.VARIANT in ("v3", "v4") else 3.5
+        cap_d = 2.2 if ef.VARIANT in ("v3", "v4") else 3.5
         return [(box(x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, z0, z0 + base_h * 0.75), PART),
                 (box(x0 + 0.3, x1 - 0.3, y0 + 0.3, y1 - 0.3, z0 + base_h * 0.75, z0 + base_h), SILVER),
                 (cylinder(cx, cy, z0 + base_h, be.STACK.prog_cap_z, cap_d), (0.10, 0.10, 0.12))]
@@ -306,7 +306,7 @@ def oled_pixels_actor(z_offset=0.0):
     """Build a crisp 3D VTK quad-mesh actor for the lit Page 1 OLED pixels inside oled_window()."""
     win = ef.oled_window()
     glass = next(b for b in ef.part_boxes() if b["ref"] == "OLED glass")
-    rows = oled_bmp.PAGE1_64X128 if ef.VARIANT == "v3" else oled_bmp.PAGE1_128X64
+    rows = oled_bmp.PAGE1_64X128 if ef.VARIANT in ("v3", "v4") else oled_bmp.PAGE1_128X64
     h = len(rows)
     w = len(rows[0])
     x0 = win["cx"] - win["w"] / 2
@@ -348,7 +348,7 @@ def oled_pixels_actor(z_offset=0.0):
     mapper.SetInputData(data)
     a = vtk.vtkActor()
     a.SetMapper(mapper)
-    rgb = (0.29, 0.87, 0.50) if ef.VARIANT == "v3" else (0.22, 0.74, 0.97)
+    rgb = (0.29, 0.87, 0.50) if ef.VARIANT in ("v3", "v4") else (0.22, 0.74, 0.97)
     a.GetProperty().SetColor(*rgb)
     a.GetProperty().SetAmbient(1.0)
     a.GetProperty().SetDiffuse(0.0)

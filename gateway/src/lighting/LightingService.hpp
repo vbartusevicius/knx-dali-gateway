@@ -204,6 +204,7 @@ public:
     State state(dali::Group group) const noexcept;
     [[nodiscard]] ControlResult query_gear_details(dali::ShortAddress address);
     [[nodiscard]] ControlResult configure_gear(dali::ShortAddress address, const GearConfig& cfg);
+    void poll_d4i_power(dali::ShortAddress address);
     void record_status_byte(dali::ShortAddress address, std::uint8_t status_byte) noexcept;
     const GearDetails& gear_details(dali::ShortAddress address) const noexcept;
     [[nodiscard]] std::uint16_t effective_power_deciwatts(dali::ShortAddress address) const noexcept;

@@ -72,6 +72,17 @@ class LabState:
         self.details = {}
         self.groups = [0] * 16
         self.inputs = [[0, 0] for _ in range(64)]
+        self.ch_names: dict[str, str] = {
+            "0": "Entry Hall",
+            "6": "Kitchen Island",
+            "12": "Living Room Cove",
+            "18": "Dining Table",
+        }
+        self.grp_names: dict[str, str] = {
+            "0": "Living Room",
+            "1": "Kitchen & Dining",
+            "2": "Hallway",
+        }
 
         for i in range(64):
             present = 0
@@ -343,6 +354,13 @@ class LabState:
         if action == "reset_psu":
             self.psu_short = False
             return
+        if action == "set_group_name":
+            nm = str(cmd.get("name", "")).strip()[:23]
+            if nm:
+                self.grp_names[str(idx)] = nm
+            else:
+                self.grp_names.pop(str(idx), None)
+            return
         if action == "scan_bus":
             self.comm_phase = "scanning"
             self.comm_progress = 100
@@ -383,6 +401,12 @@ class LabState:
                     ch[2] = 200
             elif action == "configure_gear":
                 d = self.details[i]
+                if "name" in cmd:
+                    nm = str(cmd.get("name", "")).strip()[:23]
+                    if nm:
+                        self.ch_names[str(i)] = nm
+                    else:
+                        self.ch_names.pop(str(i), None)
                 for k in ("min_level", "max_level", "power_on_level", "system_failure_level", "fade_time", "fade_rate", "dimming_curve"):
                     if k in cmd:
                         d[k] = int(cmd[k])
@@ -475,6 +499,7 @@ class LabState:
             "groups": self.groups,
             "channels": self.channels,
             "inputs": self.inputs,
+            "names": {"ch": self.ch_names, "grp": self.grp_names},
             "input_events": (
                 [
                     [0, 2, 1, 0x04, 3],

@@ -315,6 +315,13 @@ def build_base():
             for _, py, pz in knx_pin_centres("main", ref):
                 base = base.cut(cq.Workplane("YZ", origin=(-1.6, 0, 0)).center(py, pz)
                                 .circle(1.1).extrude(1.6))
+        # Flat-screwdriver pry recesses at the left-side top/bottom snap seams
+        base = base.cut(box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.4, -0.1, 0.8, 16.5, 19.5))
+        base = base.cut(box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.4, HIDDEN_H - 0.8, HIDDEN_H + 0.1, 16.5, 19.5))
+        # Three passive convection micro-louvers on top and bottom walls
+        for vx in (-2.2, 0.0, 2.2):
+            base = base.cut(box(vx - 0.45, vx + 0.45, -0.1, WALL + 0.1, 7.5, 12.5))
+            base = base.cut(box(vx - 0.45, vx + 0.45, HIDDEN_H - WALL - 0.1, HIDDEN_H + 0.1, 7.5, 12.5))
 
     else:
         base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
@@ -345,6 +352,9 @@ def standoff_bodies():
         z_tape = STACK.oled_glass_z - STACK.oled["panel"] - STACK.oled["module_board"] - 1.5 if hasattr(STACK, "oled") else FRONT_INNER_Z - 1.5
         for sx in (-6.3, 6.3):
             bodies.append(box(sx - 0.7, sx + 0.7, 30.0, 56.0, z_tape, z1))
+        # Bottom OLED locating ledge stops (left/right of flex corridor)
+        for sx in (-5.8, 5.8):
+            bodies.append(box(sx - 1.1, sx + 1.1, 29.0, 29.8, z_tape, z1))
     return bodies
 
 
@@ -443,6 +453,9 @@ def build_cover():
         cover = cover.cut(cylinder(w["x"], w["y"], FRONT_INNER_Z - 1, TOTAL_D - STACK.led_skin_mm, LED_WINDOW))
     for hole in button_holes().values():
         cover = cover.cut(cylinder(hole["x"], hole["y"], *front, BUTTON_HOLE))
+        if VARIANT == "v3":
+            # Outer finger bevel recess around button holes
+            cover = cover.cut(cylinder(hole["x"], hole["y"], TOTAL_D - 0.35, TOTAL_D + 0.1, BUTTON_HOLE + 0.8))
     win, panel, module = oled_window(), oled_panel(), oled_module()
     cover = cover.cut(box(win["cx"] - win["w"] / 2, win["cx"] + win["w"] / 2,
                           win["cy"] - win["h"] / 2, win["cy"] + win["h"] / 2, *front))

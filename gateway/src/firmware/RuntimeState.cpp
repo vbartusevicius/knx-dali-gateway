@@ -104,6 +104,18 @@ void RuntimeState::init_storage() noexcept {
             network::sanitize_network_config(loaded);
             net_cfg_ = loaded;
         }
+        EntityNames loaded_names{};
+        std::size_t nlen = sizeof(loaded_names);
+        if (nvs_get_blob(h, "names", &loaded_names, &nlen) == ESP_OK && nlen == sizeof(loaded_names) &&
+            loaded_names.magic == 0x4B444E4DU) {
+            for (auto& ch : loaded_names.channels) {
+                ch.back() = '\0';
+            }
+            for (auto& grp : loaded_names.groups) {
+                grp.back() = '\0';
+            }
+            names_ = loaded_names;
+        }
         nvs_close(h);
     }
 
@@ -386,6 +398,84 @@ std::uint8_t RuntimeState::group_level(std::uint8_t index) const noexcept {
     return v;
 }
 
+namespace {
+
+void sanitize_entity_name(const char* src, char* dst, std::size_t cap) noexcept {
+    if (!dst || cap == 0) {
+        return;
+    }
+    dst[0] = '\0';
+    if (!src) {
+        return;
+    }
+    std::size_t j = 0;
+    for (std::size_t i = 0; src[i] != '\0' && j + 1 < cap; ++i) {
+        const char ch = src[i];
+        if (ch >= 0x20 && ch != '"' && ch != '\\') {
+            dst[j++] = ch;
+        }
+    }
+    dst[j] = '\0';
+}
+
+}  // namespace
+
+void RuntimeState::save_names_unlocked() noexcept {
+    names_.magic = 0x4B444E4DU;
+    nvs_handle_t h = 0;
+    if (nvs_open("net_cfg", NVS_READWRITE, &h) == ESP_OK) {
+        (void)nvs_set_blob(h, "names", &names_, sizeof(names_));
+        (void)nvs_commit(h);
+        nvs_close(h);
+    }
+}
+
+void RuntimeState::set_channel_name(std::uint8_t index, const char* name) noexcept {
+    if (index >= 64) {
+        return;
+    }
+    lock();
+    sanitize_entity_name(name, names_.channels[index].data(), names_.channels[index].size());
+    save_names_unlocked();
+    unlock();
+}
+
+void RuntimeState::set_group_name(std::uint8_t index, const char* name) noexcept {
+    if (index >= 16) {
+        return;
+    }
+    lock();
+    sanitize_entity_name(name, names_.groups[index].data(), names_.groups[index].size());
+    save_names_unlocked();
+    unlock();
+}
+
+void RuntimeState::copy_channel_name(std::uint8_t index, char* out, std::size_t out_size) const noexcept {
+    if (!out || out_size == 0) {
+        return;
+    }
+    out[0] = '\0';
+    if (index >= 64) {
+        return;
+    }
+    lock();
+    std::snprintf(out, out_size, "%s", names_.channels[index].data());
+    unlock();
+}
+
+void RuntimeState::copy_group_name(std::uint8_t index, char* out, std::size_t out_size) const noexcept {
+    if (!out || out_size == 0) {
+        return;
+    }
+    out[0] = '\0';
+    if (index >= 16) {
+        return;
+    }
+    lock();
+    std::snprintf(out, out_size, "%s", names_.groups[index].data());
+    unlock();
+}
+
 std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                                               std::uint32_t now_ms) const noexcept {
     if (!out || out_size < 512) {
@@ -499,7 +589,24 @@ std::size_t RuntimeState::format_live_ws_json(char* out, std::size_t out_size,
                static_cast<unsigned>(ev.event_info), age_s);
         first_ev = false;
     }
-    append("%s", "]}");
+    append("%s", "],\"names\":{\"ch\":{");
+    bool first_cn = true;
+    for (unsigned i = 0; i < 64; ++i) {
+        if (names_.channels[i][0] != '\0') {
+            append("%s\"%u\":\"%s\"", first_cn ? "" : ",", i, names_.channels[i].data());
+            first_cn = false;
+        }
+    }
+    append("%s", "},\"grp\":{");
+    bool first_gn = true;
+    for (unsigned g = 0; g < 16; ++g) {
+        if (names_.groups[g][0] != '\0') {
+            append("%s\"%u\":\"%s\"", first_gn ? "" : ",", g, names_.groups[g].data());
+            first_gn = false;
+        }
+    }
+    append("%s", "}}");
+    append("%s", "}");
     unlock();
     return off;
 }

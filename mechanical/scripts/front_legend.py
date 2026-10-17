@@ -37,8 +37,8 @@ LABEL_SPACING = 0.3
 LED_LABEL_SPACING = 1.5
 INK = "#000000"
 GUIDE = "#00acc1"
-LED_RING = 0.25 if ef.VARIANT == "v3" else 0.8
-RING_LINE = 0.25 if ef.VARIANT == "v3" else 0.4
+LED_RING = 0.25 if ef.VARIANT in ("v3", "v4") else 0.8
+RING_LINE = 0.25 if ef.VARIANT in ("v3", "v4") else 0.4
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
 
@@ -91,7 +91,7 @@ def openings():
     """Every opening in the front view as a box, with its kind for drawing."""
     items = []
     for name, holes in ef.terminal_holes().items():
-        if ef.VARIANT == "v3":
+        if ef.VARIANT in ("v3", "v4"):
             continue
         if name == "KNX":
             x0, x1, y1 = be.knx_recess()
@@ -160,7 +160,7 @@ def dali_terminals(terminals=None, main=None):
     DALI bus supply, not the device's power. Returns the labels and the
     bracket's strokes as boxes."""
     terminals = terminals or ef.SPEC["terminals"]
-    if ef.VARIANT == "v3" and main is None:
+    if ef.VARIANT in ("v3", "v4") and main is None:
         return [Label("DALI", 0.0, 72.0, 2.6)], []
     else:
         main = main or ef.components("main")
@@ -213,7 +213,7 @@ def v3_labels():
 
 
 def labels():
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         return v3_labels()
     terminals = ef.SPEC["terminals"]
     main = ef.components("main")

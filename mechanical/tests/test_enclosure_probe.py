@@ -78,7 +78,7 @@ def test_terminal_faces_open_in_the_top_wall(solids):
 def test_jp1_stays_covered(solids):
     jp1 = ef.components("main")["JP1"]
     x, y, z = ef.board_point("main", jp1["x"], jp1["y"])
-    assert not clear_line(solids, x, y, z if ef.VARIANT == "v3" else be.MAIN_Z, be.TOTAL_D + 1, steps=200)
+    assert not clear_line(solids, x, y, z if ef.VARIANT in ("v3", "v4") else be.MAIN_Z, be.TOTAL_D + 1, steps=200)
 
 
 def test_front_wall_is_solid_between_openings(solids):
@@ -171,7 +171,7 @@ def test_case_misses_every_part(solids):
 
 def test_part_collision_is_detected(solids):
     plug = next(b for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS and b["ref"] == "J1")
-    shifted = dict(plug, x0=plug["x0"] - 2, x1=plug["x1"] - 2) if ef.VARIANT == "v3" else         dict(plug, x0=plug["x0"] + 4, x1=plug["x1"] + 4)
+    shifted = dict(plug, x0=plug["x0"] - 2, x1=plug["x1"] - 2) if ef.VARIANT in ("v3", "v4") else         dict(plug, x0=plug["x0"] + 4, x1=plug["x1"] + 4)
     assert part_hits(solids, [shifted]) == ["J1"]
 
 
@@ -241,7 +241,7 @@ def test_each_printed_part_is_one_piece(solids):
 def test_knx_recess_is_open_to_front_and_bottom(solids):
     x0, x1, y1 = be.knx_recess()
     x = (x0 + x1) / 2
-    if ef.VARIANT == "v3":
+    if ef.VARIANT in ("v3", "v4"):
         for h in ef.terminal_holes()["KNX"] + ef.terminal_holes()["AUX"]:
             assert not solid_at(solids, 2.0, be.WALL / 2, h["z"])
             assert not solid_at(solids, be.WIDTH / 2 - be.WALL / 2, 6.0, h["z"])

@@ -63,29 +63,26 @@ def add_edge_line(pcb: pcbnew.BOARD, x0: float, y0: float, x1: float, y1: float)
 
 
 def add_mouse_bite_holes(pcb: pcbnew.BOARD, coords: list[tuple[float, float]]) -> None:
-    """Place all mouse-bite NPTH holes inside a single DNP/Excluded footprint so BOM tools ignore them."""
-    if not coords:
-        return
-    fp = pcbnew.FOOTPRINT(pcb)
-    fp.SetReference("MOUSE_BITES")
-    fp.SetValue("DNP")
-    fp.Reference().SetVisible(False)
-    fp.Value().SetVisible(False)
-    fp.SetDNP(True)
-    fp.SetExcludedFromBOM(True)
-    fp.SetExcludedFromPosFiles(True)
-    fp.SetPosition(pcbnew.VECTOR2I_MM(0, 0))
+    """Place mouse-bite NPTH holes as individual local DNP/Excluded footprints."""
     for idx, (x_mm, y_mm) in enumerate(coords, start=1):
+        fp = pcbnew.FOOTPRINT(pcb)
+        fp.SetReference(f"MB{idx}")
+        fp.SetValue("DNP")
+        fp.Reference().SetVisible(False)
+        fp.Value().SetVisible(False)
+        fp.SetDNP(True)
+        fp.SetExcludedFromBOM(True)
+        fp.SetExcludedFromPosFiles(True)
         pad = pcbnew.PAD(fp)
-        pad.SetNumber(str(idx))
+        pad.SetNumber("1")
         pad.SetShape(pcbnew.PAD_SHAPE_CIRCLE)
         pad.SetAttribute(pcbnew.PAD_ATTRIB_NPTH)
         pad.SetSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
         pad.SetDrillSize(pcbnew.VECTOR2I_MM(HOLE_DIA, HOLE_DIA))
         pad.SetLayerSet(pad.UnplatedHoleMask())
-        pad.SetPosition(pcbnew.VECTOR2I_MM(x_mm, y_mm))
         fp.Add(pad)
-    pcb.Add(fp)
+        fp.SetPosition(pcbnew.VECTOR2I_MM(x_mm, y_mm))
+        pcb.Add(fp)
 
 
 def is_vertical_edge_at_x(drw: pcbnew.BOARD_ITEM, x_target: float) -> bool:
@@ -117,6 +114,8 @@ def build_panel(
 ) -> list[str]:
     panel_dir = root / "panel"
     shutil.rmtree(panel_dir, ignore_errors=True)
+    if len(boards) < 2:
+        return []
     panel_dir.mkdir(parents=True)
 
     # Pre-load all boards first so SWIG type descriptors stay clean
@@ -216,6 +215,9 @@ def build_panel(
     # and bridge them with 2 mouse-bite breakaway tabs + NPTH snap holes
     mb_coords: list[tuple[float, float]] = []
     n = len(placements)
+    hole_off_x = 0.15 if variant != "v2" else 0.55
+    hw = TAB_H / 2
+
     for i in range(n - 1):
         _, _, _, lx0, ly0, lw, lh = placements[i]
         _, _, _, rx0, ry0, _rw, rh = placements[i + 1]
@@ -227,24 +229,19 @@ def build_panel(
         ov_h = ov_y1 - ov_y0
         t1 = round(ov_y0 + max(6.5, ov_h * 0.25), 4)
         t2 = round(ov_y0 + min(ov_h - 6.5, ov_h * 0.75), 4)
-        hw = TAB_H / 2
 
         for drw in list(panel.GetDrawings()):
             if is_vertical_edge_at_x(drw, lx1) or is_vertical_edge_at_x(drw, rx0):
                 panel.Delete(drw)
 
-        # Rebuild right vertical edge of board i with tab openings at t1, t2
         add_edge_line(panel, lx1, ly0, lx1, t1 - hw)
         add_edge_line(panel, lx1, t1 + hw, lx1, t2 - hw)
         add_edge_line(panel, lx1, t2 + hw, lx1, ly1)
 
-        # Rebuild left vertical edge of board i+1 with tab openings at t1, t2
         add_edge_line(panel, rx0, ry0, rx0, t1 - hw)
         add_edge_line(panel, rx0, t1 + hw, rx0, t2 - hw)
         add_edge_line(panel, rx0, t2 + hw, rx0, ry1)
 
-        # Add horizontal tab bridges and 4 NPTH mouse-bite holes per tab end
-        hole_off_x = 0.15 if variant != "v2" else 0.55
         for tc in (t1, t2):
             add_edge_line(panel, lx1, tc - hw, rx0, tc - hw)
             add_edge_line(panel, lx1, tc + hw, rx0, tc + hw)

@@ -149,7 +149,7 @@ def terminal_holes():
     """KNX: one opening centred on the mated plug body (on inputs in v3, main in
     v1/v2). DALI and AUX: one hole per pole on v1/v2, one lever opening on the
     WAGO terminal in v3."""
-    if VARIANT == "v3":
+    if VARIANT in ("v3", "v4"):
         main = components("main")
         return {"KNX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J1"]))))],
                 "AUX": [dict(zip(("x", "y", "z"), board_point("main", *bbox_centre(main["J2"]))))],
@@ -165,7 +165,7 @@ def terminal_holes():
 def wire_entries():
     """Openings in the top wall that the terminals' wire-entry faces sit in,
     flush with the outside."""
-    if VARIANT == "v3":
+    if VARIANT in ("v3", "v4"):
         j3 = next(p for p in part_boxes() if (p["board"], p["ref"]) == ("main", "J3"))
         return [{"ref": "J3", "x0": j3["x0"], "x1": j3["x1"], "z0": j3["z0"], "z1": j3["z1"]}]
     main = components("main")
@@ -206,7 +206,7 @@ TERMINAL_PIN_TO_WIRE_FACE = 3.8
 def connector_faces():
     """Outer faces of the connector bodies at the case's top and bottom faces:
     the terminals' wire-entry faces and the KNX plug's underside."""
-    if VARIANT == "v3":
+    if VARIANT in ("v3", "v4"):
         main = components("main")
         return {"J3": board_point("main", 0, main["J3"]["y"] + 8.40)[1],
                 "J1": board_point("main", 0, main["J1"]["bbox"]["y0"] + BODY_MARGIN)[1],
@@ -296,7 +296,7 @@ def screw_tabs():
 THROUGH_FRONT = {"SW1", "SW2"}
 
 
-PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT == "v3" else {("main", "J1")}
+PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT in ("v3", "v4") else {("main", "J1")}
 
 
 def part_boxes():
@@ -315,7 +315,7 @@ def part_boxes():
             base = 3.9 if plug else 0.0
             n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)
             b = c["bbox"]
-            m = BODY_MARGIN if plug and VARIANT == "v3" else 0.0
+            m = BODY_MARGIN if plug and VARIANT in ("v3", "v4") else 0.0
             boxes.append(span_box(board_point(board, b["x0"], b["y0"] + m, n0),
                                   board_point(board, b["x1"], b["y1"] - m, n1),
                                   board=board, ref=ref, through_front=board == "ui" and ref in THROUGH_FRONT))

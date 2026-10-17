@@ -47,6 +47,12 @@ struct InputEventSnapshot {
     std::uint32_t uptime_ms = 0;
 };
 
+struct EntityNames {
+    std::uint32_t magic = 0x4B444E4DU;  // "KDNM"
+    std::array<std::array<char, 24>, 64> channels{};
+    std::array<std::array<char, 24>, 16> groups{};
+};
+
 class RuntimeState final {
 public:
     RuntimeState() noexcept;
@@ -91,10 +97,15 @@ public:
     [[nodiscard]] bool channel_present(std::uint8_t index) const noexcept;
     [[nodiscard]] bool channel_faulty(std::uint8_t index) const noexcept;
     [[nodiscard]] std::uint8_t group_level(std::uint8_t index) const noexcept;
+    void set_channel_name(std::uint8_t index, const char* name) noexcept;
+    void set_group_name(std::uint8_t index, const char* name) noexcept;
+    void copy_channel_name(std::uint8_t index, char* out, std::size_t out_size) const noexcept;
+    void copy_group_name(std::uint8_t index, char* out, std::size_t out_size) const noexcept;
 
 private:
     void lock() const noexcept;
     void unlock() const noexcept;
+    void save_names_unlocked() noexcept;
 
     mutable SemaphoreHandle_t mutex_ = nullptr;
     mutable StaticSemaphore_t mutex_buf_{};
@@ -102,6 +113,7 @@ private:
     diagnostics::DiagnosticLog log_;
     diagnostics::DaliDebugTrace trace_;
     network::NetworkConfig net_cfg_{};
+    EntityNames names_{};
     device::OledDisplay oled_{device::OledGeometry::Oled64x128};
     device::OledSystemState oled_state_{};
     std::array<ChannelSnapshot, 64> channels_{};

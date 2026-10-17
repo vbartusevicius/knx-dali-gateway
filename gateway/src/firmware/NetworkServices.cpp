@@ -197,6 +197,33 @@ void execute_web_json_payload(const char* buf, std::size_t len) noexcept {
         }
         return;
     }
+    if (const char* nm = std::strstr(buf, "\"name\"")) {
+        const char* colon = std::strchr(nm, ':');
+        const char* q1 = colon ? std::strchr(colon + 1, '"') : nullptr;
+        const char* q2 = q1 ? std::strchr(q1 + 1, '"') : nullptr;
+        if (q1 && q2) {
+            char name_buf[24]{};
+            const auto nlen = static_cast<std::size_t>(q2 - (q1 + 1));
+            const std::size_t copy_n = nlen < (sizeof(name_buf) - 1) ? nlen : (sizeof(name_buf) - 1);
+            std::memcpy(name_buf, q1 + 1, copy_n);
+            name_buf[copy_n] = '\0';
+            int idx = -1;
+            if (const char* ip = std::strstr(buf, "\"index\"")) {
+                if (const char* ic = std::strchr(ip, ':')) {
+                    idx = static_cast<int>(std::strtol(ic + 1, nullptr, 10));
+                }
+            }
+            if (std::strstr(buf, "\"set_group_name\"") && idx >= 0 && idx < 16) {
+                runtime_state().set_group_name(static_cast<std::uint8_t>(idx), name_buf);
+                g_ha_published_channels.reset();
+                return;
+            }
+            if (idx >= 0 && idx < 64) {
+                runtime_state().set_channel_name(static_cast<std::uint8_t>(idx), name_buf);
+                g_ha_published_channels.reset(static_cast<std::size_t>(idx));
+            }
+        }
+    }
     if (const auto cmd = network::parse_api_command_json(buf, len)) {
         if (g_commands && !g_commands->try_push(*cmd)) {
             runtime_state().log().record(diagnostics::LogSource::System, diagnostics::LogSeverity::Warning,
@@ -656,6 +683,8 @@ void publish_ha_discovery_and_states() noexcept {
             const auto addr = *dali::ShortAddress::from(i);
             if (present && !g_ha_published_channels.test(i)) {
                 const auto ch = runtime_state().channel(i);
+                char custom_name[24]{};
+                runtime_state().copy_channel_name(i, custom_name, sizeof(custom_name));
                 const auto cap = ch.has_capabilities
                                      ? std::optional<dali::ColourCapabilities>(ch.capabilities)
                                      : std::nullopt;
@@ -663,20 +692,20 @@ void publish_ha_discovery_and_states() noexcept {
                                                                topic, sizeof(topic), "light", "") &&
                     network::format_ha_channel_discovery_payload(cfg.mqtt_base_topic.data(), node_id, addr,
                                                                  cap, payload, sizeof(payload), g_ipv4,
-                                                                 kFirmwareVersion)) {
+                                                                 kFirmwareVersion, custom_name)) {
                     esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
                 }
                 if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
                                                                topic, sizeof(topic), "sensor", "_power") &&
-                    network::format_ha_channel_power_discovery_payload(meta, addr, payload,
-                                                                       sizeof(payload))) {
+                    network::format_ha_channel_power_discovery_payload(meta, addr, payload, sizeof(payload),
+                                                                       custom_name)) {
                     esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
                 }
                 if (network::format_ha_channel_discovery_topic(cfg.ha_discovery_prefix.data(), node_id, addr,
                                                                topic, sizeof(topic), "binary_sensor",
                                                                "_fault") &&
-                    network::format_ha_channel_fault_discovery_payload(meta, addr, payload,
-                                                                       sizeof(payload))) {
+                    network::format_ha_channel_fault_discovery_payload(meta, addr, payload, sizeof(payload),
+                                                                       custom_name)) {
                     esp_mqtt_client_publish(g_mqtt, topic, payload, 0, 1, 1);
                 }
                 g_ha_published_channels.set(i);

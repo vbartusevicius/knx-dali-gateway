@@ -49,13 +49,16 @@ std::size_t format_ha_channel_discovery_payload(const char* base_topic, const ch
                                                 std::optional<dali::ColourCapabilities> capabilities,
                                                 char* out, std::size_t out_size,
                                                 const char* ipv4 = "192.168.1.42",
-                                                const char* sw_version = firmware::kFirmwareVersion) noexcept;
+                                                const char* sw_version = firmware::kFirmwareVersion,
+                                                const char* custom_name = nullptr) noexcept;
 
 std::size_t format_ha_channel_power_discovery_payload(const HaDeviceMeta& meta, dali::ShortAddress channel,
-                                                      char* out, std::size_t out_size) noexcept;
+                                                      char* out, std::size_t out_size,
+                                                      const char* custom_name = nullptr) noexcept;
 
 std::size_t format_ha_channel_fault_discovery_payload(const HaDeviceMeta& meta, dali::ShortAddress channel,
-                                                      char* out, std::size_t out_size) noexcept;
+                                                      char* out, std::size_t out_size,
+                                                      const char* custom_name = nullptr) noexcept;
 
 std::size_t format_ha_group_discovery_topic(const char* ha_prefix, const char* node_id, dali::Group group,
                                             char* out, std::size_t out_size) noexcept;
@@ -63,7 +66,8 @@ std::size_t format_ha_group_discovery_topic(const char* ha_prefix, const char* n
 std::size_t format_ha_group_discovery_payload(const char* base_topic, const char* node_id, dali::Group group,
                                               char* out, std::size_t out_size,
                                               const char* ipv4 = "192.168.1.42",
-                                              const char* sw_version = firmware::kFirmwareVersion) noexcept;
+                                              const char* sw_version = firmware::kFirmwareVersion,
+                                              const char* custom_name = nullptr) noexcept;
 
 std::size_t format_mqtt_channel_state(const lighting::State& state, const lighting::ColourState& colour,
                                       bool faulty, char* out, std::size_t out_size,
