@@ -11,14 +11,14 @@ from skidl import Net
 
 from variants.v3.main import UI_LINK, ffc, wire
 
-SSD1312_64X128_ZIF14 = {
-    "footprint": "gateway_fp:FPC_XUNPU_FPC-05F-14PH20",
-    "mpn": "FPC-05F-14PH20",
-    "mfr": "XUNPU",
-    "lcsc": "C2856800",
+SSD1312_64X128_HOTBAR14 = {
+    "footprint": "gateway_fp:OLED_FPC_14P_P0.62mm_Hotbar",
+    "mpn": "QG-6428TSWCG02",
+    "mfr": "Allvision / JLX",
     "pins": ("C2P", "C2N", "C1P", "C1N", "VCC", "NC", "GND", "VCC", "RES", "SCL", "SDA", "IREF", "VCOMH", "VOUT"),
-    "source": "14-pin 0.5 mm Flip-Top bottom-contact ZIF FPC connector on the back of the UI board receiving "
-              "the folded flex tail of the 0.96in 64x128 SSD1312 portrait I2C OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0x28.0x1.22 mm)",
+    "source": "14-pin 0.62 mm pitch (P0.62x13=8.06 mm, 12.0 mm tail, 9.3 mm wide) soldering FPC footprint on the back "
+              "of the UI board receiving the folded flex tail of the 0.96in 64x128 SSD1312 portrait I2C OLED "
+              "(QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY, 14.0x28.0x1.22 mm)",
 }
 BUTTON_B3U = {"footprint": "Button_Switch_SMD:SW_SPST_B3U-1000P", "mpn": "B3U-1000P",
               "mfr": "Omron", "lcsc": "C231329"}
@@ -35,7 +35,7 @@ def build():
     wire(ffc("Carrier", "J1", "FFC to the carrier"), UI_LINK,
          {"+3V3": v3, "GND": gnd, "BTN_LADDER": btn_ladder, "LED_DATA": led_data, "+5V": v5, "I2C_SDA": sda,
           "I2C_SCL": scl})
-    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=SSD1312_64X128_ZIF14, button=BUTTON_B3U)
+    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=SSD1312_64X128_HOTBAR14, button=BUTTON_B3U)
 
 
 NET_CLASSES = dict(ui.NET_CLASSES)

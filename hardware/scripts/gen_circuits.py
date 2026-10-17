@@ -182,21 +182,21 @@ def collect_assembly_parts(variant, spec):
                 "source": "Phoenix Contact / Digi-Key / Mouser",
             })
 
-    # 2. Plug-in ZIF OLED + mounting tape (when FPC-05F-14PH20 is on ui)
-    if any(p["mpn"] == "FPC-05F-14PH20" for _, p in all_parts):
+    # 2. 0.96" 64x128 SSD1312 OLED + mounting tape (when QG-6428TSWCG02 or FPC-05F-14PH20 is on ui)
+    if any(p["mpn"] in ("QG-6428TSWCG02", "FPC-05F-14PH20") for _, p in all_parts):
         items.append({
-            "item": "OLED display (14-pin ZIF FPC, plug-in, no soldering)",
+            "item": "OLED display (14-pin 0.62 mm solder FPC)",
             "qty": 1,
-            "part": "QG-6428TSWCG02 / JLX12864OLED-S096W (0.96 in 64x128 SSD1312 I2C)",
-            "description": "0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); flex tail folds through the 1.0 mm top cutout on UI and plugs into JLC-assembled 14-pin 0.5 mm ZIF connector ui J2 (XUNPU FPC-05F-14PH20)",
-            "source": "Panelook / LCSC / AliExpress / EastRising",
+            "part": "QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312 I2C)",
+            "description": "0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); 12.0 mm x 9.3 mm flex tail folds through the 9.8 mm top notch on UI and solders directly onto the 14-pad 0.62 mm pitch footprint ui J2",
+            "source": "AliExpress (1005003749452625) / Panelook / JLX",
         })
         items.append({
             "item": "OLED mounting tape",
             "qty": 2,
-            "part": "3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.4 x 26 mm)",
+            "part": "3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.4 x 26 mm; pre-applied on NFP1312-15AY)",
             "description": "adheres the left/right back edges of the 14.0 x 28.0 mm 64x128 OLED onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)",
-            "source": "any",
+            "source": "any (included on back of NFP1312-15AY)",
         })
 
     # 3. Board-to-board cables from spec["boards"]["interconnects"]

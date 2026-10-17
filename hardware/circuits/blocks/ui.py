@@ -127,7 +127,7 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
         j3 = part("Connector", f"Conn_01x{n_pins:02d}_Socket", "OLED ZIF", oled["footprint"],
                   src(mpn=oled["mpn"], mfr=oled["mfr"], lcsc=oled["lcsc"], source=oled["source"]), ref="J2")
     else:
-        j3 = part("Connector", f"Conn_01x{n_pins:02d}_Pin", "OLED", HDR_4,
+        j3 = part("Connector", f"Conn_01x{n_pins:02d}_Pin", "OLED", oled.get("footprint", HDR_4),
                   src(mpn=oled["mpn"], mfr=oled.get("mfr", ""), hand=True, source=oled["source"]), ref="J2")
     nets = {"GND": gnd, "VCC": v3, "SCL": scl, "SDA": sda}
     if "RES" in oled["pins"]:
