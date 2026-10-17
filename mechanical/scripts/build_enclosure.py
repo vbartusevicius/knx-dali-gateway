@@ -346,15 +346,17 @@ def standoff_bodies():
     z1 = FRONT_INNER_Z + STACK.pocket_depth + 0.1
     bodies = [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
     if VARIANT == "v3":
-        # Two vertical support rails behind the left/right edges of the 14.0 x 28.0 mm
-        # 64x128 OLED panel, stopping 1.5 mm behind the panel back for 1-2 layers of 1 mm
-        # double-sided foam tape while leaving the centre clear for the flex tail.
+        # Two vertical support rails behind the left/right edges of the 25.2 mm rear cap
+        # (enc_y = 31.75..56.95) of the 14.0 x 28.0 mm 64x128 OLED panel, stopping 1.5 mm
+        # behind the panel back for 1-2 layers of 1 mm double-sided foam tape while leaving
+        # the centre and top COG/flex-tail zone (enc_y > 56.5) clear.
         z_tape = STACK.oled_glass_z - STACK.oled["panel"] - STACK.oled["module_board"] - 1.5 if hasattr(STACK, "oled") else FRONT_INNER_Z - 1.5
         for sx in (-6.3, 6.3):
-            bodies.append(box(sx - 0.7, sx + 0.7, 30.0, 56.0, z_tape, z1))
-        # Bottom OLED locating ledge stops (left/right of flex corridor)
+            bodies.append(box(sx - 0.7, sx + 0.7, 31.8, 56.5, z_tape, z1))
+        # Bottom OLED locating ledge stops at enc_y = 30.85..31.65 (0.10 mm below the
+        # enc_y = 31.75 bottom edge of the 28.0 mm OLED glass)
         for sx in (-5.8, 5.8):
-            bodies.append(box(sx - 1.1, sx + 1.1, 29.0, 29.8, z_tape, z1))
+            bodies.append(box(sx - 1.1, sx + 1.1, 30.85, 31.65, z_tape, z1))
     return bodies
 
 
