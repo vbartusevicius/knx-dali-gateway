@@ -28,6 +28,15 @@
   digikey: 945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND)
   tme: REC3-2415SRWZ/H4/A (or SCWN06B-15)
   source: Digi-Key / Mouser / TME
+- item: AUX-to-core isolated DC-DC converter (hand-soldered)
+  qty: 1
+  part: TRACO TMR 1-2411 (18-36 V in, 5 V 200 mA, 1.5 kVDC, SIP-6)
+  description: powers the gateway core from the AUX input, ORed with the KNX buck
+    (main U9)
+  mouser: 495-TMR-1-2411
+  digikey: 1951-2676-ND
+  tme: '-'
+  source: Mouser / Digi-Key / TME
 - item: OLED display module (hand-soldered)
   qty: 1
   part: Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik

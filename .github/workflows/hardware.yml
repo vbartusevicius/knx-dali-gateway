@@ -12,7 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { variant: v1, boards: "main ui" }
           - { variant: v2, boards: "main interface ui" }
           - { variant: v3, boards: "main ui" }
     env:
@@ -37,7 +36,7 @@ jobs:
         run: $EDA "python3 -m pytest hardware/tests mechanical/tests/test_fit.py mechanical/tests/test_ui_stackup.py mechanical/tests/test_board_stack.py --ignore=hardware/tests/test_step_geometry.py -q"
 
       - name: Build the enclosure and probe it with the boards
-        run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py -q"
+        run: $CAD "python3 mechanical/scripts/build_enclosure.py && python3 -m pytest mechanical/tests/test_enclosure_probe.py mechanical/tests/test_enclosure_solids.py mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py -q"
 
       - name: Renders, fit drawings and front legend for review
         run: $CAD "python3 mechanical/scripts/render_assembly3d.py && cd mechanical/scripts && python3 fit_drawing.py && python3 front_legend.py && python3 legend_color_model.py"

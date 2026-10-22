@@ -1,0 +1,42 @@
+# Datasheet maxima the layout `heights:` tables and the enclosure must respect,
+# keyed by KiCad footprint name (hardware/circuits/variants/<variant>/layout_<board>.yaml
+# heights are the modelled body heights; mechanical/tests use these maxima).
+#   body_max: body height above the board surface, mm (package outline maximum)
+#   tail_max: through-hole lead length below the seating plane, mm; the solder
+#             tail sticks out of the far side by tail_max - board thickness
+#             unless the variant's spec.yaml assembly.trim_tht_to shortens it.
+
+D_SMA: { body_max: 2.44, source: "Littelfuse SMAJ series DO-214AC outline (2.44 max incl. leads)" }
+Diode_Bridge_Vishay_DFS: { body_max: 2.60, source: "Diodes Inc. DF-S package outline, dim J 2.40-2.60" }
+D_SOD-123: { body_max: 1.35, source: "onsemi MMSZxxT1G SOD-123 outline (A max 1.35)" }
+SOT-23: { body_max: 1.12, source: "Infineon IRLML0060 / Nexperia BC847 SOT-23 outline (1.12 max)" }
+SOT-23-5: { body_max: 1.45, source: "TI SN74AHCT1G125 DBV outline (1.45 max)" }
+TSOT-23-6: { body_max: 1.00, source: "SCT2400 TSOT23-6L outline (1.00 max)" }
+SOT-363_SC-70-6: { body_max: 1.10, source: "TI LM66100 DCK outline (1.10 max)" }
+SO-6L_10x3.84mm_P1.27mm: { body_max: 2.30, source: "Toshiba TLP383 SO6L outline (2.3 max)" }
+TO-252-2: { body_max: 2.40, source: "MJD45H11 DPAK outline (2.38 max)" }
+R_0603_1608Metric: { body_max: 0.55, source: "UNI-ROYAL 0603WAF (0.45 +/- 0.10)" }
+R_1206_3216Metric: { body_max: 0.70, source: "UNI-ROYAL 1206W4F (0.55 +/- 0.15)" }
+R_2512_6332Metric: { body_max: 0.70, source: "UNI-ROYAL 25121WJ (0.55 +/- 0.15)" }
+C_0603_1608Metric: { body_max: 0.90, source: "Samsung CL10 / YAGEO CC0603 (0.80 +/- 0.10)" }
+C_0805_2012Metric: { body_max: 1.45, source: "Samsung CL21A226MAQNNNE (1.25 +/- 0.20)" }
+Crystal_SMD_3225-4Pin_3.2x2.5mm: { body_max: 0.80, source: "YXC YSX321SL outline (0.70 +/- 0.10)" }
+QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm: { body_max: 1.00, source: "onsemi NCN5130 QFN40 6x6 outline (1.00 max)" }
+QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm_ThermalVias: { body_max: 1.00, source: "onsemi NCN5130 QFN40 6x6 outline (1.00 max)" }
+L_APV_ANR4012: { body_max: 1.20, source: "Sunna SMNR4012 outline (1.2 max)" }
+L_Sunlord_SWPA6045S: { body_max: 4.50, source: "Sunlord SWPA6045S outline (4.5 max)" }
+CP_Elec_10x10: { body_max: 10.50, source: "Honor RYRVT 10x10.2 SMD electrolytic on its seat plate" }
+SW_SPST_B3U-1000P: { body_max: 1.60, source: "Omron B3U-1000P outline (1.5 +/- 0.1)" }
+SW_SPST_PTS645Sx43SMTR92: { body_max: 7.00, source: "C&K PTS645SL70 actuator height 7.0" }
+LED_SK6805-EC15_1.5x1.5mm: { body_max: 0.65, source: "OPSCO SK6805-EC15 outline (0.65)" }
+Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm: { body_max: 9.90, tail_max: 2.10, source: "Phoenix 1574200: installed height 9.9, solder pin P 2.1" }
+Converter_DCDC_RECOM_REM3_DIP24_CTRL: { body_max: 10.70, tail_max: 4.30, source: "RECOM REC3-RW DIP24: case 10.2 + 0.5 standoff, pins 3.8 +0.5/-0.25" }
+Converter_DCDC_TRACO_TMR1_SIP6: { body_max: 11.50, tail_max: 3.70, source: "TRACO TMR 1 outline: 11.0 +/-0.5 incl. 0.5 standoff, pins 3.2 +/-0.5" }
+TerminalBlock_Kefa_KF142R-5.08-2P: { body_max: 11.10, tail_max: 3.50, source: "Kefa KF142R-5.08 drawing: pin 3.5 below the seating plane" }
+TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm: { body_max: 10.30, tail_max: 3.50, source: "MaiXu MX126-5.0 drawing: pin 3.5" }
+PinHeader_2x02_P2.54mm_Vertical: { body_max: 8.50, tail_max: 3.00, source: "BOOMELE 2.54-2*2P: 2.5 plastic + 6.0 mating pin, 3.0 tail" }
+PinHeader_1x03_P2.54mm_Vertical: { tail_max: 3.00, source: "standard 2.54 male header tail 3.0" }
+PinHeader_1x04_P2.54mm_Vertical: { tail_max: 3.00, source: "Kinghelm KH-2.54PH180-1X4P-L11.5 tail 3.0" }
+PinSocket_1x03_P2.54mm_Vertical: { body_max: 8.50, tail_max: 3.00, source: "Kinghelm KH-2.54FH-1X3P-H8.5: 8.5 tall, 3.0 tail" }
+PinSocket_1x04_P2.54mm_Vertical: { body_max: 8.50, tail_max: 3.00, source: "Kinghelm KH-2.54FH-1X4P-H8.5: 8.5 tall, 3.0 tail" }
+XIAO_ESP32C6_Header: { tail_max: 3.00, source: "2.54 female socket (HC-PM254-5.0H / Kinghelm H8.5) tail 3.0" }

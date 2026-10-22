@@ -28,6 +28,15 @@
   digikey: 945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND)
   tme: REC3-2415SRWZ/H4/A (or SCWN06B-15)
   source: Digi-Key / Mouser / TME
+- item: AUX-to-core isolated DC-DC converter (hand-soldered)
+  qty: 1
+  part: TRACO TMR 1-2411 (18-36 V in, 5 V 200 mA, 1.5 kVDC, SIP-6)
+  description: powers the gateway core from the AUX input, ORed with the KNX buck
+    (main U9)
+  mouser: 495-TMR-1-2411
+  digikey: 1951-2676-ND
+  tme: '-'
+  source: Mouser / Digi-Key / TME
 - item: KNX / AUX PCB pin strips (hand-soldered)
   qty: 2
   part: Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)
@@ -66,16 +75,26 @@
   digikey: '-'
   tme: '-'
   source: AliExpress (1005003749452625) / Panelook / JLX
-- item: OLED mounting tape
-  qty: 2
-  part: 3M VHB / double-sided acrylic foam tape, 1.0 mm thick (2 strips 1.4 x 26 mm;
-    pre-applied on NFP1312-15AY)
-  description: adheres the left/right back edges of the 14.0 x 28.0 mm 64x128 OLED
-    onto the cover's two backing rails (1.5 mm gap; stack 1-2 layers of 1.0 mm tape)
+- item: OLED backing foam
+  qty: 1
+  part: open-cell PU or EPDM foam pad, 4 mm thick, 10 x 20 mm
+  description: sits on the UI board front under the panel (no parts there) and presses
+    the 1.22 mm OLED into its recess behind the 0.8 mm front skin; compresses to about
+    3.6 mm when the UI board snaps in
   mouser: '-'
   digikey: '-'
   tme: '-'
-  source: any (included on back of NFP1312-15AY)
+  source: any
+- item: Through-hole lead trim (hand)
+  qty: 1
+  part: flush cutters
+  description: after soldering, cut every through-hole lead on main to <= 1.5 mm above
+    the back copper (REC3, sockets, PST strips, KF142R, JP1); the cover wall is 2.0
+    mm away
+  mouser: '-'
+  digikey: '-'
+  tme: '-'
+  source: assembly step
 - item: Main-to-UI FFC cable
   qty: 1
   part: Wuerth 687708050002 / Molex 15166-0076 / GCT 05-08-D-0050-A / SHOU HAN FFC-0.5-8P-50mm-B

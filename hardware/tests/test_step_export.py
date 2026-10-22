@@ -12,9 +12,10 @@ from pathlib import Path
 
 import pcbnew
 import pytest
-from board_variant import BOARDS, layout_path
+from board_variant import BOARDS, VARIANT, layout_path
 
 REPO = Path("/work")
+TEST_DIR = REPO / "hardware/build" / VARIANT / "test"
 _board_path = layout_path
 
 
@@ -85,7 +86,7 @@ def _export_courtyard_json(board):
             "size_d": size[1],
             "size_h": size[2],
         })
-    out = REPO / "hardware/build" / "test" / f"{board}_courtyards.json"
+    out = TEST_DIR / f"{board}_courtyards.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, indent=2))
     return out
@@ -95,7 +96,7 @@ def _export_courtyard_json(board):
 def test_no_unresolved_3d_models(board):
     """kicad-cli pcb export step must not report any unresolved 3D models."""
     pcb = _board_path(board)
-    step = REPO / "hardware/build" / "test" / f"{board}_test.step"
+    step = TEST_DIR / f"{board}_test.step"
     step.parent.mkdir(parents=True, exist_ok=True)
     warnings = _export_step(pcb, step)
     assert not warnings, (
@@ -126,17 +127,17 @@ def test_negative_offset_board():
     models = fp.Models()
     orig = models[0].m_Offset
     models[0].m_Offset = pcbnew.VECTOR3D(orig.x + 5.0, orig.y, orig.z)
-    tmp_pcb = REPO / "hardware/build/test/negative_test.kicad_pcb"
+    tmp_pcb = TEST_DIR / "negative_test.kicad_pcb"
     tmp_pcb.parent.mkdir(parents=True, exist_ok=True)
     b.Save(str(tmp_pcb))
     # Export STEP
-    step = REPO / "hardware/build/test/negative_test.step"
+    step = TEST_DIR / "negative_test.step"
     warnings = _export_step(tmp_pcb, step)
     assert not warnings, f"Unresolved models: {warnings}"
     # Export courtyard JSON (same courtyards, since we only changed model offset)
     _export_courtyard_json("main")
     # Copy to negative JSON
     import shutil
-    src = REPO / "hardware/build/test/main_courtyards.json"
-    dst = REPO / "hardware/build/test/negative_courtyards.json"
+    src = TEST_DIR / "main_courtyards.json"
+    dst = TEST_DIR / "negative_courtyards.json"
     shutil.copyfile(src, dst)

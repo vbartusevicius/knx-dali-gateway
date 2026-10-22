@@ -62,20 +62,19 @@ QG-6428TSWCG02:
 
 REC3-2415SRW/H2/A/CTRL:
   source: >-
-    RECOM REC3-RW / REM3 datasheet ("A" Pinning, Pin Connections, Single with
+    RECOM REC3-RW datasheet ("A" Pinning, Pin Connections, Single with
     /CTRL option): 1 CTRL (active-low remote on/off referred to -Vin: open or
-    0-1.2 V = DC-DC ON, 3.0-12 V = DC-DC OFF), 2 -Vin (3 -Vin clipped flush),
+    0-1.2 V = DC-DC ON, 2.2-12 V = DC-DC OFF), 2 -Vin (3 -Vin clipped flush),
     11 NC (clipped flush), 14 +Vout, 16 -Vout, 22 +Vin, 23 +Vin; DIP24,
     2.54 mm pitch, 15.24 mm between rows (top view).
   pads: {"1": [0, 0], "2": [0, -2.54], "14": [15.24, -25.4], "16": [15.24, -20.32], "22": [15.24, -5.08], "23": [15.24, -2.54]}
   names: {"1": CTRL, "2": -Vin, "14": +Vout, "16": -Vout, "22": +Vin, "23": +Vin}
 
-REM3-2415S/A/CTRL:
+TMR 1-2411:
   source: >-
-    RECOM REM3 datasheet (LCSC copy of C6643363, p.6 "A" Pinning, Pin
-    Connections, Single): 1 CTRL (fitted with the /CTRL option), 2 -Vin,
-    11 NC, 14 +Vout, 16 -Vout, 22 +Vin, 23 +Vin; DIP24, 2.54 mm pitch,
-    15.24 mm between rows, pin 1 marked (top view); remote on/off referred
-    to -Vin: open or 0-1.2 V on, 2.2-12 V off
-  pads: {"1": [0, 0], "2": [0, -2.54], "14": [15.24, -25.4], "16": [15.24, -20.32], "22": [15.24, -5.08], "23": [15.24, -2.54]}
-  names: {"1": CTRL, "2": -Vin, "14": +Vout, "16": -Vout, "22": +Vin, "23": +Vin}
+    TRACO TMR 1 series datasheet (Rev. April 15, 2026, p.4 Outline Dimensions
+    and Pinout, single output): 1 -Vin (GND), 2 +Vin (Vcc), 4 +Vout,
+    6 -Vout (3 and 5 no pin); SIP-6, 2.54 mm pitch, pin 1 2.15 mm from the
+    body end.
+  pads: {"1": [0, 0], "2": [2.54, 0], "4": [7.62, 0], "6": [12.7, 0]}
+  names: {"1": -Vin, "2": +Vin, "4": +Vout, "6": -Vout}

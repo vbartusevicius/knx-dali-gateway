@@ -13,7 +13,7 @@ enum class PsuProtectionState : std::uint8_t {
 };
 
 struct PsuSampleResult {
-    bool supply_off_gpio = false;  // True -> drive D1/GPIO1 HIGH to pull REM3 CTRL low (PSU OFF)
+    bool supply_off_gpio = false;  // True -> drive D1/GPIO1 HIGH to drive the REC3 CTRL pin high through U4 (PSU OFF)
     PsuProtectionState state = PsuProtectionState::Normal;
     DaliState dali_led_state = DaliState::Ok;
     bool just_tripped_short = false;
@@ -21,7 +21,7 @@ struct PsuSampleResult {
 };
 
 // Monitors DALI bus idle/low state (from DALI_RX optocoupler U6) and controls
-// the REM3-2415S/A/CTRL ON/OFF leg (via U4 on D1/GPIO1 = DALI_SUPPLY_OFF).
+// the REC3-2415SRW/H2/A/CTRL ON/OFF pin (via U4 on D1/GPIO1 = DALI_SUPPLY_OFF).
 // Latches the internal converter OFF within 80 ms of a sustained bus short
 // circuit so devices on the bus are never repeatedly power-cycled; stays
 // latched off until explicitly re-armed (reset_trip / config change / reboot).

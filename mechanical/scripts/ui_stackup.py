@@ -39,8 +39,11 @@ OLED_GLASS_TARGET_Z = FRONT_OUTER_Z - 0.1
 OLED_GLASS_RANGE = (FRONT_OUTER_Z - 0.3, FRONT_OUTER_Z)
 POCKET_CLEARANCE = 0.3
 
-# C&K PTS645 SMD heights; only 7.0 mm (SL70, LCSC C285485) is in stock at JLCPCB
-TACTILE_LENGTHS = [7.0]
+BUTTON = SPEC_DATA["front_ui"]["buttons"][0]
+ACTUATOR_MM = BUTTON["actuator_length_mm"]
+PLUNGER = BUTTON.get("plunger", False)
+PLUNGER_BOSS = BUTTON.get("protrusion_beyond_front", 0.0) if PLUNGER else 0.0
+PLUNGER_GAP_RANGE = (0.5, 4.5)
 BUTTON_PROTRUSION = (0.5, 2.0)
 
 LED_HEIGHT = 0.65
@@ -73,6 +76,12 @@ class UIStackup:
         return self.board_top_z + LED_BAFFLE_GAP
 
     @property
+    def plunger_gap(self):
+        """Air between the actuator tops and the front wall's inner face that
+        a cover plunger nub has to bridge (0 when the buttons pass through)."""
+        return max(0.0, FRONT_INNER_Z - (self.board_top_z + self.prog_actuator_mm)) if PLUNGER else 0.0
+
+    @property
     def pocket_depth(self):
         """How far the cover's inner face is recessed over the module board."""
         return max(0.0, self.oled_board_top_z + POCKET_CLEARANCE - FRONT_INNER_Z)
@@ -94,6 +103,8 @@ class UIStackup:
             lo, hi = (FRONT_OUTER_Z + p for p in BUTTON_PROTRUSION)
             if not lo <= cap_z <= hi:
                 violations.append(f"{name} cap z={cap_z:.2f} outside [{lo:.2f}, {hi:.2f}]")
+        if PLUNGER and not PLUNGER_GAP_RANGE[0] <= self.plunger_gap <= PLUNGER_GAP_RANGE[1]:
+            violations.append(f"plunger gap {self.plunger_gap:.2f} outside {PLUNGER_GAP_RANGE}")
         lo, hi = LED_SKIN_RANGE
         if not lo <= self.led_skin_mm <= hi:
             violations.append(f"LED window skin {self.led_skin_mm:.2f} mm outside [{lo}, {hi}]")
@@ -102,21 +113,17 @@ class UIStackup:
         return not violations, violations
 
 
-def nearest(target, options):
-    return min(options, key=lambda x: abs(x - target))
-
-
 def compute_ui_stackup():
     board_top_z = OLED_GLASS_TARGET_Z - OLED_MODULE_STACK
-    button = nearest(FRONT_OUTER_Z + sum(BUTTON_PROTRUSION) / 2 - board_top_z, TACTILE_LENGTHS)
+    cap_z = FRONT_OUTER_Z + PLUNGER_BOSS if PLUNGER else board_top_z + ACTUATOR_MM
     return UIStackup(
         board_z=board_top_z - BOARD_THICKNESS,
         board_top_z=board_top_z,
         oled_glass_z=board_top_z + OLED_MODULE_STACK,
-        prog_actuator_mm=button,
-        prog_cap_z=board_top_z + button,
-        reset_actuator_mm=button,
-        reset_cap_z=board_top_z + button,
+        prog_actuator_mm=ACTUATOR_MM,
+        prog_cap_z=cap_z,
+        reset_actuator_mm=ACTUATOR_MM,
+        reset_cap_z=cap_z,
         led_skin_mm=LED_WINDOW_SKIN,
     )
 

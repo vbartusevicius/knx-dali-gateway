@@ -99,7 +99,11 @@ def openings():
         else:
             r = be.SCREW_HOLE / 2
             items += [("circle", h["x"] - r, h["y"] - r, h["x"] + r, h["y"] + r) for h in holes]
-    for h in ef.button_holes().values():
+    for ref, h in zip(("SW1", "SW2"), ef.button_holes().values()):
+        if be.button_top_z(ref) < ef.TOTAL_D:
+            (cx, cy, d), (x0, x1, y0, y1) = be.button_tab_outline(h, be.BUTTON_TAB["slot"])
+            items += [("circle", cx - d / 2, cy - d / 2, cx + d / 2, cy + d / 2), ("rect", x0, y0, x1, y1)]
+            continue
         r = be.BUTTON_HOLE / 2
         items.append(("circle", h["x"] - r, h["y"] - r, h["x"] + r, h["y"] + r))
     for h in ef.led_windows():
@@ -205,8 +209,8 @@ def v3_labels():
     placed, _ = dali_terminals()
     placed.append(Label("BUS   POWER", 0.0, 5.5, 1.45))
     placed.append(Label("KNX", 0.0, 11.2, 2.6))
-    placed.append(Label("PRG/RST", -4.1, 28.6, 1.15))
-    placed.append(Label("FUNC", 4.1, 28.6, 1.15))
+    placed.append(Label("PRG/RST", -4.1, 29.0, 1.15))
+    placed.append(Label("FUNC", 4.1, 29.0, 1.15))
     for text, x in (("STATUS", -4.8), ("KNX", 0.0), ("DALI", 4.8)):
         placed.append(Label(text, x, 19.6, 0.85))
     return placed

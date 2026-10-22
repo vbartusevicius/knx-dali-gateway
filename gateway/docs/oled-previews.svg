@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1308 1840" width="1308" height="1840" shape-rendering="crispEdges">
 <rect width="100%" height="100%" fill="#0f141c"/>
-<text x="28" y="30" fill="#e6edf3" font-family="monospace" font-size="16" font-weight="bold">KNX-DALI Gateway 0.96" OLED Screens — V1/V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>
+<text x="28" y="30" fill="#e6edf3" font-family="monospace" font-size="16" font-weight="bold">KNX-DALI Gateway 0.96" OLED Screens — V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>
 <text x="28" y="52" fill="#8b949e" font-family="monospace" font-size="12">Compiled from gateway/src/device/OledDisplay.cpp | Dot-and-Bar Pagination | 2-Line IP on V3 | Right-Aligned Info Col 2</text>
 <text x="28" y="88" fill="#c9d1d9" font-family="monospace" font-size="11.5" font-weight="bold">Page 1 — WiFi Connected (Max IP 255.255.255.255 + 15 Errors)</text>
 <rect x="24" y="192" width="392" height="200" rx="4" fill="#05070a" stroke="#30363d" stroke-width="2"/>

@@ -23,6 +23,7 @@ footprint mirrored about its own x axis, then rotated and placed.
 import json
 import math
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -377,11 +378,44 @@ def check_board(pcb, parts, *, live=False):
     return checks
 
 
+def stock(boards=ORDER_BOARDS):
+    """Live JLCPCB stock, unit price and library type of every LCSC part on
+    every generated board of the active variant; returns the parts short of
+    `boards` sets. Extended parts each add JLCPCB's per-order feeder fee."""
+    sys.path.insert(0, str(REPO / "hardware/circuits"))
+    from product_spec import load_spec
+
+    variant = load_spec()["active_variant"]
+    need = {}
+    for path in sorted((REPO / "hardware/build" / variant).glob("*/parts.json")):
+        if path.parent.name == "panel":
+            continue
+        for p in json.loads(path.read_text()):
+            if p["lcsc"]:
+                need[p["lcsc"]] = need.get(p["lcsc"], 0) + 1
+    short = []
+    print(f"{variant}: {'LCSC':11} {'MPN':28} {'qty':>3} {'stock':>9} {'USD':>7} library")
+    for lcsc, qty in sorted(need.items()):
+        record = jlc_record(lcsc, refresh=True)
+        prices = record.get("prices") or record.get("jlcPrices") or [{}]
+        count = int(record.get("stockCount") or 0)
+        print(f"{variant}: {lcsc:11} {record.get('componentModelEn', '?')[:28]:28} {qty:3} {count:9} "
+              f"{prices[0].get('productPrice', '?')!s:>7} {record.get('componentLibraryType', '?')}")
+        if count < qty * boards:
+            short.append((lcsc, count, qty * boards))
+    for lcsc, count, wanted in short:
+        print(f"SHORT {lcsc}: stock {count} < {wanted} for {boards} boards")
+    return short
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["snapshot"])
+    parser.add_argument("command", choices=["snapshot", "stock"])
     parser.add_argument("--cached", action="store_true")
+    parser.add_argument("--boards", type=int, default=ORDER_BOARDS)
     args = parser.parse_args()
+    if args.command == "stock":
+        sys.exit(1 if stock(args.boards) else 0)
     snapshot(cached=args.cached)

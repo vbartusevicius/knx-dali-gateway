@@ -1,6 +1,6 @@
 active_variant: v3
 product:
-  revision: C
+  revision: D
   release: v3
   status: draft-unvalidated
 
@@ -20,8 +20,8 @@ terminals:
     board: main
     shoulder: top
     poles: 2
-    pitch: 5.75
-    type: knx-style push-in plug (Phoenix PTS 0,5/2-PH-5,75 on PST 1,0 pin strip)
+    pitch: 5.08
+    type: push-in spring terminal (Kefa KF142R-5.08-2P), wire entry in the top face
     labels: [DA, DA]
   aux_dc:
     board: main
@@ -46,7 +46,7 @@ boards:
     max_outline: { width: 39.8, height: 78.0 }
     isolation:
       - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
-      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [REM3] }
+      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [isolated DC-DC] }
       - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, bridged_by: [supply-off optocoupler] }
   ui:
     plane: parallel-to-front
@@ -66,14 +66,16 @@ front_ui:
   board_z: 54.19
   board_top_z: 55.39
   oled:
-    header_gap: 4.06      # CFAL12832D-B total 1.45 (board 0.45 + panel 1.00); glass at 60.9
+    header_gap: 4.06      # UI board top to the panel's back plane; glass at 60.9
     module_board: 0.45
     panel: 1.00
     header_plastic_max: 2.5
     pin_tail: 24.99
   buttons:
-    - { id: prg_rst, label: PRG/RST, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
-    - { id: func, label: FUNC, actuator: tactile-TS-1088+plunger, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4 }
+    - { id: prg_rst, label: PRG/RST, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
+        plunger: true, protrusion_beyond_front: 0.6 }
+    - { id: func, label: FUNC, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
+        plunger: true, protrusion_beyond_front: 0.6 }
   display:
     type: oled-0.96in-64x128-ssd1312-i2c-hotbar14
     part: QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (14.0 x 28.0 x 1.22 mm, 14-pin 0.62 mm solder FPC)
@@ -82,6 +84,9 @@ front_ui:
 enclosure:
   shoulder_z: 44.0
   screw_tabs: []
+
+assembly:
+  trim_tht_to: 1.5   # main back side has 2.0 mm to the cover wall: cut every through-hole lead to <= 1.5 mm
 
 mcu:
   board: main
@@ -162,6 +167,8 @@ derived:
       - KNX_P_PROT
       - VFILT
       - +5V
+      - +5V_BUCK
+      - +5V_AUX
       SELV-AUX:
       - GNDA
       - AUX_IN

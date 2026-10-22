@@ -10,17 +10,15 @@
 """
 
 import math
-from pathlib import Path
 
 import pcbnew
 import pytest
-
-REPO = Path(__file__).resolve().parents[2]
+from board_variant import layout_path
 
 
 @pytest.fixture(scope="module")
 def board():
-    return pcbnew.LoadBoard(str(REPO / "hardware/layout/v1/main/main.kicad_pcb"))
+    return pcbnew.LoadBoard(str(layout_path("main")))
 
 
 def pad(board, ref, number):
@@ -58,6 +56,11 @@ def test_dc1_switch_node_short(board):
 
 
 def test_exposed_pad_thermal_vias(board):
+    """v3 keeps the exposed pad's vias out of the front side on purpose
+    (knx.build(thermal_vias=False)): about 0.2 W spreads into the back copper."""
+    u1 = board.FindFootprintByReference("U1")
+    if not str(u1.GetFPID().GetLibItemName()).endswith("ThermalVias"):
+        pytest.skip("exposed pad without thermal vias by design")
     vias = [p for p in board.FindFootprintByReference("U1").Pads()
             if p.GetNumber() == "41" and p.GetDrillSize().x > 0]
     assert len(vias) >= 5
@@ -66,7 +69,7 @@ def test_exposed_pad_thermal_vias(board):
 def test_knx_supply_path_width(board):
     u1 = board.FindFootprintByReference("U1")
     u1.BuildCourtyardCaches()
-    area = u1.GetCourtyard(pcbnew.F_CrtYd).BBox()
+    area = u1.GetCourtyard(pcbnew.B_CrtYd if u1.IsFlipped() else pcbnew.F_CrtYd).BBox()
     thin = [pcbnew.ToMM(t.GetWidth()) for t in board.GetTracks()
             if t.GetNetname() == "KNX_P_PROT" and t.GetClass() != "PCB_VIA"
             and pcbnew.ToMM(t.GetWidth()) < 0.22

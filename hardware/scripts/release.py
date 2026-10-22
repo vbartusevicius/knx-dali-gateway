@@ -5,7 +5,7 @@
 Naming boards re-releases only those (the others' folders stay as they are);
 the assembly parts list and the enclosure are always refreshed.
 
-<version> defaults to the variant's product.release (v1 -> v1, v2 -> v2).
+<version> defaults to the variant's product.release (v2 -> v2, v3 -> v3).
 
 Writes hardware/releases/<version>/<board>/ for every board: KiCad sources,
 Gerbers and drill files (one zip for upload), JLCPCB BOM and placement files
@@ -41,8 +41,7 @@ RELEASE = SPEC["product"]["release"]
 
 
 def assembly_parts_path():
-    variant_list = REPO / "hardware/circuits/variants" / VARIANT / "assembly_parts.yaml"
-    return variant_list if variant_list.exists() else REPO / "hardware/product/assembly_parts.yaml"
+    return REPO / "hardware/circuits/variants" / VARIANT / "assembly_parts.yaml"
 
 
 def run(*cmd):

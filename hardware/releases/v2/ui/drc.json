@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-10-17T11:00:56",
+    "date": "2026-10-22T18:06:48",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -34,111 +34,6 @@
     "unconnected_items": [],
     "violations": [
         {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R6",
-                    "pos": {
-                        "x": 27.5,
-                        "y": -14.3
-                    },
-                    "uuid": "1958cc3d-7786-4049-bbd1-092c9ea60659"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'gateway_fp'",
-            "items": [
-                {
-                    "description": "Footprint D3",
-                    "pos": {
-                        "x": 23.75,
-                        "y": -3.5
-                    },
-                    "uuid": "1b62b511-8841-4509-bc5c-27bb5b0d92a8"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R5",
-                    "pos": {
-                        "x": 11.0,
-                        "y": -13.3
-                    },
-                    "uuid": "2c4c8349-c344-4bd7-bd42-69d467572eb7"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R4",
-                    "pos": {
-                        "x": 14.0,
-                        "y": -13.3
-                    },
-                    "uuid": "45294d28-e1be-402c-9c91-70b91e0d426a"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C4",
-                    "pos": {
-                        "x": 16.0,
-                        "y": -21.3
-                    },
-                    "uuid": "5b4c5f4a-7c3d-488e-8455-30d250bc0188"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C2",
-                    "pos": {
-                        "x": 17.0,
-                        "y": -14.3
-                    },
-                    "uuid": "633ef510-1030-442e-957e-c86ecb9c49cd"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C1",
-                    "pos": {
-                        "x": 5.5,
-                        "y": -17.8
-                    },
-                    "uuid": "79319c2b-8f6e-436c-81c7-8f93bc8c9d61"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
@@ -147,112 +42,7 @@
                         "x": 20.5,
                         "y": -18.3
                     },
-                    "uuid": "969e6427-c644-47bd-b03c-40bf67bf0b62"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
-            "items": [
-                {
-                    "description": "Footprint U3",
-                    "pos": {
-                        "x": 16.0,
-                        "y": -18.3
-                    },
-                    "uuid": "9af1a5e5-7550-4891-9883-bcbcb911c906"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R2",
-                    "pos": {
-                        "x": 16.0,
-                        "y": -23.3
-                    },
-                    "uuid": "a7701c76-128e-45ef-ab33-402af99255f1"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
-            "items": [
-                {
-                    "description": "Footprint SW2",
-                    "pos": {
-                        "x": 23.75,
-                        "y": -8.8
-                    },
-                    "uuid": "b6305032-3b80-48bd-a6f2-dbbbef04d1cd"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
-            "items": [
-                {
-                    "description": "Footprint SW1",
-                    "pos": {
-                        "x": 7.75,
-                        "y": -8.8
-                    },
-                    "uuid": "cc9f0db8-6057-4e38-9083-8d2e073ff152"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C6",
-                    "pos": {
-                        "x": 15.75,
-                        "y": -6.7
-                    },
-                    "uuid": "d777e3fc-1f0a-4ec6-ac56-b519a45ddcbf"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R3",
-                    "pos": {
-                        "x": 20.5,
-                        "y": -14.3
-                    },
-                    "uuid": "e68cf77e-9a84-4731-8559-cb2ce5455fb2"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'gateway_fp'",
-            "items": [
-                {
-                    "description": "Footprint D2",
-                    "pos": {
-                        "x": 15.75,
-                        "y": -3.5
-                    },
-                    "uuid": "edadbf25-6c52-4b22-8ace-0bb2f66c5edf"
+                    "uuid": "06c82699-af2b-4c75-9d7e-c24596092989"
                 }
             ],
             "severity": "warning",
@@ -267,7 +57,97 @@
                         "x": 7.0,
                         "y": -15.3
                     },
-                    "uuid": "edfa9284-9b93-44ec-8816-3703e8b3eb46"
+                    "uuid": "091b67c7-d678-4f1c-9c07-9960ed14947f"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R5",
+                    "pos": {
+                        "x": 11.0,
+                        "y": -13.3
+                    },
+                    "uuid": "130c91bf-705a-42f1-89a3-4f9466ae5ba1"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R6",
+                    "pos": {
+                        "x": 27.5,
+                        "y": -14.3
+                    },
+                    "uuid": "1750e6da-9162-4130-ace5-4cf266dc4970"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
+            "items": [
+                {
+                    "description": "Footprint SW2",
+                    "pos": {
+                        "x": 23.75,
+                        "y": -8.8
+                    },
+                    "uuid": "1bbacdd2-f0c5-4601-ae0b-39d2b01cd01e"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'gateway_fp'",
+            "items": [
+                {
+                    "description": "Footprint D3",
+                    "pos": {
+                        "x": 23.75,
+                        "y": -3.5
+                    },
+                    "uuid": "331f823e-5342-45bd-9fe0-eb4fe02c9516"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R3",
+                    "pos": {
+                        "x": 20.5,
+                        "y": -14.3
+                    },
+                    "uuid": "3e4ae9d0-f52a-4a88-b5e3-d88cf6f2dc19"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
+            "items": [
+                {
+                    "description": "Footprint SW1",
+                    "pos": {
+                        "x": 7.75,
+                        "y": -8.8
+                    },
+                    "uuid": "4cdf93e7-5e82-4859-80a3-9ccb87caf469"
                 }
             ],
             "severity": "warning",
@@ -282,22 +162,52 @@
                         "x": 7.75,
                         "y": -3.5
                     },
-                    "uuid": "f078ee80-b094-4615-964d-aee5db61d689"
+                    "uuid": "4da1add9-ab5d-4a86-967a-127cac69834a"
                 }
             ],
             "severity": "warning",
             "type": "lib_footprint_issues"
         },
         {
-            "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
             "items": [
                 {
-                    "description": "Footprint J2",
+                    "description": "Footprint R2",
                     "pos": {
-                        "x": 8.64,
-                        "y": -38.45
+                        "x": 16.0,
+                        "y": -23.3
                     },
-                    "uuid": "f1b573d8-cf27-4bde-9874-4baa68c2242d"
+                    "uuid": "5da6bd9d-32a4-4a64-b0fe-a093e4fb627f"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
+            "items": [
+                {
+                    "description": "Footprint U3",
+                    "pos": {
+                        "x": 16.0,
+                        "y": -18.3
+                    },
+                    "uuid": "60e02891-e220-4450-ba1e-695478bd6fb0"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C6",
+                    "pos": {
+                        "x": 15.75,
+                        "y": -6.7
+                    },
+                    "uuid": "75197219-cf75-44f9-a302-914a45966d0c"
                 }
             ],
             "severity": "warning",
@@ -312,7 +222,7 @@
                         "x": 12.0,
                         "y": -23.3
                     },
-                    "uuid": "f43151ca-ea41-41e8-b6b2-ae21670c8793"
+                    "uuid": "80bcb579-6772-47a3-8609-87253b6fbad6"
                 }
             ],
             "severity": "warning",
@@ -322,12 +232,87 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint C5",
+                    "description": "Footprint C4",
                     "pos": {
-                        "x": 7.75,
+                        "x": 16.0,
+                        "y": -21.3
+                    },
+                    "uuid": "8dc518bc-fe83-4221-ae9d-8161a0acc323"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'gateway_fp'",
+            "items": [
+                {
+                    "description": "Footprint D2",
+                    "pos": {
+                        "x": 15.75,
                         "y": -3.5
                     },
-                    "uuid": "0e222375-f640-42d0-89a5-57e648c3b85b"
+                    "uuid": "92c25fe1-9bc5-41ff-b0ab-72725a04489e"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C1",
+                    "pos": {
+                        "x": 5.5,
+                        "y": -17.8
+                    },
+                    "uuid": "b20b045d-df91-4326-8b35-860765ed3a79"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C2",
+                    "pos": {
+                        "x": 17.0,
+                        "y": -14.3
+                    },
+                    "uuid": "b82f4984-de14-422f-8adc-8a0850bacaed"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R4",
+                    "pos": {
+                        "x": 14.0,
+                        "y": -13.3
+                    },
+                    "uuid": "c1baa1da-af15-419e-aea6-07ffc416fc2f"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
+            "items": [
+                {
+                    "description": "Footprint J2",
+                    "pos": {
+                        "x": 8.64,
+                        "y": -38.45
+                    },
+                    "uuid": "c6c27e4b-1717-4261-8964-a0225bacbb1e"
                 }
             ],
             "severity": "warning",
@@ -342,7 +327,22 @@
                         "x": 20.0,
                         "y": -3.3
                     },
-                    "uuid": "1e0d3bed-a8cb-4186-b296-3ea29abfc103"
+                    "uuid": "15994647-40f3-4fcd-b532-17f70be2e007"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C5",
+                    "pos": {
+                        "x": 7.75,
+                        "y": -3.5
+                    },
+                    "uuid": "2068290f-ee28-449c-967f-3adf871e2ef1"
                 }
             ],
             "severity": "warning",
@@ -357,7 +357,7 @@
                         "x": 29.0,
                         "y": -3.5
                     },
-                    "uuid": "7c6ce5a2-6591-4633-8382-2c3c00010cbd"
+                    "uuid": "42255f27-c76f-44c4-9d9b-1d0aff8c45c4"
                 }
             ],
             "severity": "warning",
@@ -372,7 +372,7 @@
                         "x": 15.75,
                         "y": -26.7
                     },
-                    "uuid": "8fe06cd1-1e58-4918-9866-41e89bef33f1"
+                    "uuid": "efdbb1d7-42d8-4c79-9aad-02c61797e8a6"
                 }
             ],
             "severity": "warning",
@@ -387,7 +387,7 @@
                         "x": 10.762742,
                         "y": -12.7775
                     },
-                    "uuid": "0512d0a6-63d6-48de-a2e5-666caeb06546"
+                    "uuid": "7105ca96-57f0-4a60-b0c9-fc518b9de268"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -395,7 +395,7 @@
                         "x": 2.1,
                         "y": -12.8
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
                 }
             ],
             "severity": "warning",
@@ -404,44 +404,21 @@
         {
             "description": "Silkscreen clearance",
             "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 2.1,
-                        "y": -12.8
-                    },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
-                },
                 {
                     "description": "Segment of R4 on F.Silkscreen",
                     "pos": {
                         "x": 13.762742,
                         "y": -12.7775
                     },
-                    "uuid": "7723c533-4ae4-43cb-a826-6a1e3f76b95b"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 2.4,
-                        "y": -16.82
-                    },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                    "uuid": "48adadd7-6823-4342-8c2a-d519e9197d66"
                 },
                 {
-                    "description": "Segment of U3 on F.Silkscreen",
+                    "description": "Segment on F.Silkscreen",
                     "pos": {
-                        "x": 15.09,
-                        "y": -16.74
+                        "x": 2.1,
+                        "y": -12.8
                     },
-                    "uuid": "a52e2fb5-c7cd-4c8c-882b-c3768d5e166c"
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
                 }
             ],
             "severity": "warning",
@@ -456,7 +433,7 @@
                         "x": 2.4,
                         "y": -16.82
                     },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                    "uuid": "58b3fcd6-d1cf-493f-a8b0-35a980be0de2"
                 },
                 {
                     "description": "Segment of U3 on F.Silkscreen",
@@ -464,7 +441,30 @@
                         "x": 16.91,
                         "y": -16.79
                     },
-                    "uuid": "edb75a09-e33a-40d8-b08f-ebe28e8fe948"
+                    "uuid": "e940a50d-ec68-4b2a-ae10-f1cbb374d3a3"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "Segment of U3 on F.Silkscreen",
+                    "pos": {
+                        "x": 16.91,
+                        "y": -16.74
+                    },
+                    "uuid": "005f1d7c-fbb3-433f-a805-a84a6b3f0c7e"
+                },
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 2.4,
+                        "y": -16.82
+                    },
+                    "uuid": "58b3fcd6-d1cf-493f-a8b0-35a980be0de2"
                 }
             ],
             "severity": "warning",
@@ -479,15 +479,15 @@
                         "x": 2.4,
                         "y": -16.82
                     },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                    "uuid": "58b3fcd6-d1cf-493f-a8b0-35a980be0de2"
                 },
                 {
                     "description": "Segment of U3 on F.Silkscreen",
                     "pos": {
-                        "x": 16.91,
+                        "x": 15.09,
                         "y": -16.74
                     },
-                    "uuid": "68a9ac44-f4c8-494c-8978-73376d6411eb"
+                    "uuid": "7bb82c65-9cef-4b48-ba21-731cff021e91"
                 }
             ],
             "severity": "warning",
@@ -502,53 +502,7 @@
                         "x": 2.1,
                         "y": -12.8
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
-                },
-                {
-                    "description": "Pad 1 [N$1] of R4 on F.Cu",
-                    "pos": {
-                        "x": 13.175,
-                        "y": -13.3
-                    },
-                    "uuid": "00b7de2f-0348-4159-b021-9de0fe9a70c5"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_over_copper"
-        },
-        {
-            "description": "Silkscreen clipped by solder mask",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 2.1,
-                        "y": -12.8
-                    },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
-                },
-                {
-                    "description": "Pad 2 [GND] of R4 on F.Cu",
-                    "pos": {
-                        "x": 14.825,
-                        "y": -13.3
-                    },
-                    "uuid": "a4f73ad1-df76-46b6-b1ca-42e1bfd9672e"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_over_copper"
-        },
-        {
-            "description": "Silkscreen clipped by solder mask",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 2.1,
-                        "y": -12.8
-                    },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
                 },
                 {
                     "description": "Pad 1 [N$2] of R5 on F.Cu",
@@ -556,7 +510,7 @@
                         "x": 10.175,
                         "y": -13.3
                     },
-                    "uuid": "3e1020bd-1a13-4229-9093-c374ea968c1c"
+                    "uuid": "d560b24f-6b99-4810-84c4-66335ffcb6ec"
                 }
             ],
             "severity": "warning",
@@ -571,7 +525,7 @@
                         "x": 2.1,
                         "y": -12.8
                     },
-                    "uuid": "75971307-7c6b-4ddf-989b-f40c9de65923"
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
                 },
                 {
                     "description": "Pad 2 [GND] of R5 on F.Cu",
@@ -579,7 +533,53 @@
                         "x": 11.825,
                         "y": -13.3
                     },
-                    "uuid": "61f86eb8-75ed-43b8-a381-7a05415e1c49"
+                    "uuid": "26270a28-d388-4f46-bedc-91e2d18aeaf2"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 2.1,
+                        "y": -12.8
+                    },
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
+                },
+                {
+                    "description": "Pad 1 [N$1] of R4 on F.Cu",
+                    "pos": {
+                        "x": 13.175,
+                        "y": -13.3
+                    },
+                    "uuid": "931c4464-cba7-4dde-8259-b4a2f961ab1d"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 2.1,
+                        "y": -12.8
+                    },
+                    "uuid": "91f488a4-2f07-41b8-b7ba-5f6211eee650"
+                },
+                {
+                    "description": "Pad 2 [GND] of R4 on F.Cu",
+                    "pos": {
+                        "x": 14.825,
+                        "y": -13.3
+                    },
+                    "uuid": "3c6df104-e5bc-4178-887a-dce9190833bf"
                 }
             ],
             "severity": "warning",
@@ -594,7 +594,7 @@
                         "x": 2.4,
                         "y": -16.82
                     },
-                    "uuid": "1bce00eb-3560-42d6-9732-34120d1cca81"
+                    "uuid": "58b3fcd6-d1cf-493f-a8b0-35a980be0de2"
                 },
                 {
                     "description": "Pad 1 [+5V] of C3 on F.Cu",
@@ -602,7 +602,191 @@
                         "x": 20.5,
                         "y": -17.35
                     },
-                    "uuid": "d307e8d6-8c71-4b53-9a16-649f8cacc72e"
+                    "uuid": "2e47da76-610d-4d9d-ae30-c9ff49161702"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "Pad 1 [+3V3] of R1 on F.Cu",
+                    "pos": {
+                        "x": 11.175,
+                        "y": -23.3
+                    },
+                    "uuid": "06f51636-aeaa-4221-8591-62b71e2be40a"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "PTH pad 3 [BTN_LADDER] of U2",
+                    "pos": {
+                        "x": 8.13,
+                        "y": -24.16
+                    },
+                    "uuid": "d1c83eab-c40e-40d2-85a9-778d27f511a1"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "Pad 1 [+3V3] of R2 on F.Cu",
+                    "pos": {
+                        "x": 15.175,
+                        "y": -23.3
+                    },
+                    "uuid": "be167cb9-bf78-447c-a9eb-ade99c4f55af"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "Pad 2 [I2C_SCL] of R2 on F.Cu",
+                    "pos": {
+                        "x": 16.825,
+                        "y": -23.3
+                    },
+                    "uuid": "1a33dac0-3163-4aff-95b8-63ca4967c205"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "Pad 2 [I2C_SDA] of R1 on F.Cu",
+                    "pos": {
+                        "x": 12.825,
+                        "y": -23.3
+                    },
+                    "uuid": "99f8c04f-db7c-425b-a44f-1d4e84dcb015"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 4.88,
+                        "y": -23.42
+                    },
+                    "uuid": "ec6149e5-fcc0-4fa7-9dff-a99279b94d33"
+                },
+                {
+                    "description": "PTH pad 12 [+3V3] of U2",
+                    "pos": {
+                        "x": 23.37,
+                        "y": -24.16
+                    },
+                    "uuid": "d9fb3979-af72-4268-9f0a-cb6316ce89f3"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 26.619999,
+                        "y": -34.28
+                    },
+                    "uuid": "d0dc8867-323c-434b-83b0-6e76e1707b61"
+                },
+                {
+                    "description": "PTH pad 7 [KNX_RXD] of U2",
+                    "pos": {
+                        "x": 8.13,
+                        "y": -34.32
+                    },
+                    "uuid": "f9401c04-a7aa-42b2-83c4-ce228a1195f4"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 26.619999,
+                        "y": -34.28
+                    },
+                    "uuid": "d0dc8867-323c-434b-83b0-6e76e1707b61"
+                },
+                {
+                    "description": "PTH pad 8 [KNX_TXD] of U2",
+                    "pos": {
+                        "x": 23.37,
+                        "y": -34.32
+                    },
+                    "uuid": "1289360d-04e7-4cf8-9180-5a783b79da45"
                 }
             ],
             "severity": "warning",

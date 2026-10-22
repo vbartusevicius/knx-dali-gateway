@@ -1,4 +1,4 @@
-from blocks import dali, knx
+from blocks import core_power, dali, knx
 from common import block, part, power, power_flag, src
 from skidl import Net
 
@@ -37,6 +37,7 @@ def build():
                       source=f"DALI side of the interface board (its J2); {INTERFACE_STACK}"), ref="J5")
     for i, name in enumerate(("da1", "da2", "gndd"), start=1):
         socket[i] += dali_nets[name]
+    core_power.build(gnd, dali_nets["gnda"], dali_nets["aux_p"], knx_nets["v5_buck"], knx_nets["v5"])
 
 
 NET_CLASSES = {**knx.NET_CLASSES, **dali.NET_CLASSES}

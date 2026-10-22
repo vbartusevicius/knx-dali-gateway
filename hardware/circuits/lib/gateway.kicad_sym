@@ -58,24 +58,70 @@
     )
   )
 
-  (symbol "REM3_DCDC_CTRL"
+  (symbol "DCDC_DIP24_CTRL"
     (pin_names (offset 0.508))
     (in_bom yes)
     (on_board yes)
     (property "Reference" "U" (at 0 10.16 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "REM3_DCDC_CTRL" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "DCDC_DIP24_CTRL" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-    (property "Datasheet" "RECOM REM3 series /CTRL option: reinforced 5kVAC, 250VAC working, 2MOPP; CTRL referred to -Vin: open or 0-1.2V on, 2.2-12V off, -0.5..1 mA" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-    (symbol "REM3_DCDC_CTRL_0_1"
+    (property "Datasheet" "RECOM REC3-RW /CTRL option (A pinning): 2kVDC/1s, 1kVAC/1min functional isolation; CTRL referred to -Vin: open or 0-1.2V on, 2.2-12V off" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "DCDC_DIP24_CTRL_0_1"
       (rectangle (start -7.62 7.62) (end 7.62 -7.62)
         (stroke (width 0.254) (type default)) (fill (type background))))
-    (symbol "REM3_DCDC_CTRL_1_1"
+    (symbol "DCDC_DIP24_CTRL_1_1"
       (pin input line (at -10.16 -5.08 0) (length 2.54) (name "CTRL" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
       (pin power_in line (at -10.16 5.08 0) (length 2.54) (name "-Vin" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
       (pin power_in line (at -10.16 2.54 0) (length 2.54) (name "+Vin" (effects (font (size 1.27 1.27)))) (number "22" (effects (font (size 1.27 1.27)))))
       (pin power_in line (at -10.16 0 0) (length 2.54) (name "+Vin" (effects (font (size 1.27 1.27)))) (number "23" (effects (font (size 1.27 1.27)))))
       (pin power_out line (at 10.16 2.54 180) (length 2.54) (name "+Vout" (effects (font (size 1.27 1.27)))) (number "14" (effects (font (size 1.27 1.27)))))
       (pin power_out line (at 10.16 -2.54 180) (length 2.54) (name "-Vout" (effects (font (size 1.27 1.27)))) (number "16" (effects (font (size 1.27 1.27)))))
+    )
+  )
+
+  (symbol "DCDC_SIP6"
+    (pin_names (offset 0.508))
+    (in_bom yes)
+    (on_board yes)
+    (property "Reference" "U" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "DCDC_SIP6" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "TRACO TMR 1 series SIP-6: 1 -Vin, 2 +Vin, 4 +Vout, 6 -Vout; 1.5 kVDC functional isolation" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "DCDC_SIP6_0_1"
+      (rectangle (start -7.62 3.81) (end 7.62 -3.81)
+        (stroke (width 0.254) (type default)) (fill (type background))))
+    (symbol "DCDC_SIP6_1_1"
+      (pin power_in line (at -10.16 2.54 0) (length 2.54) (name "+Vin" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at -10.16 -2.54 0) (length 2.54) (name "-Vin" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 2.54 180) (length 2.54) (name "+Vout" (effects (font (size 1.27 1.27)))) (number "4" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 -2.54 180) (length 2.54) (name "-Vout" (effects (font (size 1.27 1.27)))) (number "6" (effects (font (size 1.27 1.27)))))
+    )
+  )
+
+  (symbol "TPS2121"
+    (pin_names (offset 0.508))
+    (in_bom yes)
+    (on_board yes)
+    (property "Reference" "U" (at 0 10.16 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "TPS2121" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tps2121.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "TPS2121_0_1"
+      (rectangle (start -7.62 7.62) (end 7.62 -7.62)
+        (stroke (width 0.254) (type default)) (fill (type background))))
+    (symbol "TPS2121_1_1"
+      (pin power_out line (at 10.16 5.08 180) (length 2.54) (name "OUT" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at -10.16 2.54 0) (length 2.54) (name "IN2" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
+      (pin input line (at -10.16 -5.08 0) (length 2.54) (name "CP2" (effects (font (size 1.27 1.27)))) (number "3" (effects (font (size 1.27 1.27)))))
+      (pin input line (at -10.16 -2.54 0) (length 2.54) (name "OV2" (effects (font (size 1.27 1.27)))) (number "4" (effects (font (size 1.27 1.27)))))
+      (pin input line (at -10.16 0 0) (length 2.54) (name "OV1" (effects (font (size 1.27 1.27)))) (number "5" (effects (font (size 1.27 1.27)))))
+      (pin input line (at -10.16 -7.62 0) (length 2.54) (name "PR1" (effects (font (size 1.27 1.27)))) (number "6" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at -10.16 5.08 0) (length 2.54) (name "IN1" (effects (font (size 1.27 1.27)))) (number "7" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 2.54 180) (length 2.54) (name "OUT" (effects (font (size 1.27 1.27)))) (number "8" (effects (font (size 1.27 1.27)))))
+      (pin output line (at 10.16 -2.54 180) (length 2.54) (name "ST" (effects (font (size 1.27 1.27)))) (number "9" (effects (font (size 1.27 1.27)))))
+      (pin passive line (at 10.16 -5.08 180) (length 2.54) (name "ILM" (effects (font (size 1.27 1.27)))) (number "10" (effects (font (size 1.27 1.27)))))
+      (pin passive line (at 10.16 -7.62 180) (length 2.54) (name "SS" (effects (font (size 1.27 1.27)))) (number "11" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at 0 -10.16 90) (length 2.54) (name "GND" (effects (font (size 1.27 1.27)))) (number "12" (effects (font (size 1.27 1.27)))))
     )
   )
 

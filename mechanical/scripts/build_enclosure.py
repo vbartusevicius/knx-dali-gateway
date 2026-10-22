@@ -18,6 +18,7 @@ top and bottom walls (the wire sides) into the cover's screw tabs.
 Coordinates: x centred, y up from the bottom, z from the rail's front face.
 """
 
+import math
 import sys
 from pathlib import Path
 
@@ -30,6 +31,8 @@ from enclosure_features import (
     FRONT_Y_END,
     FRONT_Y_START,
     HIDDEN_H,
+    MIN_SKIN,
+    PART_AIR,
     SHOULDER_Z,
     SPEC,
     TOTAL_D,
@@ -42,10 +45,12 @@ from enclosure_features import (
     horizontal_capacitor,
     led_windows,
     legs,
+    main_ribs,
     oled_glass,
     oled_module,
     oled_panel,
     oled_window,
+    part_boxes,
     pegs,
     screw_tabs,
     shoulder_of,
@@ -77,11 +82,16 @@ BUTTON_HOLE = 2.6 if VARIANT == "v3" else 4.0
 KNX_OPENING = 10.6
 SCREW_HOLE = 3.2 if VARIANT == "v3" else 4.0
 CASE_SCREW = {"pilot": 2.2, "clearance": 2.8, "depth": 8.5, "z": BASE_TOP_Z - 2.0}
-SCREW_TAB = {"width": 4.0 if VARIANT == "v3" else 6.0, "depth": 8.5,
+SCREW_TAB = {"width": 4.0 if VARIANT == "v3" else 5.0, "depth": 8.5,
              "z0": 39.85 if VARIANT == "v3" else MAIN_Z + 2.0 + SPEC["checks"]["component_air_gap"]}
 LIP = {"thickness": 1.2, "depth": 2.0}
 SNAP = {"overlap": 0.5, "width": 6.0, "slot": 0.5, "hook_height": 1.8, "free_end_below_board": 1.8,
         "y": (FRONT_Y_START + 12, FRONT_Y_END - 12)}
+
+BOARD_EDGE_CLEARANCE = 0.2
+RIB = {"half_y": 0.4, "half_z": 1.5, "gap": 0.1}
+BUTTON_TAB = {"pad": 2.6, "arm": 2.0, "root_x": 0.9, "slot": 0.45, "thickness": 0.7, "nub": 1.4,
+              "nub_gap": 0.1, "boss": 2.0, "boss_height": 0.6, "boss_round": 0.25}
 
 RAIL = {"centre": HIDDEN_H / 2, "slot": 35.4, "lip": 1.0, "clearance": 0.1}
 BACK_DEPTH = 5.0
@@ -283,6 +293,128 @@ def walls_clip(solid):
     return solid.intersect(box(-WIDTH / 2, WIDTH / 2, 0, HIDDEN_H, -BACK_DEPTH, BASE_TOP_Z))
 
 
+def vertical_main():
+    return SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail"
+
+
+def board_edge_reliefs():
+    """Clearance in the base's bottom and top walls along the path of a
+    vertical main board, which slides in from the open left side."""
+    if not vertical_main():
+        return []
+    slab, c = board_slab("main"), BOARD_EDGE_CLEARANCE
+    bands = [(slab["y0"] - c, WALL + 0.01)] if slab["y0"] - c < WALL else []
+    bands += [(HIDDEN_H - WALL - 0.01, slab["y1"] + c)] if slab["y1"] + c > HIDDEN_H - WALL else []
+    return [box(-WIDTH / 2 - 1, slab["x1"] + PART_AIR, y0, y1, slab["z0"] - PART_AIR, slab["z1"] + PART_AIR)
+            for y0, y1 in bands]
+
+
+def main_back_face_x():
+    return SPEC["boards"]["main"]["x"] - MAIN_THICK
+
+
+def rib_bodies():
+    """Ribs on the cover's left wall that back the vertical main board, so the
+    plug insertion force goes into the case instead of parts and solder joints."""
+    if not vertical_main():
+        return []
+    return [box(-INNER_W / 2 - 0.01, main_back_face_x() - RIB["gap"], y - RIB["half_y"], y + RIB["half_y"],
+                z - RIB["half_z"], z + RIB["half_z"]) for _, y, z in main_ribs()]
+
+
+def back_part_reliefs():
+    """Channels in the cover's left wall over back-side parts of the vertical
+    main board that reach closer than PART_AIR to the wall; open towards the
+    front because the cover slides on along -z."""
+    if not vertical_main():
+        return []
+    wall_in = -INNER_W / 2
+    reliefs = []
+    for b in part_boxes():
+        comp = components(b["board"]).get(b["ref"]) if b["board"] == "main" else None
+        if comp is None or comp["side"] != "back" or b["x0"] >= wall_in + PART_AIR:
+            continue
+        x0 = b["x0"] - PART_AIR
+        if x0 < -WIDTH / 2 + MIN_SKIN:
+            raise ValueError(f"main {b['ref']} would leave less than {MIN_SKIN} mm of the left wall")
+        reliefs.append(box(x0, wall_in + 0.01, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
+                           b["z0"] - PART_AIR, BASE_TOP_Z + 0.01))
+    return reliefs
+
+
+def front_part_reliefs():
+    """Recesses in the base's right wall over front-side parts of the vertical
+    main board that reach closer than PART_AIR to the wall (the TMR 1
+    converter, 11.0 +/- 0.5 mm); the board slides in along +x, so a local
+    recess suffices."""
+    if not vertical_main():
+        return []
+    wall_in = INNER_W / 2
+    reliefs = []
+    for b in part_boxes():
+        comp = components(b["board"]).get(b["ref"]) if b["board"] == "main" else None
+        if comp is None or comp["side"] != "front" or b["x1"] <= wall_in - PART_AIR or b["z0"] >= BASE_TOP_Z:
+            continue
+        x1 = b["x1"] + PART_AIR
+        if x1 > WIDTH / 2 - MIN_SKIN:
+            raise ValueError(f"main {b['ref']} would leave less than {MIN_SKIN} mm of the right wall")
+        reliefs.append(box(wall_in - 0.01, x1, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
+                           b["z0"] - PART_AIR, min(b["z1"] + PART_AIR, BASE_TOP_Z)))
+    return reliefs
+
+
+def terminal_reliefs():
+    """Clearance in the cover's shoulder plate over a vertical-board terminal
+    whose body reaches the plate (the KF142R overhangs the board edge)."""
+    if not vertical_main():
+        return []
+    reliefs = []
+    for s in wire_entries():
+        body = next(b for b in part_boxes("body") if (b["board"], b["ref"]) == ("main", s["ref"]))
+        if body["z1"] + PART_AIR > BASE_TOP_Z:
+            reliefs.append(box(s["x0"], s["x1"], body["y0"] - PART_AIR, HIDDEN_H + 1, BASE_TOP_Z - 0.01,
+                               body["z1"] + PART_AIR))
+    return reliefs
+
+
+def button_top_z(ref):
+    return UI_BOARD_TOP_Z + components("ui")[ref]["height"]
+
+
+def button_tab_outline(hole, grow=0.0):
+    """Front outline of a C-shaped button tab (or of its slot with grow =
+    slot): a round pad over the button and an arm towards the middle of the
+    front face, where both tabs root on one bridge. The left tab reads as a C,
+    the right one as a mirrored C. Returns (pad circle (x, y, d), arm box
+    (x0, x1, y0, y1))."""
+    t = BUTTON_TAB
+    root = math.copysign(t["root_x"], hole["x"])
+    return ((hole["x"], hole["y"], t["pad"] + 2 * grow),
+            (*sorted((hole["x"], root)), hole["y"] - t["arm"] / 2 - grow, hole["y"] + t["arm"] / 2 + grow))
+
+
+def button_tab(ref, hole):
+    """Spring tab in the front wall over a button that does not reach the
+    front face: the C-shaped slot frees a pad and arm, both thinned to
+    BUTTON_TAB thickness, so the pad flexes on the arm rooted at the middle
+    bridge; a rounded bump on the front takes the finger and a plunger behind
+    the pad ends just above the actuator. Returns (cuts, bodies)."""
+    t = BUTTON_TAB
+
+    def solid(grow, z0, z1):
+        (cx, cy, d), (x0, x1, y0, y1) = button_tab_outline(hole, grow)
+        return cylinder(cx, cy, z0, z1, d).union(box(x0, x1, y0, y1, z0, z1))
+
+    through = (FRONT_INNER_Z - 1, TOTAL_D + 1)
+    tab_back = TOTAL_D - t["thickness"]
+    slot = solid(t["slot"], *through).cut(solid(0.0, *through))
+    thin = solid(0.0, FRONT_INNER_Z - 1, tab_back)
+    bump = cylinder(hole["x"], hole["y"], TOTAL_D - 0.01, TOTAL_D + t["boss_height"], t["boss"]) \
+        .faces(">Z").edges().fillet(t["boss_round"])
+    plunger = cylinder(hole["x"], hole["y"], button_top_z(ref) + t["nub_gap"], tab_back + 0.01, t["nub"])
+    return [slot, thin], [plunger, bump]
+
+
 def build_base():
     shell = box(-WIDTH / 2, WIDTH / 2, 0, HIDDEN_H, 0, BASE_TOP_Z).cut(
         box(-INNER_W / 2, INNER_W / 2, WALL, HIDDEN_H - WALL, WALL, BASE_TOP_Z + 1))
@@ -327,8 +459,8 @@ def build_base():
         base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
     for body in leg_bodies() + capacitor_cradles():
         base = base.union(walls_clip(body))
-    for keeper in shoulder_snap_keepers():
-        base = base.cut(keeper)
+    for cut in shoulder_snap_keepers() + board_edge_reliefs() + front_part_reliefs():
+        base = base.cut(cut)
     for tab in screw_tabs():
         outer, wall_in, _ = screw_axis_y(tab)
         overshoot = 1 if tab["side"] == "top" else -1
@@ -343,20 +475,17 @@ def peg_bodies():
 
 
 def standoff_bodies():
+    """Standoffs from the front wall onto the UI board: cylinders, or blocks
+    where the layout gives a size (beside the OLED panel, which a 3 mm
+    cylinder would overlap)."""
     z1 = FRONT_INNER_Z + STACK.pocket_depth + 0.1
-    bodies = [cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER) for p in standoffs()]
+    bodies = [box(p["x"] - p["w"] / 2, p["x"] + p["w"] / 2, p["y"] - p["h"] / 2, p["y"] + p["h"] / 2,
+                  UI_BOARD_TOP_Z, z1) if "w" in p else cylinder(p["x"], p["y"], UI_BOARD_TOP_Z, z1, STANDOFF_DIAMETER)
+              for p in standoffs()]
     if VARIANT == "v3":
-        # Two vertical support rails behind the left/right edges of the 25.2 mm rear cap
-        # (enc_y = 31.75..56.95) of the 14.0 x 28.0 mm 64x128 OLED panel, stopping 1.5 mm
-        # behind the panel back for 1-2 layers of 1 mm double-sided foam tape while leaving
-        # the centre and top COG/flex-tail zone (enc_y > 56.5) clear.
-        z_tape = STACK.oled_glass_z - STACK.oled["panel"] - STACK.oled["module_board"] - 1.5 if hasattr(STACK, "oled") else FRONT_INNER_Z - 1.5
-        for sx in (-6.3, 6.3):
-            bodies.append(box(sx - 0.7, sx + 0.7, 31.8, 56.5, z_tape, z1))
-        # Bottom OLED locating ledge stops at enc_y = 30.85..31.65 (0.10 mm below the
-        # enc_y = 31.75 bottom edge of the 28.0 mm OLED glass)
+        # Locating ledges just below the OLED panel's bottom edge (enc y 31.75)
         for sx in (-5.8, 5.8):
-            bodies.append(box(sx - 1.1, sx + 1.1, 30.85, 31.65, z_tape, z1))
+            bodies.append(box(sx - 1.1, sx + 1.1, 30.85, 31.65, FRONT_INNER_Z - 1.5, z1))
     return bodies
 
 
@@ -408,6 +537,12 @@ def lip_bodies():
         if slab["z0"] < BASE_TOP_Z and slab["z1"] > z0:
             notch = box(-WIDTH / 2, WIDTH / 2, slab["y0"] - 0.5, slab["y1"] + 0.5, z0 - 1, BASE_TOP_Z + 1)
             lips = [lip.cut(notch) for lip in lips]
+    reach = x_out - LIP["thickness"] - PART_AIR
+    for b in part_boxes("body"):
+        if b["board"] == "main" and b["z1"] > z0 and (b["x1"] > reach or b["x0"] < -reach):
+            notch = box(b["x0"] - PART_AIR, b["x1"] + PART_AIR, b["y0"] - PART_AIR, b["y1"] + PART_AIR, z0 - 1,
+                        BASE_TOP_Z + 1)
+            lips = [lip.cut(notch) for lip in lips]
     return lips
 
 
@@ -427,7 +562,9 @@ def build_cover():
     cover = protrusion.union(shoulder_plate("bottom")).union(shoulder_plate("top"))
     if VARIANT == "v3":
         cover = cover.union(box(-WIDTH / 2, -INNER_W / 2, WALL - 0.01, HIDDEN_H - WALL + 0.01, WALL, BASE_TOP_Z + 0.01))
-    for body in lip_bodies() + peg_bodies() + standoff_bodies() + screw_tab_bodies() + baffle_bodies():
+    for relief in back_part_reliefs() + terminal_reliefs():
+        cover = cover.cut(relief)
+    for body in lip_bodies() + peg_bodies() + standoff_bodies() + screw_tab_bodies() + baffle_bodies() + rib_bodies():
         cover = cover.union(body)
     for slot, tongue in snap_geometry():
         cover = cover.cut(slot).union(tongue)
@@ -453,11 +590,15 @@ def build_cover():
     front = (FRONT_INNER_Z - 1, TOTAL_D + 1)
     for w in led_windows():
         cover = cover.cut(cylinder(w["x"], w["y"], FRONT_INNER_Z - 1, TOTAL_D - STACK.led_skin_mm, LED_WINDOW))
-    for hole in button_holes().values():
-        cover = cover.cut(cylinder(hole["x"], hole["y"], *front, BUTTON_HOLE))
-        if VARIANT == "v3":
-            # Outer finger bevel recess around button holes
-            cover = cover.cut(cylinder(hole["x"], hole["y"], TOTAL_D - 0.35, TOTAL_D + 0.1, BUTTON_HOLE + 0.8))
+    for ref, hole in zip(("SW1", "SW2"), button_holes().values()):
+        if button_top_z(ref) < TOTAL_D:
+            cuts, bodies = button_tab(ref, hole)
+            for cut in cuts:
+                cover = cover.cut(cut)
+            for body in bodies:
+                cover = cover.union(body)
+        else:
+            cover = cover.cut(cylinder(hole["x"], hole["y"], *front, BUTTON_HOLE))
     win, panel, module = oled_window(), oled_panel(), oled_module()
     cover = cover.cut(box(win["cx"] - win["w"] / 2, win["cx"] + win["w"] / 2,
                           win["cy"] - win["h"] / 2, win["cy"] + win["h"] / 2, *front))

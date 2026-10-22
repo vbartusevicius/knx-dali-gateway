@@ -70,10 +70,10 @@ jobs:
           }
           EOF
 
-      - name: Package Hardware Release Bundles (V1, V2, V3)
+      - name: Package Hardware Release Bundles (V2, V3)
         run: |
           mkdir -p gateway/build/artifacts
-          for v in v1 v2 v3; do
+          for v in v2 v3; do
             (cd hardware/releases/$v && zip -r ../../../gateway/build/artifacts/knx-dali-gateway-hardware-${v}.zip . -x "*.DS_Store")
           done
 
@@ -110,7 +110,6 @@ jobs:
           gh release upload "$REL_TAG" \
             gateway/build/artifacts/firmware.bin \
             gateway/build/artifacts/littlefs.bin \
-            gateway/build/artifacts/knx-dali-gateway-hardware-v1.zip \
             gateway/build/artifacts/knx-dali-gateway-hardware-v2.zip \
             gateway/build/artifacts/knx-dali-gateway-hardware-v3.zip \
             --clobber

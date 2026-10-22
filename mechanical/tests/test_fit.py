@@ -67,6 +67,27 @@ def main_height_violations(comps, height_of):
     return bad
 
 
+PACKAGES = yaml.safe_load((REPO / "hardware/product/package_heights.yaml").read_text())
+
+
+def understated_heights(comps_by_board):
+    return [(board, ref, c["height"], PACKAGES[fp]["body_max"])
+            for board, comps in comps_by_board.items() for ref, c in comps.items()
+            for fp in [c["footprint"].split(":")[-1]]
+            if "body_max" in PACKAGES.get(fp, {}) and c["height"] < PACKAGES[fp]["body_max"] - 1e-6]
+
+
+def test_modelled_heights_cover_the_package_maxima():
+    """Every fit check uses the layout's height table; a part modelled lower
+    than its datasheet maximum hides real collisions."""
+    assert not understated_heights({b: ef.components(b) for b in SPEC["variants"][ef.VARIANT]["boards"]})
+
+
+def test_height_check_catches_an_understated_sma_diode():
+    comps = {"D1": {"footprint": "Diode_SMD:D_SMA", "height": 1.4}}
+    assert understated_heights({"main": comps}) == [("main", "D1", 1.4, 2.44)]
+
+
 def test_main_parts_have_air_to_floor_shoulders_and_ui_board():
     assert not main_height_violations(ef.components("main"), lambda r: part_height("main", r))
 
@@ -166,14 +187,15 @@ def contact_collisions(points, comps, side, half, to_enc):
     soldered pin ends of through-hole parts on the other side."""
     hits = []
     for p in points:
+        hx, hy = (p["w"] / 2, p["h"] / 2) if "w" in p else (half, half)
         for ref, c in comps.items():
             b = c["bbox"]
             (x0, y0), (x1, y1) = to_enc(b["x0"], b["y0"]), to_enc(b["x1"], b["y1"])
-            if c["side"] == side and x0 < p["x"] + half and p["x"] - half < x1 \
-                    and y0 < p["y"] + half and p["y"] - half < y1:
+            if c["side"] == side and x0 < p["x"] + hx and p["x"] - hx < x1 \
+                    and y0 < p["y"] + hy and p["y"] - hy < y1:
                 hits.append(ref)
             pins = [to_enc(x, y) for x, y in c["tht_pads"]]
-            if c["side"] != side and any(abs(x - p["x"]) < half + PIN_RADIUS and abs(y - p["y"]) < half + PIN_RADIUS
+            if c["side"] != side and any(abs(x - p["x"]) < hx + PIN_RADIUS and abs(y - p["y"]) < hy + PIN_RADIUS
                                          for x, y in pins):
                 hits.append(f"{ref} pins")
     return hits
@@ -216,8 +238,13 @@ THROUGH_WALL = {"main": {"J1", "J2", "J3"}, "dali": {"J1"}, "inputs": {"J1", "J2
 
 def wall_crossings(board, comps):
     """Parts other than the connectors, which may pass through their case
-    openings, must stay inside the walls."""
+    openings, must stay inside the walls. Back-side parts of a vertical main
+    board may reach into the cover's left wall reliefs and front-side parts
+    into the base's right wall reliefs, down to MIN_SKIN of wall plus
+    PART_AIR."""
     half = ef.WIDTH / 2 - WALL
+    relief = ef.WIDTH / 2 - ef.MIN_SKIN - ef.PART_AIR
+    vertical = SPEC["boards"][board].get("plane") == "perpendicular-to-rail"
     low, high = (WALL, ef.HIDDEN_H - WALL) if board != "ui" else         (ef.FRONT_Y_START + WALL, ef.FRONT_Y_END - WALL)
     bad = []
     thick = SPEC["boards"][board]["thickness"]
@@ -228,7 +255,9 @@ def wall_crossings(board, comps):
         n0, n1 = (-thick - h, -thick) if c["side"] == "back" else (0.0, h)
         b = ef.span_box(ef.board_point(board, c["bbox"]["x0"], c["bbox"]["y0"], n0),
                         ef.board_point(board, c["bbox"]["x1"], c["bbox"]["y1"], n1))
-        if b["x0"] < -half - 1e-6 or b["x1"] > half + 1e-6 or b["y0"] < low - 1e-6 or b["y1"] > high + 1e-6:
+        left = relief if vertical and c["side"] == "back" else half
+        right = relief if vertical and c["side"] == "front" else half
+        if b["x0"] < -left - 1e-6 or b["x1"] > right + 1e-6 or b["y0"] < low - 1e-6 or b["y1"] > high + 1e-6:
             bad.append(ref)
     return bad
 

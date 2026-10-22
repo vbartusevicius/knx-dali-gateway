@@ -1,6 +1,6 @@
 active_variant: v2
 product:
-  revision: B
+  revision: C
   release: v2
   status: draft-unvalidated
 
@@ -70,7 +70,7 @@ front_ui:
 enclosure:
   screw_tabs:
     - { x: -8.0, side: bottom }
-    - { x: 1.55, side: top }
+    - { x: 2.3, side: top }   # centred between the AUX (J2) and DALI (J3) terminal bodies
 
 mcu:
   board: ui
@@ -136,6 +136,8 @@ derived:
       - CEQ2
       - VSW1
       - VDD1M
+      - +5V_BUCK
+      - +5V_AUX
       - Net-*
       KNX-Power:
       - KNX_P

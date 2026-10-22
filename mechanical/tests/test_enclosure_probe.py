@@ -32,7 +32,9 @@ def clear_line(solids, x, y, z0, z1, steps=12):
 
 
 def test_front_openings_clear(solids):
-    holes = list(ef.button_holes().values())
+    """Buttons that do not reach the front face get a plunger tab instead of a
+    hole (test_enclosure_solids.py checks those)."""
+    holes = [h for ref, h in zip(("SW1", "SW2"), ef.button_holes().values()) if be.button_top_z(ref) >= ef.TOTAL_D]
     win = ef.oled_window()
     holes.append({"x": win["cx"], "y": win["cy"]})
     blocked = [h for h in holes if not clear_line(solids, h["x"], h["y"], be.FRONT_INNER_Z - 0.2, be.TOTAL_D + 1)]

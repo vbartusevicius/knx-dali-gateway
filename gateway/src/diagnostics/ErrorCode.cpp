@@ -13,7 +13,7 @@ constexpr std::array<ErrorDescriptor, 24> catalog{{
      "Inspect DA+/DA- wiring for a short circuit, reversed external DC supply, or damaged ballast."},
     {ErrorCode::DaliNoPower, "DALI_NO_POWER", "DALI Bus Power Absent",
      "No idle high voltage (12..20 V) detected on the DALI line.",
-     "Verify JP1 jumper caps, 24 V AUX supply into REM3-2415S/A/CTRL, or external DALI bus PSU."},
+     "Verify JP1 jumper caps, 24 V AUX supply into the REC3-2415SRW DC-DC, or external DALI bus PSU."},
     {ErrorCode::DaliFrameCollision, "DALI_COLLISION", "DALI Bus Frame Collision",
      "A forward or backward frame collision occurred on the DALI line during transmission.",
      "Check if two ballasts share the same short address or if a DALI-2 input device transmitted at once."},

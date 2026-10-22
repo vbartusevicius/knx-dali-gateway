@@ -13,24 +13,26 @@ frame:
   min_track: 0.12
   edge_clearance: 0.3
   silk_inside: true
-  fine_pitch_power_pads: [U1, U2, J4, Q2, Q3]
+  fine_pitch_power_pads: [U1, U2, J4, Q2, Q3, U10]
   raised_modules: [U8]
   plane_layers: [In1.Cu]
   domains: [SELV-KNX, DALI, SELV-AUX]
   domain_regions:
     SELV-KNX:
       - { x0: 0.0,  y0: 0.0,  x1: 12.8, y1: 42.0 }
-      - { x0: 12.8, y0: 16.0, x1: 18.5, y1: 42.0 }
-      - { x0: 18.5, y0: 16.0, x1: 36.2, y1: 35.5 }
+      - { x0: 12.8, y0: 17.0, x1: 18.5, y1: 42.0 }
+      - { x0: 18.5, y0: 17.0, x1: 36.2, y1: 35.8 }
+      - { x0: 32.0, y0: 9.4,  x1: 36.2, y1: 17.0 }    # U9 output pins 4/6
     SELV-AUX:
-      - { x0: 14.8, y0: 0.0,  x1: 39.8, y1: 14.0 }
-      - { x0: 38.2, y0: 14.0, x1: 39.8, y1: 37.5 }
-      - { x0: 20.5, y0: 37.5, x1: 39.8, y1: 53.5 }
+      - { x0: 14.8, y0: 0.0,  x1: 39.8, y1: 7.4 }     # J2, F1, U9 input pins 1/2
+      - { x0: 14.8, y0: 7.4,  x1: 30.0, y1: 15.0 }    # D3, D4
+      - { x0: 38.2, y0: 7.4,  x1: 39.8, y1: 37.8 }
+      - { x0: 20.5, y0: 37.8, x1: 39.8, y1: 53.5 }
     DALI:
       - { x0: 0.0,  y0: 48.0, x1: 14.5, y1: 78.0 }
       - { x0: 14.5, y0: 59.5, x1: 39.8, y1: 78.0 }
-  isolators: [U3, U4, U5, U6]
-  power_nets: [KNX_P, KNX_P_PROT, VFILT, +5V, +5V_XIAO,
+  isolators: [U3, U4, U5, U6, U9]
+  power_nets: [KNX_P, KNX_P_PROT, VFILT, +5V, +5V_XIAO, +5V_BUCK, +5V_AUX,
                AUX_IN, AUX_FUSED, AUX_P, DA1, DA2, DA_P, DALI_ISO15V, DALI_SUPPLY_SW,
                DALI_BOOT, DALI_SENSE]
   slots:
@@ -39,22 +41,36 @@ frame:
   copper_keepout:
     - { x0: 0.5,  y0: 42.0, x1: 14.5, y1: 48.0 }    # SELV-KNX | DALI (6 mm)
     - { x0: 14.5, y0: 42.0, x1: 20.5, y1: 59.5 }    # DALI | SELV-KNX/AUX (6 mm)
-    - { x0: 20.5, y0: 53.5, x1: 39.3, y1: 59.5 }    # SELV-AUX | DALI, under REM3 (6 mm)
-    - { x0: 12.8, y0: 0.5,  x1: 14.8, y1: 16.0 }    # SELV-KNX | SELV-AUX at bottom plugs (2 mm)
-    - { x0: 14.8, y0: 14.0, x1: 38.2, y1: 16.0 }    # SELV-KNX | SELV-AUX above J2 (2 mm)
-    - { x0: 36.2, y0: 16.0, x1: 38.2, y1: 37.5 }    # SELV-KNX | SELV-AUX rear strip (2 mm)
-    - { x0: 18.5, y0: 35.5, x1: 36.2, y1: 37.5 }    # SELV-KNX | SELV-AUX above U8 (2 mm)
+    - { x0: 20.5, y0: 53.5, x1: 39.3, y1: 59.5 }    # SELV-AUX | DALI, under the DC-DC (6 mm)
+    - { x0: 12.8, y0: 0.5,  x1: 14.8, y1: 17.0 }    # SELV-KNX | SELV-AUX at bottom plugs (2 mm)
+    - { x0: 14.8, y0: 15.0, x1: 32.0, y1: 17.0 }    # SELV-KNX | SELV-AUX above D3/D4 (2 mm)
+    - { x0: 30.0, y0: 7.4,  x1: 32.0, y1: 17.0 }    # SELV-AUX | U9 output island (2 mm)
+    - { x0: 32.0, y0: 7.4,  x1: 38.2, y1: 9.4 }     # U9 input | output pins (2 mm)
+    - { x0: 36.2, y0: 9.4,  x1: 38.2, y1: 37.8 }    # SELV-KNX | SELV-AUX rear strip (2 mm)
+    - { x0: 18.5, y0: 35.8, x1: 36.2, y1: 37.8 }    # SELV-KNX | SELV-AUX above U8 (2 mm)
   pours:
     - { net: GND,  layers: [In1.Cu], region: { x0: 0.5,  y0: 0.5,  x1: 12.5, y1: 41.7 } }
-    - { net: GND,  layers: [In1.Cu], region: { x0: 12.8, y0: 16.3, x1: 18.2, y1: 41.7 } }
-    - { net: GND,  layers: [In1.Cu], region: { x0: 18.5, y0: 16.3, x1: 35.9, y1: 35.2 } }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 0.5,  x1: 39.3, y1: 13.7 } }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 38.3, y0: 14.0, x1: 39.3, y1: 37.5 } }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 20.8, y0: 37.8, x1: 39.3, y1: 53.2 } }
+    - { net: GND,  layers: [In1.Cu], region: { x0: 12.8, y0: 17.3, x1: 18.2, y1: 41.7 } }
+    - { net: GND,  layers: [In1.Cu], region: { x0: 18.5, y0: 17.3, x1: 35.9, y1: 35.5 } }
+    - { net: GND,  layers: [In1.Cu], region: { x0: 32.3, y0: 9.7,  x1: 35.9, y1: 17.6 }, priority: 1 }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 0.5,  x1: 39.3, y1: 7.1 } }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 6.8,  x1: 29.7, y1: 14.7 }, priority: 1 }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 38.5, y0: 6.8,  x1: 39.3, y1: 37.8 }, priority: 2 }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 20.8, y0: 38.1, x1: 39.3, y1: 53.2 } }
     - { net: GNDD, layers: [In1.Cu], region: { x0: 0.5,  y0: 48.3, x1: 14.2, y1: 77.5 } }
     - { net: GNDD, layers: [In1.Cu], region: { x0: 14.5, y0: 59.8, x1: 39.3, y1: 77.5 } }
 
+case:
+  # Cover ribs on the back face, in the part-free strips along the bottom and
+  # top board edges (the cover slides on along -z, so each rib sweeps its strip)
+  ribs:
+    - { x: 3.0,  y: 0.6 }
+    - { x: 37.0, y: 0.6 }
+    - { x: 3.0,  y: 77.4 }
+    - { x: 37.0, y: 77.4 }
+
 pad_ties: { U1: 41 }
+pin_bridges: { U1: [[9, 10]] }
 pad_escapes: { U1: { length: 0.3, skip: [31, 32, 33, 36, 37, 38, 39, 40] } }
 
 heights:
@@ -67,17 +83,6 @@ heights:
   U3: 10.9
   U8: 11.0
   JP1: 8.5
-  D1: 2.0
-  D2: 2.0
-  D3: 2.0
-  D4: 2.0
-  D6: 1.5
-  Q1: 2.3
-  U4: 2.0
-  U5: 2.0
-  U6: 2.0
-  D7: 1.4
-  D8: 1.4
 
 parts:
   # --- FRONT (+x): tall components and connectors ---
@@ -86,40 +91,44 @@ parts:
   D1:  { x: 4.0,   y: 12.2,  rot: 0,   block: knx_in }
   D2:  { x: 4.0,   y: 15.8,  rot: 0,   block: knx_in }
   J2:  { x: 17.5,  y: 8.0,   rot: 0,   block: aux_in, locked: true }
-  F1:  { x: 29.0,  y: 3.5,   rot: 0,   block: aux_fuse }
-  D3:  { x: 29.5,  y: 8.2,   rot: 0,   block: aux_in }
-  D4:  { x: 35.8,  y: 8.2,   rot: 90,  block: aux_in }
+  F1:  { x: 29.0,  y: 3.5,   rot: 90,  block: aux_fuse }
+  D3:  { x: 18.45, y: 12.6,  rot: 0,   block: aux_in }
+  D4:  { x: 26.0,  y: 12.6,  rot: 0,   block: aux_in }
+  # AUX-to-core converter standing in the rear-bottom corner: input pins 1/2 in
+  # the AUX zone, output pins 4/6 in a SELV-KNX island; the base's right wall
+  # has a relief over its top (11.0 +/- 0.5 mm)
+  U9:  { x: 34.0,  y: 2.7,   rot: 90,  block: aux_core, locked: true }
 
   # Middle-left front: 470 uF storage cap, 220 uH KNX inductor, UI FFC
   C4:  { x: 6.8,   y: 23.8,  rot: 0,   block: ncn_left, locked: true }
-  L1:  { x: 5.2,   y: 34.0,  rot: 0,   block: ncn_bottom, locked: true }
+  L1:  { x: 5.2,   y: 32.8,  rot: 0,   block: ncn_bottom, locked: true }
   J4:  { x: 15.8,  y: 31.0,  rot: -90, block: int_ui, locked: true }
 
-  # Middle-right front (under U3): XIAO U8 on 5 mm sockets, with 5 V buck underneath
-  U8:  { x: 27.6,  y: 26.2,  rot: 90,  block: mcu, locked: true }
-  U2:  { x: 22.4,  y: 24.8,  rot: 0,   block: buck5v }
-  L2:  { x: 22.4,  y: 29.6,  rot: 0,   block: buck5v }
-  C10: { x: 26.2,  y: 22.2,  rot: 0,   block: buck5v }
-  C11: { x: 19.2,  y: 21.6,  rot: 0,   block: buck5v }
-  C12: { x: 26.0,  y: 29.8,  rot: 90,  block: buck5v }
-  C13: { x: 28.4,  y: 29.8,  rot: 90,  block: buck5v }
-  C14: { x: 30.2,  y: 26.2,  rot: 0,   block: buck5v }
-  R5:  { x: 19.2,  y: 26.8,  rot: 90,  block: buck5v }
-  R6:  { x: 19.2,  y: 30.2,  rot: 90,  block: buck5v }
-  R7:  { x: 29.8,  y: 22.4,  rot: 0,   block: buck5v }
-  R8:  { x: 29.8,  y: 24.2,  rot: 0,   block: buck5v }
-  U7:  { x: 33.4,  y: 30.2,  rot: 0,   block: mcu_power }
-  C19: { x: 33.4,  y: 27.0,  rot: 0,   block: mcu_power }
-  R22: { x: 33.4,  y: 22.4,  rot: 0,   block: mcu }
-  R23: { x: 33.4,  y: 24.2,  rot: 0,   block: mcu }
+  # Middle-right front (under U3): XIAO U8 on 5 mm sockets, with 5 V buck underneath (y +0.6 for U9)
+  U8:  { x: 27.6,  y: 26.8,  rot: 90,  block: mcu, locked: true }
+  U2:  { x: 22.4,  y: 25.4,  rot: 0,   block: buck5v }
+  L2:  { x: 22.4,  y: 30.2,  rot: 0,   block: buck5v }
+  C10: { x: 26.2,  y: 22.8,  rot: 0,   block: buck5v }
+  C11: { x: 19.2,  y: 22.2,  rot: 0,   block: buck5v }
+  C12: { x: 26.0,  y: 30.4,  rot: 90,  block: buck5v }
+  C13: { x: 28.4,  y: 30.4,  rot: 90,  block: buck5v }
+  C14: { x: 30.2,  y: 26.8,  rot: 0,   block: buck5v }
+  R5:  { x: 19.2,  y: 27.4,  rot: 90,  block: buck5v }
+  R6:  { x: 19.2,  y: 30.8,  rot: 90,  block: buck5v }
+  R7:  { x: 29.8,  y: 23.0,  rot: 0,   block: buck5v }
+  R8:  { x: 29.8,  y: 24.8,  rot: 0,   block: buck5v }
+  U7:  { x: 33.4,  y: 30.8,  rot: 0,   block: mcu_power }
+  C19: { x: 33.4,  y: 27.6,  rot: 0,   block: mcu_power }
+  R22: { x: 33.4,  y: 23.0,  rot: 0,   block: mcu }
+  R23: { x: 33.4,  y: 24.8,  rot: 0,   block: mcu }
 
-  # Supply-off opto and REM3 input passives (y 38..43, below U3 courtyard at y 44.5)
+  # Supply-off opto and DC-DC input passives (y 38..43, below U3 courtyard at y 44.5)
   U4:  { x: 19.5,  y: 39.8,  rot: 0,   block: dali_supply_off, locked: true }
   R11: { x: 28.4,  y: 40.2,  rot: 0,   block: dali_supply_off }
   D5:  { x: 34.4,  y: 40.2,  rot: 0,   block: dali_supply_off }
   C16: { x: 28.4,  y: 42.6,  rot: 0,   block: dcdc_iso }
 
-  # Top front (DALI): REM3 on rear half, DALI optos across y 42..48, KF142R-5.08-2P
+  # Top front (DALI): REC3 DC-DC on rear half, DALI optos across y 42..48, KF142R-5.08-2P
   # push-in spring terminal J3 at top-front (flush with y=81), JP1 and current limiter
   U3:  { x: 36.9,  y: 46.8,  rot: 180, block: dcdc_iso, locked: true }
   U5:  { x: 4.2,   y: 45.0,  rot: 90,  block: dali_tx_led, locked: true }
@@ -132,27 +141,38 @@ parts:
   R12: { x: 15.6,  y: 66.2,  rot: 0,   block: dali_limit }
 
   # --- BACK (-x): low SMD components (<= 1.5 mm, inside THT solder-tail shadow) ---
-  # Back SELV-KNX (x 1..18, y 12..41, zero THT pins in this region!): NCN5130 + crystal + passives
+  # Back SELV-KNX (x 1..18, y 12..41, zero THT pins in this region!): NCN5130 + crystal + passives;
+  # C1/C2/C3 under the VBUS1-CCP-CAV-CEQ pins, C5 at pin 40, C15 at pin 16 (datasheet layout rules)
   R14: { x: 2.0,   y: 38.6,  rot: 0,   side: back, block: dali_tx_led }
   R15: { x: 5.2,   y: 38.6,  rot: 0,   side: back, block: dali_tx_led }
   R21: { x: 9.2,   y: 38.6,  rot: 0,   side: back, block: dali_rx_selv }
   R10: { x: 12.6,  y: 38.6,  rot: 0,   side: back, block: dali_supply_off }
   U1:  { x: 8.4,   y: 26.0,  rot: 90,  side: back, block: ncn5130 }
   Y1:  { x: 14.8,  y: 26.0,  rot: 90,  side: back, block: ncn_top }
-  C8:  { x: 14.8,  y: 22.4,  rot: 0,   side: back, block: ncn_top }
+  C8:  { x: 15.7,  y: 22.4,  rot: 0,   side: back, block: ncn_top }
   C9:  { x: 14.8,  y: 29.6,  rot: 0,   side: back, block: ncn_top }
-  C5:  { x: 12.2,  y: 20.4,  rot: 0,   side: back, block: ncn_right }
+  C5:  { x: 12.6,  y: 21.5,  rot: 0,   side: back, block: ncn_right }
   C6:  { x: 11.4,  y: 30.6,  rot: 0,   side: back, block: ncn_right }
-  C3:  { x: 5.8,   y: 20.4,  rot: 0,   side: back, block: ncn_left }
-  C1:  { x: 2.4,   y: 20.4,  rot: 0,   side: back, block: ncn_left }
-  C2:  { x: 2.4,   y: 24.0,  rot: 90,  side: back, block: ncn_left }
-  C7:  { x: 2.4,   y: 28.0,  rot: 90,  side: back, block: ncn_bottom }
+  C3:  { x: 5.6,   y: 20.8,  rot: 90,  side: back, block: ncn_left }
+  C1:  { x: 8.6,   y: 21.0,  rot: 0,   side: back, block: ncn_left }
+  C2:  { x: 8.65,  y: 18.6,  rot: 270, side: back, block: ncn_left }
+  C7:  { x: 2.4,   y: 29.6,  rot: 90,  side: back, block: ncn_bottom }
   R4:  { x: 5.2,   y: 30.6,  rot: 0,   side: back, block: ncn_bottom }
   R9:  { x: 8.2,   y: 31.2,  rot: 0,   side: back, block: ncn_right }
   R2:  { x: 5.6,   y: 33.6,  rot: 0,   side: back, block: ncn_right }
   R1:  { x: 9.6,   y: 33.6,  rot: 0,   side: back, block: ncn_right }
-  C15: { x: 5.6,   y: 36.0,  rot: 0,   side: back, block: ncn_bottom }
-  R3:  { x: 8.0,   y: 15.6,  rot: 0,   side: back, block: ncn_left }
+  C15: { x: 3.4,   y: 25.5,  rot: 90,  side: back, block: ncn_bottom }
+  R3:  { x: 8.0,   y: 15.0,  rot: 0,   side: back, block: ncn_left }
+
+  # Back core rail: TPS2121 priority mux between the XIAO socket rows, U9 decoupling
+  U10: { x: 33.2,  y: 25.2,  rot: 0,   side: back, block: core_mux }
+  R24: { x: 35.6,  y: 29.4,  rot: 90,  side: back, block: core_mux }
+  R25: { x: 33.6,  y: 28.6,  rot: 90,  side: back, block: core_mux }
+  R26: { x: 34.8,  y: 21.85, rot: 90,  side: back, block: core_mux }
+  C22: { x: 31.6,  y: 21.85, rot: 90,  side: back, block: core_mux }
+  C23: { x: 29.8,  y: 25.2,  rot: 90,  side: back, block: core_mux }
+  C20: { x: 36.6,  y: 4.0,   rot: 90,  side: back, block: aux_core }
+  C21: { x: 34.0,  y: 12.9,  rot: 0,   side: back, block: aux_core }
 
   # Back DALI: bridge D6 and RX between U3 pin columns (x 24..34, y 61..75), TX in x 1..12, y 52..64
   D6:  { x: 29.2,  y: 71.0,  rot: 90,  side: back, block: dali_bridge }

@@ -176,7 +176,7 @@ def main() -> None:
         '<rect width="100%" height="100%" fill="#0f141c"/>',
         (
             '<text x="28" y="30" fill="#e6edf3" font-family="monospace" font-size="16" font-weight="bold">'
-            'KNX-DALI Gateway 0.96" OLED Screens — V1/V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>'
+            'KNX-DALI Gateway 0.96" OLED Screens — V2 (128x64 Landscape) vs V3 (64x128 Portrait)</text>'
         ),
         (
             '<text x="28" y="52" fill="#8b949e" font-family="monospace" font-size="12">'
@@ -210,7 +210,7 @@ def main() -> None:
     OUT_SVG.write_text("\n".join(svg))
     print(f"Wrote {OUT_SVG}")
 
-    # Also write dedicated V1/V2 (128x64 landscape) and V3 (64x128 portrait) showcase strips for README.md
+    # Also write dedicated V2 (128x64 landscape) and V3 (64x128 portrait) showcase strips for README.md
     strip_items = [
         ("overview", "1. Status"),
         ("matrix", "2. 64-Lamp Map"),
@@ -220,7 +220,7 @@ def main() -> None:
         ("modal_short", "DALI Bus Short"),
     ]
 
-    # V1/V2 (128x64 landscape, 3x2 grid)
+    # V2 (128x64 landscape, 3x2 grid)
     v2_svg_path = ROOT / "docs" / "oled-v2-landscape.svg"
     v2_cell_w = 128 * scale + 28
     v2_cell_h = 64 * scale + 48
@@ -229,7 +229,7 @@ def main() -> None:
     v2 = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {v2_w} {v2_h}" width="{v2_w}" height="{v2_h}" shape-rendering="crispEdges">',
         '<rect width="100%" height="100%" rx="8" fill="#0d1117"/>',
-        '<text x="24" y="30" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">V1 / V2 Front Display — 0.96" 128×64 Landscape OLED (SSD1306)</text>',
+        '<text x="24" y="30" fill="#e6edf3" font-family="monospace" font-size="14" font-weight="bold">V2 Front Display — 0.96" 128×64 Landscape OLED (SSD1306)</text>',
     ]
     for i, (key, lbl) in enumerate(strip_items):
         col, row = i % 3, i // 3

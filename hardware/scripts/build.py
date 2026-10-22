@@ -6,12 +6,12 @@ inside the `eda` or `cad` container (where it runs the steps directly in one
 Python process without calling Docker):
 
 From the host:
-    python3 hardware/scripts/build.py                  # full build + release + tests for v1, v2, v3
+    python3 hardware/scripts/build.py                  # full build + release + tests for v2, v3
     python3 hardware/scripts/build.py v3               # full pipeline for v3 only
     python3 hardware/scripts/build.py v3 --eda         # circuits + placement/routing + board renders
     python3 hardware/scripts/build.py v3 --cad         # enclosure + fit SVG + legend + 3MF/embossed + 3D renders
     python3 hardware/scripts/build.py v3 --release     # package hardware/releases/<variant>/
-    python3 hardware/scripts/build.py v1 v2 v3 --test  # run full EDA + CAD + lint test suites in parallel
+    python3 hardware/scripts/build.py v2 v3 --test     # run full EDA + CAD + lint test suites in parallel
 
 Inside the `eda` or `cad` container:
     python3 hardware/scripts/build.py --in-eda [board...]
@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-ALL_VARIANTS = ("v1", "v2", "v3")
+ALL_VARIANTS = ("v2", "v3")
 
 
 def has_module(name):
@@ -92,6 +92,7 @@ def run_cad(*, do_test=False):
         subprocess.run([
             sys.executable, "-m", "pytest",
             "mechanical/tests/test_enclosure_probe.py",
+            "mechanical/tests/test_enclosure_solids.py",
             "mechanical/tests/test_front_legend.py",
             "hardware/tests/test_step_geometry.py", "-q", "-p", "no:cacheprovider",
         ], cwd=REPO, check=True)
@@ -124,14 +125,14 @@ def run_variant_on_host(variant, args):
                    "mechanical/tests/test_ui_stackup.py mechanical/tests/test_board_stack.py "
                    "--ignore=hardware/tests/test_step_geometry.py -q -p no:cacheprovider --tb=short")
         docker_run(variant, "cad",
-                   "python3 -m pytest mechanical/tests/test_enclosure_probe.py "
+                   "python3 -m pytest mechanical/tests/test_enclosure_probe.py mechanical/tests/test_enclosure_solids.py "
                    "mechanical/tests/test_front_legend.py hardware/tests/test_step_geometry.py "
                    "-q -p no:cacheprovider --tb=short")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("variants", nargs="*", help="v1, v2, v3 (or board names when inside a container)")
+    parser.add_argument("variants", nargs="*", help="v2, v3 (or board names when inside a container)")
     parser.add_argument("--boards", nargs="*", default=[], help="subset of boards (e.g. main ui)")
     parser.add_argument("--eda", action="store_true", help="run circuit generation + layout/routing + board renders")
     parser.add_argument("--cad", action="store_true", help="run enclosure + fit + legend + 3MF/embossed + 3D renders")

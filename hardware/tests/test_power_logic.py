@@ -5,9 +5,9 @@ Checks:
 - Crystal present, UART straps, DC2-unused config, VIN=VFILT
 - XIAO pin map vs Seeed counter-clockwise table
 - ADC ladder thresholds incl 5% tolerance
-- DALI RX/TX thresholds and bus current from formulas
+- DALI RX thresholds from formulas (TX, bus current, buck UVLO and the KNX
+  power budget are value-driven in test_circuit_physics.py)
 - Component ratings: regulator input max, cap voltage
-- KNX power budget with VFILT storage
 - Logic: KNX TXD/RXD crossing, DALI_TX/RX, LEDs, I2C pull-ups
 """
 
@@ -25,71 +25,9 @@ VARIANT = bv.VARIANT
 SPEC = bv.load_spec()
 
 
-def _parse_netlist(board="main"):
-    """Parse the SKiDL netlist and return net -> list of (ref, pin)."""
-    net_path = REPO / "hardware/build" / VARIANT / board / f"{board}.net"
-    text = net_path.read_text()
-    nets = {}
-    nets_start = text.find("(nets")
-    if nets_start == -1:
-        return nets
-    pos = nets_start
-    while pos < len(text):
-        idx = text.find("(net\n", pos)
-        if idx == -1:
-            idx = text.find("(net\r", pos)
-        if idx == -1:
-            break
-        name_match = re.search(r'\(name\s+"([^"]+)"\)', text[idx:idx+200])
-        if not name_match:
-            pos = idx + 5
-            continue
-        net_name = name_match.group(1)
-        block_end = len(text)
-        next_net = text.find("(net\n", idx + 5)
-        if next_net == -1:
-            next_net = text.find("(net\r", idx + 5)
-        if next_net != -1:
-            block_end = next_net
-        block = text[idx:block_end]
-        nodes = []
-        for nm in re.finditer(
-            r'\(node\s*\(ref\s+"([^"]+)"\)\s*\(pin\s+"([^"]+)"\)',
-            block
-        ):
-            nodes.append((nm.group(1), nm.group(2)))
-        if nodes:
-            nets[net_name] = nodes
-        pos = block_end
-    return nets
-
-
-def _parse_parts(board="main"):
-    """Parse parts.json and return ref -> part info."""
-    parts_path = REPO / "hardware/build" / VARIANT / board / "parts.json"
-    import json
-    parts = json.loads(parts_path.read_text())
-    return {p["ref"]: p for p in parts}
-
-
-def _merged_netlists():
-    merged = {}
-    for b in SPEC["variants"][VARIANT]["boards"]:
-        for net, nodes in _parse_netlist(b).items():
-            merged.setdefault(net, []).extend(nodes)
-    return merged
-
-
-def _merged_parts():
-    merged = {}
-    for b in SPEC["variants"][VARIANT]["boards"]:
-        for ref, info in _parse_parts(b).items():
-            merged.setdefault(ref, info)
-    return merged
-
-
-NETS = _merged_netlists()
-PARTS = _merged_parts()
+NETS = bv.merged_netlists()
+PARTS = bv.merged_parts()
+_parse_netlist = bv.parse_netlist
 
 # NCN5130 pin name -> pin number (from gateway.kicad_sym, Table 1)
 NCN5130_PINS = {
@@ -285,26 +223,6 @@ def test_buck5v_power_pins():
     assert ("U2", SCT2400_PINS["SW"]) in sw_members
 
 
-def test_buck5v_en_divider():
-    """Buck EN divider: 120k/10k → turn-on ~17V (above SAVEB 14V).
-    SCT2400 EN: 1.21V rising / 1.1V falling (typ).
-    turn-on typ = 1.21 * 13 = 15.7V; turn-off typ = 1.1 * 13 = 14.3V."""
-    r_top = 120.0  # kΩ
-    r_bot = 10.0   # kΩ
-    ratio = r_top / r_bot + 1  # 13
-    en_rising_typ = 1.21
-    en_falling_typ = 1.1
-    en_rising_max = 1.4
-    en_falling_min = 0.9
-    turn_on_typ = en_rising_typ * ratio
-    turn_off_typ = en_falling_typ * ratio
-    turn_on_max = en_rising_max * ratio
-    turn_off_min = en_falling_min * ratio
-    assert turn_on_typ >= 14.0, f"Turn-on {turn_on_typ:.1f}V < SAVEB 14V"
-    assert turn_off_min >= 11.0, f"Turn-off min {turn_off_min:.1f}V too low"
-    print(f"\n  Buck EN UVLO: turn-on typ={turn_on_typ:.1f}V, "
-          f"turn-off typ={turn_off_typ:.1f}V")
-    print(f"  turn-on max={turn_on_max:.1f}V, turn-off min={turn_off_min:.1f}V")
 
 
 def test_buck5v_fb_divider():
@@ -405,41 +323,10 @@ def test_adc_ladder_thresholds():
 # 5. DALI TX/RX thresholds and bus current
 # ---------------------------------------------------------------------------
 
-def test_dali_tx_current_limit():
-    """TX current limit: R_sense=3.3Ω → 180-230mA (V_BE 0.6-0.75V)."""
-    r_sense = 3.3
-    vbe_min = 0.6
-    vbe_max = 0.75
-    i_min = vbe_min / r_sense * 1000
-    i_max = vbe_max / r_sense * 1000
-    assert 180 <= i_min <= 230, f"TX I_min {i_min:.0f}mA outside 180-230mA"
-    assert 180 <= i_max <= 250, f"TX I_max {i_max:.0f}mA outside 180-250mA"
-    print(f"\n  DALI TX: R_sense={r_sense}Ω → {i_min:.0f}-{i_max:.0f}mA")
 
 
-def test_dali_tx_low_level():
-    """Low level at 250mA: 2 bridge drops + R_sense + R_DS(on) ≤ 4.5V."""
-    bridge_drops = 2 * 0.7  # 1.4V
-    r_sense_drop = 0.75  # V at 230mA (max V_BE)
-    r_ds_on_drop = 0.5  # conservative for SOT-23 MOSFET at 12V V_GS
-    low_level = bridge_drops + r_sense_drop + r_ds_on_drop
-    assert low_level <= 4.5, \
-        f"DALI low level {low_level:.2f}V > 4.5V"
-    print(f"\n  DALI TX low level: {low_level:.2f}V (≤4.5V)")
 
 
-def test_dali_tx_bootstrap_droop():
-    """Bootstrap reservoir droop over 1ms low with 22k gate series R.
-    Gate current = 12V / 22k = 0.55mA; droop = 0.55mA * 1ms / 1uF = 0.55V."""
-    c_boot = 1e-6  # 1µF
-    i_gate = 12.0 / 22e3  # 12V zener / 22k series R = 0.55mA
-    t_low = 1e-3  # 1ms
-    droop = i_gate * t_low / c_boot
-    assert droop < 1.0, f"Bootstrap droop {droop:.2f}V > 1V"
-    # V_GS after droop: 12V - 0.55V = 11.45V >> V_GS(th) max 2.5V
-    v_gs_after = 12.0 - droop
-    assert v_gs_after > 2.5, f"V_GS after droop {v_gs_after:.2f}V < V_GS(th) max"
-    print(f"\n  DALI TX bootstrap droop: {droop:.3f}V over 1ms, V_GS={v_gs_after:.2f}V")
 
 
 def test_dali_rx_thresholds():
@@ -472,18 +359,6 @@ def test_dali_rx_thresholds():
     print(f"  ON ≥ {bus_on_min}V (DA_P {da_p_on:.2f}V >= needed {v_needed:.2f}V)")
 
 
-def test_dali_bus_current():
-    """Bus current (RX + TX bootstrap) ≤ 2mA at 22.5V per IEC 62386-101.
-    RX two-NPN limiter: I_limit = 0.6V / 680Ω = 0.88mA
-    TX bootstrap: 12V / 22k = 0.55mA (gate series R discharge)
-    Total: 0.88 + 0.55 = 1.43mA ≤ 2mA."""
-    i_rx = 0.88  # mA (two-NPN limiter: 0.6V/680Ω)
-    i_tx_bootstrap = 0.55  # mA (12V/22k gate series R)
-    i_total = i_rx + i_tx_bootstrap
-    iec_limit = 2.0  # mA per IEC 62386-101
-    assert i_total <= iec_limit, \
-        f"Total bus current {i_total:.2f}mA > IEC limit {iec_limit}mA"
-    print(f"\n  DALI bus current: RX={i_rx}mA + TX={i_tx_bootstrap}mA = {i_total:.2f}mA ≤ {iec_limit}mA")
 
 
 def test_dali_rx_polarity():
@@ -596,8 +471,8 @@ def test_dali_ptc_1812():
     pytest.fail("No fuse found")
 
 
-def test_rem3_output_cap_voltage():
-    """REM3 output cap is 10µF 25V (not just 10µF with no voltage spec)."""
+def test_dcdc_output_cap_voltage():
+    """DC-DC output cap is 10µF 25V (not just 10µF with no voltage spec)."""
     for info in PARTS.values():
         val = str(info.get("value", ""))
         if "10u" in val and "25V" in val:
@@ -656,12 +531,15 @@ def test_knx_rxd_series_resistor():
 
 def test_no_domain_bridge_except_isolators():
     """No single net connects parts in both SELV-KNX and DALI/AUX domains
-    except through U3 (REM3), U4/U5/U6 (optos)."""
+    except through the isolators listed in the main board's layout plan
+    (DC-DC converters and optocouplers)."""
+    import yaml
+    plan = yaml.safe_load((REPO / f"hardware/circuits/variants/{VARIANT}/layout_main.yaml").read_text())
     main_nets = _parse_netlist("main")
     gnd_refs = {r for r, _ in main_nets.get("GND", [])}
     gndd_refs = {r for r, _ in main_nets.get("GNDD", [])}
     gnda_refs = {r for r, _ in main_nets.get("GNDA", [])}
-    optos = {"U3", "U4", "U5", "U6"}
+    optos = set(plan["frame"]["isolators"])
     gnd_only = gnd_refs - optos
     gndd_only = gndd_refs - optos
     gnda_only = gnda_refs - optos
@@ -677,14 +555,14 @@ def test_no_domain_bridge_except_isolators():
 # 7. Component ratings
 # ---------------------------------------------------------------------------
 
-def test_rem3_input_range():
-    """REM3 input 18-36V vs 24V/30V aux."""
-    rem3_vin_min = 18.0
-    rem3_vin_max = 36.0
+def test_dcdc_input_range():
+    """REC3-2415SRW input 18-36V vs 24V/30V aux."""
+    dcdc_vin_min = 18.0
+    dcdc_vin_max = 36.0
     aux_nominal = 24.0
     aux_max = 30.0
-    assert rem3_vin_min <= aux_nominal
-    assert rem3_vin_max >= aux_max
+    assert dcdc_vin_min <= aux_nominal
+    assert dcdc_vin_max >= aux_max
 
 
 def test_capacitor_voltage_ratings():
@@ -705,63 +583,6 @@ def test_capacitor_voltage_ratings():
 # 8. KNX power budget (VFILT storage)
 # ---------------------------------------------------------------------------
 
-def test_knx_power_budget():
-    """Available power from KNX bus vs total load.
-
-    Power chain (new architecture):
-      KNX bus (20V min, 40mA) → VFILT (no DC2, direct storage)
-      VFILT → SCT2400 (85%) → +5V
-      +5V → XIAO onboard buck (85%) → +3V3
-
-    Loads at 3.3V:
-      XIAO CPU: 30mA, LEDs: 3×2mA, OLED: 12mA, NCN5130: 10mA
-      WiFi modem-sleep DTIM3: 27mA, WiFi RX: 78mA
-    """
-    knx_bus_ma = 40
-    bus_v_min = 20.0
-    sct2400_eff = 0.85
-    xiao_buck_eff = 0.85
-
-    xiao_cpu_ma = 30
-    wifi_rx_ma = 78
-    wifi_modem_ma = 27
-    led_ma = 3 * 2
-    oled_ma = 12
-    ncn5130_ma = 10
-    v33 = 3.3
-
-    base_mw = (xiao_cpu_ma + led_ma + oled_ma + ncn5130_ma) * v33
-    wifi_rx_mw = wifi_rx_ma * v33
-    wifi_modem_mw = wifi_modem_ma * v33
-
-    results = []
-    for bus_v_label, bus_v in [("20V worst-case", bus_v_min), ("24V nominal", 24.0)]:
-        bus_mw = knx_bus_ma * bus_v
-        vfilt_mw = bus_mw  # direct storage, no DC2
-        vfilt_mw * sct2400_eff
-
-        for wifi_label, wifi_mw in [
-            ("WiFi off", 0),
-            ("WiFi modem-sleep DTIM3", wifi_modem_mw),
-            ("WiFi continuous RX", wifi_rx_mw),
-        ]:
-            total_33_mw = base_mw + wifi_mw
-            vfilt_load_mw = total_33_mw / (sct2400_eff * xiao_buck_eff)
-            margin = vfilt_mw - vfilt_load_mw
-            pct = margin / vfilt_mw * 100 if vfilt_mw > 0 else 0
-            results.append((bus_v_label, wifi_label, bus_mw, vfilt_mw,
-                            total_33_mw, vfilt_load_mw, margin, pct))
-
-    print("\n  KNX power budget (VFILT storage, no DC2):")
-    print(f"  {'Bus':<18s} {'WiFi mode':<28s} {'Bus mW':>7s} "
-          f"{'VFILT mW':>9s} {'Load mW':>8s} {'VFILT load':>11s} "
-          f"{'Margin mW':>10s} {'Margin %':>9s}")
-    for r in results:
-        print(f"  {r[0]:<18s} {r[1]:<28s} {r[2]:7.0f} {r[3]:9.0f} "
-              f"{r[4]:8.0f} {r[5]:11.0f} {r[6]:10.0f} {r[7]:8.0f}%")
-
-    for bus_label, wifi_label, _, _, _, _, margin, _ in results:
-        assert margin > 0, f"{bus_label} {wifi_label}: margin {margin:.0f} mW < 0"
 
 
 def test_wifi_tx_burst_energy():

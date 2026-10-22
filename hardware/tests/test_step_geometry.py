@@ -11,9 +11,10 @@ import json
 from pathlib import Path
 
 import pytest
-from board_variant import BOARDS
+from board_variant import BOARDS, VARIANT
 
 REPO = Path("/work")
+TEST_DIR = REPO / "hardware/build" / VARIANT / "test"
 
 
 def _read_step_solids(step_path):
@@ -63,8 +64,8 @@ def _find_solid_for_model(solids, model_size, expected_center, tol=5.0):
 def test_custom_models_aligned_to_courtyard(board):
     """Every custom 3D model's world XY center must match its footprint's
     courtyard center ±0.5 mm, measured from the exported STEP geometry."""
-    step_path = REPO / "hardware/build/test" / f"{board}_test.step"
-    json_path = REPO / "hardware/build/test" / f"{board}_courtyards.json"
+    step_path = TEST_DIR / f"{board}_test.step"
+    json_path = TEST_DIR / f"{board}_courtyards.json"
 
     if not step_path.exists():
         pytest.skip(f"{step_path} not found — run EDA tests first")
@@ -111,8 +112,8 @@ def test_custom_models_aligned_to_courtyard(board):
 
 def test_negative_deliberate_offset():
     """A model with a deliberate 5 mm offset must fail the alignment check."""
-    step_path = REPO / "hardware/build/test/negative_test.step"
-    json_path = REPO / "hardware/build/test/negative_courtyards.json"
+    step_path = TEST_DIR / "negative_test.step"
+    json_path = TEST_DIR / "negative_courtyards.json"
 
     if not step_path.exists():
         pytest.skip(f"{step_path} not found — run EDA negative test first")

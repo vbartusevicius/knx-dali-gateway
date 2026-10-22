@@ -14,7 +14,7 @@ namespace gateway::device {
 
 enum class OledGeometry : std::uint8_t {
     Auto = 0,
-    Oled128x64 = 1,  // V1 / V2: Winstar WEA012864D (0.96" 128x64 landscape SSD1306)
+    Oled128x64 = 1,  // V2: Winstar WEA012864D (0.96" 128x64 landscape SSD1306)
     Oled64x128 = 2,  // V3: 0.96" 64x128 portrait (14.0x28.0mm SSD1312)
     Disabled = 3
 };
@@ -102,7 +102,7 @@ private:
     std::array<std::uint8_t, oled_buffer_size> buffer_{};
 };
 
-// Strategy interface for different OLED panel geometries (128x64 V1/V2
+// Strategy interface for different OLED panel geometries (128x64 V2
 // landscape, 64x128 V3 portrait, or Disabled).
 class OledLayoutStrategy {
 public:

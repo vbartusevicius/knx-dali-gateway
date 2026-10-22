@@ -39,9 +39,14 @@ oled_module:
   glass:   { x: 1.47, y: 13.1, w: 10.86, h: 21.74 }
 
 case:
+  # Blocks clear of the OLED panel (y 11.5..39.5) and its flex-tail notch (x
+  # 2.0..11.8): two above the panel, two at the bottom edge beside the LEDs;
+  # they run past the board edge into the protrusion's top and bottom walls.
   standoffs:
-    - { x: 1.3,  y: 38.8 }
-    - { x: 12.5, y: 38.8 }
+    - { x: 0.95,  y: 40.475, w: 1.5, h: 1.35 }
+    - { x: 12.85, y: 40.475, w: 1.5, h: 1.35 }
+    - { x: 0.95,  y: 0.075,  w: 1.5, h: 1.45 }
+    - { x: 12.85, y: 0.075,  w: 1.5, h: 1.45 }
 
 heights:
   default: 1.2

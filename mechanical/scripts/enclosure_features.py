@@ -147,7 +147,7 @@ def bbox_centre(comp):
 
 def terminal_holes():
     """KNX: one opening centred on the mated plug body (on inputs in v3, main in
-    v1/v2). DALI and AUX: one hole per pole on v1/v2, one lever opening on the
+    v2). DALI and AUX: one hole per pole on v2, one lever opening on the
     WAGO terminal in v3."""
     if VARIANT in ("v3", "v4"):
         main = components("main")
@@ -162,12 +162,16 @@ def terminal_holes():
     return holes
 
 
+WIRE_ENTRY_CLEARANCE = 0.2
+
+
 def wire_entries():
     """Openings in the top wall that the terminals' wire-entry faces sit in,
     flush with the outside."""
     if VARIANT in ("v3", "v4"):
-        j3 = next(p for p in part_boxes() if (p["board"], p["ref"]) == ("main", "J3"))
-        return [{"ref": "J3", "x0": j3["x0"], "x1": j3["x1"], "z0": j3["z0"], "z1": j3["z1"]}]
+        j3 = next(p for p in part_boxes("body") if (p["board"], p["ref"]) == ("main", "J3"))
+        c = WIRE_ENTRY_CLEARANCE
+        return [{"ref": "J3", "x0": j3["x0"], "x1": j3["x1"] + c, "z0": j3["z0"] - c, "z1": j3["z1"] + c}]
     main = components("main")
     z0 = SPEC["boards"]["main"]["z"]
     slots = []
@@ -185,6 +189,8 @@ def layout_plan(board):
 
 PLUG_HEIGHT = 11.5
 BODY_MARGIN = 0.5
+PART_AIR = 0.3
+MIN_SKIN = 0.6
 if "shoulder_z" in SPEC["enclosure"]:
     SHOULDER_Z = dict.fromkeys(("bottom", "top"), SPEC["enclosure"]["shoulder_z"])
 else:
@@ -220,7 +226,8 @@ def connector_faces():
 
 def case_points(board, kind):
     convert = main_to_enc if board == "main" else ui_to_enc
-    return [dict(zip(("x", "y"), convert(p["x"], p["y"]))) for p in layout_plan(board).get("case", {}).get(kind, [])]
+    return [{**p, **dict(zip(("x", "y"), convert(p["x"], p["y"])))}
+            for p in layout_plan(board).get("case", {}).get(kind, [])]
 
 
 def legs():
@@ -231,6 +238,13 @@ def legs():
 def pegs():
     """Pegs from the cover's shoulder plates onto the front of the main board."""
     return case_points("main", "pegs")
+
+
+def main_ribs():
+    """Cover ribs behind a vertical main board, as enclosure (x, y, z) points
+    on the board's back face (layout case.ribs, board coordinates)."""
+    return [board_point("main", p["x"], p["y"], -SPEC["boards"]["main"]["thickness"])
+            for p in layout_plan("main").get("case", {}).get("ribs", [])]
 
 
 def standoffs():
@@ -299,9 +313,10 @@ THROUGH_FRONT = {"SW1", "SW2"}
 PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT in ("v3", "v4") else {("main", "J1")}
 
 
-def part_boxes():
-    """Every part as a box in enclosure coordinates: courtyard outline times
-    its height, on the side it is mounted; KNX/AUX strips as mated plugs."""
+def part_boxes(outline="bbox"):
+    """Every part as a box in enclosure coordinates: its outline (courtyard
+    `bbox`, or the Fab-layer `body`) times its height, on the side it is
+    mounted; KNX/AUX strips as mated plugs."""
     boxes = []
     horizontal = horizontal_capacitor()
     for board in SPEC["variants"][VARIANT]["boards"]:
@@ -314,8 +329,8 @@ def part_boxes():
             h = PLUG_HEIGHT if plug else c["height"]
             base = 3.9 if plug else 0.0
             n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)
-            b = c["bbox"]
-            m = BODY_MARGIN if plug and VARIANT in ("v3", "v4") else 0.0
+            b = c["bbox"] if plug else c.get(outline, c["bbox"])
+            m = BODY_MARGIN if plug and (VARIANT == "v3" or outline == "body") else 0.0
             boxes.append(span_box(board_point(board, b["x0"], b["y0"] + m, n0),
                                   board_point(board, b["x1"], b["y1"] - m, n1),
                                   board=board, ref=ref, through_front=board == "ui" and ref in THROUGH_FRONT))

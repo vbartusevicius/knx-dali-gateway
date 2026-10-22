@@ -6,7 +6,8 @@ Eliminates all hidden sub-boards by using both sides of the vertical main PCB:
   pin strip, bottom-front, flush with y=0), J2 (AUX 20-32 V yellow/white pin
   strip, bottom-rear, flush with y=0), J3 (DALI push-pin strip, top-front, flush
   with y=81), C4 (470 uF SMD storage cap), L1 (22 uH KNX inductor), U5 (XIAO on
-  5 mm sockets with the 5 V buck underneath), U2 (REM3-2415S/A/CTRL), JP1 (DALI
+  5 mm sockets with the 5 V buck underneath), U3 (REC3-2415SRW/H2/A/CTRL), U9 (TMR 1-2411
+  AUX-to-core converter, rear-bottom corner beside the AUX input), JP1 (DALI
   supply jumper), Q1 (MJD45H11 DPAK), the three SO-6L optocouplers (with milled
   isolation slots), and J4 (8-pin 0.5 mm FFC to the UI board).
 - Back (-x, 2.0 mm clearance to the left wall, inside the shadow of the THT
@@ -16,7 +17,7 @@ Eliminates all hidden sub-boards by using both sides of the vertical main PCB:
 
 from builtins import NC
 
-from blocks import dali, knx, mcu_xiao
+from blocks import core_power, dali, knx, mcu_xiao
 from common import block, part, power, power_flag, src
 from skidl import Net
 
@@ -68,13 +69,14 @@ def build():
             "+5V": v5, "+3V3": v3, "GND": gnd}
     block("int_ui")
     wire(ffc("UI board", "J4", "8-pin 0.5 mm FFC to the UI board J1"), UI_LINK, nets)
+    core_power.build(gnd, gnda, dali_nets["aux_p"], knx_nets["v5_buck"], v5)
 
 
 NET_CLASSES = {
     "SELV-KNX": ["GND", "+3V3", "+5V_XIAO", "BTN_LADDER", "LED_DATA", "I2C_SDA", "I2C_SCL",
                  "KNX_TXD", "KNX_RXD", "DALI_TX", "DALI_RX", "NCN_SAVEB", "DALI_SUPPLY_OFF", "BUCK5_SW",
                  "+3V3_TRX", "+20V_SW", "VDDD", "VDDA", "CEQ1", "CEQ2", "XTAL1", "XTAL2", "XSEL", "Net-*"],
-    "KNX-Power": ["KNX_P", "KNX_P_PROT", "VFILT", "+5V"],
+    "KNX-Power": ["KNX_P", "KNX_P_PROT", "VFILT", "+5V", "+5V_BUCK", "+5V_AUX"],
     "SELV-AUX": ["GNDA", "AUX_IN", "AUX_FUSED", "AUX_P"],
     "DALI": ["GNDD", "DA1", "DA2", "DA_P", "DALI_ISO15V", "DALI_SUPPLY_SW", "DALI_BOOT", "DALI_GATE",
              "DALI_GATE_SW", "DALI_SENSE", "RX_LIM_IN"],

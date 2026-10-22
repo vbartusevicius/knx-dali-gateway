@@ -36,3 +36,4 @@ gateway/src/firmware/WebAssets.hpp
 
 # Devin local MCP config (machine-specific)
 .devin/mcp_config.local.json
+.claude/mcp_config.local.json

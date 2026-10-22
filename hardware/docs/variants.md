@@ -1,17 +1,16 @@
-# Hardware variants (V1, V2, V3)
+# Hardware variants (V2, V3)
 
-All three variants share one set of circuit blocks (`hardware/circuits/blocks/`),
-the same **RECOM `REC3-2415SRW/H2/A/CTRL`** (or `/H4/A/M/CTRL`) isolated DALI supply with firmware shut-off,
+Both variants share one set of circuit blocks (`hardware/circuits/blocks/`),
+the same **RECOM `REC3-2415SRW/H2/A/CTRL`** (or `/H4/A/M/CTRL`; functional isolation, no reinforced part by design) isolated DALI supply with firmware shut-off,
 and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button ladder
 (`gateway/src/firmware/Board.hpp`).
 
 | Variant | Width | Boards | Main-to-UI Link | DALI Terminal | KNX / AUX Terminals | OLED Display | Case Closure |
 |---|---|---|---|---|---|---|---|
-| **V1** (`v1`) | 3 DIN (`54 mm`) | 2 (`main`, `ui`) | 10-pin JST-SH cable (`100 mm`) | MaiXu `MX126-5.0-02P` screw | Phoenix `PST 1,0` (KNX) + `MX126` screw (AUX) | Winstar `WEA012864D-03` 0.96" 128x64 (4-pin THT) | 2 x 2.5x10 screws + UI snap hooks |
 | **V2** (`v2`) | 2 DIN (`36 mm`) | 3 (`main`, `interface`, `ui`) | 10-pin JST-SH cable (`100 mm`) + 2 B2B headers (`1x4`, `1x3`) | MaiXu `MX126-5.0-02P` screw | Phoenix `PST 1,0` (KNX) + `MX126` screw (AUX) | Winstar `WEA012864D-03` 0.96" 128x64 (4-pin THT) | 2 x 2.5x10 screws + UI snap hooks |
 | **V3** (`v3`) | 1 DIN (`18 mm`) | 2 (`main` two-sided vertical, `ui`) | 8-pin 0.5 mm Type B FFC (`50 mm`, `C42416274`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`, 250 V 15 A) | Two Phoenix `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | `QG-6428TSWCG02` / `NFP1312-15AY` 0.96" `64×128` portrait `SSD1312` (`14 × 28 mm`, 14-pin 0.62 mm solder FPC) | Side-opening clamshell with 4 side snap-clicks + UI snaps |
 
-## Unified XIAO ESP32-C6 Pin Map (`V1`, `V2`, `V3`)
+## Unified XIAO ESP32-C6 Pin Map (`V2`, `V3`)
 
 | XIAO Pin | ESP32-C6 GPIO | Schematic Net | Direction | Function |
 |---|---|---|---|---|
@@ -23,12 +22,14 @@ and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button lad
 | **6 (`D5`)** | `GPIO23` | `I2C_SCL` | I2C | SSD1306 OLED clock (`4.7k` pull-up to `+3V3`) |
 | **7 (`D6`)** | `GPIO16` | `KNX_RXD` | Output (`UART1 TX`) | MCU TX -> `1k` series back-power-protection resistor -> `NCN5130` pin 27 (`SDI/RXD`, 19200 baud 9-bit) |
 | **8 (`D7`)** | `GPIO17` | `KNX_TXD` | Input (`UART1 RX`) | `NCN5130` pin 28 (`SDO/TXD`) -> MCU RX |
-| **9 (`D8`)** | `GPIO19` | `DALI_RX` | Input (RMT RX) | From DALI RX optocoupler (`U6` on V1/V3 `main`, `U2` on V2 `interface`); bus idle high = `DALI_RX` low (`dali_invert_rx = true`) |
+| **9 (`D8`)** | `GPIO19` | `DALI_RX` | Input (RMT RX) | From DALI RX optocoupler (`U6` on V3 `main`, `U2` on V2 `interface`); bus idle high = `DALI_RX` low (`dali_invert_rx = true`) |
 | **10 (`D9`)** | `GPIO20` | `NCN_SAVEB` | Input | `NCN5130` pin 36 (`SAVEB`, open-drain with `10k` pull-up to `+3V3`); goes low when KNX bus voltage drops |
-| **11 (`D10`)** | `GPIO18` | `DALI_TX` | Output (RMT TX) | Drives DALI TX optocoupler LED (`U5` on V1/V3 `main`, `U1` on V2 `interface`); high = bus pulled low (`dali_invert_tx = false`) |
+| **11 (`D10`)** | `GPIO18` | `DALI_TX` | Output (RMT TX) | Drives DALI TX optocoupler LED (`U5` on V3 `main`, `U1` on V2 `interface`); high = bus pulled low (`dali_invert_tx = false`) |
 | **12 (`3V3`)** | — | `+3V3` | Power out | 3.3 V output from the XIAO's onboard regulator, powering SELV logic, pull-ups and the OLED |
 | **13 (`GND`)** | — | `GND` | Ground | SELV-KNX ground |
 | **14 (`5V`)** | — | `+5V_XIAO` | Power in | Fed from the KNX `+5V` buck (`SCT2400`) through the `LM66100` ideal diode so USB-C power cannot back-feed the KNX buck |
+
+Core rail (v2 and v3): `+5V` comes from the `TPS2121` priority mux (`U10`): IN1 is the AUX `TMR 1-2411` converter (`U9`, priority above 4.4 V), IN2 the KNX `SCT2400` buck (`+5V_BUCK`). The XIAO's `LM66100` has CE on VOUT for reverse current blocking (USB back-feed).
 
 ## Addressable Status LEDs (`D0 / GPIO0 = LED_DATA`)
 
@@ -58,7 +59,7 @@ filter capacitor (`C1`) to `GND`:
 
 ## Cover Variants Generated in Each Release (`enclosure/`)
 
-Every variant (`v1`, `v2`, `v3`) includes three ready-to-print cover files generated
+Every variant (`v2`, `v3`) includes three ready-to-print cover files generated
 from the exact same `front_legend.py` geometry:
 1. **`cover.stl` / `cover.step`:** single-colour cover ( without text cuts on `cover.stl`, or with debossed cutouts in `cover_color`).
 2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`0.3 mm` recessed text and LED rings** matching `front_legend.svg`.

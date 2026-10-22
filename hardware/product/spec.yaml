@@ -1,16 +1,15 @@
-# Single source of truth for the PCBs and the 3D-printed DIN enclosure.
+# Shared defaults for the PCBs and the 3D-printed DIN enclosure. Every variant
+# (hardware/circuits/variants/<variant>/spec.yaml, v2 and v3) is merged over this
+# file by hardware/circuits/product_spec.py; the variant sets active_variant,
+# product revision/release and everything that differs.
 # Units: millimetres. Coordinate system (installed device, viewed from the front):
 #   x = width (left -> right), y = height (bottom -> top), z = depth (rail face = 0 -> front).
-# Generators (SKiDL/KiCad PCB scripts and the CadQuery enclosure) read this file;
+# Generators (SKiDL/KiCad PCB scripts and the CadQuery enclosure) read the merged spec;
 # the fit tests compare the generated PCBs against the generated enclosure.
 
 product:
   name: KNX DALI Gateway
-  revision: A
-  release: v1              # hardware/releases/<release>/
   status: draft-unvalidated
-
-active_variant: v1         # 3 DIN, 2 boards, 2-layer POC (see variants below)
 
 # Envelope per user measurement (authoritative — see hardware/docs/din-envelope.svg
 # and hardware/docs/variants.md). Per module: 18 mm wide. Hidden part under
@@ -43,19 +42,7 @@ enclosure:
   wire_entry: top                # terminal wire-entry faces sit in openings in the top wall
   parts: [base, cover]
 
-variants:
-  v1:
-    description: "3 DIN, 2 boards, 2 layers — proof of concept"
-    modules: 3
-    boards: [main, ui]
-  din2_modular:
-    status: planned
-    description: "2 DIN, >2 boards, 2 layers — carrier + KNX/DALI sub-boards"
-  golden:
-    status: planned
-    description: "2 DIN, 2 boards, 4 layers — production target"
-
-boards:                  # POC: 2-layer, 1.6 mm
+boards:
   main:                  # parallel to the rail; front side faces the cover
     plane: parallel-to-front
     thickness: 1.6
@@ -133,7 +120,7 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
   display:
     type: oled-0.96in-ssd1306-i2c   # populated; glass flush with the front
     part: Winstar WEA012864DWPP3N00003 (WEA012864D-03 drawing)
-    geometry: hardware/circuits/variants/v1/layout_ui.yaml oled_module
+    geometry: hardware/circuits/variants/v2/layout_ui.yaml oled_module
   labels_area: true
 
 mcu:
@@ -159,97 +146,3 @@ rejected_variants:
       main_board: 36 x 86 mm, 2-layer, NCN5130 QFN-40 0.5 mm + ESP32 module + USB-C + 6 mm isolation band
       courtyard_utilisation: { SELV_back: 0.66, SELV_front: 0.49, isolation_band: 0.96, DALI_back: 0.73 }
       freerouting: 30 unconnected pads, 146 DRC violations (2026-10-11 10:31 run)
-
-# --- BEGIN GENERATED (hardware/scripts/gen_circuits.py) ---
-derived:
-  mcu_pins:
-    led_data:
-      pin: D0/GPIO0
-      net: LED_DATA
-      note: RMT, SK6805 chain via 5 V buffer on UI
-    dali_supply_off:
-      pin: D1/GPIO1
-      net: DALI_SUPPLY_OFF
-      note: high switches the isolated DALI supply off via the CTRL optocoupler
-    button_ladder:
-      pin: D2/GPIO2
-      net: BTN_LADDER
-      note: 'ADC ladder: PRG/RST + FUNC on UI board'
-    i2c_sda:
-      pin: D4/GPIO22
-      net: I2C_SDA
-      note: OLED on UI board
-    i2c_scl:
-      pin: D5/GPIO23
-      net: I2C_SCL
-      note: OLED on UI board
-    knx_uart_tx:
-      pin: D6/GPIO16
-      net: KNX_RXD
-      note: MCU TX -> NCN5130 SDI/RXD
-    knx_uart_rx:
-      pin: D7/GPIO17
-      net: KNX_TXD
-      note: NCN5130 SDO/TXD -> MCU RX
-    dali_rx:
-      pin: D8/GPIO19
-      net: DALI_RX
-      note: RX optocoupler -> RMT RX
-    ncn_saveb:
-      pin: D9/GPIO20
-      net: NCN_SAVEB
-      note: NCN5130 SAVEB (open-collector)
-    dali_tx:
-      pin: D10/GPIO18
-      net: DALI_TX
-      note: RMT TX -> TX optocoupler
-  net_classes:
-    main:
-      SELV-KNX:
-      - GND
-      - +3V3
-      - +5V_XIAO
-      - BTN_LADDER
-      - LED_DATA
-      - I2C_SDA
-      - I2C_SCL
-      - KNX_TXD
-      - KNX_RXD
-      - DALI_TX
-      - DALI_RX
-      - NCN_SAVEB
-      - DALI_SUPPLY_OFF
-      - Net-*
-      KNX-Power:
-      - KNX_P
-      - KNX_P_PROT
-      - VFILT
-      SELV-AUX:
-      - GNDA
-      - AUX_P
-      - AUX_FUSED
-      DALI:
-      - GNDD
-      - DA1
-      - DA2
-      - DA_P
-      - DALI_GATE
-      - DALI_GATE_SW
-      - DALI_SENSE
-      - DALI_BOOT
-      - DALI_ISO15V
-      - DALI_SUPPLY_SW
-      - RX_LIM_IN
-    ui:
-      SELV-KNX:
-      - GND
-      - +3V3
-      - +5V
-      - BTN_LADDER
-      - LED_DATA
-      - LED_CHAIN1
-      - LED_CHAIN2
-      - I2C_SDA
-      - I2C_SCL
-      - Net-*
-# --- END GENERATED ---

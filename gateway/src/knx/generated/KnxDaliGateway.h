@@ -33,7 +33,7 @@
 #define ParamCH_BcFixedLevel                        (knx.paramByte(CH_BcFixedLevel))
 // DALI channel
 #define ParamCH_DaliChannel                         (knx.paramByte(CH_DaliChannel))
-// Internal DALI bus power supply (REM3 16 V / 250 mA)
+// Internal DALI bus power supply (15 V / 180 mA)
 #define ParamCH_InternalDaliPsu                     (knx.paramByte(CH_InternalDaliPsu))
 
 #define CH_KoBcSwitch 1185

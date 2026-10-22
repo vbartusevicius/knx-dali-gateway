@@ -208,7 +208,7 @@ void KnxDevice::update_led(std::uint32_t now) {
         if (psu_res.just_tripped_short) {
             runtime_state().log().record(diagnostics::LogSource::Dali, diagnostics::LogSeverity::Critical,
                                          diagnostics::ErrorCode::DaliBusShort, diagnostics::no_address,
-                                         "DALI bus short >=80ms; REM3 latched OFF", now);
+                                         "DALI bus short >=80ms; internal supply latched OFF", now);
         } else if (psu_res.just_lost_external_power) {
             runtime_state().log().record(diagnostics::LogSource::Dali, diagnostics::LogSeverity::Error,
                                          diagnostics::ErrorCode::DaliNoPower, diagnostics::no_address,

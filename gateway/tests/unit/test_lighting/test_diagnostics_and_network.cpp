@@ -278,7 +278,7 @@ void test_lighting_service_queries_and_configures_gear_details() {
 
 void test_dali_psu_monitor_latches_off_on_short_until_explicit_reset() {
     device::DaliPsuMonitor mon;
-    // Normal idle high bus: REM3 stays ON (supply_off_gpio = false).
+    // Normal idle high bus: the internal supply stays ON (supply_off_gpio = false).
     auto s = mon.sample(true, 100);
     TEST_ASSERT_FALSE(s.supply_off_gpio);
     TEST_ASSERT_EQUAL(static_cast<int>(device::DaliState::Ok), static_cast<int>(s.dali_led_state));
@@ -289,7 +289,7 @@ void test_dali_psu_monitor_latches_off_on_short_until_explicit_reset() {
     s = mon.sample(false, 240);
     TEST_ASSERT_FALSE(s.supply_off_gpio);
 
-    // At t=280 ms (80 ms continuous low), REM3 CTRL latches OFF immediately!
+    // At t=280 ms (80 ms continuous low), the supply CTRL latches OFF immediately!
     s = mon.sample(false, 280);
     TEST_ASSERT_TRUE(s.supply_off_gpio);
     TEST_ASSERT_TRUE(s.just_tripped_short);

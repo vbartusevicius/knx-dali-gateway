@@ -7,9 +7,9 @@
 #include <hal/adc_types.h>
 #include <hal/uart_types.h>
 
-// Unified XIAO ESP32-C6 pin map across V1 (3 DIN), V2 (2 DIN) and V3 (1 DIN):
+// Unified XIAO ESP32-C6 pin map across V2 (2 DIN) and V3 (1 DIN):
 //   D0  / GPIO0  = LED_DATA         (SK6805-EC15 RGB chain: index 0 D1 STATUS, 1 D2 KNX, 2 D3 DALI)
-//   D1  / GPIO1  = DALI_SUPPLY_OFF  (high switches the isolated REM3-2415S/A/CTRL DALI supply off)
+//   D1  / GPIO1  = DALI_SUPPLY_OFF  (high switches the isolated REC3-2415SRW/H2/A/CTRL DALI supply off)
 //   D2  / GPIO2  = BTN_LADDER       (ADC1_CH2: 10k pull-up to 3V3, SW1 PRG/RST 20k, SW2 FUNC 10k)
 //   D3  / GPIO21 = NC               (unconnected spare GPIO)
 //   D4  / GPIO22 = I2C_SDA          (SSD1306 OLED on UI board, I2C address 0x3C)

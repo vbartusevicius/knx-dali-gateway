@@ -1,4 +1,4 @@
-"""DALI block: AUX input protection + isolated DC-DC (RECOM REM3-2415S 15V)
+"""DALI block: AUX input protection + isolated DC-DC (RECOM REC3-2415SRW/H2/A/CTRL 15V)
 + two-transistor current limiter (~180 mA) + supply jumpers + bridge
 rectifier + opto-isolated TX (bootstrap reservoir) + RX (zener threshold).
 
@@ -9,15 +9,17 @@ TX design (fail-safe bootstrap reservoir):
   GPIO high -> opto LED on -> opto transistor conducts -> gate pulled up
   toward bootstrap reservoir -> MOSFET on -> bus pulled low.
   Bootstrap reservoir: diode from DA_P + 1uF cap feeds opto collector.
-  Gate series R 22k limits bootstrap discharge; gate pull-down 100k ensures
-  off when opto off. 12V zener clamps V_GS.
-  Q2/R_sense limits TX current: R_sense=3R3 -> 180-230mA (V_BE 0.6-0.75V).
+  Gate divider 4k7 series / 10k pull-down: V_GS = 0.68 V_boot (>= 5.6 V at the
+  end of a 1.3 ms collision break at the 9.5 V minimum bus high level), and
+  the 10k pull-down discharges the gate in ~10 us when the opto turns off, so
+  active half-bits are not stretched.
+  12V zener clamps V_GS at a 22.5 V bus.
+  Q2/R_sense is only a fault clamp: R_sense=2R -> 275-350mA (V_BE 0.55-0.7V),
+  above the 250 mA a DALI transmitter must sink and above the internal supply
+  limit, so the bus supply's own limit always decides the low level.
 
-  Low level at 250mA: 2 bridge drops (1.4V) + R_sense (0.83V) + R_DS(on)
-  ~ 2.3V <= 4.5V.
-
-  Reservoir droop over 1ms low: gate current ~12V/22k = 0.55mA.
-  Droop = 0.55mA * 1ms / 1uF = 0.55V (V_GS drops 12V -> 11.45V, OK).
+  Low level at 250mA: 2 bridge drops (2.0V) + R_sense (0.5V) + R_DS(on)
+  ~ 2.6V <= 4.5V.
 
 RX design (zener threshold + two-NPN current limiter):
   5V6 zener + two-NPN limiter at ~0.9mA.
@@ -25,9 +27,11 @@ RX design (zener threshold + two-NPN current limiter):
   Bus >= 9.5V -> DA_P >= 8.1V -> zener on -> limiter -> LED on ->
   DALI_RX low (opto transistor sinks).
   Polarity: bus high -> DALI_RX low; bus low -> DALI_RX high (inverted).
+  4k7 pull-up: the opto leaves saturation sooner than with 10k, which halves
+  the turn-off skew on rising DALI_RX edges.
 
-  Bus current at 22.5V: RX 0.9mA (limited) + TX bootstrap ~0.55mA = 1.45mA
-  <= 2mA per IEC 62386-101.
+  Quiescent bus current: RX 0.9mA (limited); the TX bootstrap only draws
+  while transmitting. <= 2mA per IEC 62386-101.
 
 DALI supply limiter (high-side PNP):
   Q_pass MJD45H11 PNP (not Darlington): E=iso15, C=sw_in, B driven.
@@ -49,7 +53,7 @@ bus current was in stock):
 AUX protection:
   PTC 1812L110/33 (1.1A hold, 33V) + reverse-polarity Schottky + TVS SMAJ33A.
   DALI-side TVS SMAJ24A across DA_P-GNDD (24VWM > 22.5V bus max).
-  Residual risk: REM3 36V max; AUX TVS V_BR=36.7V slightly exceeds REM3 max.
+  Residual risk: REC3 36V max; AUX TVS V_BR=36.7V slightly exceeds it.
 """
 
 from common import block, part, power, power_flag, src
@@ -67,8 +71,8 @@ SO6L = "Package_SO:SO-6L_10x3.84mm_P1.27mm"
 DPAK = "Package_TO_SOT_SMD:TO-252-2"
 FUSE1812 = "Fuse:Fuse_1812_4532Metric"
 TERM_5MM = "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm"
-DCDC_REM3 = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24"
-DCDC_REM3_CTRL = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24_CTRL"
+DCDC_DIP24_FP = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24"
+DCDC_DIP24_CTRL_FP = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24_CTRL"
 JUMPER_2X2 = "Connector_PinHeader_2.54mm:PinHeader_2x02_P2.54mm_Vertical"
 
 
@@ -85,7 +89,7 @@ def build(gnd, v3, *, include_interface=True, terminals=True, input_stage=True, 
     to other boards (AUX_IN/GNDA and DA1/DA2 are returned for the headers).
     input_stage=False leaves the AUX fuse/diode/TVS there too (AUX_P arrives
     on a header). bus_side=False leaves the limiter and the supply jumpers to the
-    DALI board (DALI_ISO15V/GNDD go there). supply_off (a 3.3 V logic net on the KNX side) selects the REM3 /CTRL
+    DALI board (DALI_ISO15V/GNDD go there). supply_off (a 3.3 V logic net on the KNX side) selects the REC3 /CTRL
     version and switches the isolated supply off through an optocoupler."""
     gndd = power("GNDD")
     gnda = power("GNDA")
@@ -118,14 +122,14 @@ def build(gnd, v3, *, include_interface=True, terminals=True, input_stage=True, 
     c_aux_in[1] += aux_p
     c_aux_in[2] += gnda
     if supply_off is not None:
-        u3 = part("gateway", "REM3_DCDC_CTRL", "REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso", DCDC_REM3_CTRL,
+        u3 = part("gateway", "DCDC_DIP24_CTRL", "REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso", DCDC_DIP24_CTRL_FP,
                   src(mpn="REC3-2415SRW/H2/A/CTRL", mfr="RECOM", hand=True,
                       source="RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, "
-                             "DIP-24 A-pinning with pin 1 CTRL (also accepts REM3-2415S/A/CTRL or Mean Well SCWN06B-15 / SCW03B-15)"))
+                             "DIP-24 A-pinning with pin 1 CTRL"))
         supply_off_switch(gnd, gnda, aux_p, u3["CTRL"], supply_off)
     else:
-        u3 = part("gateway", "REM3_DCDC", "REC3-2415SRW/H2/A 24V->15V 3W iso",
-                  DCDC_REM3,
+        u3 = part("gateway", "DCDC_DIP24", "REC3-2415SRW/H2/A 24V->15V 3W iso",
+                  DCDC_DIP24_FP,
                   src(mpn="REC3-2415SRW/H2/A", mfr="RECOM", hand=True,
                       source="RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, "
                              "2kVDC/4kVDC isolated, DIP-24 A-pinning"))
@@ -134,7 +138,7 @@ def build(gnd, v3, *, include_interface=True, terminals=True, input_stage=True, 
     u3["+Vout"] += iso15
     u3["-Vout"] += gndd
     c_iso_out = cap("10u 25V",
-                    src(source="RECOM REM3 datasheet: output cap 10uF 25V"),
+                    src(source="RECOM REC3-RW datasheet: output cap 10uF 25V"),
                     footprint=C0805)
     c_iso_out[1] += iso15
     c_iso_out[2] += gndd
@@ -204,7 +208,7 @@ def aux_protection(gnda, aux_fused, aux_p, terminal=None):
     board its pin 1 feeds the PTC; otherwise the PTC input is AUX_IN."""
     f1 = part("Device", "Polyfuse", "1.1A", FUSE1812,
               src(mpn="1812L110/33MR", mfr="Littelfuse", lcsc="C142747",
-                  source="AUX PTC 1812 1.1A hold 33V; REM3 input protection"))
+                  source="AUX PTC 1812 1.1A hold 33V; REC3 input protection"))
     f1.fields["Place"] = "aux_fuse"
     if terminal is not None:
         terminal[1] += f1[1]
@@ -223,14 +227,14 @@ def aux_protection(gnda, aux_fused, aux_p, terminal=None):
     d_aux_tvs = part("Device", "D_Zener", "SMAJ33A", D_SMA,
                      src(mpn="SMAJ33A", mfr="Littelfuse", lcsc="C113966",
                          source="AUX TVS, unidirectional; V_RWM=33V V_BR=36.7V "
-                                "V_C=53.3V; residual risk: REM3 36V max"))
+                                "V_C=53.3V; residual risk: REC3 36V max"))
     d_aux_tvs["K"] += aux_p
     d_aux_tvs["A"] += gnda
     return aux_in
 
 
 def supply_off_switch(gnd, gnda, aux_p, ctrl, supply_off):
-    """REM3 CTRL (RECOM datasheet, referred to -Vin): open or 0-1.2 V = on,
+    """REC3 CTRL (RECOM REC3-RW datasheet, referred to -Vin): open or 0-1.2 V = on,
     2.2-12 V = off, -0.5..1 mA. The optocoupler closes AUX_P -> 10k -> CTRL with
     a 5.6 V zener to -Vin: 1.4 mA (20 V) to 2.6 mA (32 V) holds CTRL at about
     5.6 V. Unpowered or idle, CTRL stays open: the supply defaults on."""
@@ -303,13 +307,11 @@ def build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx):
     # Opto transistor: collector from bootstrap, emitter via 22k to gate
     u4[6] += boot
     u4[4] += gate_sw
-    # Gate series resistor: limits bootstrap discharge to ~0.55mA
-    r_gate = res("22k", src(source="Gate series R; limits bootstrap discharge; "
-                                     "I=12V/22k=0.55mA; droop 0.55V/1ms"))
+    r_gate = res("4k7", src(source="Gate divider top; V_GS = 0.68 V_boot (>= 5.6V after a 1.3ms break at a 9.5V "
+                                    "bus), 12V zener clamps above"))
     r_gate[1] += gate_sw
     r_gate[2] += gate
-    # Gate pull-down (fail-safe: opto off -> gate low -> MOSFET off)
-    r_gate_pd = res("100k", src(source="Gate pull-down; fail-safe MOSFET off"))
+    r_gate_pd = res("10k", src(source="Gate pull-down; fail-safe off, discharges the gate in ~10us"))
     r_gate_pd[1] += gate
     r_gate_pd[2] += gndd
     # Gate zener (clamps V_GS to 12V at high bus voltage)
@@ -327,8 +329,8 @@ def build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx):
     q1["D"] += da_p
     sense = Net("DALI_SENSE")
     q1["S"] += sense
-    # R_sense for TX current limit: 3.3Ω -> 180-230mA
-    r_sense_tx = res("3R3", src(source="TX current limit: 0.65V/3R3=197mA"),
+    r_sense_tx = res("2R", src(source="TX fault clamp: 0.55-0.7V/2R = 275-350mA, above the 250mA DALI sink "
+                                       "requirement and the internal supply limit"),
                      footprint=R1206)
     r_sense_tx[1] += sense
     r_sense_tx[2] += gndd
@@ -380,7 +382,7 @@ def build_interface(gnd, v3, gndd, da1, da2, da_p, dali_tx, dali_rx):
     u5[4] += gnd
 
     block("dali_rx_selv")
-    r_rx_pu = res("10k", src(source="DALI_RX pull-up; bus high -> RX low"))
+    r_rx_pu = res("4k7", src(source="DALI_RX pull-up; bus high -> RX low; 0.7mA <= opto output at 0.8mA LED"))
     r_rx_pu[1] += v3
     r_rx_pu[2] += dali_rx
 

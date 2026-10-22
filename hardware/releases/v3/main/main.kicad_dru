@@ -8,19 +8,19 @@
   (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
 (rule power_neck_down_at_fine_pitch_pins
   (constraint track_width (min 0.15mm))
-  (condition "(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && (A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3'))"))
+  (condition "(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && (A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3') || A.intersectsCourtyard('U10'))"))
 (rule neck_down_at_fine_pitch_pins
   (constraint track_width (min 0.1mm))
-  (condition "A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3')"))
+  (condition "A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3') || A.intersectsCourtyard('U10')"))
 (rule parts_under_raised_modules
   (constraint courtyard_clearance (min -100mm))
   (condition "A.Reference == 'U8' || B.Reference == 'U8'"))
 (rule creepage_selv-knx_dali
   (constraint creepage (min 6.0mm))
-  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('DALI') || B.hasNetclass('DALI-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6')"))
+  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('DALI') || B.hasNetclass('DALI-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6') && !(A.Reference == 'U9' && B.Reference == 'U9')"))
 (rule creepage_selv-knx_selv-aux
   (constraint creepage (min 2.0mm))
-  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('SELV-AUX') || B.hasNetclass('AUX-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6')"))
+  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('SELV-AUX') || B.hasNetclass('AUX-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6') && !(A.Reference == 'U9' && B.Reference == 'U9')"))
 (rule creepage_dali_selv-aux
   (constraint creepage (min 6.0mm))
-  (condition "(A.hasNetclass('DALI') || A.hasNetclass('DALI-Power')) && (B.hasNetclass('SELV-AUX') || B.hasNetclass('AUX-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6')"))
+  (condition "(A.hasNetclass('DALI') || A.hasNetclass('DALI-Power')) && (B.hasNetclass('SELV-AUX') || B.hasNetclass('AUX-Power')) && !(A.Reference == 'U3' && B.Reference == 'U3') && !(A.Reference == 'U4' && B.Reference == 'U4') && !(A.Reference == 'U5' && B.Reference == 'U5') && !(A.Reference == 'U6' && B.Reference == 'U6') && !(A.Reference == 'U9' && B.Reference == 'U9')"))

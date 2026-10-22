@@ -1,4 +1,4 @@
-"""Test the REM3 DC-DC footprint: pin count, positions, THT, creepage.
+"""Test the REC3-RW DIP24 DC-DC footprint: pin count, positions, THT, creepage.
 
 Reads the .kicad_mod file directly (no KiCad needed) and checks:
 - Exactly 5 pads (pins 2, 14, 16, 22, 23)
@@ -44,7 +44,7 @@ def _parse_footprint():
 
 
 def test_footprint_has_5_pads():
-    """The REM3-2415S/A has only 5 pins: 2, 14, 16, 22, 23."""
+    """The REC3-2415SRW/H2/A/CTRL uses pins 1 (CTRL), 2, 14, 16, 22, 23 (3 and 11 clipped)."""
     pads, _ = _parse_footprint()
     assert set(pads.keys()) == {1, 2, 14, 16, 22, 23}, \
         f"Expected pins {{2,14,16,22,23}}, got {set(pads.keys())}"

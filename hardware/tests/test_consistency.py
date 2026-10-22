@@ -11,7 +11,7 @@ import re
 
 import pcbnew
 import pytest
-from board_variant import BOARDS, SPEC, VARIANT, build_path, layout_path
+from board_variant import BOARDS, SPEC, build_path, layout_path
 
 
 def sexpr(text):
@@ -87,9 +87,6 @@ def test_every_part_is_sourced(board):
 
 
 LINKS = [link for link in SPEC["boards"].get("interconnects", []) if "refs" in link]
-if VARIANT == "v1":
-    LINKS = [{"refs": {"main": "J4", "ui": "J1"}, "pins": 10}]
-
 
 @pytest.mark.parametrize("link", LINKS, ids=lambda link: "-".join(f"{b}.{r}" for b, r in link["refs"].items()))
 def test_board_links_connect_matching_nets_pin_for_pin(link):

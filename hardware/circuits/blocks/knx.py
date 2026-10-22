@@ -6,7 +6,8 @@ external FANIN). DC2 and V20V are unused per the lead's power-architecture
 decision (storage on VFILT).
 
 Returns the nets the rest of the system needs:
-  knx_txd, knx_rxd, saveb, v5 (5V buck output), gnd
+  knx_txd, knx_rxd, saveb, v5_buck (buck output), v5 (core 5 V rail, fed by
+  blocks/core_power.py from v5_buck and the AUX converter), gnd
 """
 
 from builtins import NC
@@ -76,10 +77,11 @@ def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, in
     v3t = Net("+3V3_TRX")
     vfilt = Net("VFILT")
     v5 = Net("+5V")
+    v5_buck = Net("+5V_BUCK")
     knx_txd = Net("KNX_TXD")
     knx_rxd = Net("KNX_RXD")
     saveb = Net("NCN_SAVEB")
-    for n in (knx_p, knx_p_prot, v5):
+    for n in (knx_p, knx_p_prot, v5, v5_buck):
         power_flag(n)
 
     # --- KNX bus terminal + TVS + reverse polarity (Figure 12) ---
@@ -261,7 +263,7 @@ def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, in
     c9[2] += gnd
 
     if buck:
-        buck_5v(gnd, vfilt, v5, sw)
+        buck_5v(gnd, vfilt, v5_buck, sw)
 
     # --- KNX_RXD series resistor (prevents USB-powered XIAO back-powering NCN) ---
     r_knx_rxd = res("1k", src(source="Series R in KNX_RXD near NCN; "
@@ -281,18 +283,18 @@ def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, in
     c_vin[2] += gnd
 
     return {"knx_p": knx_p, "knx_p_prot": knx_p_prot, "knx_txd": knx_txd, "knx_rxd": knx_rxd, "saveb": saveb,
-            "v5": v5, "vfilt": vfilt}
+            "v5": v5, "v5_buck": v5_buck, "vfilt": vfilt}
 
 
 NET_CLASSES = {
     "SELV-KNX": ["GND", "+3V3_TRX", "+5V", "KNX_P", "KNX_P_PROT", "KNX_TXD",
                  "KNX_RXD", "NCN_SAVEB", "VFILT", "CCP", "CAV", "CEQ1",
-                 "CEQ2", "VSW1", "VDD1M", "Net-*"],
+                 "CEQ2", "VSW1", "VDD1M", "+5V_BUCK", "+5V_AUX", "Net-*"],
     "KNX-Power": ["KNX_P", "KNX_P_PROT", "VFILT"],
 }
 
 
-def buck_5v(gnd, vfilt, v5, sw):
+def buck_5v(gnd, vfilt, v5_buck, sw):
     """SCT2400 5 V buck from VFILT, with its EN undervoltage divider."""
     # --- 5V buck: VFILT -> +5V (SCT2400, >=40V input) ---
     block("buck5v")
@@ -301,11 +303,9 @@ def buck_5v(gnd, vfilt, v5, sw):
                   source="SCT2400 datasheet; 4.5-40V in, 600mA, 2MHz, 0.81V FB"))
     u2["VIN"] += vfilt
     u2["GND"] += gnd
-    # EN divider: buck starts at VFILT~17V (above SAVEB 14V)
-    # SCT2400 EN: 1.21V rising / 1.1V falling (typ)
-    # 120k/10k: turn-on typ=1.21*13=15.7V, turn-off typ=1.1*13=14.3V
-    # turn-on max(1.4V)=18.2V, turn-off min(0.9V)=11.7V — all above NCN min
-    r_en_top = res("120k 1%", src(source="SCT2400 EN UVLO top; turn-on ~17V"))
+    r_en_top = res("100k 1%", src(source="SCT2400 EN UVLO top (EN 1.21/1.4V rising, 0.9V falling min, 480k "
+                                         "internal pull-down): on 13.5V typ / 15.7V max, below VFILT at a 21V bus; "
+                                         "off >= 10.1V, above the NCN5130 VFILT reset"))
     r_en_top.fields["Place"] = "buck5v"
     r_en_top[1] += vfilt
     r_en_top[2] += u2["EN"]
@@ -324,10 +324,10 @@ def buck_5v(gnd, vfilt, v5, sw):
                   source="SCT2400 datasheet; 4.7uH 1.15A sat shielded 4x4mm"))
     l3.fields["Place"] = "buck5v"
     l3[1] += sw
-    l3[2] += v5
+    l3[2] += v5_buck
     r_fb_top = res("51k 1%", src(source="SCT2400 FB divider: VOUT=0.81*(1+51k/10k)=4.94V"))
     r_fb_top.fields["Place"] = "buck5v"
-    r_fb_top[1] += v5
+    r_fb_top[1] += v5_buck
     r_fb_top[2] += u2["FB"]
     r_fb_bot = res("10k 1%", src(source="SCT2400 FB divider bottom"))
     r_fb_bot.fields["Place"] = "buck5v"
@@ -344,5 +344,5 @@ def buck_5v(gnd, vfilt, v5, sw):
                 src(source="SCT2400 datasheet Cout"),
                 footprint=C0805 if "22u" in val else C0603)
         c.fields["Place"] = "buck5v"
-        c[1] += v5
+        c[1] += v5_buck
         c[2] += gnd

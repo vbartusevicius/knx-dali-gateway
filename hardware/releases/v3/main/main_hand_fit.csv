@@ -1,5 +1,6 @@
 Designator,Value,Manufacturer part,Notes
 J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
 J2,AUX 20-32 V (yellow/white),1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
-U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL (also accepts REM3-2415S/A/CTRL or Mean Well SCWN06B-15 / SCW03B-15)"
+U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL"
 U8,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
+U9,TMR 1-2411 24V->5V 1W iso,TMR 1-2411,"TRACO TMR 1 datasheet: 18-36 V in, 5 V 200 mA regulated (+/-1 %), 1.5 kVDC functional isolation, no minimum load, 1680 uF max capacitive load; SIP-6 17.0 x 7.62 x 11.0"

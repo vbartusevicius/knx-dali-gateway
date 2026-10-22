@@ -304,10 +304,10 @@ def apply_frame(board, plan):
     for kind, layer, half in (("legs", pcbnew.B_Cu, 2.5), ("pegs", pcbnew.F_Cu, 1.5),
                               ("standoffs", pcbnew.F_Cu, 1.5)):
         for p in case.get(kind, []):
-            case_contact_keepout(board, p["x"], p["y"], half, layer)
+            case_contact_keepout(board, p["x"], p["y"], p.get("w", 2 * half) / 2, p.get("h", 2 * half) / 2, layer)
 
 
-def case_contact_keepout(board, x, y, half, layer):
+def case_contact_keepout(board, x, y, half_x, half_y, layer):
     """Rule area where a case leg, peg or standoff touches the board: no parts."""
     zone = pcbnew.ZONE(board)
     zone.SetIsRuleArea(True)
@@ -319,7 +319,7 @@ def case_contact_keepout(board, x, y, half, layer):
     zone.SetLayer(layer)
     outline = zone.Outline()
     outline.NewOutline()
-    for px, py in rect_points({"x0": x - half, "y0": y - half, "x1": x + half, "y1": y + half}):
+    for px, py in rect_points({"x0": x - half_x, "y0": y - half_y, "x1": x + half_x, "y1": y + half_y}):
         p = pos(px, py)
         outline.Append(p.x, p.y)
     board.Add(zone)
@@ -332,14 +332,15 @@ def fill_zones(board):
 
 # Power classes route at 0.3 mm; Freerouting necks them to 0.225 mm between
 # pads, still about 0.8 A on 1 oz outer copper against a 350 mA worst case.
-DRU_4LAYER = """\
+POWER_TRACK_MIN = 0.22
+DRU_4LAYER = f"""\
 (version 1)
 (rule jlcpcb_minimum
   (constraint track_width (min 0.12mm))
   (constraint clearance (min 0.2mm))
   (constraint hole_size (min 0.2mm)))
 (rule power_track_width
-  (constraint track_width (min 0.22mm))
+  (constraint track_width (min {POWER_TRACK_MIN}mm))
   (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
 """
 
@@ -444,6 +445,35 @@ def body_box(fp):
     return bb
 
 
+def fab_box(fp):
+    """Fab-layer outline = the package body as drawn by the footprint author;
+    the courtyard box when a footprint has none."""
+    fab = pcbnew.B_Fab if fp.IsFlipped() else pcbnew.F_Fab
+    shapes = [item for item in fp.GraphicalItems() if item.GetLayer() == fab and item.Type() == pcbnew.PCB_SHAPE_T]
+    if not shapes:
+        return body_box(fp)
+    bb = shapes[0].GetBoundingBox()
+    for item in shapes[1:]:
+        bb.Merge(item.GetBoundingBox())
+    return bb
+
+
+def enclosure_box(bb):
+    return {"x0": round(pcbnew.ToMM(bb.GetLeft()), 3), "x1": round(pcbnew.ToMM(bb.GetRight()), 3),
+            "y0": round(-pcbnew.ToMM(bb.GetBottom()), 3), "y1": round(-pcbnew.ToMM(bb.GetTop()), 3)}
+
+
+PACKAGE_HEIGHTS = yaml.safe_load((REPO / "hardware/product/package_heights.yaml").read_text())
+
+
+def part_height(heights, ref, footprint):
+    """An explicit per-ref height wins; otherwise the board default, raised to
+    the package's datasheet maximum."""
+    if ref in heights:
+        return heights[ref]
+    return max(heights.get("default", 2.0), PACKAGE_HEIGHTS.get(footprint, {}).get("body_max", 0.0))
+
+
 def export_components(board, plan, out):
     heights = plan.get("heights", {})
     comps = []
@@ -456,17 +486,15 @@ def export_components(board, plan, out):
             "x": round(pcbnew.ToMM(p.x), 3), "y": round(-pcbnew.ToMM(p.y), 3),
             "rot": fp.GetOrientation().AsDegrees(),
             "side": "back" if fp.IsFlipped() else "front",
-            "height": heights.get(fp.GetReference(), heights.get("default", 2.0)),
+            "height": part_height(heights, fp.GetReference(), fpid),
             "pads": [[round(pcbnew.ToMM(pad.GetPosition().x), 3),
                       round(-pcbnew.ToMM(pad.GetPosition().y), 3), pad.GetNumber()]
                      for pad in fp.Pads()],
             "tht_pads": [[round(pcbnew.ToMM(pad.GetPosition().x), 3),
                           round(-pcbnew.ToMM(pad.GetPosition().y), 3)]
                          for pad in fp.Pads() if pad.GetDrillSizeX() > 0],
-            "bbox": {"x0": round(pcbnew.ToMM(bb.GetLeft()), 3),
-                     "x1": round(pcbnew.ToMM(bb.GetRight()), 3),
-                     "y0": round(-pcbnew.ToMM(bb.GetBottom()), 3),
-                     "y1": round(-pcbnew.ToMM(bb.GetTop()), 3)},
+            "bbox": enclosure_box(bb),
+            "body": enclosure_box(fab_box(fp)),
         })
     out.write_text(json.dumps(comps, indent=1))
 
@@ -579,6 +607,7 @@ def current_board(board_name, plan):
         print(f"{board_name}: new layout, placed {len(placed)} planned parts")
     apply_frame(board, plan)
     add_pad_ties(board, plan)
+    add_pin_bridges(board, plan)
     add_pad_escapes(board, plan)
     return board
 
@@ -630,6 +659,31 @@ def add_pad_ties(board, plan):
             board.Add(tie)
             tie.SetNet(anchor.GetNet())
             tie.SetLocked(True)
+
+
+def add_pin_bridges(board, plan):
+    """Join neighbouring pins of one net with a locked track at the pin width
+    (plan "pin_bridges": {ref: [[pin, pin], ...]}), e.g. a QFN's doubled VFILT
+    pins that the router otherwise has to reach separately."""
+    existing = {frozenset(((t.GetStart().x, t.GetStart().y), (t.GetEnd().x, t.GetEnd().y))) for t in board.GetTracks()}
+    for ref, pairs in plan.get("pin_bridges", {}).items():
+        fp = board.FindFootprintByReference(ref)
+        pads = {p.GetNumber(): p for p in fp.Pads()}
+        for a, b in pairs:
+            pa, pb = pads[str(a)], pads[str(b)]
+            if pa.GetNetCode() != pb.GetNetCode():
+                sys.exit(f"{ref} pins {a}/{b} are on different nets")
+            ends = frozenset(((pa.GetPosition().x, pa.GetPosition().y), (pb.GetPosition().x, pb.GetPosition().y)))
+            if ends in existing:
+                continue
+            bridge = pcbnew.PCB_TRACK(board)
+            bridge.SetStart(pa.GetPosition())
+            bridge.SetEnd(pb.GetPosition())
+            bridge.SetWidth(min(pa.GetSize().x, pa.GetSize().y))
+            bridge.SetLayer(pcbnew.B_Cu if fp.IsFlipped() else pcbnew.F_Cu)
+            board.Add(bridge)
+            bridge.SetNet(pa.GetNet())
+            bridge.SetLocked(True)
 
 
 def stub_clears(board, pad, start, end, width, clearance, layer):
@@ -833,13 +887,35 @@ def widen_neckdown_stubs(board):
     return widened
 
 
+def widen_thin_tracks(board, frame):
+    """Freerouting occasionally keeps a neck-down width away from the fine-pitch
+    parts; restore such tracks to their class minimum (power_track_width rule
+    for power nets, the JLC minimum otherwise)."""
+    signal_min = pcbnew.FromMM(frame["min_track"])
+    power_min = pcbnew.FromMM(POWER_TRACK_MIN)
+    fine = [board.FindFootprintByReference(r) for r in frame.get("fine_pitch_power_pads", [])]
+    for fp in fine:
+        fp.BuildCourtyardCaches()
+    courtyards = [fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd) for fp in fine]
+    widened = 0
+    for track in board.GetTracks():
+        minimum = power_min if track.GetNetname() in frame["power_nets"] else signal_min
+        if track.Type() != pcbnew.PCB_TRACE_T or track.GetWidth() >= minimum:
+            continue
+        if any(c.OutlineCount() and (c.Contains(track.GetStart()) or c.Contains(track.GetEnd())) for c in courtyards):
+            continue
+        track.SetWidth(minimum)
+        widened += 1
+    return widened
+
+
 def import_ses(board_name):
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
     ses = build_dir(board_name) / f"{board_name}.ses"
     if not pcbnew.ImportSpecctraSES(board, str(ses)):
         sys.exit("SES import failed")
-    widened = widen_neckdown_stubs(board)
+    widened = widen_neckdown_stubs(board) + widen_thin_tracks(board, plan["frame"])
     removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
     print(f"{board_name}: removed {removed} ground tracks the pours already cover, "
           f"widened {widened} neck-down stubs")

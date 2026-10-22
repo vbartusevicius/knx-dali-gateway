@@ -416,6 +416,14 @@
       },
       {
         "netclass": "KNX-Power",
+        "pattern": "+5V_AUX"
+      },
+      {
+        "netclass": "KNX-Power",
+        "pattern": "+5V_BUCK"
+      },
+      {
+        "netclass": "KNX-Power",
         "pattern": "+5V_XIAO"
       },
       {
@@ -449,6 +457,10 @@
       {
         "netclass": "SELV-KNX",
         "pattern": "CEQ2"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CORE_PR1"
       },
       {
         "netclass": "DALI-Power",
@@ -561,6 +573,14 @@
       {
         "netclass": "DALI",
         "pattern": "N$13"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "N$14"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "N$15"
       },
       {
         "netclass": "SELV-KNX",

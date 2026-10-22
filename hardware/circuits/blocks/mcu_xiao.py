@@ -1,6 +1,6 @@
 """MCU block: Seeed XIAO ESP32C6 on 2x7 female 2.54mm headers, powered
-from the KNX 5V buck via a TI LM66100 ideal diode so a USB-powered XIAO
-cannot back-feed the KNX side.
+from the core 5 V rail via a TI LM66100 ideal diode so a USB-powered XIAO
+cannot back-feed the core rail.
 
 XIAO ESP32C6 pinout (Seeed wiki, verified against schematic v1.0):
   Edge header (2x7, 2.54mm pitch, 15.24mm row spacing), counter-clockwise:
@@ -11,7 +11,7 @@ XIAO ESP32C6 pinout (Seeed wiki, verified against schematic v1.0):
   EN/CHIP_PU is not on the castellated header (bottom pad only) and
   cannot be reached through female headers — pad 15 removed.
 
-Power path: +5V (KNX buck) -> LM66100 -> XIAO 5V pin.
+Power path: +5V core rail (AUX converter or KNX buck) -> LM66100 -> XIAO 5V pin.
 XIAO's onboard regulator produces +3V3 from 5V; the XIAO 3V3 pin
 outputs +3V3 for our low-power logic (optos, LEDs, OLED, pull-ups).
 
@@ -79,7 +79,7 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
 
     Args:
         gnd: KNX-domain ground
-        v5_knx: +5V from the KNX buck (our rail)
+        v5_knx: +5V core rail (AUX converter ORed with the KNX buck)
         knx_txd, knx_rxd: NCN5130 UART signals
         dali_tx, dali_rx: DALI logic signals
         saveb: NCN5130 SAVEB signal
@@ -94,14 +94,15 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
     scl = Net("I2C_SCL")
     led_prog = Net("LED_DATA")
 
-    # --- LM66100 ideal diode (SC70-6): v5_knx -> v5 (XIAO 5V pin) ---
-    # CE tied to GND for always-on (active-low); ST (status) NC.
+    # CE on VOUT enables the LM66100's always-on reverse current blocking
+    # (datasheet 8.3.2); with CE on GND it is a plain switch and USB VBUS on
+    # the XIAO 5V pin would back-feed the core rail and the KNX buck.
     block("mcu_power")
     d_ideal = part("Power_Management", "LM66100DCK", "LM66100", SC70_6,
                    src(mpn="LM66100DCKR", mfr="TI", lcsc="C2869734",
-                       source="TI LM66100 datasheet; SC70-6; CE active-low tied GND, ST NC"))
+                       source="TI LM66100 datasheet; SC70-6; CE on VOUT for reverse current blocking, ST NC"))
     d_ideal["VIN"] += v5_knx
-    d_ideal["~{CE}"] += gnd
+    d_ideal["~{CE}"] += v5
     d_ideal["GND"] += gnd
     d_ideal["VOUT"] += v5
     d_ideal["ST"] += NC
@@ -129,7 +130,7 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
     u1["11"] += dali_tx        # D10/GPIO18
     u1["12"] += v3             # 3V3 — XIAO onboard regulator OUTPUT
     u1["13"] += gnd            # GND
-    u1["14"] += v5             # 5V — fed via LM66100 from KNX 5V buck
+    u1["14"] += v5             # 5V — fed via LM66100 from the core rail
 
     # I2C pull-ups (on main board, near XIAO)
     for net_ in (sda, scl):

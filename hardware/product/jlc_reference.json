@@ -505,6 +505,39 @@
         "2": "2"
       }
     },
+    "C17942": {
+      "record": {
+        "componentModelEn": "1206W4F200KT5E",
+        "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+        "componentSpecificationEn": "1206",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2206010145_UNI-ROYAL-Uniroyal-Elec-1206W4F200KT5E_C17942.pdf",
+        "componentLibraryType": "expand",
+        "attributes": [
+          {
+            "attribute_name_en": "Resistance",
+            "component_code": "C17942",
+            "attribute_value_name": "2Ω"
+          }
+        ]
+      },
+      "footprint": "R1206",
+      "pads": [
+        [
+          "2",
+          1.4787880000000295,
+          -0.0
+        ],
+        [
+          "1",
+          -1.4787880000000295,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "2": "2",
+        "1": "1"
+      }
+    },
     "C17945": {
       "record": {
         "componentModelEn": "1206W4F330KT5E",
@@ -654,6 +687,39 @@
             "attribute_name_en": "Resistance",
             "component_code": "C22936",
             "attribute_value_name": "1Ω"
+          }
+        ]
+      },
+      "footprint": "R0603",
+      "pads": [
+        [
+          "2",
+          0.7533639999999732,
+          -0.0
+        ],
+        [
+          "1",
+          -0.7533639999999732,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "2": "2",
+        "1": "1"
+      }
+    },
+    "C22984": {
+      "record": {
+        "componentModelEn": "0603WAF3002T5E",
+        "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+        "componentSpecificationEn": "0603",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2206010116_UNI-ROYAL-Uniroyal-Elec-0603WAF3002T5E_C22984.pdf",
+        "componentLibraryType": "base",
+        "attributes": [
+          {
+            "attribute_name_en": "Resistance",
+            "component_code": "C22984",
+            "attribute_value_name": "30kΩ"
           }
         ]
       },
@@ -1026,39 +1092,6 @@
         "1": "1"
       }
     },
-    "C25808": {
-      "record": {
-        "componentModelEn": "0603WAF1203T5E",
-        "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
-        "componentSpecificationEn": "0603",
-        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2206010045_UNI-ROYAL-Uniroyal-Elec-0603WAF1203T5E_C25808.pdf",
-        "componentLibraryType": "base",
-        "attributes": [
-          {
-            "attribute_name_en": "Resistance",
-            "component_code": "C25808",
-            "attribute_value_name": "120kΩ"
-          }
-        ]
-      },
-      "footprint": "R0603",
-      "pads": [
-        [
-          "2",
-          0.7533639999999732,
-          -0.0
-        ],
-        [
-          "1",
-          -0.7533639999999732,
-          -0.0
-        ]
-      ],
-      "pin_names": {
-        "2": "2",
-        "1": "1"
-      }
-    },
     "C2693819": {
       "record": {
         "componentModelEn": "SCT2400TVBR",
@@ -1187,117 +1220,6 @@
         ]
       ],
       "pin_names": {
-        "4": "4",
-        "3": "3",
-        "2": "2",
-        "1": "1"
-      }
-    },
-    "C2856800": {
-      "record": {
-        "componentModelEn": "FPC-05F-14PH20",
-        "componentBrandEn": "XUNPU",
-        "componentSpecificationEn": "SMD,P=0.5mm,Surface Mount，Right Angle",
-        "dataManualUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2109221030_XUNPU-FPC-05F-14PH20_C2856800.pdf",
-        "componentLibraryType": "expand",
-        "attributes": []
-      },
-      "footprint": "FPC-SMD_14P-P0.50_XUNPU_FPC-05F-14PH20",
-      "pads": [
-        [
-          "1",
-          -3.2499300000000186,
-          1.28752599999999
-        ],
-        [
-          "2",
-          -2.7500580000000574,
-          1.28752599999999
-        ],
-        [
-          "3",
-          -2.2499320000000442,
-          1.28752599999999
-        ],
-        [
-          "4",
-          -1.7500600000000832,
-          1.28752599999999
-        ],
-        [
-          "5",
-          -1.2499340000000703,
-          1.28752599999999
-        ],
-        [
-          "6",
-          -0.7500619999999936,
-          1.28752599999999
-        ],
-        [
-          "7",
-          -0.2499359999999806,
-          1.28752599999999
-        ],
-        [
-          "8",
-          0.2499359999999806,
-          1.28752599999999
-        ],
-        [
-          "9",
-          0.7500619999999936,
-          1.28752599999999
-        ],
-        [
-          "10",
-          1.2499339999999548,
-          1.28752599999999
-        ],
-        [
-          "11",
-          1.7500599999999678,
-          1.28752599999999
-        ],
-        [
-          "12",
-          2.2499319999999288,
-          1.28752599999999
-        ],
-        [
-          "13",
-          2.750057999999942,
-          1.28752599999999
-        ],
-        [
-          "14",
-          3.2501839999999547,
-          1.28752599999999
-        ],
-        [
-          "16",
-          -4.9400460000000175,
-          -1.28752599999999
-        ],
-        [
-          "15",
-          4.9400460000000175,
-          -1.28752599999999
-        ]
-      ],
-      "pin_names": {
-        "16": "16",
-        "15": "15",
-        "14": "14",
-        "13": "13",
-        "12": "12",
-        "11": "11",
-        "10": "10",
-        "9": "9",
-        "8": "8",
-        "7": "7",
-        "6": "6",
-        "5": "5",
         "4": "4",
         "3": "3",
         "2": "2",
@@ -1542,39 +1464,6 @@
         "4": "EM",
         "3": "CAT",
         "1": "AN"
-      }
-    },
-    "C31850": {
-      "record": {
-        "componentModelEn": "0603WAF2202T5E",
-        "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
-        "componentSpecificationEn": "0603",
-        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2206010030_UNI-ROYAL-Uniroyal-Elec-0603WAF2202T5E_C31850.pdf",
-        "componentLibraryType": "base",
-        "attributes": [
-          {
-            "attribute_name_en": "Resistance",
-            "component_code": "C31850",
-            "attribute_value_name": "22kΩ"
-          }
-        ]
-      },
-      "footprint": "R0603",
-      "pads": [
-        [
-          "2",
-          0.7533639999999732,
-          -0.0
-        ],
-        [
-          "1",
-          -0.7533639999999732,
-          -0.0
-        ]
-      ],
-      "pin_names": {
-        "2": "2",
-        "1": "1"
       }
     },
     "C4184": {
@@ -1868,6 +1757,93 @@
         "3": "E",
         "1": "B",
         "2": "C"
+      }
+    },
+    "C485916": {
+      "record": {
+        "componentModelEn": "TPS2121RUXR",
+        "componentBrandEn": "Texas Instruments",
+        "componentSpecificationEn": "VQFN-HR-12(2x2.5)",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2410121944_Texas-Instruments-TPS2121RUXR_C485916.pdf",
+        "componentLibraryType": "expand",
+        "attributes": []
+      },
+      "footprint": "VQFN-HR-12_L2.5-W2.0-P0.50-BL",
+      "pads": [
+        [
+          "1",
+          -0.35013899999995013,
+          -0.6748779999999233
+        ],
+        [
+          "2",
+          0.3498850000000139,
+          -0.6748779999999233
+        ],
+        [
+          "7",
+          0.3498850000000139,
+          0.6751319999999751
+        ],
+        [
+          "8",
+          -0.35013899999995013,
+          0.6751319999999751
+        ],
+        [
+          "3",
+          1.149985000000037,
+          -0.7500619999999936
+        ],
+        [
+          "4",
+          1.149985000000037,
+          -0.2499359999999806
+        ],
+        [
+          "5",
+          1.149985000000037,
+          0.2499359999999806
+        ],
+        [
+          "6",
+          1.149985000000037,
+          0.7500619999999936
+        ],
+        [
+          "9",
+          -1.149985000000037,
+          0.7500619999999936
+        ],
+        [
+          "10",
+          -1.149985000000037,
+          0.2499359999999806
+        ],
+        [
+          "11",
+          -1.149985000000037,
+          -0.2499359999999806
+        ],
+        [
+          "12",
+          -1.149985000000037,
+          -0.7500619999999936
+        ]
+      ],
+      "pin_names": {
+        "1": "OUT",
+        "2": "IN2",
+        "3": "CP2",
+        "4": "OV2",
+        "5": "OV1",
+        "6": "PR1",
+        "7": "IN1",
+        "8": "OUT",
+        "9": "ST",
+        "10": "ILM",
+        "11": "SS",
+        "12": "GND"
       }
     },
     "C48970703": {
