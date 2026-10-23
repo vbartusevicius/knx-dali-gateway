@@ -10,10 +10,15 @@ with the correct structure (uuid, property, etc.).
 """
 
 import json
+import re
 import subprocess
+import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "hardware/scripts"))
 
 # Minimal KiCad 9 PCB with two pads on different domain nets, 2mm apart.
 # Pad P1 (KNX/GND) at (50, -50) mm
@@ -264,3 +269,36 @@ def test_drc_catches_cross_domain_creepage(tmp_path):
         f"Expected a creepage/clearance violation for 2mm DALI-KNX gap, " \
         f"got {len(violations)} violations: " \
         f"{[v.get('type') for v in violations]}"
+
+
+def creepage_violations(tmp_path, pcb_text, dru_text):
+    (tmp_path / "fixture.kicad_pcb").write_text(pcb_text)
+    (tmp_path / "fixture.kicad_dru").write_text(dru_text)
+    (tmp_path / "fixture.kicad_pro").write_text(FIXTURE_PRO)
+    drc, _ = _run_drc(tmp_path / "fixture.kicad_pcb", tmp_path)
+    return [v for v in drc.get("violations", []) if v.get("type") == "creepage"]
+
+
+@pytest.mark.parametrize("slot,expected", [(None, 1), ((50.9, -53.5, 51.9, -46.5), 0)])
+def test_slot_between_isolator_pins_meets_creepage(tmp_path, slot, expected):
+    """One footprint with a KNX and a DALI pin 2.8 mm apart (TRN 3 pins 2/3) (an isolated
+    converter's own pins): KiCad checks creepage per net pair, so only a
+    board slot between the pins, not a rule condition, clears the violation."""
+    import layout
+
+    second_pad = '\t\t(pad "2" thru_hole circle (at 2.8 0) (size 1.2 1.2) (drill 0.8)\n' \
+                 '\t\t\t(layers "*.Cu" "*.Mask") (net 2 "GNDD")\n' \
+                 '\t\t\t(uuid "00000001-0000-0000-0000-000000000005"))\n'
+    pcb = re.sub(r"\t\(footprint \"test:pad_dali\".*?\n\t\)\n", "", FIXTURE_PCB, flags=re.DOTALL)
+    pcb = re.sub(r"\t\(segment .*?\n\t\t\(uuid [^)]*\)\)\n", "", pcb, flags=re.DOTALL)
+    pcb = pcb.replace("(size 1.5 1.5)", "(size 1.2 1.2)")
+    pcb = pcb.replace('(uuid "00000001-0000-0000-0000-000000000004"))\n', '(uuid "00000001-0000-0000-0000-000000000004"))\n'
+                      + second_pad, 1)
+    if slot:
+        x0, y0, x1, y1 = slot
+        corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        lines = "".join(f'\t(gr_line (start {a[0]} {a[1]}) (end {b[0]} {b[1]}) (layer "Edge.Cuts") (width 0.05))\n'
+                        for a, b in zip(corners, corners[1:] + corners[:1]))
+        pcb = pcb[:pcb.rindex(")")] + lines + ")\n"
+    dru = layout.dru_rules(["SELV-KNX", "DALI"], None, "(version 1)\n")
+    assert len(creepage_violations(tmp_path, pcb, dru)) == expected

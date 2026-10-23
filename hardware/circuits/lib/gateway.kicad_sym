@@ -98,6 +98,45 @@
     )
   )
 
+  (symbol "DCDC_SIP5"
+    (pin_names (offset 0.508))
+    (in_bom yes)
+    (on_board yes)
+    (property "Reference" "U" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "DCDC_SIP5" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "TRACO TRN 3 series SIP: 1 -Vin, 2 +Vin, 3 +Vout, 5 -Vout (no pin 4); 1.6 kVDC functional isolation" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "DCDC_SIP5_0_1"
+      (rectangle (start -7.62 3.81) (end 7.62 -3.81)
+        (stroke (width 0.254) (type default)) (fill (type background))))
+    (symbol "DCDC_SIP5_1_1"
+      (pin power_in line (at -10.16 2.54 0) (length 2.54) (name "+Vin" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at -10.16 -2.54 0) (length 2.54) (name "-Vin" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 2.54 180) (length 2.54) (name "+Vout" (effects (font (size 1.27 1.27)))) (number "3" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 -2.54 180) (length 2.54) (name "-Vout" (effects (font (size 1.27 1.27)))) (number "5" (effects (font (size 1.27 1.27)))))
+    )
+  )
+
+  (symbol "DCDC_SIP8_REMOTE"
+    (pin_names (offset 0.508))
+    (in_bom yes)
+    (on_board yes)
+    (property "Reference" "U" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "DCDC_SIP8_REMOTE" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "TRACO TMR 2 series SIP-8: 1 -Vin, 2 +Vin, 3 Remote (open = on), 5 NC, 6 +Vout, 7 -Vout, 8 NC; 1.6 kVDC functional isolation" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "DCDC_SIP8_REMOTE_0_1"
+      (rectangle (start -7.62 3.81) (end 7.62 -6.35)
+        (stroke (width 0.254) (type default)) (fill (type background))))
+    (symbol "DCDC_SIP8_REMOTE_1_1"
+      (pin power_in line (at -10.16 2.54 0) (length 2.54) (name "+Vin" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
+      (pin power_in line (at -10.16 -2.54 0) (length 2.54) (name "-Vin" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+      (pin input line (at -10.16 -5.08 0) (length 2.54) (name "Remote" (effects (font (size 1.27 1.27)))) (number "3" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 2.54 180) (length 2.54) (name "+Vout" (effects (font (size 1.27 1.27)))) (number "6" (effects (font (size 1.27 1.27)))))
+      (pin power_out line (at 10.16 -2.54 180) (length 2.54) (name "-Vout" (effects (font (size 1.27 1.27)))) (number "7" (effects (font (size 1.27 1.27)))))
+    )
+  )
+
   (symbol "TPS2121"
     (pin_names (offset 0.508))
     (in_bom yes)

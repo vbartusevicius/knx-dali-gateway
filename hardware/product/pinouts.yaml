@@ -78,3 +78,21 @@ TMR 1-2411:
     body end.
   pads: {"1": [0, 0], "2": [2.54, 0], "4": [7.62, 0], "6": [12.7, 0]}
   names: {"1": -Vin, "2": +Vin, "4": +Vout, "6": -Vout}
+
+TRN 3-2411:
+  source: >-
+    TRACO TRN 3 series datasheet (Rev. October 8, 2026, p.4 Outline
+    Dimensions and Pinout, single output): 1 -Vin (GND), 2 +Vin (Vcc),
+    3 +Vout, 5 -Vout (no pin 4); pin 1 1.5 mm from the body end, pitch
+    2.0 / 2.8 / 2.0 / 2.0 mm.
+  pads: {"1": [0, 0], "2": [2.0, 0], "3": [4.8, 0], "5": [8.8, 0]}
+  names: {"1": -Vin, "2": +Vin, "3": +Vout, "5": -Vout}
+
+TMR 2411:
+  source: >-
+    TRACO TMR 2 series datasheet (Rev. April 15, 2026, p.5 Outline Dimensions
+    and Pinout, single output): 1 -Vin (GND), 2 +Vin (Vcc), 3 Remote (open =
+    on, left open), 5 NC, 6 +Vout, 7 -Vout, 8 NC (no pin 4); SIP-8, 2.54 mm
+    pitch, pin 1 2.0 mm from the body end. Connected pins only.
+  pads: {"1": [0, 0], "2": [2.54, 0], "6": [12.7, 0], "7": [15.24, 0]}
+  names: {"1": -Vin, "2": +Vin, "6": +Vout, "7": -Vout}

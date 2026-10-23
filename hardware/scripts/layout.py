@@ -90,13 +90,13 @@ def keepout_zone(board, x0, y0, x1, y1, layers):
     board.Add(zone)
 
 
-def dru_rules(domains, isolators, isolation, base):
+def dru_rules(domains, isolation, base):
     """Creepage rules between every pair of domains (6 mm unless the spec's
-    isolation list says otherwise); pad pairs on one isolator are exempt
-    because its package body is the barrier."""
+    isolation list says otherwise). KiCad evaluates creepage per net pair, so
+    no condition can exempt an isolator's own pins: where they sit closer than
+    the domain distance, a board slot between them lengthens the path."""
     minimum = {frozenset(i["between"]): i["creepage_min"] for i in isolation or []}
     power = {"SELV-KNX": "KNX-Power", "DALI": "DALI-Power", "SELV-AUX": "AUX-Power"}
-    exempt = "".join(f" && !(A.Reference == '{r}' && B.Reference == '{r}')" for r in isolators)
     rules = [base]
     for i, a in enumerate(domains):
         for b in domains[i + 1:]:
@@ -104,7 +104,7 @@ def dru_rules(domains, isolators, isolation, base):
             cond_b = f"(B.hasNetclass('{b}') || B.hasNetclass('{power[b]}'))"
             rules.append(f"(rule creepage_{a.lower()}_{b.lower()}\n"
                          f"  (constraint creepage (min {minimum.get(frozenset((a, b)), 6.0)}mm))\n"
-                         f"  (condition \"{cond_a} && {cond_b}{exempt}\"))\n")
+                         f"  (condition \"{cond_a} && {cond_b}\"))\n")
     return "".join(rules)
 
 
@@ -417,8 +417,7 @@ def project_net_settings(classes):
 
 def write_rules(board, plan, board_name, pcb_path):
     frame = plan["frame"]
-    dru = dru_rules(frame["domains"], sorted(frame.get("isolators", [])),
-                    SPEC["boards"].get(board_name, {}).get("isolation"),
+    dru = dru_rules(frame["domains"], SPEC["boards"].get(board_name, {}).get("isolation"),
                     DRU_4LAYER + neck_down_rule(frame.get("fine_pitch_power_pads", []))
                     + raised_module_rule(frame.get("raised_modules", [])))
     pcb_path.with_suffix(".kicad_dru").write_text(dru)

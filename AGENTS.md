@@ -739,3 +739,18 @@ Research candidates for the future lab are XKNX 3.20.0 and python-dali 0.11; tho
 - Power architecture (user decision, 2026-10-22): AUX is the primary core supply on v2 and v3 (TRACO TMR 1-2411 U9 isolated converter, TI TPS2121 U10 priority mux, KNX buck as seamless fallback; `hardware/circuits/blocks/core_power.py`). v3 has U9 standing in the rear-bottom corner; v2 has it on the back of main between the interface socket tails and the REC3 body. The XIAO's LM66100 now has CE on VOUT (reverse current blocking; CE on GND back-fed USB into the core rail). The XIAO 3.3 V regulator is an SGM6029C buck: KNX-only modem-sleep WiFi works down to a 16.3 V bus, continuous WiFi needs 22.7 V. New references are created last with fixed refs (U9, U10, R24-R26, C20-C23) so existing designators never renumber. Details in hardware/docs/review-2026-10-22.md.
 - v3 NCN5130 placement fixed in rev D (all `test_u1_routing.py` rules pass on both variants). Layout helper added: `pin_bridges` plan option (locked same-net pin ties). Freerouting is deterministic but chaotic, so a one-part move can change the unrouted count a lot; re-place and retry rather than locking old copper.
 - Open: DALI short protection while the MCU is unpowered, ROM boot log on GPIO16, bench timing and power measurements.
+- 2026-10-23 review: `hardware/docs/review-2026-10-23.md` (v2 rev C / v3 rev D at `f3ccb1e`, all suites pass). Open:
+  - E12: TPS2121 CP2 on GND gives a 100 µs switchover, so the core rail collapses at a WiFi TX peak. Proposed fix: CP2 divider from +5V_BUCK, bulk on the mux output, ST to GPIO21.
+  - E13: TX opto turn-off stretches active half-bits by about 38 µs; needs firmware edge trim.
+  - E14: SAVEB low (KNX absent) switches the DALI supply off and skips the PSU monitor (firmware).
+  - E15: GPIO16 back-feeds the unpowered NCN.
+  - R1: `layout.sync` rewrites UUIDs on every run.
+
+  E12/E13 are pinned by strict-xfail tests in `test_circuit_physics.py`. Remove each marker when its fix lands. The release CSVs use CRLF, so edit them byte-preserving.
+- AUX core converter (user decisions 2026-10-23), both variants carry the WiFi TX peaks without handing over to KNX:
+  - v3: TRACO TMR 2411 (2 W) on a main-board tongue in the front protrusion. Below U9 only a 1.4 mm strip carries the AUX feed, keeping the space free for the UI cable.
+  - v2: TRACO TRN 3-2411 (3 W, 11.9 × 7.7 mm SIP) in the old back strip, with a board slot between pins 2/3.
+  - `core_power.build(..., converter=...)` takes `TMR2_2411` or `TRN3_2411`.
+  - C23 is 100 µF 1206 (C15008).
+  - Remaining: AUX hot-unplug during TX, because CP2 is still grounded (100 µs switchover, 3.08 V worst case).
+- KiCad checks creepage per net pair: DRC rule conditions on `Reference`/`memberOfFootprint` never match. Where an isolator's own pins sit closer than the domain distance, add a board slot (frame `slots`).

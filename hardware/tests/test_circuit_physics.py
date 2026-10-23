@@ -11,6 +11,9 @@ hardware/circuits/blocks is checked against the datasheet limits below.
   voltage and stops above the NCN5130 VFILT reset
 - KNX power budget: modem-sleep WiFi down to the lowest KNX bus voltage,
   continuous WiFi from CONTINUOUS_WIFI_BUS_MIN_V
+- AUX core converter: carries the sustained load and the WiFi TX peak (rating
+  from the fitted part)
+- Core mux: the core rail rides through the TPS2121 switchover at a WiFi TX peak
 """
 
 import math
@@ -139,6 +142,23 @@ def test_tx_gate_turns_off_within_the_half_bit_tolerance():
     assert discharge + miller <= budget, f"gate turn-off {(discharge + miller) * 1e6:.1f} us > {budget * 1e6:.0f} us"
 
 
+TLP383_TURN_OFF_TYP_S = 28e-6      # TLP383 datasheet table 10: toff typ, IF 16 mA, RL 1.9 kOhm (saturated)
+TLP383_TURN_ON_TYP_S = 0.95e-6
+FIRMWARE_TX_ACTIVE_TRIM_S = 0.0     # gateway/src/dali/bus: no edge compensation of active half-bits yet
+
+
+@pytest.mark.xfail(strict=True, reason="review-2026-10-23 E13: needs firmware TX edge compensation; open")
+def test_tx_active_half_bit_stays_inside_the_transmitter_window():
+    """The TX opto runs saturated (6 mA LED, about 1 mA collector), so its
+    storage time adds to the gate discharge on every active half-bit."""
+    t = tx()
+    vgs = gate_volts(DALI_HIGH_MAX_V - SS16_VF_V, t)
+    gate_off = t["pulldown"] * MOSFET_CISS_F * math.log(vgs / MOSFET_VTH_MAX_V)
+    gate_off += MOSFET_QGD_C * t["pulldown"] / MOSFET_VTH_MAX_V
+    stretch = TLP383_TURN_OFF_TYP_S + gate_off - TLP383_TURN_ON_TYP_S - FIRMWARE_TX_ACTIVE_TRIM_S
+    assert abs(stretch) <= TX_HALF_BIT_MAX_EXCESS_S, f"active half-bit stretched by {stretch * 1e6:.0f} us"
+
+
 def rx():
     nets, parts = board_with("RX_LIM_IN")
     pass_q = next(r for r, p in nets["RX_LIM_IN"] if r.startswith("Q") and p == "3")
@@ -180,8 +200,8 @@ def test_buck_stops_before_the_ncn5130_resets():
 
 SCT2400_FB_V = (0.79, 0.83)         # SCT2400 datasheet VFB 0.79-0.83 V
 FB_RESISTOR_TOL = 0.01
-AUX_CONVERTER_V = (4.95, 5.05)      # TRACO TMR 1-2411 set accuracy +/-1 %
-AUX_CONVERTER_A = 0.200
+AUX_CONVERTER_V = (4.95, 5.05)      # TRACO TMR 2411 / TRN 3-2411 set accuracy +/-1 %
+AUX_CONVERTER_A = {"TMR 2411": 0.400, "TRN 3-2411": 0.600}  # TRACO datasheets, 5 V models
 TPS2121_PR1_RISE_MAX_V = 1.10       # TPS2121 datasheet VPR1 rising 1.01-1.10 V
 AHCT_VCC_MIN_V = 4.5                # SN74AHCT1G125 recommended VCC minimum
 PR1_MARGIN = 1.05
@@ -193,10 +213,63 @@ def core_mux():
             ohms(part_between(nets, parts, "CORE_PR1", "GND", "R")))
 
 
+def aux_converter_a():
+    _, parts = board_with("+5V_AUX")
+    return AUX_CONVERTER_A[parts["U9"]["mpn"]]
+
+
 def test_aux_converter_keeps_priority_at_its_lowest_output():
     top, bottom = core_mux()
     pr1 = AUX_CONVERTER_V[0] * bottom * (1 - FB_RESISTOR_TOL) / (top * (1 + FB_RESISTOR_TOL) + bottom)
     assert pr1 >= TPS2121_PR1_RISE_MAX_V * PR1_MARGIN, f"PR1 {pr1:.3f} V"
+
+
+TPS2121_PR1_FALL_MIN_V = 0.99       # TPS2121 datasheet VPR1 falling 0.99-1.09 V
+TPS2121_SWITCHOVER_S = 100e-6       # TPS2121 tSW max with CP2 < VREF (5 us tFSW only with CP2 >= VREF)
+TPS2121_FAST_SWITCHOVER_S = 5e-6
+ESP32C6_TX_PEAK_A = 0.354           # ESP32-C6 datasheet table 5-7: 802.11b 1 Mbps at 21 dBm, whole chip
+MLCC_BIAS_RETAINED = {"10u": 0.5,    # 10 uF 10 V X5R 0603/0805 at 5 V DC bias (Samsung CL10A/CL21A curves)
+                      "100u": 0.3}   # 100 uF 6.3 V X5R 1206 (CL31A107MQHNNNE) at 5 V, estimate from the series curve
+CORE_RAIL_MIN_V = 3.5               # XIAO SGM6029C in dropout still gives the ESP32-C6 its 3.0 V minimum
+
+
+def core_rail_capacitance_f():
+    """Ceramics on the mux output and behind the LM66100; the XIAO's own
+    input capacitors are not counted (not in the Seeed BOM we can verify)."""
+    total = 0.0
+    for board in BOARDS:
+        nets, parts = bv.parse_netlist(board), bv.parse_parts(board)
+        for net in ("+5V", "+5V_XIAO"):
+            for ref, _ in nets.get(net, ()):
+                if ref.startswith("C"):
+                    value = parts[ref]["value"]
+                    total += farads(value) * MLCC_BIAS_RETAINED.get(value.split()[0], 1.0)
+    return total
+
+
+def tx_peak_5v_a():
+    peripherals_3v3 = sum(v for k, v in XIAO_LOAD_3V3_A.items() if not k.startswith("cpu"))
+    return (ESP32C6_TX_PEAK_A + peripherals_3v3) * 3.3 / XIAO_EFFICIENCY / 5.0 + LEDS_5V_A
+
+
+def test_aux_converter_carries_the_wifi_tx_peak():
+    """Otherwise every TX burst drags AUX below the PR1 threshold and hands
+    the core to the KNX path through the TPS2121 switchover."""
+    assert tx_peak_5v_a() <= aux_converter_a(), f"{tx_peak_5v_a() * 1e3:.0f} mA of {aux_converter_a() * 1e3:.0f} mA"
+
+
+@pytest.mark.xfail(strict=True, reason="review-2026-10-23 E12: AUX unplugged during a TX burst still waits up "
+                                       "to 100 us for the switchover (CP2 grounded); open")
+def test_core_rail_rides_through_the_mux_switchover():
+    """AUX lost during a WiFi TX burst: the core caps alone carry the load
+    for the whole TPS2121 switchover."""
+    nets, _ = board_with("CORE_PR1")
+    top, bottom = core_mux()
+    v_switch = TPS2121_PR1_FALL_MIN_V * (1 + top * (1 - FB_RESISTOR_TOL) / (bottom * (1 + FB_RESISTOR_TOL)))
+    t_switch = TPS2121_SWITCHOVER_S if net_of(nets, "U10", "3") == "GND" else TPS2121_FAST_SWITCHOVER_S
+    load_5v = tx_peak_5v_a()
+    v_min = v_switch - load_5v * t_switch / core_rail_capacitance_f()
+    assert v_min >= CORE_RAIL_MIN_V, f"core rail dips to {v_min:.2f} V ({t_switch * 1e6:.0f} us at {load_5v * 1e3:.0f} mA)"
 
 
 def test_knx_buck_alone_runs_the_core_and_the_led_buffer():
@@ -210,9 +283,8 @@ def test_knx_buck_alone_runs_the_core_and_the_led_buffer():
 
 
 def test_aux_converter_carries_the_sustained_core_load():
-    board_with("+5V_AUX")
     load_5v = (sum(XIAO_LOAD_3V3_A.values()) + WIFI_EXTRA_A["continuous RX"]) * 3.3 / XIAO_EFFICIENCY / 5.0 + LEDS_5V_A
-    assert load_5v <= 0.8 * AUX_CONVERTER_A, f"{load_5v * 1e3:.0f} mA of {AUX_CONVERTER_A * 1e3:.0f} mA"
+    assert load_5v <= 0.8 * aux_converter_a(), f"{load_5v * 1e3:.0f} mA of {aux_converter_a() * 1e3:.0f} mA"
 
 
 def vfilt_load_w(wifi_a):

@@ -29,7 +29,7 @@ terminals:
     poles: 2
     pitch: 5.75
     type: knx-style plug, yellow/white (Phoenix PTS 0,5/2-PH-5,75 GY35YE)
-    labels: [AUX+, AUX-]  # 20-32 V; powers only the internal DALI supply
+    labels: [AUX+, AUX-]  # 20-32 V; internal DALI supply and the AUX core converter
   knx:
     board: main
     shoulder: bottom

@@ -158,18 +158,23 @@ def collect_assembly_parts(variant, spec):
                 "tme": "REC3-2415SRWZ/H4/A (or SCWN06B-15)",
                 "source": "Digi-Key / Mouser / TME",
             })
-    if "TMR 1-2411" in hand_by_mpn:
-        locs = ", ".join(hand_by_mpn["TMR 1-2411"]["locs"])
-        items.append({
-            "item": "AUX-to-core isolated DC-DC converter (hand-soldered)",
-            "qty": len(hand_by_mpn["TMR 1-2411"]["locs"]),
-            "part": "TRACO TMR 1-2411 (18-36 V in, 5 V 200 mA, 1.5 kVDC, SIP-6)",
-            "description": f"powers the gateway core from the AUX input, ORed with the KNX buck ({locs})",
-            "mouser": "495-TMR-1-2411",
-            "digikey": "1951-2676-ND",
-            "tme": "-",
-            "source": "Mouser / Digi-Key / TME",
-        })
+    for mpn, part_text, mouser, digikey, tme in (
+            ("TRN 3-2411", "TRACO TRN 3-2411 (18-36 V in, 5 V 600 mA, 1.6 kVDC, SIP 11.9 x 7.7 x 11.0)",
+             "-", "-", "-"),
+            ("TMR 2411", "TRACO TMR 2411 (18-36 V in, 5 V 400 mA, 1.6 kVDC, SIP-8; or TMR 3-2411, same package)",
+             "495-TMR-2411", "1951-2741-ND", "-")):
+        if mpn in hand_by_mpn:
+            locs = ", ".join(hand_by_mpn[mpn]["locs"])
+            items.append({
+                "item": "AUX-to-core isolated DC-DC converter (hand-soldered)",
+                "qty": len(hand_by_mpn[mpn]["locs"]),
+                "part": part_text,
+                "description": f"powers the gateway core from the AUX input, ORed with the KNX buck ({locs})",
+                "mouser": mouser,
+                "digikey": digikey,
+                "tme": tme,
+                "source": "Newark 47AC2160 / LCSC C5987491" if mpn == "TRN 3-2411" else "Mouser / Digi-Key / TME",
+            })
     if "WEA012864DWPP3N00003" in hand_by_mpn:
         locs = ", ".join(hand_by_mpn["WEA012864DWPP3N00003"]["locs"])
         items.append({
@@ -209,7 +214,7 @@ def collect_assembly_parts(variant, spec):
                 "item": "AUX 20-32 V plug (yellow/white)",
                 "qty": 1,
                 "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212",
-                "description": "yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75 pin strip (main J2; 20-32 V for the internal DALI supply only)",
+                "description": "yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75 pin strip (main J2; 20-32 V for the internal DALI supply and the AUX core converter)",
                 "mouser": "651-1574299",
                 "digikey": "277-1574299-ND",
                 "tme": "WAGO 243-212",

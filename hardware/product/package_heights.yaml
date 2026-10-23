@@ -20,6 +20,7 @@ R_1206_3216Metric: { body_max: 0.70, source: "UNI-ROYAL 1206W4F (0.55 +/- 0.15)"
 R_2512_6332Metric: { body_max: 0.70, source: "UNI-ROYAL 25121WJ (0.55 +/- 0.15)" }
 C_0603_1608Metric: { body_max: 0.90, source: "Samsung CL10 / YAGEO CC0603 (0.80 +/- 0.10)" }
 C_0805_2012Metric: { body_max: 1.45, source: "Samsung CL21A226MAQNNNE (1.25 +/- 0.20)" }
+C_1206_3216Metric: { body_max: 1.80, source: "Samsung CL31A107MQHNNNE (1.60 +/- 0.20)" }
 Crystal_SMD_3225-4Pin_3.2x2.5mm: { body_max: 0.80, source: "YXC YSX321SL outline (0.70 +/- 0.10)" }
 QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm: { body_max: 1.00, source: "onsemi NCN5130 QFN40 6x6 outline (1.00 max)" }
 QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm_ThermalVias: { body_max: 1.00, source: "onsemi NCN5130 QFN40 6x6 outline (1.00 max)" }
@@ -32,6 +33,8 @@ LED_SK6805-EC15_1.5x1.5mm: { body_max: 0.65, source: "OPSCO SK6805-EC15 outline 
 Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm: { body_max: 9.90, tail_max: 2.10, source: "Phoenix 1574200: installed height 9.9, solder pin P 2.1" }
 Converter_DCDC_RECOM_REM3_DIP24_CTRL: { body_max: 10.70, tail_max: 4.30, source: "RECOM REC3-RW DIP24: case 10.2 + 0.5 standoff, pins 3.8 +0.5/-0.25" }
 Converter_DCDC_TRACO_TMR1_SIP6: { body_max: 11.50, tail_max: 3.70, source: "TRACO TMR 1 outline: 11.0 +/-0.5 incl. 0.5 standoff, pins 3.2 +/-0.5" }
+Converter_DCDC_TRACO_TRN3_SIP5: { body_max: 11.50, tail_max: 4.60, source: "TRACO TRN 3 outline: 11.0 +/-0.5, pins 4.1 +/-0.5" }
+Converter_DCDC_TRACO_TMR2_SIP8: { body_max: 11.70, tail_max: 4.60, source: "TRACO TMR 2 outline: 11.2 +/-0.5 incl. 0.5 standoff, pins 4.1 +/-0.5" }
 TerminalBlock_Kefa_KF142R-5.08-2P: { body_max: 11.10, tail_max: 3.50, source: "Kefa KF142R-5.08 drawing: pin 3.5 below the seating plane" }
 TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm: { body_max: 10.30, tail_max: 3.50, source: "MaiXu MX126-5.0 drawing: pin 3.5" }
 PinHeader_2x02_P2.54mm_Vertical: { body_max: 8.50, tail_max: 3.00, source: "BOOMELE 2.54-2*2P: 2.5 plastic + 6.0 mating pin, 3.0 tail" }

@@ -37,7 +37,8 @@ def build():
                       source=f"DALI side of the interface board (its J2); {INTERFACE_STACK}"), ref="J5")
     for i, name in enumerate(("da1", "da2", "gndd"), start=1):
         socket[i] += dali_nets[name]
-    core_power.build(gnd, dali_nets["gnda"], dali_nets["aux_p"], knx_nets["v5_buck"], knx_nets["v5"])
+    core_power.build(gnd, dali_nets["gnda"], dali_nets["aux_p"], knx_nets["v5_buck"], knx_nets["v5"],
+                     converter=core_power.TRN3_2411)
 
 
 NET_CLASSES = {**knx.NET_CLASSES, **dali.NET_CLASSES}

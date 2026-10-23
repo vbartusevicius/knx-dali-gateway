@@ -1,12 +1,17 @@
 # V3 main board, 4 layers, 1.2 mm, two-sided vertical PCB along the left wall
 # of the 1-DIN case (39.8 x 78.0 mm, enclosure x -5.4..-4.2, y 1.5..79.5,
-# z 2.1..41.9). All hidden sub-boards are consolidated onto this two-sided
+# z 2.1..41.9, plus a 10.3 x 41.4 mm tongue into the front protrusion). All hidden sub-boards are consolidated onto this two-sided
 # board: tall parts on the front (+x, 11.6 mm clearance to the right wall),
 # low SMD parts (<= 1.8 mm) on the back (-x, 2.0 mm clearance to the left wall,
 # inside the shadow of the THT solder tails).
 
 frame:
   size: { x: 39.8, y: 78.0 }
+  # Tongue x -10.3..0, y 37.3..59.7 reaches into the front protrusion (enclosure
+  # z 41.9..52.2: 0.2 mm inside its walls, 0.5 mm behind the UI board's parts)
+  # and carries the 2 W AUX converter U9; below it only a 1.4 mm strip
+  # (x -1.4..0, y 18.3..37.3) for the AUX feed, so the UI cable has the space
+  outline: [[0.0, 0.0], [39.8, 0.0], [39.8, 78.0], [0.0, 78.0], [0.0, 59.7], [-10.3, 59.7], [-10.3, 37.3], [-1.4, 37.3], [-1.4, 18.3], [0.0, 18.3]]
   copper_layers: 4
   thickness: 1.2
   min_drill: 0.2
@@ -19,14 +24,22 @@ frame:
   domains: [SELV-KNX, DALI, SELV-AUX]
   domain_regions:
     SELV-KNX:
-      - { x0: 0.0,  y0: 0.0,  x1: 12.8, y1: 42.0 }
+      - { x0: 3.5,  y0: 5.4,  x1: 12.8, y1: 22.0 }
+      - { x0: 1.7,  y0: 22.0, x1: 12.8, y1: 42.0 }
+      - { x0: -6.6, y0: 40.4, x1: 1.7,  y1: 42.0 }    # tongue and front edge below the DALI keep-out
+      - { x0: -6.6, y0: 42.0, x1: -3.8, y1: 46.0 }    # U9 output pins 6/7
       - { x0: 12.8, y0: 17.0, x1: 18.5, y1: 42.0 }
       - { x0: 18.5, y0: 17.0, x1: 36.2, y1: 35.8 }
-      - { x0: 32.0, y0: 9.4,  x1: 36.2, y1: 17.0 }    # U9 output pins 4/6
     SELV-AUX:
-      - { x0: 14.8, y0: 0.0,  x1: 39.8, y1: 7.4 }     # J2, F1, U9 input pins 1/2
-      - { x0: 14.8, y0: 7.4,  x1: 30.0, y1: 15.0 }    # D3, D4
-      - { x0: 38.2, y0: 7.4,  x1: 39.8, y1: 37.8 }
+      - { x0: 14.8, y0: 0.0,  x1: 39.8, y1: 15.0 }    # J2, F1, D3, D4
+      - { x0: 0.0,  y0: 0.0,  x1: 14.8, y1: 3.4 }     # AUX corridor along the bottom edge
+      - { x0: 0.0,  y0: 3.4,  x1: 1.5,  y1: 18.3 }    # ... up the front edge
+      - { x0: -1.4, y0: 18.3, x1: 1.5,  y1: 20.0 }    # ... onto the strip below U9
+      - { x0: -1.4, y0: 20.0, x1: 0.0,  y1: 37.3 }    # ... up the strip
+      - { x0: -10.3, y0: 37.3, x1: 0.0, y1: 38.4 }    # ... along the tongue's lower edge
+      - { x0: -10.3, y0: 38.4, x1: -8.6, y1: 48.0 }   # ... and its outer edge
+      - { x0: -10.3, y0: 48.0, x1: -3.8, y1: 59.7 }   # U9 input pins 1/2, C20
+      - { x0: 38.2, y0: 15.0, x1: 39.8, y1: 37.8 }
       - { x0: 20.5, y0: 37.8, x1: 39.8, y1: 53.5 }
     DALI:
       - { x0: 0.0,  y0: 48.0, x1: 14.5, y1: 78.0 }
@@ -42,20 +55,25 @@ frame:
     - { x0: 0.5,  y0: 42.0, x1: 14.5, y1: 48.0 }    # SELV-KNX | DALI (6 mm)
     - { x0: 14.5, y0: 42.0, x1: 20.5, y1: 59.5 }    # DALI | SELV-KNX/AUX (6 mm)
     - { x0: 20.5, y0: 53.5, x1: 39.3, y1: 59.5 }    # SELV-AUX | DALI, under the DC-DC (6 mm)
-    - { x0: 12.8, y0: 0.5,  x1: 14.8, y1: 17.0 }    # SELV-KNX | SELV-AUX at bottom plugs (2 mm)
-    - { x0: 14.8, y0: 15.0, x1: 32.0, y1: 17.0 }    # SELV-KNX | SELV-AUX above D3/D4 (2 mm)
-    - { x0: 30.0, y0: 7.4,  x1: 32.0, y1: 17.0 }    # SELV-AUX | U9 output island (2 mm)
-    - { x0: 32.0, y0: 7.4,  x1: 38.2, y1: 9.4 }     # U9 input | output pins (2 mm)
-    - { x0: 36.2, y0: 9.4,  x1: 38.2, y1: 37.8 }    # SELV-KNX | SELV-AUX rear strip (2 mm)
+    - { x0: 12.8, y0: 5.4,  x1: 14.8, y1: 17.0 }    # SELV-KNX | SELV-AUX at bottom plugs (2 mm)
+    - { x0: 14.8, y0: 15.0, x1: 38.2, y1: 17.0 }    # SELV-KNX | SELV-AUX above D3/D4 (2 mm)
+    - { x0: 36.2, y0: 17.0, x1: 38.2, y1: 37.8 }    # SELV-KNX | SELV-AUX rear strip (2 mm)
+    - { x0: 1.5,  y0: 3.4,  x1: 14.8, y1: 5.4 }     # SELV-KNX | AUX corridor, bottom edge (2 mm)
+    - { x0: 1.5,  y0: 5.4,  x1: 3.5,  y1: 22.0 }    # SELV-KNX | AUX corridor, front edge (2 mm)
+    - { x0: 0.0,  y0: 20.0, x1: 1.7,  y1: 38.4 }    # SELV-KNX | AUX corridor, strip (2 mm)
+    - { x0: -8.6, y0: 38.4, x1: 1.7,  y1: 40.4 }    # SELV-KNX | AUX corridor, tongue lower edge (2 mm)
+    - { x0: -8.6, y0: 40.4, x1: -6.6, y1: 48.0 }    # SELV-KNX | AUX corridor, tongue outer edge (2 mm)
+    - { x0: -6.6, y0: 46.0, x1: -3.8, y1: 48.0 }    # U9 output | input pins (2 mm)
+    - { x0: -3.8, y0: 42.0, x1: 2.4,  y1: 63.5 }    # tongue SELV | DALI (6 mm)
     - { x0: 18.5, y0: 35.8, x1: 36.2, y1: 37.8 }    # SELV-KNX | SELV-AUX above U8 (2 mm)
   pours:
-    - { net: GND,  layers: [In1.Cu], region: { x0: 0.5,  y0: 0.5,  x1: 12.5, y1: 41.7 } }
+    - { net: GND,  layers: [In1.Cu], region: { x0: 3.7,  y0: 5.6,  x1: 12.5, y1: 41.7 } }
+    - { net: GND,  layers: [In1.Cu], region: { x0: 1.9,  y0: 22.2, x1: 4.2,  y1: 41.7 }, priority: 1 }
+    - { net: GND,  layers: [In1.Cu], region: { x0: -6.4, y0: 40.6, x1: 1.9,  y1: 41.7 }, priority: 2 }
     - { net: GND,  layers: [In1.Cu], region: { x0: 12.8, y0: 17.3, x1: 18.2, y1: 41.7 } }
     - { net: GND,  layers: [In1.Cu], region: { x0: 18.5, y0: 17.3, x1: 35.9, y1: 35.5 } }
-    - { net: GND,  layers: [In1.Cu], region: { x0: 32.3, y0: 9.7,  x1: 35.9, y1: 17.6 }, priority: 1 }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 0.5,  x1: 39.3, y1: 7.1 } }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 6.8,  x1: 29.7, y1: 14.7 }, priority: 1 }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 38.5, y0: 6.8,  x1: 39.3, y1: 37.8 }, priority: 2 }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 15.1, y0: 0.5,  x1: 39.3, y1: 14.7 } }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 38.5, y0: 14.5, x1: 39.3, y1: 37.8 }, priority: 1 }
     - { net: GNDA, layers: [In1.Cu], region: { x0: 20.8, y0: 38.1, x1: 39.3, y1: 53.2 } }
     - { net: GNDD, layers: [In1.Cu], region: { x0: 0.5,  y0: 48.3, x1: 14.2, y1: 77.5 } }
     - { net: GNDD, layers: [In1.Cu], region: { x0: 14.5, y0: 59.8, x1: 39.3, y1: 77.5 } }
@@ -88,20 +106,23 @@ parts:
   # --- FRONT (+x): tall components and connectors ---
   # Bottom shoulder: KNX (red/black, front) and AUX (yellow/white, rear), flush with y=0
   J1:  { x: 4.5,   y: 8.0,   rot: 0,   block: knx_in, locked: true }
-  D1:  { x: 4.0,   y: 12.2,  rot: 0,   block: knx_in }
-  D2:  { x: 4.0,   y: 15.8,  rot: 0,   block: knx_in }
+  D1:  { x: 7.1,   y: 12.2,  rot: 0,   block: knx_in }
+  D2:  { x: 7.1,   y: 15.8,  rot: 0,   block: knx_in }
   J2:  { x: 17.5,  y: 8.0,   rot: 0,   block: aux_in, locked: true }
   F1:  { x: 29.0,  y: 3.5,   rot: 90,  block: aux_fuse }
   D3:  { x: 18.45, y: 12.6,  rot: 0,   block: aux_in }
   D4:  { x: 26.0,  y: 12.6,  rot: 0,   block: aux_in }
-  # AUX-to-core converter standing in the rear-bottom corner: input pins 1/2 in
-  # the AUX zone, output pins 4/6 in a SELV-KNX island; the base's right wall
-  # has a relief over its top (11.0 +/- 0.5 mm)
-  U9:  { x: 34.0,  y: 2.7,   rot: 90,  block: aux_core, locked: true }
+  # 2 W AUX-to-core converter standing on the tongue in the front protrusion,
+  # pin 1 at the top: input pins 1/2 (SELV-AUX, fed by the corridor along the
+  # bottom, front and tongue edges), output pins 6/7 (SELV-KNX) at the bottom.
+  # Pin row at x -4.55 so the body fits x -10.15..1.05 whichever long face the
+  # pins are 3.5 mm from; the case walls have reliefs over its top (11.2 +/- 0.5)
+  U9:  { x: -4.55, y: 57.6,  rot: -90, block: aux_core, locked: true }
 
   # Middle-left front: 470 uF storage cap, 220 uH KNX inductor, UI FFC
-  C4:  { x: 6.8,   y: 23.8,  rot: 0,   block: ncn_left, locked: true }
-  L1:  { x: 5.2,   y: 32.8,  rot: 0,   block: ncn_bottom, locked: true }
+  # C4 turned 90 deg and L1 0.8 mm up: no KNX copper within 2 mm of the AUX strip
+  C4:  { x: 6.8,   y: 23.95, rot: 90,  block: ncn_left, locked: true }
+  L1:  { x: 5.2,   y: 33.6,  rot: 0,   block: ncn_bottom, locked: true }
   J4:  { x: 15.8,  y: 31.0,  rot: -90, block: int_ui, locked: true }
 
   # Middle-right front (under U3): XIAO U8 on 5 mm sockets, with 5 V buck underneath (y +0.6 for U9)
@@ -135,7 +156,7 @@ parts:
   U6:  { x: 11.2,  y: 45.0,  rot: -90, block: dali_rx, locked: true }
   J3:  { x: 6.4,   y: 71.1,  rot: 180, block: dali_terminal, locked: true }
   JP1: { x: 14.2,  y: 72.5,  rot: 0,   block: dali_switch, locked: true }
-  Q1:  { x: 7.2,   y: 56.4,  rot: 0,   block: dali_limit }
+  Q1:  { x: 8.6,   y: 56.4,  rot: 0,   block: dali_limit }
   Q2:  { x: 15.6,  y: 60.8,  rot: 0,   block: dali_limit }
   R13: { x: 15.6,  y: 63.8,  rot: 0,   block: dali_limit }
   R12: { x: 15.6,  y: 66.2,  rot: 0,   block: dali_limit }
@@ -143,7 +164,7 @@ parts:
   # --- BACK (-x): low SMD components (<= 1.5 mm, inside THT solder-tail shadow) ---
   # Back SELV-KNX (x 1..18, y 12..41, zero THT pins in this region!): NCN5130 + crystal + passives;
   # C1/C2/C3 under the VBUS1-CCP-CAV-CEQ pins, C5 at pin 40, C15 at pin 16 (datasheet layout rules)
-  R14: { x: 2.0,   y: 38.6,  rot: 0,   side: back, block: dali_tx_led }
+  R14: { x: 4.4,   y: 36.9,  rot: 0,   side: back, block: dali_tx_led }
   R15: { x: 5.2,   y: 38.6,  rot: 0,   side: back, block: dali_tx_led }
   R21: { x: 9.2,   y: 38.6,  rot: 0,   side: back, block: dali_rx_selv }
   R10: { x: 12.6,  y: 38.6,  rot: 0,   side: back, block: dali_supply_off }
@@ -156,7 +177,7 @@ parts:
   C3:  { x: 5.6,   y: 20.8,  rot: 90,  side: back, block: ncn_left }
   C1:  { x: 8.6,   y: 21.0,  rot: 0,   side: back, block: ncn_left }
   C2:  { x: 8.65,  y: 18.6,  rot: 270, side: back, block: ncn_left }
-  C7:  { x: 2.4,   y: 29.6,  rot: 90,  side: back, block: ncn_bottom }
+  C7:  { x: 2.5,   y: 29.6,  rot: 90,  side: back, block: ncn_bottom }
   R4:  { x: 5.2,   y: 30.6,  rot: 0,   side: back, block: ncn_bottom }
   R9:  { x: 8.2,   y: 31.2,  rot: 0,   side: back, block: ncn_right }
   R2:  { x: 5.6,   y: 33.6,  rot: 0,   side: back, block: ncn_right }
@@ -170,9 +191,9 @@ parts:
   R25: { x: 33.6,  y: 28.6,  rot: 90,  side: back, block: core_mux }
   R26: { x: 34.8,  y: 21.85, rot: 90,  side: back, block: core_mux }
   C22: { x: 31.6,  y: 21.85, rot: 90,  side: back, block: core_mux }
-  C23: { x: 29.8,  y: 25.2,  rot: 90,  side: back, block: core_mux }
-  C20: { x: 36.6,  y: 4.0,   rot: 90,  side: back, block: aux_core }
-  C21: { x: 34.0,  y: 12.9,  rot: 0,   side: back, block: aux_core }
+  C23: { x: 29.8,  y: 25.7,  rot: 90,  side: back, block: core_mux }
+  C20: { x: -7.6,  y: 56.3,  rot: 90,  side: back, block: aux_core }
+  C21: { x: 1.5,   y: 41.0,  rot: 0,   side: back, block: aux_core }
 
   # Back DALI: bridge D6 and RX between U3 pin columns (x 24..34, y 61..75), TX in x 1..12, y 52..64
   D6:  { x: 29.2,  y: 71.0,  rot: 90,  side: back, block: dali_bridge }
@@ -181,13 +202,14 @@ parts:
   Q6:  { x: 32.8,  y: 61.8,  rot: 0,   side: back, block: dali_rx }
   R19: { x: 28.5,  y: 64.6,  rot: 0,   side: back, block: dali_rx }
   R20: { x: 32.8,  y: 64.6,  rot: 0,   side: back, block: dali_rx }
-  D8:  { x: 4.2,   y: 52.8,  rot: 0,   side: back, block: dali_tx }
-  C18: { x: 10.6,  y: 52.8,  rot: 0,   side: back, block: dali_tx }
-  R16: { x: 2.2,   y: 56.0,  rot: 0,   side: back, block: dali_tx }
-  R17: { x: 5.6,   y: 56.0,  rot: 0,   side: back, block: dali_tx }
-  D9:  { x: 10.6,  y: 56.0,  rot: 0,   side: back, block: dali_tx }
-  Q3:  { x: 2.6,   y: 59.8,  rot: 0,   side: back, block: dali_tx }
-  R18: { x: 6.8,   y: 60.2,  rot: 90,  side: back, block: dali_tx }
+  # DALI TX: every DALI pad at x >= 2.4, 6 mm from the tongue copper
+  D8:  { x: 5.7,   y: 52.8,  rot: 0,   side: back, block: dali_tx }
+  C18: { x: 11.0,  y: 52.8,  rot: 0,   side: back, block: dali_tx }
+  R16: { x: 3.7,   y: 56.0,  rot: 0,   side: back, block: dali_tx }
+  R17: { x: 7.0,   y: 56.0,  rot: 0,   side: back, block: dali_tx }
+  D9:  { x: 11.0,  y: 56.0,  rot: 0,   side: back, block: dali_tx }
+  Q3:  { x: 4.1,   y: 59.8,  rot: 0,   side: back, block: dali_tx }
+  R18: { x: 7.5,   y: 60.2,  rot: 90,  side: back, block: dali_tx }
   Q4:  { x: 11.2,  y: 59.8,  rot: 0,   side: back, block: dali_tx }
   D7:  { x: 4.8,   y: 64.6,  rot: 0,   side: back, block: dali_bridge }
   D10: { x: 11.2,  y: 64.6,  rot: 0,   side: back, block: dali_rx }

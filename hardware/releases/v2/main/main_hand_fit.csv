@@ -2,4 +2,4 @@ Designator,Value,Manufacturer part,Notes
 C4,470u 35V,KMG35V470M10*16 LO,"NCN5130 Table 6 C4 470µF 35V storage; D10 L16 P5; hand-fit lying down from the back: bend both leads 90 deg 3 mm from the body, body axis 7 mm below the board (2 mm air gap) in the base cradles, solder on the front"
 J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
 U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL"
-U9,TMR 1-2411 24V->5V 1W iso,TMR 1-2411,"TRACO TMR 1 datasheet: 18-36 V in, 5 V 200 mA regulated (+/-1 %), 1.5 kVDC functional isolation, no minimum load, 1680 uF max capacitive load; SIP-6 17.0 x 7.62 x 11.0"
+U9,TRN 3-2411 24V->5V 3W iso,TRN 3-2411,"TRACO TRN 3 datasheet: 18-36 V in, 5 V 600 mA regulated (+/-1 %), 1.6 kVDC functional isolation, no minimum load, current limit 180 % typ, 2200 uF max capacitive load; SIP 11.9 x 7.7 x 11.0"

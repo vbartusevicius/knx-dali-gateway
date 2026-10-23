@@ -222,6 +222,44 @@
         "2": "A"
       }
     },
+    "C15008": {
+      "record": {
+        "componentModelEn": "CL31A107MQHNNNE",
+        "componentBrandEn": "Samsung Electro-Mechanics",
+        "componentSpecificationEn": "1206",
+        "dataManualUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2304140030_Samsung-Electro-Mechanics-CL31A107MQHNNNE_C15008.pdf",
+        "componentLibraryType": "base",
+        "attributes": [
+          {
+            "attribute_name_en": "Voltage Rating",
+            "component_code": "C15008",
+            "attribute_value_name": "6.3V"
+          },
+          {
+            "attribute_name_en": "Capacitance",
+            "component_code": "C15008",
+            "attribute_value_name": "100uF"
+          }
+        ]
+      },
+      "footprint": "C1206",
+      "pads": [
+        [
+          "2",
+          1.5925799999999954,
+          -0.0
+        ],
+        [
+          "1",
+          -1.5925799999999954,
+          -0.0
+        ]
+      ],
+      "pin_names": {
+        "1": "1",
+        "2": "2"
+      }
+    },
     "C15849": {
       "record": {
         "componentModelEn": "CL10A105KB8NNNC",

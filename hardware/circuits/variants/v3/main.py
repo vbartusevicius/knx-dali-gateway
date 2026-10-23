@@ -6,8 +6,9 @@ Eliminates all hidden sub-boards by using both sides of the vertical main PCB:
   pin strip, bottom-front, flush with y=0), J2 (AUX 20-32 V yellow/white pin
   strip, bottom-rear, flush with y=0), J3 (DALI push-pin strip, top-front, flush
   with y=81), C4 (470 uF SMD storage cap), L1 (22 uH KNX inductor), U5 (XIAO on
-  5 mm sockets with the 5 V buck underneath), U3 (REC3-2415SRW/H2/A/CTRL), U9 (TMR 1-2411
-  AUX-to-core converter, rear-bottom corner beside the AUX input), JP1 (DALI
+  5 mm sockets with the 5 V buck underneath), U3 (REC3-2415SRW/H2/A/CTRL), U9 (TMR 2411
+  2 W AUX-to-core converter on the board's tongue in the front protrusion, fed by
+  an AUX corridor along the bottom and front edges), JP1 (DALI
   supply jumper), Q1 (MJD45H11 DPAK), the three SO-6L optocouplers (with milled
   isolation slots), and J4 (8-pin 0.5 mm FFC to the UI board).
 - Back (-x, 2.0 mm clearance to the left wall, inside the shadow of the THT
@@ -69,7 +70,7 @@ def build():
             "+5V": v5, "+3V3": v3, "GND": gnd}
     block("int_ui")
     wire(ffc("UI board", "J4", "8-pin 0.5 mm FFC to the UI board J1"), UI_LINK, nets)
-    core_power.build(gnd, gnda, dali_nets["aux_p"], knx_nets["v5_buck"], v5)
+    core_power.build(gnd, gnda, dali_nets["aux_p"], knx_nets["v5_buck"], v5, converter=core_power.TMR2_2411)
 
 
 NET_CLASSES = {

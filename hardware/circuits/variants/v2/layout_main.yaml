@@ -12,9 +12,9 @@ frame:
   domain_regions:
     SELV-KNX:
       - { x0: 0.0, y0: 0.0,  x1: 31.5, y1: 29.25 }
-      - { x0: 8.4, y0: 29.25, x1: 31.5, y1: 35.6 }   # U9 output pins 4/6
+      - { x0: 5.9, y0: 29.25, x1: 31.5, y1: 35.6 }   # U9 output pins 3/5
     SELV-AUX:
-      - { x0: 1.4, y0: 31.25, x1: 6.4, y1: 37.5 }    # U9 input pins 1/2
+      - { x0: 1.4, y0: 32.85, x1: 5.35, y1: 37.5 }   # U9 input pins 1/2
       - { x0: 0.0, y0: 37.5, x1: 21.0, y1: 52.0 }
       - { x0: 0.0, y0: 52.0, x1: 11.5, y1: 68.0 }
       - { x0: 0.0, y0: 68.0, x1: 15.5, y1: 76.5 }
@@ -27,11 +27,14 @@ frame:
                DA1, DA2, DALI_ISO15V, DALI_SUPPLY_SW, AUX_P, AUX_FUSED]
   slots:
     - { x0: 17.0, y0: 34.8, x1: 20.0, y1: 38.6 }
+    - { x0: 5.5,  y0: 32.1, x1: 6.5,  y1: 35.1 }    # U9 pins 2 | 3: creepage path past 2 mm
   copper_keepout:
     - { x0: 8.4,  y0: 35.6, x1: 21.0, y1: 37.5 }    # SELV-KNX | SELV-AUX (2 mm)
-    - { x0: 0.5,  y0: 29.25, x1: 8.4, y1: 31.25 }   # SELV-KNX | U9 input island (2 mm)
-    - { x0: 6.4,  y0: 31.25, x1: 8.4, y1: 37.5 }    # U9 input | output pins (2 mm)
-    - { x0: 0.5,  y0: 31.25, x1: 1.4, y1: 37.5 }
+    - { x0: 0.5,  y0: 29.25, x1: 6.65, y1: 32.85 }  # SELV-KNX | U9 input pins: AUX leaves pins 1/2 upwards (2 mm)
+    - { x0: 5.35, y0: 32.85, x1: 6.65, y1: 37.5 }   # U9 input | output pins (2 mm between their tracks)
+    - { x0: 6.65, y0: 34.35, x1: 14.5, y1: 35.6 }   # SELV-AUX | U9 output pins: KNX leaves pins 3/5 downwards
+    - { x0: 6.65, y0: 35.6, x1: 8.4,  y1: 37.5 }
+    - { x0: 0.5,  y0: 32.85, x1: 1.4, y1: 37.5 }
     - { x0: 21.0, y0: 35.5, x1: 31.0, y1: 41.5 }    # SELV-KNX | DALI (6 mm)
     - { x0: 21.0, y0: 41.5, x1: 27.0, y1: 54.0 }    # SELV-AUX | DALI vertical (6 mm)
     - { x0: 10.5, y0: 48.0, x1: 27.0, y1: 54.0 }    # SELV-AUX | DALI under U3 (6 mm)
@@ -40,7 +43,7 @@ frame:
   pours:
     - { net: GND,  layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5,  y0: 0.5,  x1: 31.0, y1: 28.95 } }
     - { net: GND,  layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 8.7,  y0: 28.7, x1: 31.0, y1: 33.8 }, priority: 1 }
-    - { net: GNDA, layers: [In1.Cu], region: { x0: 1.7,  y0: 31.55, x1: 6.1, y1: 37.8 }, priority: 1 }
+    - { net: GNDA, layers: [In1.Cu], region: { x0: 1.7,  y0: 33.0, x1: 4.6, y1: 37.8 }, priority: 1 }
     - { net: GNDA, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5,  y0: 39.8, x1: 20.5, y1: 47.7 } }
     - { net: GNDA, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5,  y0: 47.8, x1: 10.2, y1: 67.8 } }
     - { net: GNDA, layers: [F.Cu, In1.Cu, In2.Cu, B.Cu], region: { x0: 0.5,  y0: 67.9, x1: 10.2, y1: 76.0 } }
@@ -126,15 +129,16 @@ parts:
   R12: { x: 24.5,  y: 60.5,  rot: 0,   side: back, block: dali_limit }
   R13: { x: 29.0,  y: 56.5,  rot: 90,  side: back, block: dali_limit }
   C17: { x: 23.2,  y: 66.0,  rot: 90,  side: back, block: dali_tx }
-  # AUX-to-core converter on the back, standing between the interface socket
-  # tails (y 28.4) and the REC3 body (y 38.0): pins 1/2 in the AUX island,
-  # pins 4/6 in SELV-KNX; TPS2121 mux and passives on the front, beside J4
-  U9:  { x: 2.6,   y: 32.1,  rot: 0,   side: back, block: aux_core, locked: true }
+  # 3 W AUX-to-core converter (TRN 3-2411, 7.7 mm thick) on the back, standing
+  # between the interface socket tails (y 28.4) and the REC3 body (y 38.2):
+  # pins 1/2 in the AUX island, pins 3/5 in SELV-KNX, 2.8 mm apart, so the AUX
+  # tracks leave upwards and the KNX tracks downwards; TPS2121 mux on the front
+  U9:  { x: 2.6,   y: 33.6,  rot: 0,   side: back, block: aux_core, locked: true }
   C20: { x: 8.0,   y: 39.2,  rot: 0,   block: aux_core }
-  C21: { x: 12.8,  y: 32.6,  rot: 0,   block: aux_core }
+  C21: { x: 9.4,   y: 31.2,  rot: 0,   block: aux_core }
   U10: { x: 25.0,  y: 29.5,  rot: 0,   block: core_mux }
   R24: { x: 29.5,  y: 32.5,  rot: 0,   block: core_mux }
   R25: { x: 29.5,  y: 34.3,  rot: 0,   block: core_mux }
   R26: { x: 28.4,  y: 29.0,  rot: 90,  block: core_mux }
   C22: { x: 25.0,  y: 27.0,  rot: 0,   block: core_mux }
-  C23: { x: 22.4,  y: 29.4,  rot: 90,  block: core_mux }
+  C23: { x: 15.0,  y: 32.5,  rot: 90,  block: core_mux }

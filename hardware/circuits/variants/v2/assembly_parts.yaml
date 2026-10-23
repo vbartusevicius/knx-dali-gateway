@@ -30,13 +30,13 @@
   source: Digi-Key / Mouser / TME
 - item: AUX-to-core isolated DC-DC converter (hand-soldered)
   qty: 1
-  part: TRACO TMR 1-2411 (18-36 V in, 5 V 200 mA, 1.5 kVDC, SIP-6)
+  part: TRACO TRN 3-2411 (18-36 V in, 5 V 600 mA, 1.6 kVDC, SIP 11.9 x 7.7 x 11.0)
   description: powers the gateway core from the AUX input, ORed with the KNX buck
     (main U9)
-  mouser: 495-TMR-1-2411
-  digikey: 1951-2676-ND
+  mouser: '-'
+  digikey: '-'
   tme: '-'
-  source: Mouser / Digi-Key / TME
+  source: Newark 47AC2160 / LCSC C5987491
 - item: OLED display module (hand-soldered)
   qty: 1
   part: Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik

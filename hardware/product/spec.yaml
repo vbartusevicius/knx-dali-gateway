@@ -81,7 +81,7 @@ terminals:
     poles: 2
     pitch: 5.0
     type: screw
-    labels: [AUX+, AUX-]  # 20-32 V (24 V PSU or MDT 30 V); powers only the internal DALI supply
+    labels: [AUX+, AUX-]  # 20-32 V (24 V PSU or MDT 30 V); internal DALI supply and the AUX core converter
   dali_supply_switch:
     board: main
     shoulder: top

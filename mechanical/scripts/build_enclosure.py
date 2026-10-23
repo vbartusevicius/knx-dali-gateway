@@ -342,25 +342,39 @@ def back_part_reliefs():
     return reliefs
 
 
-def front_part_reliefs():
-    """Recesses in the base's right wall over front-side parts of the vertical
-    main board that reach closer than PART_AIR to the wall (the TMR 1
-    converter, 11.0 +/- 0.5 mm); the board slides in along +x, so a local
-    recess suffices."""
+def tall_front_parts():
+    """Front-side parts of the vertical main board that reach closer than
+    PART_AIR to the right wall (the TMR converter, 11.2 +/- 0.5 mm), with
+    the outer x of the recess they need."""
     if not vertical_main():
         return []
     wall_in = INNER_W / 2
-    reliefs = []
+    found = []
     for b in part_boxes():
         comp = components(b["board"]).get(b["ref"]) if b["board"] == "main" else None
-        if comp is None or comp["side"] != "front" or b["x1"] <= wall_in - PART_AIR or b["z0"] >= BASE_TOP_Z:
+        if comp is None or comp["side"] != "front" or b["x1"] <= wall_in - PART_AIR:
             continue
         x1 = b["x1"] + PART_AIR
         if x1 > WIDTH / 2 - MIN_SKIN:
             raise ValueError(f"main {b['ref']} would leave less than {MIN_SKIN} mm of the right wall")
-        reliefs.append(box(wall_in - 0.01, x1, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
-                           b["z0"] - PART_AIR, min(b["z1"] + PART_AIR, BASE_TOP_Z)))
-    return reliefs
+        found.append((b, x1))
+    return found
+
+
+def front_part_reliefs():
+    """Recesses in the base's right wall over tall front-side parts; the board
+    slides in along +x, so a local recess suffices."""
+    return [box(INNER_W / 2 - 0.01, x1, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
+                b["z0"] - PART_AIR, min(b["z1"] + PART_AIR, BASE_TOP_Z))
+            for b, x1 in tall_front_parts() if b["z0"] < BASE_TOP_Z]
+
+
+def protrusion_part_reliefs():
+    """Channels in the cover's right protrusion wall over tall front-side parts
+    above the base; open towards the base because the cover slides on along -z."""
+    return [box(INNER_W / 2 - 0.01, x1, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
+                BASE_TOP_Z - 0.01, b["z1"] + PART_AIR)
+            for b, x1 in tall_front_parts() if b["z1"] > BASE_TOP_Z]
 
 
 def terminal_reliefs():
@@ -562,7 +576,7 @@ def build_cover():
     cover = protrusion.union(shoulder_plate("bottom")).union(shoulder_plate("top"))
     if VARIANT == "v3":
         cover = cover.union(box(-WIDTH / 2, -INNER_W / 2, WALL - 0.01, HIDDEN_H - WALL + 0.01, WALL, BASE_TOP_Z + 0.01))
-    for relief in back_part_reliefs() + terminal_reliefs():
+    for relief in back_part_reliefs() + terminal_reliefs() + protrusion_part_reliefs():
         cover = cover.cut(relief)
     for body in lip_bodies() + peg_bodies() + standoff_bodies() + screw_tab_bodies() + baffle_bodies() + rib_bodies():
         cover = cover.union(body)

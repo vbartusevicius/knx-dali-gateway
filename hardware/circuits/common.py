@@ -51,6 +51,7 @@ PASSIVES = {
     ("C", "220n 50V", "0603"): ("C64705", "Samsung", "CL10B224KB8NNNC"),
     ("C", "1u 50V", "0603"): ("C15849", "Samsung", "CL10A105KB8NNNC"),
     ("C", "10u 10V", "0603"): ("C19702", "Samsung", "CL10A106KP8NNNC"),
+    ("C", "100u 6.3V", "1206"): ("C15008", "Samsung", "CL31A107MQHNNNE"),
     ("C", "1u 50V", "0805"): ("C28323", "Samsung", "CL21B105KBFNNNE"),
     ("C", "10u 25V", "0805"): ("C15850", "Samsung", "CL21A106KAYNNNE"),
     ("C", "10u 50V", "0805"): ("C440198", "Murata", "GRM21BR61H106KE43L"),
