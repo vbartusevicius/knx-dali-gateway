@@ -127,46 +127,100 @@ void test_default_input_channels_are_unused() {
     }
 }
 
-void test_parse_input_channel_block() {
+std::size_t input_slot(std::size_t slot) {
+    return IN_ParamBlockOffset + slot * IN_ParamBlockSize;
+}
+
+// field is the instance-0 offset (IN_fI0Type ...); instance i is i strides further.
+std::size_t input_field(std::size_t slot, std::size_t instance, std::size_t field) {
+    return input_slot(slot) + field + instance * (IN_fI1Type - IN_fI0Type);
+}
+
+void test_parse_input_device_slot() {
     auto buffer = parameters();
-    const auto offset = IN_ParamBlockOffset + 2 * IN_ParamBlockSize;
-    buffer[offset + IN_fDeviceAddress] = 5;
-    buffer[offset + IN_fInstance] = 1;
-    buffer[offset + IN_fInputType] = 1;  // push button
-    buffer[offset + IN_fFunction] = 3;   // toggle + dimming
-    buffer[offset + IN_fScene] = 20;
-    buffer[offset + IN_fThreshold] = 10;
+    buffer[input_slot(1) + IN_fDeviceAddress] = 5;
+    buffer[input_slot(1) + IN_fFirstInstance] = 1;
+    buffer[input_slot(1) + IN_fInstanceCount] = 2;
+    buffer[input_field(1, 1, IN_fI0Type)] = 1;      // push button
+    buffer[input_field(1, 1, IN_fI0Function)] = 3;  // toggle + dimming
+    buffer[input_field(1, 1, IN_fI0Scene)] = 20;
+    buffer[input_field(1, 1, IN_fI0Threshold)] = 10;
+    buffer[input_field(1, 0, IN_fI0Type)] = 2;  // occupancy
     const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
-    const auto& input = config.inputs[2];
-    TEST_ASSERT_EQUAL_UINT8(5, input.device);
-    TEST_ASSERT_EQUAL_UINT8(1, input.instance);
-    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton), static_cast<int>(input.type));
+    // Slot 1 instance i is input channel 4 + i; its instance number is first + i.
+    const auto& occupancy = config.inputs[4];
+    TEST_ASSERT_EQUAL_UINT8(5, occupancy.device);
+    TEST_ASSERT_EQUAL_UINT8(1, occupancy.instance);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Occupancy),
+                      static_cast<int>(occupancy.type));
+    const auto& button = config.inputs[5];
+    TEST_ASSERT_EQUAL_UINT8(5, button.device);
+    TEST_ASSERT_EQUAL_UINT8(2, button.instance);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton),
+                      static_cast<int>(button.type));
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::ToggleDim),
-                      static_cast<int>(input.function));
-    TEST_ASSERT_EQUAL_UINT8(20, input.scene);
-    TEST_ASSERT_EQUAL_UINT8(10, input.threshold);
-    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
-                      static_cast<int>(config.inputs[1].type));
+                      static_cast<int>(button.function));
+    TEST_ASSERT_EQUAL_UINT8(20, button.scene);
+    TEST_ASSERT_EQUAL_UINT8(10, button.threshold);
+    for (const auto channel : {0, 3, 6, 7, 8}) {
+        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                          static_cast<int>(config.inputs[channel].type));
+    }
+}
+
+void test_instances_beyond_the_slot_count_stay_unused() {
+    auto buffer = parameters();
+    buffer[input_slot(0) + IN_fDeviceAddress] = 7;
+    buffer[input_slot(0) + IN_fInstanceCount] = 1;
+    for (std::size_t i = 0; i < 4; ++i) {
+        buffer[input_field(0, i, IN_fI0Type)] = 1;  // configured, but only instance 0 is counted
+    }
+    const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton),
+                      static_cast<int>(config.inputs[0].type));
+    for (const auto channel : {1, 2, 3}) {
+        TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                          static_cast<int>(config.inputs[channel].type));
+    }
 }
 
 void test_invalid_input_values_fall_back_to_defaults() {
     auto buffer = parameters();
-    const auto offset = IN_ParamBlockOffset;
-    buffer[offset + IN_fDeviceAddress] = 64;
-    buffer[offset + IN_fInstance] = 32;
-    buffer[offset + IN_fInputType] = 4;
-    buffer[offset + IN_fFunction] = 5;
-    buffer[offset + IN_fScene] = 65;
-    buffer[offset + IN_fThreshold] = 101;
+    buffer[input_slot(0) + IN_fDeviceAddress] = 3;
+    buffer[input_slot(0) + IN_fInstanceCount] = 1;
+    buffer[input_field(0, 0, IN_fI0Type)] = 4;
+    buffer[input_field(0, 0, IN_fI0Function)] = 5;
+    buffer[input_field(0, 0, IN_fI0Scene)] = 65;
+    buffer[input_field(0, 0, IN_fI0Threshold)] = 101;
+    buffer[input_slot(1) + IN_fDeviceAddress] = 64;  // invalid device: whole slot ignored
+    buffer[input_slot(1) + IN_fInstanceCount] = 1;
+    buffer[input_field(1, 0, IN_fI0Type)] = 1;
+    buffer[input_slot(2) + IN_fDeviceAddress] = 4;  // invalid count: whole slot ignored
+    buffer[input_slot(2) + IN_fInstanceCount] = 5;
+    buffer[input_field(2, 0, IN_fI0Type)] = 1;
+    buffer[input_slot(3) + IN_fDeviceAddress] = 6;  // instances past 31 are dropped
+    buffer[input_slot(3) + IN_fFirstInstance] = 30;
+    buffer[input_slot(3) + IN_fInstanceCount] = 4;
+    for (std::size_t i = 0; i < 4; ++i) {
+        buffer[input_field(3, i, IN_fI0Type)] = 1;
+    }
     const auto config = gateway::config::parse_configuration(buffer.data(), buffer.size());
     const auto& input = config.inputs[0];
-    TEST_ASSERT_EQUAL_UINT8(0, input.device);
-    TEST_ASSERT_EQUAL_UINT8(0, input.instance);
+    TEST_ASSERT_EQUAL_UINT8(3, input.device);
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused), static_cast<int>(input.type));
     TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputFunction::Toggle),
                       static_cast<int>(input.function));
     TEST_ASSERT_EQUAL_UINT8(1, input.scene);
     TEST_ASSERT_EQUAL_UINT8(0, input.threshold);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                      static_cast<int>(config.inputs[4].type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                      static_cast<int>(config.inputs[8].type));
+    TEST_ASSERT_EQUAL_UINT8(31, config.inputs[13].instance);
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::PushButton),
+                      static_cast<int>(config.inputs[13].type));
+    TEST_ASSERT_EQUAL(static_cast<int>(gateway::config::InputType::Unused),
+                      static_cast<int>(config.inputs[14].type));
 }
 
 void test_out_of_range_percent_falls_back_to_default_level() {
@@ -211,7 +265,8 @@ void run_config_tests() {
     RUN_TEST(test_parse_group_and_broadcast_blocks);
     RUN_TEST(test_invalid_enum_falls_back_to_last_level);
     RUN_TEST(test_default_input_channels_are_unused);
-    RUN_TEST(test_parse_input_channel_block);
+    RUN_TEST(test_parse_input_device_slot);
+    RUN_TEST(test_instances_beyond_the_slot_count_stay_unused);
     RUN_TEST(test_invalid_input_values_fall_back_to_defaults);
     RUN_TEST(test_out_of_range_percent_falls_back_to_default_level);
     RUN_TEST(test_parse_dt6_ballast_limits_fade_and_psu_mode);

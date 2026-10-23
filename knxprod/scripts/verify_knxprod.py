@@ -50,6 +50,7 @@ def reserved_names(name, root):
     return found
 
 
+SEPARATOR_HINTS = {None, "Headline", "HorizontalRuler", "Information", "Error"}
 WHEN_TEST = re.compile(r"(?:(?:=|!=|<|>|<=|>=)-?\d+|-?\d+(?: -?\d+)*)")
 
 
@@ -63,6 +64,8 @@ def dynamic_problems(name, root):
             problems.append(f"{name}: <{tag}> RefId {element.get('RefId')!r} does not resolve")
         elif tag == "choose" and element.get("ParamRefId") not in refs:
             problems.append(f"{name}: <choose> ParamRefId {element.get('ParamRefId')!r} is not a ParameterRef")
+        elif tag == "ParameterSeparator" and element.get("UIHint") not in SEPARATOR_HINTS:
+            problems.append(f"{name}: <ParameterSeparator> UIHint {element.get('UIHint')!r} is not one ETS renders")
         elif tag == "when" and element.get("default") != "true" and not WHEN_TEST.fullmatch(element.get("test", "")):
             problems.append(f"{name}: <when> test {element.get('test')!r} is not KNX syntax")
     return problems[:20]

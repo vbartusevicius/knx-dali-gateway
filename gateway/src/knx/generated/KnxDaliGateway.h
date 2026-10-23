@@ -11,9 +11,9 @@
 #define MAIN_FirmwareName "KNX DALI Gateway"
 #define MAIN_OpenKnxId 0xFF
 #define MAIN_ApplicationNumber 90
-#define MAIN_ApplicationVersion 1
+#define MAIN_ApplicationVersion 2
 #define MAIN_ApplicationEncoding iso-8859-15
-#define MAIN_ParameterSize 949
+#define MAIN_ParameterSize 909
 #define MAIN_MaxKoNumber 1321
 #define MAIN_OrderNumber "0xFF5A"
 // Parameter with single occurrence
@@ -22,18 +22,18 @@
 #define CH_StartupDelay                         0      // uint8_t
 #define CH_BcSwitchOnMode                       1      // 8 Bits, Bit 7-0
 #define CH_BcFixedLevel                         2      // uint8_t
-#define CH_DaliChannel                          3      // uint8_t
+#define CH_DaliChannel                          3      // 8 Bits, Bit 7-0
 #define CH_InternalDaliPsu                      4      // 8 Bits, Bit 7-0
 
 // Startup delay
 #define ParamCH_StartupDelay                        (knx.paramByte(CH_StartupDelay))
-// Broadcast switch-on level
+// Switch-on level
 #define ParamCH_BcSwitchOnMode                      (knx.paramByte(CH_BcSwitchOnMode))
-// Broadcast fixed switch-on level
+// Fixed switch-on level
 #define ParamCH_BcFixedLevel                        (knx.paramByte(CH_BcFixedLevel))
-// DALI channel
+// Lamp
 #define ParamCH_DaliChannel                         (knx.paramByte(CH_DaliChannel))
-// Internal DALI bus power supply (15 V / 180 mA)
+// Internal DALI bus supply (15 V, 180 mA)
 #define ParamCH_InternalDaliPsu                     (knx.paramByte(CH_InternalDaliPsu))
 
 #define CH_KoBcSwitch 1185
@@ -46,23 +46,23 @@
 #define CH_KoBcRgbw 1192
 #define CH_KoBcXyY 1193
 
-// Broadcast: Switch
+// Broadcast
 #define KoCH_BcSwitch                            (knx.getGroupObject(CH_KoBcSwitch))
-// Broadcast: Brightness
+// Broadcast
 #define KoCH_BcBrightness                        (knx.getGroupObject(CH_KoBcBrightness))
-// Broadcast: Relative dimming
+// Broadcast
 #define KoCH_BcRelativeDimming                   (knx.getGroupObject(CH_KoBcRelativeDimming))
-// Broadcast: Scene
+// Broadcast
 #define KoCH_BcScene                             (knx.getGroupObject(CH_KoBcScene))
-// Broadcast: Colour temperature
+// Broadcast
 #define KoCH_BcColourTemperature                 (knx.getGroupObject(CH_KoBcColourTemperature))
-// Broadcast: Relative colour temperature
+// Broadcast
 #define KoCH_BcRelativeColourTemperature         (knx.getGroupObject(CH_KoBcRelativeColourTemperature))
-// Broadcast: RGB
+// Broadcast
 #define KoCH_BcRgb                               (knx.getGroupObject(CH_KoBcRgb))
-// Broadcast: RGBW
+// Broadcast
 #define KoCH_BcRgbw                              (knx.getGroupObject(CH_KoBcRgbw))
-// Broadcast: xyY
+// Broadcast
 #define KoCH_BcXyY                               (knx.getGroupObject(CH_KoBcXyY))
 
 #define CH_ChannelCount 64
@@ -134,51 +134,51 @@
 #define ParamCH_fSwitchOnMode                       (knx.paramByte(CH_ParamCalcIndex(CH_fSwitchOnMode)))
 // Fixed switch-on level
 #define ParamCH_fFixedLevel                         (knx.paramByte(CH_ParamCalcIndex(CH_fFixedLevel)))
-// Member of DALI group 1
+// Member of G00
 #define ParamCH_fGroup01                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup01)) & CH_fGroup01Mask))
-// Member of DALI group 2
+// Member of G01
 #define ParamCH_fGroup02                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup02)) & CH_fGroup02Mask))
-// Member of DALI group 3
+// Member of G02
 #define ParamCH_fGroup03                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup03)) & CH_fGroup03Mask))
-// Member of DALI group 4
+// Member of G03
 #define ParamCH_fGroup04                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup04)) & CH_fGroup04Mask))
-// Member of DALI group 5
+// Member of G04
 #define ParamCH_fGroup05                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup05)) & CH_fGroup05Mask))
-// Member of DALI group 6
+// Member of G05
 #define ParamCH_fGroup06                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup06)) & CH_fGroup06Mask))
-// Member of DALI group 7
+// Member of G06
 #define ParamCH_fGroup07                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup07)) & CH_fGroup07Mask))
-// Member of DALI group 8
+// Member of G07
 #define ParamCH_fGroup08                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup08)) & CH_fGroup08Mask))
-// Member of DALI group 9
+// Member of G08
 #define ParamCH_fGroup09                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup09)) & CH_fGroup09Mask))
-// Member of DALI group 10
+// Member of G09
 #define ParamCH_fGroup10                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup10)) & CH_fGroup10Mask))
-// Member of DALI group 11
+// Member of G10
 #define ParamCH_fGroup11                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup11)) & CH_fGroup11Mask))
-// Member of DALI group 12
+// Member of G11
 #define ParamCH_fGroup12                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup12)) & CH_fGroup12Mask))
-// Member of DALI group 13
+// Member of G12
 #define ParamCH_fGroup13                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup13)) & CH_fGroup13Mask))
-// Member of DALI group 14
+// Member of G13
 #define ParamCH_fGroup14                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup14)) & CH_fGroup14Mask))
-// Member of DALI group 15
+// Member of G14
 #define ParamCH_fGroup15                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup15)) & CH_fGroup15Mask))
-// Member of DALI group 16
+// Member of G15
 #define ParamCH_fGroup16                            ((bool)(knx.paramByte(CH_ParamCalcIndex(CH_fGroup16)) & CH_fGroup16Mask))
-// Colour control
+// Lamp type
 #define ParamCH_fColourControl                      (knx.paramByte(CH_ParamCalcIndex(CH_fColourControl)))
-// DT6 minimum brightness limit
+// Minimum level
 #define ParamCH_fMinLevel                           (knx.paramByte(CH_ParamCalcIndex(CH_fMinLevel)))
-// DT6 maximum brightness limit
+// Maximum level
 #define ParamCH_fMaxLevel                           (knx.paramByte(CH_ParamCalcIndex(CH_fMaxLevel)))
-// DT6 ballast power-on level (0=Off, 1..100%, 101=Last)
+// Power-on level (0 = off, 101 = last level)
 #define ParamCH_fPowerOnLevel                       (knx.paramByte(CH_ParamCalcIndex(CH_fPowerOnLevel)))
-// DT6 ballast system-failure level (0=Off, 1..100%, 101=No change)
+// System-failure level (0 = off, 101 = no change)
 #define ParamCH_fSysFailLevel                       (knx.paramByte(CH_ParamCalcIndex(CH_fSysFailLevel)))
-// DT6 ballast fade time (IEC 62386-102 Table 15)
+// Fade time
 #define ParamCH_fFadeTime                           (knx.paramByte(CH_ParamCalcIndex(CH_fFadeTime)))
-// DT6 ballast fade rate (IEC 62386-102 Table 16)
+// Fade rate
 #define ParamCH_fFadeRate                           (knx.paramByte(CH_ParamCalcIndex(CH_fFadeRate)))
 
 // deprecated
@@ -208,35 +208,35 @@
 #define CH_KoXyY 13
 #define CH_KoXyYStatus 14
 
-// Channel %C%: Switch
+// A%CC-1%
 #define KoCH_Switch                              (knx.getGroupObject(CH_KoCalcNumber(CH_KoSwitch)))
-// Channel %C%: Switch status
+// A%CC-1%
 #define KoCH_SwitchStatus                        (knx.getGroupObject(CH_KoCalcNumber(CH_KoSwitchStatus)))
-// Channel %C%: Brightness
+// A%CC-1%
 #define KoCH_Brightness                          (knx.getGroupObject(CH_KoCalcNumber(CH_KoBrightness)))
-// Channel %C%: Brightness status
+// A%CC-1%
 #define KoCH_BrightnessStatus                    (knx.getGroupObject(CH_KoCalcNumber(CH_KoBrightnessStatus)))
-// Channel %C%: Relative dimming
+// A%CC-1%
 #define KoCH_RelativeDimming                     (knx.getGroupObject(CH_KoCalcNumber(CH_KoRelativeDimming)))
-// Channel %C%: Fault
+// A%CC-1%
 #define KoCH_Fault                               (knx.getGroupObject(CH_KoCalcNumber(CH_KoFault)))
-// Channel %C%: Colour temperature
+// A%CC-1%
 #define KoCH_ColourTemperature                   (knx.getGroupObject(CH_KoCalcNumber(CH_KoColourTemperature)))
-// Channel %C%: Colour temperature status
+// A%CC-1%
 #define KoCH_ColourTemperatureStatus             (knx.getGroupObject(CH_KoCalcNumber(CH_KoColourTemperatureStatus)))
-// Channel %C%: Relative colour temperature
+// A%CC-1%
 #define KoCH_RelativeColourTemperature           (knx.getGroupObject(CH_KoCalcNumber(CH_KoRelativeColourTemperature)))
-// Channel %C%: RGB
+// A%CC-1%
 #define KoCH_Rgb                                 (knx.getGroupObject(CH_KoCalcNumber(CH_KoRgb)))
-// Channel %C%: RGB status
+// A%CC-1%
 #define KoCH_RgbStatus                           (knx.getGroupObject(CH_KoCalcNumber(CH_KoRgbStatus)))
-// Channel %C%: RGBW
+// A%CC-1%
 #define KoCH_Rgbw                                (knx.getGroupObject(CH_KoCalcNumber(CH_KoRgbw)))
-// Channel %C%: RGBW status
+// A%CC-1%
 #define KoCH_RgbwStatus                          (knx.getGroupObject(CH_KoCalcNumber(CH_KoRgbwStatus)))
-// Channel %C%: xyY
+// A%CC-1%
 #define KoCH_XyY                                 (knx.getGroupObject(CH_KoCalcNumber(CH_KoXyY)))
-// Channel %C%: xyY status
+// A%CC-1%
 #define KoCH_XyYStatus                           (knx.getGroupObject(CH_KoCalcNumber(CH_KoXyYStatus)))
 
 #define GR_ChannelCount 16
@@ -254,7 +254,7 @@
 #define ParamGR_fSwitchOnMode                       (knx.paramByte(GR_ParamCalcIndex(GR_fSwitchOnMode)))
 // Fixed switch-on level
 #define ParamGR_fFixedLevel                         (knx.paramByte(GR_ParamCalcIndex(GR_fFixedLevel)))
-// Colour control
+// Group type
 #define ParamGR_fColourControl                      (knx.paramByte(GR_ParamCalcIndex(GR_fColourControl)))
 
 // deprecated
@@ -283,86 +283,161 @@
 #define GR_KoXyY 12
 #define GR_KoXyYStatus 13
 
-// DALI group %C%: Switch
+// G%CC-1%
 #define KoGR_Switch                              (knx.getGroupObject(GR_KoCalcNumber(GR_KoSwitch)))
-// DALI group %C%: Switch status
+// G%CC-1%
 #define KoGR_SwitchStatus                        (knx.getGroupObject(GR_KoCalcNumber(GR_KoSwitchStatus)))
-// DALI group %C%: Brightness
+// G%CC-1%
 #define KoGR_Brightness                          (knx.getGroupObject(GR_KoCalcNumber(GR_KoBrightness)))
-// DALI group %C%: Brightness status
+// G%CC-1%
 #define KoGR_BrightnessStatus                    (knx.getGroupObject(GR_KoCalcNumber(GR_KoBrightnessStatus)))
-// DALI group %C%: Relative dimming
+// G%CC-1%
 #define KoGR_RelativeDimming                     (knx.getGroupObject(GR_KoCalcNumber(GR_KoRelativeDimming)))
-// DALI group %C%: Colour temperature
+// G%CC-1%
 #define KoGR_ColourTemperature                   (knx.getGroupObject(GR_KoCalcNumber(GR_KoColourTemperature)))
-// DALI group %C%: Colour temperature status
+// G%CC-1%
 #define KoGR_ColourTemperatureStatus             (knx.getGroupObject(GR_KoCalcNumber(GR_KoColourTemperatureStatus)))
-// DALI group %C%: Relative colour temperature
+// G%CC-1%
 #define KoGR_RelativeColourTemperature           (knx.getGroupObject(GR_KoCalcNumber(GR_KoRelativeColourTemperature)))
-// DALI group %C%: RGB
+// G%CC-1%
 #define KoGR_Rgb                                 (knx.getGroupObject(GR_KoCalcNumber(GR_KoRgb)))
-// DALI group %C%: RGB status
+// G%CC-1%
 #define KoGR_RgbStatus                           (knx.getGroupObject(GR_KoCalcNumber(GR_KoRgbStatus)))
-// DALI group %C%: RGBW
+// G%CC-1%
 #define KoGR_Rgbw                                (knx.getGroupObject(GR_KoCalcNumber(GR_KoRgbw)))
-// DALI group %C%: RGBW status
+// G%CC-1%
 #define KoGR_RgbwStatus                          (knx.getGroupObject(GR_KoCalcNumber(GR_KoRgbwStatus)))
-// DALI group %C%: xyY
+// G%CC-1%
 #define KoGR_XyY                                 (knx.getGroupObject(GR_KoCalcNumber(GR_KoXyY)))
-// DALI group %C%: xyY status
+// G%CC-1%
 #define KoGR_XyYStatus                           (knx.getGroupObject(GR_KoCalcNumber(GR_KoXyYStatus)))
 
-#define IN_ChannelCount 32
+#define IN_ChannelCount 8
 
 // Parameter per channel
 #define IN_ParamBlockOffset 757
-#define IN_ParamBlockSize 6
+#define IN_ParamBlockSize 19
 #define IN_ParamCalcIndex(index) (index + IN_ParamBlockOffset + _channelIndex * IN_ParamBlockSize)
 
-#define IN_fDeviceAddress                       0      // uint8_t
-#define IN_fInstance                            1      // uint8_t
-#define IN_fInputType                           2      // 8 Bits, Bit 7-0
-#define IN_fFunction                            3      // 8 Bits, Bit 7-0
-#define IN_fScene                               4      // uint8_t
-#define IN_fThreshold                           5      // uint8_t
+#define IN_fDeviceAddress                       0      // 8 Bits, Bit 7-0
+#define IN_fFirstInstance                       1      // uint8_t
+#define IN_fInstanceCount                       2      // 8 Bits, Bit 7-0
+#define IN_fI0Type                              3      // 8 Bits, Bit 7-0
+#define IN_fI0Function                          4      // 8 Bits, Bit 7-0
+#define IN_fI0Scene                             5      // uint8_t
+#define IN_fI0Threshold                         6      // uint8_t
+#define IN_fI1Type                              7      // 8 Bits, Bit 7-0
+#define IN_fI1Function                          8      // 8 Bits, Bit 7-0
+#define IN_fI1Scene                             9      // uint8_t
+#define IN_fI1Threshold                        10      // uint8_t
+#define IN_fI2Type                             11      // 8 Bits, Bit 7-0
+#define IN_fI2Function                         12      // 8 Bits, Bit 7-0
+#define IN_fI2Scene                            13      // uint8_t
+#define IN_fI2Threshold                        14      // uint8_t
+#define IN_fI3Type                             15      // 8 Bits, Bit 7-0
+#define IN_fI3Function                         16      // 8 Bits, Bit 7-0
+#define IN_fI3Scene                            17      // uint8_t
+#define IN_fI3Threshold                        18      // uint8_t
 
-// DALI device short address
+// Input device
 #define ParamIN_fDeviceAddress                      (knx.paramByte(IN_ParamCalcIndex(IN_fDeviceAddress)))
-// Instance number
-#define ParamIN_fInstance                           (knx.paramByte(IN_ParamCalcIndex(IN_fInstance)))
-// Input type
-#define ParamIN_fInputType                          (knx.paramByte(IN_ParamCalcIndex(IN_fInputType)))
+// First instance
+#define ParamIN_fFirstInstance                      (knx.paramByte(IN_ParamCalcIndex(IN_fFirstInstance)))
+// Instances
+#define ParamIN_fInstanceCount                      (knx.paramByte(IN_ParamCalcIndex(IN_fInstanceCount)))
+// Type
+#define ParamIN_fI0Type                             (knx.paramByte(IN_ParamCalcIndex(IN_fI0Type)))
 // Push button function
-#define ParamIN_fFunction                           (knx.paramByte(IN_ParamCalcIndex(IN_fFunction)))
+#define ParamIN_fI0Function                         (knx.paramByte(IN_ParamCalcIndex(IN_fI0Function)))
 // Scene number
-#define ParamIN_fScene                              (knx.paramByte(IN_ParamCalcIndex(IN_fScene)))
-// Send threshold
-#define ParamIN_fThreshold                          (knx.paramByte(IN_ParamCalcIndex(IN_fThreshold)))
+#define ParamIN_fI0Scene                            (knx.paramByte(IN_ParamCalcIndex(IN_fI0Scene)))
+// Send on change of (0 = every event)
+#define ParamIN_fI0Threshold                        (knx.paramByte(IN_ParamCalcIndex(IN_fI0Threshold)))
+// Type
+#define ParamIN_fI1Type                             (knx.paramByte(IN_ParamCalcIndex(IN_fI1Type)))
+// Push button function
+#define ParamIN_fI1Function                         (knx.paramByte(IN_ParamCalcIndex(IN_fI1Function)))
+// Scene number
+#define ParamIN_fI1Scene                            (knx.paramByte(IN_ParamCalcIndex(IN_fI1Scene)))
+// Send on change of (0 = every event)
+#define ParamIN_fI1Threshold                        (knx.paramByte(IN_ParamCalcIndex(IN_fI1Threshold)))
+// Type
+#define ParamIN_fI2Type                             (knx.paramByte(IN_ParamCalcIndex(IN_fI2Type)))
+// Push button function
+#define ParamIN_fI2Function                         (knx.paramByte(IN_ParamCalcIndex(IN_fI2Function)))
+// Scene number
+#define ParamIN_fI2Scene                            (knx.paramByte(IN_ParamCalcIndex(IN_fI2Scene)))
+// Send on change of (0 = every event)
+#define ParamIN_fI2Threshold                        (knx.paramByte(IN_ParamCalcIndex(IN_fI2Threshold)))
+// Type
+#define ParamIN_fI3Type                             (knx.paramByte(IN_ParamCalcIndex(IN_fI3Type)))
+// Push button function
+#define ParamIN_fI3Function                         (knx.paramByte(IN_ParamCalcIndex(IN_fI3Function)))
+// Scene number
+#define ParamIN_fI3Scene                            (knx.paramByte(IN_ParamCalcIndex(IN_fI3Scene)))
+// Send on change of (0 = every event)
+#define ParamIN_fI3Threshold                        (knx.paramByte(IN_ParamCalcIndex(IN_fI3Threshold)))
 
 // deprecated
 #define IN_KoOffset 1194
 
 // Communication objects per channel (multiple occurrence)
 #define IN_KoBlockOffset 1194
-#define IN_KoBlockSize 4
+#define IN_KoBlockSize 16
 
 #define IN_KoCalcNumber(index) (index + IN_KoBlockOffset + _channelIndex * IN_KoBlockSize)
 #define IN_KoCalcIndex(number) ((number >= IN_KoCalcNumber(0) && number < IN_KoCalcNumber(IN_KoBlockSize)) ? (number - IN_KoBlockOffset) % IN_KoBlockSize : -1)
 #define IN_KoCalcChannel(number) ((number >= IN_KoBlockOffset && number < IN_KoBlockOffset + IN_ChannelCount * IN_KoBlockSize) ? (number - IN_KoBlockOffset) / IN_KoBlockSize : -1)
 
-#define IN_KoSwitch 0
-#define IN_KoDimming 1
-#define IN_KoIlluminance 2
-#define IN_KoScene 3
+#define IN_KoI0Switch 0
+#define IN_KoI0Dimming 1
+#define IN_KoI0Illuminance 2
+#define IN_KoI0Scene 3
+#define IN_KoI1Switch 4
+#define IN_KoI1Dimming 5
+#define IN_KoI1Illuminance 6
+#define IN_KoI1Scene 7
+#define IN_KoI2Switch 8
+#define IN_KoI2Dimming 9
+#define IN_KoI2Illuminance 10
+#define IN_KoI2Scene 11
+#define IN_KoI3Switch 12
+#define IN_KoI3Dimming 13
+#define IN_KoI3Illuminance 14
+#define IN_KoI3Scene 15
 
-// Input %C%: Switch/Occupancy
-#define KoIN_Switch                              (knx.getGroupObject(IN_KoCalcNumber(IN_KoSwitch)))
-// Input %C%: Dimming
-#define KoIN_Dimming                             (knx.getGroupObject(IN_KoCalcNumber(IN_KoDimming)))
-// Input %C%: Illuminance
-#define KoIN_Illuminance                         (knx.getGroupObject(IN_KoCalcNumber(IN_KoIlluminance)))
-// Input %C%: Scene
-#define KoIN_Scene                               (knx.getGroupObject(IN_KoCalcNumber(IN_KoScene)))
+// Input device %C%
+#define KoIN_I0Switch                            (knx.getGroupObject(IN_KoCalcNumber(IN_KoI0Switch)))
+// Input device %C%
+#define KoIN_I0Dimming                           (knx.getGroupObject(IN_KoCalcNumber(IN_KoI0Dimming)))
+// Input device %C%
+#define KoIN_I0Illuminance                       (knx.getGroupObject(IN_KoCalcNumber(IN_KoI0Illuminance)))
+// Input device %C%
+#define KoIN_I0Scene                             (knx.getGroupObject(IN_KoCalcNumber(IN_KoI0Scene)))
+// Input device %C%
+#define KoIN_I1Switch                            (knx.getGroupObject(IN_KoCalcNumber(IN_KoI1Switch)))
+// Input device %C%
+#define KoIN_I1Dimming                           (knx.getGroupObject(IN_KoCalcNumber(IN_KoI1Dimming)))
+// Input device %C%
+#define KoIN_I1Illuminance                       (knx.getGroupObject(IN_KoCalcNumber(IN_KoI1Illuminance)))
+// Input device %C%
+#define KoIN_I1Scene                             (knx.getGroupObject(IN_KoCalcNumber(IN_KoI1Scene)))
+// Input device %C%
+#define KoIN_I2Switch                            (knx.getGroupObject(IN_KoCalcNumber(IN_KoI2Switch)))
+// Input device %C%
+#define KoIN_I2Dimming                           (knx.getGroupObject(IN_KoCalcNumber(IN_KoI2Dimming)))
+// Input device %C%
+#define KoIN_I2Illuminance                       (knx.getGroupObject(IN_KoCalcNumber(IN_KoI2Illuminance)))
+// Input device %C%
+#define KoIN_I2Scene                             (knx.getGroupObject(IN_KoCalcNumber(IN_KoI2Scene)))
+// Input device %C%
+#define KoIN_I3Switch                            (knx.getGroupObject(IN_KoCalcNumber(IN_KoI3Switch)))
+// Input device %C%
+#define KoIN_I3Dimming                           (knx.getGroupObject(IN_KoCalcNumber(IN_KoI3Dimming)))
+// Input device %C%
+#define KoIN_I3Illuminance                       (knx.getGroupObject(IN_KoCalcNumber(IN_KoI3Illuminance)))
+// Input device %C%
+#define KoIN_I3Scene                             (knx.getGroupObject(IN_KoCalcNumber(IN_KoI3Scene)))
 
 
 // enumeration types

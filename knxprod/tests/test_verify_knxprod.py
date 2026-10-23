@@ -93,3 +93,9 @@ def test_choose_without_paramrefid_and_expression_tests_are_rejected(tmp_path):
     assert any("<choose> ParamRefId None" in p for p in problems)
     assert any("test 'P1 == 1' is not KNX syntax" in p for p in problems)
     assert any("RefId 'O9' does not resolve" in p for p in problems)
+
+
+def test_unknown_separator_style_is_rejected(tmp_path):
+    dynamic = '<ParameterSeparator Id="S1" Text="x" UIHint="Warning"/><ParameterSeparator Id="S2" Text="y" UIHint="Error"/>'
+    problems = v.verify(archive(tmp_path, dynamic=dynamic), HEADER)
+    assert len(problems) == 1 and "UIHint 'Warning'" in problems[0]

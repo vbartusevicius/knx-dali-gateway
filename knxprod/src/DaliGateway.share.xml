@@ -21,24 +21,169 @@
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="100" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
-                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" />
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-DaliChannel" Name="DaliChannel">
-                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="63" />
+              <ParameterType Id="%AID%_PT-GearAddress" Name="GearAddress">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="A00" Value="0" />
+                  <Enumeration Id="%ENID%" Text="A01" Value="1" />
+                  <Enumeration Id="%ENID%" Text="A02" Value="2" />
+                  <Enumeration Id="%ENID%" Text="A03" Value="3" />
+                  <Enumeration Id="%ENID%" Text="A04" Value="4" />
+                  <Enumeration Id="%ENID%" Text="A05" Value="5" />
+                  <Enumeration Id="%ENID%" Text="A06" Value="6" />
+                  <Enumeration Id="%ENID%" Text="A07" Value="7" />
+                  <Enumeration Id="%ENID%" Text="A08" Value="8" />
+                  <Enumeration Id="%ENID%" Text="A09" Value="9" />
+                  <Enumeration Id="%ENID%" Text="A10" Value="10" />
+                  <Enumeration Id="%ENID%" Text="A11" Value="11" />
+                  <Enumeration Id="%ENID%" Text="A12" Value="12" />
+                  <Enumeration Id="%ENID%" Text="A13" Value="13" />
+                  <Enumeration Id="%ENID%" Text="A14" Value="14" />
+                  <Enumeration Id="%ENID%" Text="A15" Value="15" />
+                  <Enumeration Id="%ENID%" Text="A16" Value="16" />
+                  <Enumeration Id="%ENID%" Text="A17" Value="17" />
+                  <Enumeration Id="%ENID%" Text="A18" Value="18" />
+                  <Enumeration Id="%ENID%" Text="A19" Value="19" />
+                  <Enumeration Id="%ENID%" Text="A20" Value="20" />
+                  <Enumeration Id="%ENID%" Text="A21" Value="21" />
+                  <Enumeration Id="%ENID%" Text="A22" Value="22" />
+                  <Enumeration Id="%ENID%" Text="A23" Value="23" />
+                  <Enumeration Id="%ENID%" Text="A24" Value="24" />
+                  <Enumeration Id="%ENID%" Text="A25" Value="25" />
+                  <Enumeration Id="%ENID%" Text="A26" Value="26" />
+                  <Enumeration Id="%ENID%" Text="A27" Value="27" />
+                  <Enumeration Id="%ENID%" Text="A28" Value="28" />
+                  <Enumeration Id="%ENID%" Text="A29" Value="29" />
+                  <Enumeration Id="%ENID%" Text="A30" Value="30" />
+                  <Enumeration Id="%ENID%" Text="A31" Value="31" />
+                  <Enumeration Id="%ENID%" Text="A32" Value="32" />
+                  <Enumeration Id="%ENID%" Text="A33" Value="33" />
+                  <Enumeration Id="%ENID%" Text="A34" Value="34" />
+                  <Enumeration Id="%ENID%" Text="A35" Value="35" />
+                  <Enumeration Id="%ENID%" Text="A36" Value="36" />
+                  <Enumeration Id="%ENID%" Text="A37" Value="37" />
+                  <Enumeration Id="%ENID%" Text="A38" Value="38" />
+                  <Enumeration Id="%ENID%" Text="A39" Value="39" />
+                  <Enumeration Id="%ENID%" Text="A40" Value="40" />
+                  <Enumeration Id="%ENID%" Text="A41" Value="41" />
+                  <Enumeration Id="%ENID%" Text="A42" Value="42" />
+                  <Enumeration Id="%ENID%" Text="A43" Value="43" />
+                  <Enumeration Id="%ENID%" Text="A44" Value="44" />
+                  <Enumeration Id="%ENID%" Text="A45" Value="45" />
+                  <Enumeration Id="%ENID%" Text="A46" Value="46" />
+                  <Enumeration Id="%ENID%" Text="A47" Value="47" />
+                  <Enumeration Id="%ENID%" Text="A48" Value="48" />
+                  <Enumeration Id="%ENID%" Text="A49" Value="49" />
+                  <Enumeration Id="%ENID%" Text="A50" Value="50" />
+                  <Enumeration Id="%ENID%" Text="A51" Value="51" />
+                  <Enumeration Id="%ENID%" Text="A52" Value="52" />
+                  <Enumeration Id="%ENID%" Text="A53" Value="53" />
+                  <Enumeration Id="%ENID%" Text="A54" Value="54" />
+                  <Enumeration Id="%ENID%" Text="A55" Value="55" />
+                  <Enumeration Id="%ENID%" Text="A56" Value="56" />
+                  <Enumeration Id="%ENID%" Text="A57" Value="57" />
+                  <Enumeration Id="%ENID%" Text="A58" Value="58" />
+                  <Enumeration Id="%ENID%" Text="A59" Value="59" />
+                  <Enumeration Id="%ENID%" Text="A60" Value="60" />
+                  <Enumeration Id="%ENID%" Text="A61" Value="61" />
+                  <Enumeration Id="%ENID%" Text="A62" Value="62" />
+                  <Enumeration Id="%ENID%" Text="A63" Value="63" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-InputAddress" Name="InputAddress">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="D00" Value="0" />
+                  <Enumeration Id="%ENID%" Text="D01" Value="1" />
+                  <Enumeration Id="%ENID%" Text="D02" Value="2" />
+                  <Enumeration Id="%ENID%" Text="D03" Value="3" />
+                  <Enumeration Id="%ENID%" Text="D04" Value="4" />
+                  <Enumeration Id="%ENID%" Text="D05" Value="5" />
+                  <Enumeration Id="%ENID%" Text="D06" Value="6" />
+                  <Enumeration Id="%ENID%" Text="D07" Value="7" />
+                  <Enumeration Id="%ENID%" Text="D08" Value="8" />
+                  <Enumeration Id="%ENID%" Text="D09" Value="9" />
+                  <Enumeration Id="%ENID%" Text="D10" Value="10" />
+                  <Enumeration Id="%ENID%" Text="D11" Value="11" />
+                  <Enumeration Id="%ENID%" Text="D12" Value="12" />
+                  <Enumeration Id="%ENID%" Text="D13" Value="13" />
+                  <Enumeration Id="%ENID%" Text="D14" Value="14" />
+                  <Enumeration Id="%ENID%" Text="D15" Value="15" />
+                  <Enumeration Id="%ENID%" Text="D16" Value="16" />
+                  <Enumeration Id="%ENID%" Text="D17" Value="17" />
+                  <Enumeration Id="%ENID%" Text="D18" Value="18" />
+                  <Enumeration Id="%ENID%" Text="D19" Value="19" />
+                  <Enumeration Id="%ENID%" Text="D20" Value="20" />
+                  <Enumeration Id="%ENID%" Text="D21" Value="21" />
+                  <Enumeration Id="%ENID%" Text="D22" Value="22" />
+                  <Enumeration Id="%ENID%" Text="D23" Value="23" />
+                  <Enumeration Id="%ENID%" Text="D24" Value="24" />
+                  <Enumeration Id="%ENID%" Text="D25" Value="25" />
+                  <Enumeration Id="%ENID%" Text="D26" Value="26" />
+                  <Enumeration Id="%ENID%" Text="D27" Value="27" />
+                  <Enumeration Id="%ENID%" Text="D28" Value="28" />
+                  <Enumeration Id="%ENID%" Text="D29" Value="29" />
+                  <Enumeration Id="%ENID%" Text="D30" Value="30" />
+                  <Enumeration Id="%ENID%" Text="D31" Value="31" />
+                  <Enumeration Id="%ENID%" Text="D32" Value="32" />
+                  <Enumeration Id="%ENID%" Text="D33" Value="33" />
+                  <Enumeration Id="%ENID%" Text="D34" Value="34" />
+                  <Enumeration Id="%ENID%" Text="D35" Value="35" />
+                  <Enumeration Id="%ENID%" Text="D36" Value="36" />
+                  <Enumeration Id="%ENID%" Text="D37" Value="37" />
+                  <Enumeration Id="%ENID%" Text="D38" Value="38" />
+                  <Enumeration Id="%ENID%" Text="D39" Value="39" />
+                  <Enumeration Id="%ENID%" Text="D40" Value="40" />
+                  <Enumeration Id="%ENID%" Text="D41" Value="41" />
+                  <Enumeration Id="%ENID%" Text="D42" Value="42" />
+                  <Enumeration Id="%ENID%" Text="D43" Value="43" />
+                  <Enumeration Id="%ENID%" Text="D44" Value="44" />
+                  <Enumeration Id="%ENID%" Text="D45" Value="45" />
+                  <Enumeration Id="%ENID%" Text="D46" Value="46" />
+                  <Enumeration Id="%ENID%" Text="D47" Value="47" />
+                  <Enumeration Id="%ENID%" Text="D48" Value="48" />
+                  <Enumeration Id="%ENID%" Text="D49" Value="49" />
+                  <Enumeration Id="%ENID%" Text="D50" Value="50" />
+                  <Enumeration Id="%ENID%" Text="D51" Value="51" />
+                  <Enumeration Id="%ENID%" Text="D52" Value="52" />
+                  <Enumeration Id="%ENID%" Text="D53" Value="53" />
+                  <Enumeration Id="%ENID%" Text="D54" Value="54" />
+                  <Enumeration Id="%ENID%" Text="D55" Value="55" />
+                  <Enumeration Id="%ENID%" Text="D56" Value="56" />
+                  <Enumeration Id="%ENID%" Text="D57" Value="57" />
+                  <Enumeration Id="%ENID%" Text="D58" Value="58" />
+                  <Enumeration Id="%ENID%" Text="D59" Value="59" />
+                  <Enumeration Id="%ENID%" Text="D60" Value="60" />
+                  <Enumeration Id="%ENID%" Text="D61" Value="61" />
+                  <Enumeration Id="%ENID%" Text="D62" Value="62" />
+                  <Enumeration Id="%ENID%" Text="D63" Value="63" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Text40" Name="Text40">
+                <TypeText SizeInBit="320" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-ColourControl" Name="ColourControl">
                 <TypeRestriction Base="Value" SizeInBit="8">
-                  <Enumeration Id="%ENID%" Text="Dimmable (brightness only, DT0..DT6)" Value="0" />
-                  <Enumeration Id="%ENID%" Text="Colour temperature (DT8 Tc)" Value="1" />
+                  <Enumeration Id="%ENID%" Text="Unused" Value="255" />
+                  <Enumeration Id="%ENID%" Text="Dimmable" Value="0" />
+                  <Enumeration Id="%ENID%" Text="Tunable white (DT8 Tc)" Value="1" />
                   <Enumeration Id="%ENID%" Text="RGB (DT8)" Value="2" />
                   <Enumeration Id="%ENID%" Text="RGBW (DT8)" Value="3" />
-                  <Enumeration Id="%ENID%" Text="xy chromaticity (DT8)" Value="4" />
-                  <Enumeration Id="%ENID%" Text="Switch only (non-dimmable on/off, DT7)" Value="5" />
-                  <Enumeration Id="%ENID%" Text="Unused (hide channel objects)" Value="255" />
+                  <Enumeration Id="%ENID%" Text="Colour xy (DT8)" Value="4" />
+                  <Enumeration Id="%ENID%" Text="On/off only (DT7)" Value="5" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-InstanceNumber" Name="InstanceNumber">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="31" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-InstanceCount" Name="InstanceCount">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Id="%ENID%" Text="Unused" Value="0" />
+                  <Enumeration Id="%ENID%" Text="1 instance" Value="1" />
+                  <Enumeration Id="%ENID%" Text="2 instances" Value="2" />
+                  <Enumeration Id="%ENID%" Text="3 instances" Value="3" />
+                  <Enumeration Id="%ENID%" Text="4 instances" Value="4" />
+                </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-InputType" Name="InputType">
                 <TypeRestriction Base="Value" SizeInBit="8">
@@ -65,8 +210,8 @@
               </ParameterType>
               <ParameterType Id="%AID%_PT-DaliSupplyMode" Name="DaliSupplyMode">
                 <TypeRestriction Base="Value" SizeInBit="8">
-                  <Enumeration Id="%ENID%" Text="Disabled (external DALI bus power supply)" Value="0" />
-                  <Enumeration Id="%ENID%" Text="Enabled (internal 15 V / 180 mA supply)" Value="1" />
+                  <Enumeration Id="%ENID%" Text="Off (external DALI supply)" Value="0" />
+                  <Enumeration Id="%ENID%" Text="On" Value="1" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-SpecialLevelPercent" Name="SpecialLevelPercent">
@@ -118,18 +263,18 @@
               <Parameter Id="%AID%_P-%TT%00001" Name="StartupDelay" ParameterType="%AID%_PT-StartupDelay" Text="Startup delay" SuffixText="s" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%00002" Name="BcSwitchOnMode" ParameterType="%AID%_PT-SwitchOnLevel" Text="Broadcast switch-on level" Value="0">
+              <Parameter Id="%AID%_P-%TT%00002" Name="BcSwitchOnMode" ParameterType="%AID%_PT-SwitchOnLevel" Text="Switch-on level" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%00003" Name="BcFixedLevel" ParameterType="%AID%_PT-Percent" Text="Broadcast fixed switch-on level" SuffixText="%" Value="100">
+              <Parameter Id="%AID%_P-%TT%00003" Name="BcFixedLevel" ParameterType="%AID%_PT-Percent" Text="Fixed switch-on level" SuffixText="%" Value="100">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="2" BitOffset="0" />
               </Parameter>
               <!-- ETS-side selector for the Identify/Replace commissioning
                    buttons; the firmware never reads this byte. -->
-              <Parameter Id="%AID%_P-%TT%00004" Name="DaliChannel" ParameterType="%AID%_PT-DaliChannel" Text="DALI channel" Value="0">
+              <Parameter Id="%AID%_P-%TT%00004" Name="DaliChannel" ParameterType="%AID%_PT-GearAddress" Text="Lamp" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="3" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%00005" Name="InternalDaliPsu" ParameterType="%AID%_PT-DaliSupplyMode" Text="Internal DALI bus power supply (15 V / 180 mA)" Value="1">
+              <Parameter Id="%AID%_P-%TT%00005" Name="InternalDaliPsu" ParameterType="%AID%_PT-DaliSupplyMode" Text="Internal DALI bus supply (15 V, 180 mA)" Value="1">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
               </Parameter>
             </Parameters>
@@ -141,15 +286,15 @@
               <ParameterRef Id="%AID%_P-%TT%00005_R-%TT%0000501" RefId="%AID%_P-%TT%00005" />
             </ParameterRefs>
             <ComObjectTable>
-              <ComObject Id="%AID%_O-%TT%01185" Name="BcSwitch"          Number="1185" Text="Broadcast: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%01186" Name="BcBrightness"      Number="1186" Text="Broadcast: Brightness"       FunctionText="Brightness"       ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
-              <ComObject Id="%AID%_O-%TT%01187" Name="BcRelativeDimming" Number="1187" Text="Broadcast: Relative dimming" FunctionText="Relative dimming" ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
-              <ComObject Id="%AID%_O-%TT%01188" Name="BcScene"           Number="1188" Text="Broadcast: Scene"            FunctionText="Scene"            ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-18-1" />
-              <ComObject Id="%AID%_O-%TT%01189" Name="BcColourTemperature"       Number="1189" Text="Broadcast: Colour temperature"          FunctionText="Colour temperature"          ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
-              <ComObject Id="%AID%_O-%TT%01190" Name="BcRelativeColourTemperature" Number="1190" Text="Broadcast: Relative colour temperature" FunctionText="Relative colour temperature" ObjectSize="4 Bit"   CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
-              <ComObject Id="%AID%_O-%TT%01191" Name="BcRgb"             Number="1191" Text="Broadcast: RGB"                        FunctionText="RGB"                        ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
-              <ComObject Id="%AID%_O-%TT%01192" Name="BcRgbw"            Number="1192" Text="Broadcast: RGBW"                       FunctionText="RGBW"                       ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
-              <ComObject Id="%AID%_O-%TT%01193" Name="BcXyY"             Number="1193" Text="Broadcast: xyY"                        FunctionText="xyY"                        ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
+              <ComObject Id="%AID%_O-%TT%01185" Name="BcSwitch"          Number="1185" Text="Broadcast"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%01186" Name="BcBrightness"      Number="1186" Text="Broadcast"       FunctionText="Brightness"       ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%01187" Name="BcRelativeDimming" Number="1187" Text="Broadcast" FunctionText="Relative dimming" ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%01188" Name="BcScene"           Number="1188" Text="Broadcast"            FunctionText="Scene"            ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-18-1" />
+              <ComObject Id="%AID%_O-%TT%01189" Name="BcColourTemperature"       Number="1189" Text="Broadcast"          FunctionText="Colour temperature"          ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
+              <ComObject Id="%AID%_O-%TT%01190" Name="BcRelativeColourTemperature" Number="1190" Text="Broadcast" FunctionText="Relative colour temperature" ObjectSize="4 Bit"   CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%01191" Name="BcRgb"             Number="1191" Text="Broadcast"                        FunctionText="RGB"                        ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
+              <ComObject Id="%AID%_O-%TT%01192" Name="BcRgbw"            Number="1192" Text="Broadcast"                       FunctionText="RGBW"                       ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
+              <ComObject Id="%AID%_O-%TT%01193" Name="BcXyY"             Number="1193" Text="Broadcast"                        FunctionText="xyY"                        ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%01185_R-%TT%0118501" RefId="%AID%_O-%TT%01185" />
@@ -169,12 +314,16 @@
           <Dynamic>
             <ChannelIndependentBlock>
               <ParameterBlock Id="%AID%_PB-%TT%00001" Name="General" Text="General">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Gateway" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00005_R-%TT%0000501" />
-              </ParameterBlock>
-              <ParameterBlock Id="%AID%_PB-%TT%00002" Name="Broadcast" Text="Broadcast">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Broadcast (all lamps)" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00002_R-%TT%0000201" />
-                <ParameterRefRef RefId="%AID%_P-%TT%00003_R-%TT%0000301" />
+                <choose ParamRefId="%AID%_P-%TT%00002_R-%TT%0000201">
+                  <when test="1">
+                    <ParameterRefRef RefId="%AID%_P-%TT%00003_R-%TT%0000301" IndentLevel="1" />
+                  </when>
+                </choose>
                 <ComObjectRefRef RefId="%AID%_O-%TT%01185_R-%TT%0118501" />
                 <ComObjectRefRef RefId="%AID%_O-%TT%01186_R-%TT%0118601" />
                 <ComObjectRefRef RefId="%AID%_O-%TT%01187_R-%TT%0118701" />
@@ -186,31 +335,195 @@
                 <ComObjectRefRef RefId="%AID%_O-%TT%01193_R-%TT%0119301" />
               </ParameterBlock>
               <ParameterBlock Id="%AID%_PB-%TT%00003" Name="Commissioning" Text="DALI commissioning">
-                <ParameterSeparator Id="%AID%_PS-%TT%00001" Text="Each button sends a function-property command to the gateway; the job runs on the DALI bus. Use 'Refresh status' to see progress and the presence/fault summary." UIHint="Information" />
-                <Button Id="%AID%_B-%TT%00001" Text="Scan bus" EventHandlerOnline="ConnectionOriented" EventHandler="daliScan" />
-                <Button Id="%AID%_B-%TT%00002" Text="Address new devices" EventHandlerOnline="ConnectionOriented" EventHandler="daliAssignNew" />
-                <ParameterSeparator Id="%AID%_PS-%TT%00002" Text="Re-addressing reprograms every short address on the DALI bus. Only run this during initial commissioning." UIHint="Warning" />
-                <Button Id="%AID%_B-%TT%00003" Text="Re-address all devices" EventHandlerOnline="ConnectionOriented" EventHandler="daliAssignAll" />
-                <ParameterSeparator Id="%AID%_PS-%TT%00003" Text="Resetting clears every short address on the DALI bus; all devices become unaddressed and must be commissioned again." UIHint="Warning" />
-                <Button Id="%AID%_B-%TT%00007" Text="Reset DALI addresses" EventHandlerOnline="ConnectionOriented" EventHandler="daliResetAddresses" />
-                <ParameterRefRef RefId="%AID%_P-%TT%00004_R-%TT%0000401" />
-                <Button Id="%AID%_B-%TT%00004" Text="Identify channel (recall max)" EventHandlerOnline="ConnectionOriented" EventHandler="daliIdentify" />
-                <Button Id="%AID%_B-%TT%00012" Text="Lamp finder: blink on/off (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderBlink" />
-                <Button Id="%AID%_B-%TT%00013" Text="Lamp finder: smooth pulse (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderPulse" />
-                <Button Id="%AID%_B-%TT%00014" Text="Find next channel (+1 &amp; blink)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderNext" />
-                <Button Id="%AID%_B-%TT%00015" Text="Stop lamp finder (restore level)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
-                <Button Id="%AID%_B-%TT%00005" Text="Replace channel" EventHandlerOnline="ConnectionOriented" EventHandler="daliReplace" />
-                <Button Id="%AID%_B-%TT%00006" Text="Refresh status" EventHandlerOnline="ConnectionOriented" EventHandler="daliStatus" />
-                <ParameterSeparator Id="%AID%_PS-%TT%00004" Text="DALI-2 input devices (push buttons, occupancy and light sensors) live in their own short-address space. Scan discovers them; the buttons below commission new or all input devices." UIHint="Information" />
-                <Button Id="%AID%_B-%TT%00008" Text="Scan input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputScan" />
-                <Button Id="%AID%_B-%TT%00009" Text="Address new input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputAssignNew" />
-                <Button Id="%AID%_B-%TT%00010" Text="Address all input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputAssignAll" />
-                <Button Id="%AID%_B-%TT%00011" Text="Refresh input status" EventHandlerOnline="ConnectionOriented" EventHandler="inputStatus" />
+                <ParameterSeparator Id="%AID%_PS-%TT%00001" Text="The buttons on this page run jobs on the DALI bus through the gateway. They stay greyed out until ETS has a bus connection: select an interface (bottom of the ETS window) and download the physical address first." UIHint="Information" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Lamps (control gear)" UIHint="Headline" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                    <Row Id="%AID%_PB-nnn_R-2" />
+                    <Row Id="%AID%_PB-nnn_R-3" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Find every lamp on the DALI bus" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00001" Text="Scan bus" EventHandlerOnline="ConnectionOriented" EventHandler="daliScan" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Give new lamps a free short address" Cell="2,1" />
+                  <Button Cell="2,2" Id="%AID%_B-%TT%00002" Text="Address new lamps" EventHandlerOnline="ConnectionOriented" EventHandler="daliAssignNew" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Show progress, lamps found and faults" Cell="3,1" />
+                  <Button Cell="3,2" Id="%AID%_B-%TT%00006" Text="Refresh status" EventHandlerOnline="ConnectionOriented" EventHandler="daliStatus" />
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-%TT%00002" Text="Re-addressing reprograms every short address on the DALI bus. Only run this during initial commissioning." UIHint="Error" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Re-address every lamp" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00003" Text="Re-address all lamps" EventHandlerOnline="ConnectionOriented" EventHandler="daliAssignAll" />
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-%TT%00003" Text="Resetting clears every short address on the DALI bus; all devices become unaddressed and must be commissioned again." UIHint="Error" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Clear every short address" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00007" Text="Reset DALI addresses" EventHandlerOnline="ConnectionOriented" EventHandler="daliResetAddresses" />
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Find a lamp" UIHint="Headline" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Lamp" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00004_R-%TT%0000401" Cell="1,2" />
+                </ParameterBlock>
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                    <Row Id="%AID%_PB-nnn_R-2" />
+                    <Row Id="%AID%_PB-nnn_R-3" />
+                    <Row Id="%AID%_PB-nnn_R-4" />
+                    <Row Id="%AID%_PB-nnn_R-5" />
+                    <Row Id="%AID%_PB-nnn_R-6" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Recall maximum level" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00004" Text="Identify (recall max)" EventHandlerOnline="ConnectionOriented" EventHandler="daliIdentify" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Blink on and off for 30 s" Cell="2,1" />
+                  <Button Cell="2,2" Id="%AID%_B-%TT%00012" Text="Blink on/off (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderBlink" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Pulse smoothly for 30 s" Cell="3,1" />
+                  <Button Cell="3,2" Id="%AID%_B-%TT%00013" Text="Smooth pulse (30 s)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderPulse" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Go to the next address and blink" Cell="4,1" />
+                  <Button Cell="4,2" Id="%AID%_B-%TT%00014" Text="Next lamp (+1 and blink)" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderNext" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Stop and restore the previous level" Cell="5,1" />
+                  <Button Cell="5,2" Id="%AID%_B-%TT%00015" Text="Stop and restore level" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Give a new ballast this address" Cell="6,1" />
+                  <Button Cell="6,2" Id="%AID%_B-%TT%00005" Text="Replace this lamp" EventHandlerOnline="ConnectionOriented" EventHandler="daliReplace" />
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-%TT%00004" Text="DALI-2 input devices (push buttons, occupancy and light sensors) have their own short addresses (D00..D63)." UIHint="Information" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Input devices" UIHint="Headline" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                    <Row Id="%AID%_PB-nnn_R-2" />
+                    <Row Id="%AID%_PB-nnn_R-3" />
+                    <Row Id="%AID%_PB-nnn_R-4" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Find every input device on the bus" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00008" Text="Scan input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputScan" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Give new input devices an address" Cell="2,1" />
+                  <Button Cell="2,2" Id="%AID%_B-%TT%00009" Text="Address new input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputAssignNew" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Re-address every input device" Cell="3,1" />
+                  <Button Cell="3,2" Id="%AID%_B-%TT%00010" Text="Address all input devices" EventHandlerOnline="ConnectionOriented" EventHandler="inputAssignAll" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Show input devices found" Cell="4,1" />
+                  <Button Cell="4,2" Id="%AID%_B-%TT%00011" Text="Refresh input status" EventHandlerOnline="ConnectionOriented" EventHandler="inputStatus" />
+                </ParameterBlock>
               </ParameterBlock>
             </ChannelIndependentBlock>
-            <op:include href="DaliChannel.templ.xml" xpath="//ApplicationProgram/Dynamic/Channel" type="template" prefix="CH" IsInner="true" />
-            <op:include href="DaliGroup.templ.xml" xpath="//ApplicationProgram/Dynamic/Channel" type="template" prefix="GR" IsInner="true" />
-            <op:include href="DaliInput.templ.xml" xpath="//ApplicationProgram/Dynamic/Channel" type="template" prefix="IN" IsInner="true" />
+            <Channel Id="%AID%_CH-CH" Number="CH" Name="Lamps" Text="DALI lamps">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="LampSelection" Text="Lamp selection">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Choose a lamp type for each DALI address in use; only those lamps get a configuration page and group objects. 'Activate lamps found on the bus' sets every lamp the gateway found and still marked Unused to Dimmable." UIHint="Information" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Set every lamp found on the bus to Dimmable" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00016" Text="Activate lamps found on the bus" EventHandlerOnline="ConnectionOriented" EventHandler="lampsActivateFound" />
+                </ParameterBlock>
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="12%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="44%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="44%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Address" UIHint="Headline" Cell="1,1" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Lamp type" UIHint="Headline" Cell="1,2" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Name" UIHint="Headline" Cell="1,3" />
+                </ParameterBlock>
+                <op:include href="DaliChannel.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Selection']/*" type="template" prefix="CH" IsInner="true" />
+              </ParameterBlock>
+              <op:include href="DaliChannel.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Definition']/*" type="template" prefix="CH" IsInner="true" />
+            </Channel>
+            <Channel Id="%AID%_CH-GR" Number="GR" Name="Groups" Text="DALI groups">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="GroupSelection" Text="Group selection">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Choose a type for each DALI group you control from KNX; only those groups get a configuration page and group objects. Lamps join groups on their own page (DALI groups)." UIHint="Information" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="12%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="44%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="44%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Group" UIHint="Headline" Cell="1,1" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Group type" UIHint="Headline" Cell="1,2" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Name" UIHint="Headline" Cell="1,3" />
+                </ParameterBlock>
+                <op:include href="DaliGroup.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Selection']/*" type="template" prefix="GR" IsInner="true" />
+              </ParameterBlock>
+              <op:include href="DaliGroup.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Definition']/*" type="template" prefix="GR" IsInner="true" />
+            </Channel>
+            <Channel Id="%AID%_CH-IN" Number="IN" Name="Inputs" Text="DALI inputs">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="InputSelection" Text="Device selection">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Each slot is one DALI-2 input device (push-button coupler, occupancy or light sensor) with up to 4 instances; every instance gets its own type, function and group objects on the device's page. 'Activate input devices found on the bus' fills free slots with the devices the gateway found." UIHint="Information" />
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Add every input device found on the bus" Cell="1,1" />
+                  <Button Cell="1,2" Id="%AID%_B-%TT%00017" Text="Activate input devices found on the bus" EventHandlerOnline="ConnectionOriented" EventHandler="inputsActivateFound" />
+                </ParameterBlock>
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="12%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="22%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="22%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="44%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Slot" UIHint="Headline" Cell="1,1" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Device" UIHint="Headline" Cell="1,2" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Instances" UIHint="Headline" Cell="1,3" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Name" UIHint="Headline" Cell="1,4" />
+                </ParameterBlock>
+                <op:include href="DaliInput.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Selection']/*" type="template" prefix="IN" IsInner="true" />
+              </ParameterBlock>
+              <op:include href="DaliInput.templ.xml" xpath="//ApplicationProgram/Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='Definition']/*" type="template" prefix="IN" IsInner="true" />
+            </Channel>
           </Dynamic>
         </ApplicationProgram>
       </ApplicationPrograms>

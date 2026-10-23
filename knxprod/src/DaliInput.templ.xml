@@ -6,80 +6,285 @@
         <ApplicationProgram>
           <Static>
             <Parameters>
-              <Parameter Id="%AID%_P-%TT%%CC%001" Name="f%C%DeviceAddress" ParameterType="%AID%_PT-DaliChannel" Text="DALI device short address" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%001" Name="f%C%DeviceAddress" ParameterType="%AID%_PT-InputAddress" Text="Input device" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%002" Name="f%C%Instance" ParameterType="%AID%_PT-InstanceNumber" Text="Instance number" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%002" Name="f%C%FirstInstance" ParameterType="%AID%_PT-InstanceNumber" Text="First instance" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%InputType" ParameterType="%AID%_PT-InputType" Text="Input type" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%InstanceCount" ParameterType="%AID%_PT-InstanceCount" Text="Instances" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="2" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%004" Name="f%C%Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%020" Name="f%C%Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%011" Name="f%C%I0Type" ParameterType="%AID%_PT-InputType" Text="Type" Value="1">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="3" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%005" Name="f%C%Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
+              <Parameter Id="%AID%_P-%TT%%CC%012" Name="f%C%I0Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%006" Name="f%C%Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send threshold" SuffixText="%" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%013" Name="f%C%I0Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="5" BitOffset="0" />
               </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%014" Name="f%C%I0Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send on change of (0 = every event)" SuffixText="%" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="6" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%015" Name="f%C%I0Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%021" Name="f%C%I1Type" ParameterType="%AID%_PT-InputType" Text="Type" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="7" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%022" Name="f%C%I1Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="8" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%023" Name="f%C%I1Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="9" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%024" Name="f%C%I1Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send on change of (0 = every event)" SuffixText="%" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="10" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%025" Name="f%C%I1Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%031" Name="f%C%I2Type" ParameterType="%AID%_PT-InputType" Text="Type" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="11" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%032" Name="f%C%I2Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="12" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%033" Name="f%C%I2Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="13" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%034" Name="f%C%I2Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send on change of (0 = every event)" SuffixText="%" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="14" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%035" Name="f%C%I2Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
+              <Parameter Id="%AID%_P-%TT%%CC%041" Name="f%C%I3Type" ParameterType="%AID%_PT-InputType" Text="Type" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="15" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%042" Name="f%C%I3Function" ParameterType="%AID%_PT-InputFunction" Text="Push button function" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="16" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%043" Name="f%C%I3Scene" ParameterType="%AID%_PT-SceneNumber" Text="Scene number" Value="1">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="17" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%044" Name="f%C%I3Threshold" ParameterType="%AID%_PT-ThresholdPercent" Text="Send on change of (0 = every event)" SuffixText="%" Value="0">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="18" BitOffset="0" />
+              </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%045" Name="f%C%I3Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
               <ParameterRef Id="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_P-%TT%%CC%002" />
               <ParameterRef Id="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_P-%TT%%CC%003" />
-              <ParameterRef Id="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_P-%TT%%CC%004" />
-              <ParameterRef Id="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_P-%TT%%CC%005" />
-              <ParameterRef Id="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_P-%TT%%CC%006" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" RefId="%AID%_P-%TT%%CC%020" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_P-%TT%%CC%011" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_P-%TT%%CC%012" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_P-%TT%%CC%013" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%014_R-%TT%%CC%01401" RefId="%AID%_P-%TT%%CC%014" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" RefId="%AID%_P-%TT%%CC%015" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%021_R-%TT%%CC%02101" RefId="%AID%_P-%TT%%CC%021" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%022_R-%TT%%CC%02201" RefId="%AID%_P-%TT%%CC%022" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%023_R-%TT%%CC%02301" RefId="%AID%_P-%TT%%CC%023" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%024_R-%TT%%CC%02401" RefId="%AID%_P-%TT%%CC%024" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" RefId="%AID%_P-%TT%%CC%025" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%031_R-%TT%%CC%03101" RefId="%AID%_P-%TT%%CC%031" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%032_R-%TT%%CC%03201" RefId="%AID%_P-%TT%%CC%032" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%033_R-%TT%%CC%03301" RefId="%AID%_P-%TT%%CC%033" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%034_R-%TT%%CC%03401" RefId="%AID%_P-%TT%%CC%034" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" RefId="%AID%_P-%TT%%CC%035" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%041_R-%TT%%CC%04101" RefId="%AID%_P-%TT%%CC%041" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%042_R-%TT%%CC%04201" RefId="%AID%_P-%TT%%CC%042" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%043_R-%TT%%CC%04301" RefId="%AID%_P-%TT%%CC%043" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%044_R-%TT%%CC%04401" RefId="%AID%_P-%TT%%CC%044" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" RefId="%AID%_P-%TT%%CC%045" />
             </ParameterRefs>
             <ComObjectTable>
-              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"      Number="%K0%" Text="Input %C%: Switch/Occupancy" FunctionText="Switch/Occupancy" ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%Dimming"    Number="%K1%" Text="Input %C%: Dimming"         FunctionText="Dimming"         ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
-              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%Illuminance" Number="%K2%" Text="Input %C%: Illuminance"     FunctionText="Illuminance"     ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
-              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%Scene"      Number="%K3%" Text="Input %C%: Scene"           FunctionText="Scene"           ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%I0Switch" Number="%K0%" Text="Input device %C%" FunctionText="Switch/Occupancy" ObjectSize="1 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%I0Dimming" Number="%K1%" Text="Input device %C%" FunctionText="Dimming" ObjectSize="4 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%I0Illuminance" Number="%K2%" Text="Input device %C%" FunctionText="Illuminance" ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
+              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%I0Scene" Number="%K3%" Text="Input device %C%" FunctionText="Scene" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%005" Name="%C%I1Switch" Number="%K4%" Text="Input device %C%" FunctionText="Switch/Occupancy" ObjectSize="1 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%006" Name="%C%I1Dimming" Number="%K5%" Text="Input device %C%" FunctionText="Dimming" ObjectSize="4 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%007" Name="%C%I1Illuminance" Number="%K6%" Text="Input device %C%" FunctionText="Illuminance" ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
+              <ComObject Id="%AID%_O-%TT%%CC%008" Name="%C%I1Scene" Number="%K7%" Text="Input device %C%" FunctionText="Scene" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%009" Name="%C%I2Switch" Number="%K8%" Text="Input device %C%" FunctionText="Switch/Occupancy" ObjectSize="1 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%010" Name="%C%I2Dimming" Number="%K9%" Text="Input device %C%" FunctionText="Dimming" ObjectSize="4 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%011" Name="%C%I2Illuminance" Number="%K10%" Text="Input device %C%" FunctionText="Illuminance" ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
+              <ComObject Id="%AID%_O-%TT%%CC%012" Name="%C%I2Scene" Number="%K11%" Text="Input device %C%" FunctionText="Scene" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%013" Name="%C%I3Switch" Number="%K12%" Text="Input device %C%" FunctionText="Switch/Occupancy" ObjectSize="1 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%014" Name="%C%I3Dimming" Number="%K13%" Text="Input device %C%" FunctionText="Dimming" ObjectSize="4 Bit" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%015" Name="%C%I3Illuminance" Number="%K14%" Text="Input device %C%" FunctionText="Illuminance" ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-9-4" />
+              <ComObject Id="%AID%_O-%TT%%CC%016" Name="%C%I3Scene" Number="%K15%" Text="Input device %C%" FunctionText="Scene" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Disabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-17-1" />
             </ComObjectTable>
             <ComObjectRefs>
-              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" FunctionText="Switch" Text="{{0:Instance 1}}" TextParameterRefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00102" RefId="%AID%_O-%TT%%CC%001" FunctionText="Occupancy" Text="{{0:Instance 1}}" TextParameterRefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" Text="{{0:Instance 1}}" TextParameterRefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" Text="{{0:Instance 1}}" TextParameterRefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" Text="{{0:Instance 1}}" TextParameterRefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_O-%TT%%CC%005" FunctionText="Switch" Text="{{0:Instance 2}}" TextParameterRefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%005_R-%TT%%CC%00502" RefId="%AID%_O-%TT%%CC%005" FunctionText="Occupancy" Text="{{0:Instance 2}}" TextParameterRefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_O-%TT%%CC%006" Text="{{0:Instance 2}}" TextParameterRefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_O-%TT%%CC%007" Text="{{0:Instance 2}}" TextParameterRefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_O-%TT%%CC%008" Text="{{0:Instance 2}}" TextParameterRefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_O-%TT%%CC%009" FunctionText="Switch" Text="{{0:Instance 3}}" TextParameterRefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%009_R-%TT%%CC%00902" RefId="%AID%_O-%TT%%CC%009" FunctionText="Occupancy" Text="{{0:Instance 3}}" TextParameterRefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_O-%TT%%CC%010" Text="{{0:Instance 3}}" TextParameterRefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_O-%TT%%CC%011" Text="{{0:Instance 3}}" TextParameterRefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_O-%TT%%CC%012" Text="{{0:Instance 3}}" TextParameterRefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_O-%TT%%CC%013" FunctionText="Switch" Text="{{0:Instance 4}}" TextParameterRefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01302" RefId="%AID%_O-%TT%%CC%013" FunctionText="Occupancy" Text="{{0:Instance 4}}" TextParameterRefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" RefId="%AID%_O-%TT%%CC%014" Text="{{0:Instance 4}}" TextParameterRefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" RefId="%AID%_O-%TT%%CC%015" Text="{{0:Instance 4}}" TextParameterRefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" RefId="%AID%_O-%TT%%CC%016" Text="{{0:Instance 4}}" TextParameterRefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
             </ComObjectRefs>
           </Static>
           <Dynamic>
-            <Channel Id="%AID%_CH-%TT%%CC%" Number="%PREFIX%" Name="Input %C%" Text="Input %C%">
-              <ParameterBlock Id="%AID%_PB-%TT%%CC%001" Name="Input%C%" Text="Input %C%">
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
+            <ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Selection">
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="12%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="22%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="22%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Width="44%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Device %C%" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" Cell="1,2" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" Cell="1,3" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" Cell="1,4" />
+                </ParameterBlock>
+              </ParameterBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Definition">
                 <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
-                  <when test="1">
-                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
-                    <choose ParamRefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401">
-                      <when test="4">
-                        <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
-                      </when>
-                    </choose>
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
-                    <choose ParamRefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401">
-                      <when test="3">
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
-                      </when>
-                      <when test="4">
-                        <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
-                      </when>
-                    </choose>
-                  </when>
-                  <when test="2">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
-                  </when>
-                  <when test="3">
-                    <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                  <when test="!=0">
+                    <ParameterBlock Id="%AID%_PB-nnn" Name="f%C%Device" Text="Device %C%: {{0:Input device}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" ShowInComObjectTree="true">
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="DALI instance numbers start at 0: with First instance 0, Instance 1 is DALI instance 0. A device with more than 4 instances uses a second device slot with First instance 4." UIHint="Information" />
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="1 2 3 4">
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Instance 1 (DALI instance first + 0)" UIHint="Headline" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%015_R-%TT%%CC%01501" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%011_R-%TT%%CC%01101" />
+                          <choose ParamRefId="%AID%_P-%TT%%CC%011_R-%TT%%CC%01101">
+                            <when test="1">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%012_R-%TT%%CC%01201" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                              <choose ParamRefId="%AID%_P-%TT%%CC%012_R-%TT%%CC%01201">
+                                <when test="3">
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                                </when>
+                                <when test="4">
+                                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%013_R-%TT%%CC%01301" />
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
+                                </when>
+                              </choose>
+                            </when>
+                            <when test="2">
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00102" />
+                            </when>
+                            <when test="3">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%014_R-%TT%%CC%01401" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                            </when>
+                          </choose>
+                        </when>
+                      </choose>
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="2 3 4">
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Instance 2 (DALI instance first + 1)" UIHint="Headline" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%025_R-%TT%%CC%02501" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%021_R-%TT%%CC%02101" />
+                          <choose ParamRefId="%AID%_P-%TT%%CC%021_R-%TT%%CC%02101">
+                            <when test="1">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%022_R-%TT%%CC%02201" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
+                              <choose ParamRefId="%AID%_P-%TT%%CC%022_R-%TT%%CC%02201">
+                                <when test="3">
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
+                                </when>
+                                <when test="4">
+                                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%023_R-%TT%%CC%02301" />
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" />
+                                </when>
+                              </choose>
+                            </when>
+                            <when test="2">
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00502" />
+                            </when>
+                            <when test="3">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%024_R-%TT%%CC%02401" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" />
+                            </when>
+                          </choose>
+                        </when>
+                      </choose>
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="3 4">
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Instance 3 (DALI instance first + 2)" UIHint="Headline" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%035_R-%TT%%CC%03501" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%031_R-%TT%%CC%03101" />
+                          <choose ParamRefId="%AID%_P-%TT%%CC%031_R-%TT%%CC%03101">
+                            <when test="1">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%032_R-%TT%%CC%03201" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" />
+                              <choose ParamRefId="%AID%_P-%TT%%CC%032_R-%TT%%CC%03201">
+                                <when test="3">
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" />
+                                </when>
+                                <when test="4">
+                                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%033_R-%TT%%CC%03301" />
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />
+                                </when>
+                              </choose>
+                            </when>
+                            <when test="2">
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%009_R-%TT%%CC%00902" />
+                            </when>
+                            <when test="3">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%034_R-%TT%%CC%03401" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />
+                            </when>
+                          </choose>
+                        </when>
+                      </choose>
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="4">
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Instance 4 (DALI instance first + 3)" UIHint="Headline" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%045_R-%TT%%CC%04501" />
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%041_R-%TT%%CC%04101" />
+                          <choose ParamRefId="%AID%_P-%TT%%CC%041_R-%TT%%CC%04101">
+                            <when test="1">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%042_R-%TT%%CC%04201" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />
+                              <choose ParamRefId="%AID%_P-%TT%%CC%042_R-%TT%%CC%04201">
+                                <when test="3">
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" />
+                                </when>
+                                <when test="4">
+                                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%043_R-%TT%%CC%04301" />
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%016_R-%TT%%CC%01601" />
+                                </when>
+                              </choose>
+                            </when>
+                            <when test="2">
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01302" />
+                            </when>
+                            <when test="3">
+                              <ParameterRefRef RefId="%AID%_P-%TT%%CC%044_R-%TT%%CC%04401" />
+                              <ComObjectRefRef RefId="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" />
+                            </when>
+                          </choose>
+                        </when>
+                      </choose>
+                    </ParameterBlock>
                   </when>
                 </choose>
               </ParameterBlock>
-            </Channel>
+            </ChannelIndependentBlock>
           </Dynamic>
         </ApplicationProgram>
       </ApplicationPrograms>

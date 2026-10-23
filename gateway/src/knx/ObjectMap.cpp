@@ -47,11 +47,18 @@ static_assert(CH_KoBcSwitch + 1 == CH_KoBcBrightness && CH_KoBcSwitch + 2 == CH_
                   CH_KoBcSwitch + 7 == CH_KoBcRgbw && CH_KoBcSwitch + 8 == CH_KoBcXyY,
               "broadcast object order must be Switch, Brightness, Relative dimming, Scene, "
               "Colour temperature, Relative colour temperature, RGB, RGBW, xyY");
-static_assert(IN_ChannelCount == 32, "knxprod must define 32 input channels");
-static_assert(IN_KoBlockSize == 4, "knxprod must define 4 objects per input channel");
+// knxprod input module: 8 device slots x 4 instances x 4 objects. Slot s,
+// instance i is input channel s * 4 + i, so input objects stay numbered
+// 1194 + channel * 4 + function.
+constexpr unsigned input_object_stride = IN_KoI1Switch - IN_KoI0Switch;
+constexpr unsigned input_channel_count = IN_ChannelCount * (IN_KoBlockSize / input_object_stride);
+static_assert(input_object_stride == 4 && IN_KoBlockSize == 16,
+              "knxprod must define 4 objects per input instance");
+static_assert(input_channel_count == 32, "knxprod must define 8 device slots of 4 instances");
 static_assert(IN_KoBlockOffset == CH_KoBcXyY + 1, "input objects must follow the broadcast objects");
-static_assert(IN_KoSwitch == 0 && IN_KoDimming == 1 && IN_KoIlluminance == 2 && IN_KoScene == 3,
-              "input object order must be Switch, Dimming, Illuminance, Scene");
+static_assert(IN_KoI0Switch == 0 && IN_KoI0Dimming == 1 && IN_KoI0Illuminance == 2 && IN_KoI0Scene == 3 &&
+                  IN_KoI3Scene == 15,
+              "input object order must be Switch, Dimming, Illuminance, Scene per instance");
 static_assert(object_count == IN_KoBlockOffset + IN_ChannelCount * IN_KoBlockSize - 1,
               "the last input object must be the last group object");
 static_assert(object_count == 64 * 15 + 16 * 14 + 9 + 32 * 4, "object total must be 1321");
@@ -212,26 +219,26 @@ constexpr std::uint16_t input_objects_end = IN_KoBlockOffset + IN_ChannelCount *
 constexpr std::uint16_t input_offset(InputObjectFunction function) noexcept {
     switch (function) {
     case InputObjectFunction::Switch:
-        return IN_KoSwitch;
+        return IN_KoI0Switch;
     case InputObjectFunction::Dimming:
-        return IN_KoDimming;
+        return IN_KoI0Dimming;
     case InputObjectFunction::Illuminance:
-        return IN_KoIlluminance;
+        return IN_KoI0Illuminance;
     case InputObjectFunction::Scene:
-        return IN_KoScene;
+        return IN_KoI0Scene;
     }
     return 0;
 }
 
 std::optional<InputObjectFunction> input_function(unsigned index) noexcept {
     switch (index) {
-    case IN_KoSwitch:
+    case IN_KoI0Switch:
         return InputObjectFunction::Switch;
-    case IN_KoDimming:
+    case IN_KoI0Dimming:
         return InputObjectFunction::Dimming;
-    case IN_KoIlluminance:
+    case IN_KoI0Illuminance:
         return InputObjectFunction::Illuminance;
-    case IN_KoScene:
+    case IN_KoI0Scene:
         return InputObjectFunction::Scene;
     default:
         return std::nullopt;
@@ -326,10 +333,11 @@ std::optional<ObjectTarget> object_target(std::uint16_t number) noexcept {
 }
 
 std::uint16_t input_object_number(std::uint8_t channel, InputObjectFunction function) noexcept {
-    if (channel >= IN_ChannelCount) {
+    if (channel >= input_channel_count) {
         return 0;
     }
-    return static_cast<std::uint16_t>(IN_KoBlockOffset + IN_KoBlockSize * channel + input_offset(function));
+    return static_cast<std::uint16_t>(IN_KoBlockOffset + input_object_stride * channel +
+                                      input_offset(function));
 }
 
 std::optional<InputObjectTarget> input_object_target(std::uint16_t number) noexcept {
@@ -337,11 +345,11 @@ std::optional<InputObjectTarget> input_object_target(std::uint16_t number) noexc
         return std::nullopt;
     }
     const auto index = static_cast<unsigned>(number - IN_KoBlockOffset);
-    const auto function = input_function(index % IN_KoBlockSize);
+    const auto function = input_function(index % input_object_stride);
     if (!function) {
         return std::nullopt;
     }
-    return InputObjectTarget{static_cast<std::uint8_t>(index / IN_KoBlockSize), *function};
+    return InputObjectTarget{static_cast<std::uint8_t>(index / input_object_stride), *function};
 }
 
 }

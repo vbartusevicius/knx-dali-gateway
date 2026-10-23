@@ -32,11 +32,18 @@ static_assert(GR_fSwitchOnMode == 0 && GR_fFixedLevel == 1, "group parameter lay
 static_assert(CH_BcSwitchOnMode == 1 && CH_BcFixedLevel == 2, "broadcast parameter layout changed");
 static_assert(IN_ParamBlockOffset == GR_ParamBlockOffset + GR_ChannelCount * GR_ParamBlockSize,
               "input parameters must follow the group blocks");
-static_assert(IN_ChannelCount == input_count, "knxprod must define 32 input channels");
-static_assert(IN_ParamBlockSize == 6, "input parameter block must stay 6 bytes");
-static_assert(IN_fDeviceAddress == 0 && IN_fInstance == 1 && IN_fInputType == 2 && IN_fFunction == 3 &&
-                  IN_fScene == 4 && IN_fThreshold == 5,
-              "input parameter layout changed");
+// Input module: one block per DALI-2 input device slot; instance i of a slot
+// becomes input channel slot * instances_per_slot + i.
+constexpr std::size_t instances_per_slot = 4;
+constexpr std::size_t instance_stride = IN_fI1Type - IN_fI0Type;
+static_assert(IN_ChannelCount * instances_per_slot == input_count,
+              "knxprod must define 8 slots of 4 instances");
+static_assert(IN_ParamBlockSize == 19, "input device slot block must stay 19 bytes");
+static_assert(IN_fDeviceAddress == 0 && IN_fFirstInstance == 1 && IN_fInstanceCount == 2,
+              "input device slot header layout changed");
+static_assert(instance_stride == 4 && IN_fI0Type == 3 && IN_fI0Function == 4 && IN_fI0Scene == 5 &&
+                  IN_fI0Threshold == 6 && IN_fI3Threshold == IN_fI0Threshold + 3 * instance_stride,
+              "input instance layout changed");
 static_assert(MAIN_ParameterSize == IN_ParamBlockOffset + IN_ChannelCount * IN_ParamBlockSize,
               "parameter memory must end after the input blocks");
 
@@ -124,26 +131,35 @@ Configuration parse_configuration(const std::uint8_t* parameters, std::size_t si
         config.groups[group] = parse_switch_on(block[GR_fSwitchOnMode], block[GR_fFixedLevel]);
     }
     config.broadcast = parse_switch_on(parameters[CH_BcSwitchOnMode], parameters[CH_BcFixedLevel]);
-    for (unsigned index = 0; index < IN_ChannelCount; ++index) {
-        const auto block = parameters + IN_ParamBlockOffset + std::size_t{index} * IN_ParamBlockSize;
-        auto& input = config.inputs[index];
-        if (block[IN_fDeviceAddress] <= 63) {
-            input.device = block[IN_fDeviceAddress];
+    for (unsigned slot = 0; slot < IN_ChannelCount; ++slot) {
+        const auto block = parameters + IN_ParamBlockOffset + std::size_t{slot} * IN_ParamBlockSize;
+        const auto device = block[IN_fDeviceAddress];
+        const auto first = block[IN_fFirstInstance];
+        const auto count = block[IN_fInstanceCount];
+        if (device > 63 || count > instances_per_slot) {
+            continue;
         }
-        if (block[IN_fInstance] <= 31) {
-            input.instance = block[IN_fInstance];
-        }
-        if (block[IN_fInputType] <= static_cast<std::uint8_t>(InputType::Light)) {
-            input.type = static_cast<InputType>(block[IN_fInputType]);
-        }
-        if (block[IN_fFunction] <= static_cast<std::uint8_t>(InputFunction::Scene)) {
-            input.function = static_cast<InputFunction>(block[IN_fFunction]);
-        }
-        if (block[IN_fScene] >= 1 && block[IN_fScene] <= 64) {
-            input.scene = block[IN_fScene];
-        }
-        if (block[IN_fThreshold] <= 100) {
-            input.threshold = block[IN_fThreshold];
+        for (std::size_t i = 0; i < count && first + i <= 31; ++i) {
+            const auto at = i * instance_stride;
+            const auto type = block[IN_fI0Type + at];
+            const auto function = block[IN_fI0Function + at];
+            const auto scene = block[IN_fI0Scene + at];
+            const auto threshold = block[IN_fI0Threshold + at];
+            auto& input = config.inputs[slot * instances_per_slot + i];
+            input.device = device;
+            input.instance = static_cast<std::uint8_t>(first + i);
+            if (type <= static_cast<std::uint8_t>(InputType::Light)) {
+                input.type = static_cast<InputType>(type);
+            }
+            if (function <= static_cast<std::uint8_t>(InputFunction::Scene)) {
+                input.function = static_cast<InputFunction>(function);
+            }
+            if (scene >= 1 && scene <= 64) {
+                input.scene = scene;
+            }
+            if (threshold <= 100) {
+                input.threshold = threshold;
+            }
         }
     }
     return config;

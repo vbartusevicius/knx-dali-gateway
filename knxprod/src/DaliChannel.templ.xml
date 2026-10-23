@@ -15,46 +15,47 @@
               <!-- Group membership mask: byte 0 bits 0-7 = DALI groups 0-7, byte 1 bits 0-7 = groups 8-15. -->
               <Union SizeInBit="16">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="2" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%101" Name="f%C%Group01" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="7" Text="Member of DALI group 1" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%102" Name="f%C%Group02" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="6" Text="Member of DALI group 2" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%103" Name="f%C%Group03" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="5" Text="Member of DALI group 3" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%104" Name="f%C%Group04" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="4" Text="Member of DALI group 4" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%105" Name="f%C%Group05" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="3" Text="Member of DALI group 5" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%106" Name="f%C%Group06" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Member of DALI group 6" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%107" Name="f%C%Group07" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Member of DALI group 7" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%108" Name="f%C%Group08" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="Member of DALI group 8" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%109" Name="f%C%Group09" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="7" Text="Member of DALI group 9" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%110" Name="f%C%Group10" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="6" Text="Member of DALI group 10" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%111" Name="f%C%Group11" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="5" Text="Member of DALI group 11" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%112" Name="f%C%Group12" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="4" Text="Member of DALI group 12" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%113" Name="f%C%Group13" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="3" Text="Member of DALI group 13" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%114" Name="f%C%Group14" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="2" Text="Member of DALI group 14" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%115" Name="f%C%Group15" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="1" Text="Member of DALI group 15" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%116" Name="f%C%Group16" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="0" Text="Member of DALI group 16" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%101" Name="f%C%Group01" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="7" Text="Member of G00" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%102" Name="f%C%Group02" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="6" Text="Member of G01" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%103" Name="f%C%Group03" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="5" Text="Member of G02" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%104" Name="f%C%Group04" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="4" Text="Member of G03" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%105" Name="f%C%Group05" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="3" Text="Member of G04" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%106" Name="f%C%Group06" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Member of G05" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%107" Name="f%C%Group07" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Member of G06" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%108" Name="f%C%Group08" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="Member of G07" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%109" Name="f%C%Group09" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="7" Text="Member of G08" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%110" Name="f%C%Group10" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="6" Text="Member of G09" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%111" Name="f%C%Group11" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="5" Text="Member of G10" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%112" Name="f%C%Group12" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="4" Text="Member of G11" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%113" Name="f%C%Group13" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="3" Text="Member of G12" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%114" Name="f%C%Group14" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="2" Text="Member of G13" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%115" Name="f%C%Group15" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="1" Text="Member of G14" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%116" Name="f%C%Group16" ParameterType="%AID%_PT-CheckBox" Offset="1" BitOffset="0" Text="Member of G15" Value="0" />
               </Union>
               <!-- ETS-side selector that only controls which colour objects are shown;
                    the firmware ignores it (the gear's DT8 capabilities decide). -->
-              <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%ColourControl" ParameterType="%AID%_PT-ColourControl" Text="Colour control" Value="0">
+              <Parameter Id="%AID%_P-%TT%%CC%003" Name="f%C%ColourControl" ParameterType="%AID%_PT-ColourControl" Text="Lamp type" Value="255">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="4" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%004" Name="f%C%MinLevel" ParameterType="%AID%_PT-Percent" Text="DT6 minimum brightness limit" SuffixText="%" Value="1">
+              <Parameter Id="%AID%_P-%TT%%CC%004" Name="f%C%MinLevel" ParameterType="%AID%_PT-Percent" Text="Minimum level" SuffixText="%" Value="1">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="5" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%005" Name="f%C%MaxLevel" ParameterType="%AID%_PT-Percent" Text="DT6 maximum brightness limit" SuffixText="%" Value="100">
+              <Parameter Id="%AID%_P-%TT%%CC%005" Name="f%C%MaxLevel" ParameterType="%AID%_PT-Percent" Text="Maximum level" SuffixText="%" Value="100">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="6" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%006" Name="f%C%PowerOnLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="DT6 ballast power-on level (0=Off, 1..100%, 101=Last)" Value="100">
+              <Parameter Id="%AID%_P-%TT%%CC%006" Name="f%C%PowerOnLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="Power-on level (0 = off, 101 = last level)" SuffixText="%" Value="100">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="7" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%007" Name="f%C%SysFailLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="DT6 ballast system-failure level (0=Off, 1..100%, 101=No change)" Value="100">
+              <Parameter Id="%AID%_P-%TT%%CC%007" Name="f%C%SysFailLevel" ParameterType="%AID%_PT-SpecialLevelPercent" Text="System-failure level (0 = off, 101 = no change)" SuffixText="%" Value="100">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="8" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%008" Name="f%C%FadeTime" ParameterType="%AID%_PT-FadeTime" Text="DT6 ballast fade time (IEC 62386-102 Table 15)" Value="255">
+              <Parameter Id="%AID%_P-%TT%%CC%008" Name="f%C%FadeTime" ParameterType="%AID%_PT-FadeTime" Text="Fade time" Value="255">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="9" BitOffset="0" />
               </Parameter>
-              <Parameter Id="%AID%_P-%TT%%CC%009" Name="f%C%FadeRate" ParameterType="%AID%_PT-FadeRate" Text="DT6 ballast fade rate (IEC 62386-102 Table 16)" Value="255">
+              <Parameter Id="%AID%_P-%TT%%CC%009" Name="f%C%FadeRate" ParameterType="%AID%_PT-FadeRate" Text="Fade rate" Value="255">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="10" BitOffset="0" />
               </Parameter>
+              <Parameter Id="%AID%_P-%TT%%CC%020" Name="f%C%Name" ParameterType="%AID%_PT-Text40" Text="Name" Value="" />
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_P-%TT%%CC%001" />
@@ -82,110 +83,190 @@
               <ParameterRef Id="%AID%_P-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_P-%TT%%CC%007" />
               <ParameterRef Id="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_P-%TT%%CC%008" />
               <ParameterRef Id="%AID%_P-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_P-%TT%%CC%009" />
+              <ParameterRef Id="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" RefId="%AID%_P-%TT%%CC%020" />
             </ParameterRefs>
             <ComObjectTable>
-              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"           Number="%K0%" Text="Channel %C%: Switch"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%SwitchStatus"     Number="%K1%" Text="Channel %C%: Switch status"     FunctionText="Switch status"     ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%Brightness"       Number="%K2%" Text="Channel %C%: Brightness"        FunctionText="Brightness"        ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%BrightnessStatus" Number="%K3%" Text="Channel %C%: Brightness status" FunctionText="Brightness status" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%005" Name="%C%RelativeDimming"  Number="%K4%" Text="Channel %C%: Relative dimming"  FunctionText="Relative dimming"  ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
-              <ComObject Id="%AID%_O-%TT%%CC%006" Name="%C%Fault"           Number="%K5%" Text="Channel %C%: Fault"            FunctionText="Fault"            ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-5" />
-              <ComObject Id="%AID%_O-%TT%%CC%007" Name="%C%ColourTemperature"       Number="%K6%"  Text="Channel %C%: Colour temperature"          FunctionText="Colour temperature"          ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%008" Name="%C%ColourTemperatureStatus" Number="%K7%"  Text="Channel %C%: Colour temperature status"   FunctionText="Colour temperature status"   ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%009" Name="%C%RelativeColourTemperature" Number="%K8%" Text="Channel %C%: Relative colour temperature" FunctionText="Relative colour temperature" ObjectSize="4 Bit"   CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
-              <ComObject Id="%AID%_O-%TT%%CC%010" Name="%C%Rgb"            Number="%K9%"  Text="Channel %C%: RGB"                        FunctionText="RGB"                        ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%011" Name="%C%RgbStatus"      Number="%K10%" Text="Channel %C%: RGB status"                 FunctionText="RGB status"                 ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%012" Name="%C%Rgbw"           Number="%K11%" Text="Channel %C%: RGBW"                       FunctionText="RGBW"                       ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%013" Name="%C%RgbwStatus"     Number="%K12%" Text="Channel %C%: RGBW status"                FunctionText="RGBW status"                ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%014" Name="%C%XyY"            Number="%K13%" Text="Channel %C%: xyY"                        FunctionText="xyY"                        ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
-              <ComObject Id="%AID%_O-%TT%%CC%015" Name="%C%XyYStatus"      Number="%K14%" Text="Channel %C%: xyY status"                 FunctionText="xyY status"                 ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%001" Name="%C%Switch"           Number="%K0%" Text="A%CC-1%"           FunctionText="Switch"           ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%002" Name="%C%SwitchStatus"     Number="%K1%" Text="A%CC-1%"     FunctionText="Switch status"     ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%003" Name="%C%Brightness"       Number="%K2%" Text="A%CC-1%"        FunctionText="Brightness"        ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%004" Name="%C%BrightnessStatus" Number="%K3%" Text="A%CC-1%" FunctionText="Brightness status" ObjectSize="1 Byte" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%005" Name="%C%RelativeDimming"  Number="%K4%" Text="A%CC-1%"  FunctionText="Relative dimming"  ObjectSize="4 Bit"  CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%006" Name="%C%Fault"           Number="%K5%" Text="A%CC-1%"            FunctionText="Fault"            ObjectSize="1 Bit"  CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-5" />
+              <ComObject Id="%AID%_O-%TT%%CC%007" Name="%C%ColourTemperature"       Number="%K6%"  Text="A%CC-1%"          FunctionText="Colour temperature"          ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%008" Name="%C%ColourTemperatureStatus" Number="%K7%"  Text="A%CC-1%"   FunctionText="Colour temperature status"   ObjectSize="2 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-7-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%009" Name="%C%RelativeColourTemperature" Number="%K8%" Text="A%CC-1%" FunctionText="Relative colour temperature" ObjectSize="4 Bit"   CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-3-7" />
+              <ComObject Id="%AID%_O-%TT%%CC%010" Name="%C%Rgb"            Number="%K9%"  Text="A%CC-1%"                        FunctionText="RGB"                        ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%011" Name="%C%RgbStatus"      Number="%K10%" Text="A%CC-1%"                 FunctionText="RGB status"                 ObjectSize="3 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-232-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%012" Name="%C%Rgbw"           Number="%K11%" Text="A%CC-1%"                       FunctionText="RGBW"                       ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%013" Name="%C%RgbwStatus"     Number="%K12%" Text="A%CC-1%"                FunctionText="RGBW status"                ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-251-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%014" Name="%C%XyY"            Number="%K13%" Text="A%CC-1%"                        FunctionText="xyY"                        ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Disabled" WriteFlag="Enabled"  TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
+              <ComObject Id="%AID%_O-%TT%%CC%015" Name="%C%XyYStatus"      Number="%K14%" Text="A%CC-1%"                 FunctionText="xyY status"                 ObjectSize="6 Bytes" CommunicationFlag="Enabled" ReadFlag="Enabled"  WriteFlag="Disabled" TransmitFlag="Enabled"  UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-242-600" />
             </ComObjectTable>
             <ComObjectRefs>
-              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_O-%TT%%CC%005" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_O-%TT%%CC%006" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_O-%TT%%CC%007" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_O-%TT%%CC%008" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_O-%TT%%CC%009" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_O-%TT%%CC%010" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_O-%TT%%CC%011" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_O-%TT%%CC%012" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_O-%TT%%CC%013" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" RefId="%AID%_O-%TT%%CC%014" />
-              <ComObjectRef Id="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" RefId="%AID%_O-%TT%%CC%015" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_O-%TT%%CC%002" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_O-%TT%%CC%003" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_O-%TT%%CC%004" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_O-%TT%%CC%005" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_O-%TT%%CC%006" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_O-%TT%%CC%007" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" RefId="%AID%_O-%TT%%CC%008" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" RefId="%AID%_O-%TT%%CC%009" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" RefId="%AID%_O-%TT%%CC%010" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" RefId="%AID%_O-%TT%%CC%011" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" RefId="%AID%_O-%TT%%CC%012" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" RefId="%AID%_O-%TT%%CC%013" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" RefId="%AID%_O-%TT%%CC%014" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" RefId="%AID%_O-%TT%%CC%015" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
             </ComObjectRefs>
           </Static>
           <Dynamic>
-            <Channel Id="%AID%_CH-%CC%" Number="%PREFIX%" Name="Channel %C%" Text="Channel %C%">
-              <ParameterBlock Id="%AID%_PB-%TT%%CC%001" Name="Channel%C%" Text="Channel %C%">
-                <ParameterSeparator Id="%AID%_PS-%TT%%CC%001" Text="Use Lamp Finder to blink or smoothly pulse this DALI ballast on the line (automatically restores the previous brightness when stopped)." UIHint="Information" />
-                <Button Id="%AID%_B-%TT%%CC%001" Text="Find this lamp (blink on/off)" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderBlink" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
-                <Button Id="%AID%_B-%TT%%CC%002" Text="Find this lamp (smooth pulse)" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderPulse" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
-                <Button Id="%AID%_B-%TT%%CC%003" Text="Stop lamp finder" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
-                <Button Id="%AID%_B-%TT%%CC%004" Text="Replace this ballast" EventHandlerOnline="ConnectionOriented" EventHandler="channelReplace" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%101_R-%TT%%CC%10101" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%102_R-%TT%%CC%10201" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%103_R-%TT%%CC%10301" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%104_R-%TT%%CC%10401" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%105_R-%TT%%CC%10501" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%106_R-%TT%%CC%10601" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%107_R-%TT%%CC%10701" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%108_R-%TT%%CC%10801" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%109_R-%TT%%CC%10901" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%110_R-%TT%%CC%11001" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%111_R-%TT%%CC%11101" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%112_R-%TT%%CC%11201" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%113_R-%TT%%CC%11301" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%114_R-%TT%%CC%11401" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%115_R-%TT%%CC%11501" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%116_R-%TT%%CC%11601" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%007_R-%TT%%CC%00701" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%009_R-%TT%%CC%00901" />
+            <ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Selection">
+                <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Width="12%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Width="44%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Width="44%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="A%CC-1%" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" Cell="1,2" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" Cell="1,3" />
+                </ParameterBlock>
+              </ParameterBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Definition">
                 <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
                   <when test="!=255">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
-                  </when>
-                </choose>
-                <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
-                  <when test="&lt;5">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
-                  </when>
-                </choose>
-                <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
-                  <when test="1">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" />
-                  </when>
-                  <when test="2">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />
-                  </when>
-                  <when test="3">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />
-                  </when>
-                  <when test="4">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" />
+                    <ParameterBlock Id="%AID%_PB-nnn" Name="f%C%Lamp" Text="A%CC-1%: {{0:Lamp}}" TextParameterRefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" ShowInComObjectTree="true">
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%020_R-%TT%%CC%02001" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
+                      <choose ParamRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101">
+                        <when test="1">
+                          <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" IndentLevel="1" />
+                        </when>
+                      </choose>
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Find on the bus" UIHint="Headline" />
+                      <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                        <Rows>
+                          <Row Id="%AID%_PB-nnn_R-1" />
+                          <Row Id="%AID%_PB-nnn_R-2" />
+                          <Row Id="%AID%_PB-nnn_R-3" />
+                          <Row Id="%AID%_PB-nnn_R-4" />
+                        </Rows>
+                        <Columns>
+                          <Column Id="%AID%_PB-nnn_C-1" Width="55%" />
+                          <Column Id="%AID%_PB-nnn_C-2" Width="45%" />
+                        </Columns>
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Blink on and off for 30 s" Cell="1,1" />
+                        <Button Cell="1,2" Id="%AID%_B-%TT%%CC%001" Text="Blink on/off" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderBlink" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Pulse smoothly for 30 s" Cell="2,1" />
+                        <Button Cell="2,2" Id="%AID%_B-%TT%%CC%002" Text="Smooth pulse" EventHandlerOnline="ConnectionOriented" EventHandler="channelFinderPulse" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Stop and restore the previous level" Cell="3,1" />
+                        <Button Cell="3,2" Id="%AID%_B-%TT%%CC%003" Text="Stop and restore level" EventHandlerOnline="ConnectionOriented" EventHandler="daliFinderStop" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Give a new ballast this address" Cell="4,1" />
+                        <Button Cell="4,2" Id="%AID%_B-%TT%%CC%004" Text="Replace this ballast" EventHandlerOnline="ConnectionOriented" EventHandler="channelReplace" EventHandlerParameters="{ &quot;ch&quot;: %C% }" />
+                      </ParameterBlock>
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="DALI groups" UIHint="Headline" />
+                      <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                        <Rows>
+                          <Row Id="%AID%_PB-nnn_R-1" />
+                          <Row Id="%AID%_PB-nnn_R-2" />
+                          <Row Id="%AID%_PB-nnn_R-3" />
+                          <Row Id="%AID%_PB-nnn_R-4" />
+                        </Rows>
+                        <Columns>
+                          <Column Id="%AID%_PB-nnn_C-1" Width="8%" />
+                          <Column Id="%AID%_PB-nnn_C-2" Width="17%" />
+                          <Column Id="%AID%_PB-nnn_C-3" Width="8%" />
+                          <Column Id="%AID%_PB-nnn_C-4" Width="17%" />
+                          <Column Id="%AID%_PB-nnn_C-5" Width="8%" />
+                          <Column Id="%AID%_PB-nnn_C-6" Width="17%" />
+                          <Column Id="%AID%_PB-nnn_C-7" Width="8%" />
+                          <Column Id="%AID%_PB-nnn_C-8" Width="17%" />
+                        </Columns>
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G00" Cell="1,1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%101_R-%TT%%CC%10101" Cell="1,2" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G01" Cell="1,3" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%102_R-%TT%%CC%10201" Cell="1,4" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G02" Cell="1,5" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%103_R-%TT%%CC%10301" Cell="1,6" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G03" Cell="1,7" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%104_R-%TT%%CC%10401" Cell="1,8" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G04" Cell="2,1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%105_R-%TT%%CC%10501" Cell="2,2" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G05" Cell="2,3" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%106_R-%TT%%CC%10601" Cell="2,4" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G06" Cell="2,5" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%107_R-%TT%%CC%10701" Cell="2,6" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G07" Cell="2,7" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%108_R-%TT%%CC%10801" Cell="2,8" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G08" Cell="3,1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%109_R-%TT%%CC%10901" Cell="3,2" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G09" Cell="3,3" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%110_R-%TT%%CC%11001" Cell="3,4" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G10" Cell="3,5" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%111_R-%TT%%CC%11101" Cell="3,6" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G11" Cell="3,7" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%112_R-%TT%%CC%11201" Cell="3,8" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G12" Cell="4,1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%113_R-%TT%%CC%11301" Cell="4,2" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G13" Cell="4,3" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%114_R-%TT%%CC%11401" Cell="4,4" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G14" Cell="4,5" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%115_R-%TT%%CC%11501" Cell="4,6" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="G15" Cell="4,7" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%116_R-%TT%%CC%11601" Cell="4,8" />
+                      </ParameterBlock>
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Ballast settings" UIHint="Headline" />
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Written to the ballast after an ETS download; 'Keep ballast setting' leaves the ballast's own value." />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%007_R-%TT%%CC%00701" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%008_R-%TT%%CC%00801" />
+                      <ParameterRefRef RefId="%AID%_P-%TT%%CC%009_R-%TT%%CC%00901" />
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="!=255">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
+                        </when>
+                      </choose>
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="&lt;5">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
+                        </when>
+                      </choose>
+                      <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
+                      <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                        <when test="1">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" />
+                        </when>
+                        <when test="2">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />
+                        </when>
+                        <when test="3">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />
+                        </when>
+                        <when test="4">
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" />
+                          <ComObjectRefRef RefId="%AID%_O-%TT%%CC%015_R-%TT%%CC%01501" />
+                        </when>
+                      </choose>
+                    </ParameterBlock>
                   </when>
                 </choose>
               </ParameterBlock>
-            </Channel>
+            </ChannelIndependentBlock>
           </Dynamic>
         </ApplicationProgram>
       </ApplicationPrograms>

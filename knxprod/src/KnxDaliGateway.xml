@@ -3,7 +3,7 @@
   <op:ETS
     OpenKnxId="0xFF"
     ApplicationNumber="90"
-    ApplicationVersion="0.1"
+    ApplicationVersion="0.2"
     ReplacesVersions="0"
     ApplicationRevision="0"
     ProductName="KNX DALI Gateway"
@@ -22,7 +22,7 @@
 
   <op:define prefix="IN" ModuleType="3"
     template="DaliInput.templ.xml"
-    NumChannels="32" KoOffset="1194" />
+    NumChannels="8" KoOffset="1194" />
 
   <generate />
 </KNX>

@@ -4,6 +4,7 @@
 .venv/
 .pytest_cache/
 .ruff_cache/
+.DS_Store
 
 # Hardware: everything the pipeline regenerates (netlists, DSN/SES, review
 # renders, fab staging). Committed: circuits, libraries, the routed layouts

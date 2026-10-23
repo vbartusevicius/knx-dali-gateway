@@ -102,19 +102,24 @@ def _input(channel: int) -> dict[str, str]:
     }
 
 
-# Input-channel group addresses; tests use channels 0..4.
+# Input group addresses; tests use inputs 0..4.
 INPUTS = {c: _input(c) for c in range(5)}
 
-# ETS input-channel bindings (device short address, instance, type, function,
-# scene, threshold %) for the channels above. Type: 1 push button,
-# 2 occupancy, 3 light. Function: 0 toggle, 1 on, 2 off, 3 toggle+dim, 4 scene.
-INPUT_BINDINGS = {
-    0: {"device": 0, "instance": 0, "type": 1, "function": 0},
-    1: {"device": 0, "instance": 1, "type": 1, "function": 3},
-    2: {"device": 0, "instance": 2, "type": 1, "function": 4, "scene": 5},
-    3: {"device": 1, "instance": 0, "type": 2},
-    4: {"device": 2, "instance": 0, "type": 3, "threshold": 20},
+# ETS input device slots (8 slots of up to 4 instances): device short address,
+# first instance and per-instance type, function, scene, threshold %. Type:
+# 1 push button, 2 occupancy, 3 light. Function: 0 toggle, 1 on, 2 off,
+# 3 toggle+dim, 4 scene. Slot s, instance i is the gateway's input channel
+# s * 4 + i, which INPUT_CHANNEL maps the test inputs onto.
+INPUT_SLOTS = {
+    0: {"device": 0, "instances": [
+        {"type": 1, "function": 0},
+        {"type": 1, "function": 3},
+        {"type": 1, "function": 4, "scene": 5},
+    ]},
+    1: {"device": 1, "instances": [{"type": 2}]},
+    2: {"device": 2, "instances": [{"type": 3, "threshold": 20}]},
 }
+INPUT_CHANNEL = {0: 0, 1: 1, 2: 2, 3: 4, 4: 8}
 
 # Function index within each block, shared by channels and groups.
 CHANNEL_FN = {
@@ -176,7 +181,7 @@ def associations() -> list[tuple[int, int]]:
         for name, ga_str in fns.items():
             ga = _ga(ga_str)
             gas.append(ga)
-            pairs.append((ga, tables.input_object(channel, INPUT_FN[name])))
+            pairs.append((ga, tables.input_object(INPUT_CHANNEL[channel], INPUT_FN[name])))
     # TSAPs index into the deduplicated address table (group_addresses()).
     tsap_of = {ga: i + 1 for i, ga in enumerate(group_addresses())}
     return [(tsap_of[ga], asap) for ga, asap in pairs]
@@ -191,12 +196,12 @@ def group_addresses() -> list[int]:
     )
 
 
-PARAMETER_SIZE = 949  # MAIN_ParameterSize from the generated header
+PARAMETER_SIZE = 909  # MAIN_ParameterSize from the generated header
 
 
 def parameters() -> bytes:
     """Parameter image: defaults + channel 2 fixed-on 50% + group 0 members
-    + the input-channel bindings in INPUT_BINDINGS."""
+    + the input device slots in INPUT_SLOTS."""
     params = bytearray(PARAMETER_SIZE)
     params[4] = 1  # InternalDaliPsu enabled
     # Channel blocks at offset 5, size 11:
@@ -214,14 +219,17 @@ def parameters() -> bytes:
         if channel == 2:
             params[base + 0] = 1  # SwitchOnPolicy::FixedLevel
             params[base + 1] = 50  # percent
-    # Input-channel blocks at offset 757, size 6:
-    # [device, instance, type, function, scene, threshold].
-    for channel, binding in INPUT_BINDINGS.items():
-        base = 757 + channel * 6
+    # Input device slots at offset 757, size 19: [device, first instance,
+    # instance count, then 4 x (type, function, scene, threshold)].
+    for slot, binding in INPUT_SLOTS.items():
+        base = 757 + slot * 19
         params[base + 0] = binding["device"]
-        params[base + 1] = binding["instance"]
-        params[base + 2] = binding["type"]
-        params[base + 3] = binding.get("function", 0)
-        params[base + 4] = binding.get("scene", 1)
-        params[base + 5] = binding.get("threshold", 0)
+        params[base + 1] = 0
+        params[base + 2] = len(binding["instances"])
+        for i, instance in enumerate(binding["instances"]):
+            at = base + 3 + i * 4
+            params[at + 0] = instance["type"]
+            params[at + 1] = instance.get("function", 0)
+            params[at + 2] = instance.get("scene", 1)
+            params[at + 3] = instance.get("threshold", 0)
     return bytes(params)

@@ -198,3 +198,103 @@ function inputStatus(device, online, progress, context) {
                      buttons + " with buttons, " + occupancy + " with occupancy, " +
                      light + " with light sensors");
 }
+
+function gwReadState(online, property, minLength, what) {
+    online.connect();
+    var resp = online.invokeFunctionPropertyState(GW_FUNCTION_PROPERTY_OBJECT, property, []);
+    online.disconnect();
+    if (!resp || resp.length < minLength) {
+        throw new Error("No " + what + " response from the gateway.");
+    }
+    return resp;
+}
+
+function gwPresent(resp, offset, address) {
+    return (resp[offset + (address >> 3)] & (1 << (address & 7))) !== 0;
+}
+
+// Lamp types: 255 = Unused, 0 = Dimmable. Lamps the user already set up keep their type.
+function lampsActivateFound(device, online, progress, context) {
+    progress.setText("Reading the lamps found on the DALI bus");
+    var resp = gwReadState(online, GW_STATE_PROPERTY, 20, "status");
+    var activated = 0;
+    var found = 0;
+    for (var address = 0; address < 64; ++address) {
+        if (!gwPresent(resp, 4, address)) {
+            continue;
+        }
+        ++found;
+        var type = device.getParameterByName("CH_f" + (address + 1) + "ColourControl");
+        if (type && Number(type.value) === 255) {
+            type.value = 0;
+            ++activated;
+        }
+    }
+    progress.setText(found + " lamps on the bus, " + activated + " newly activated as Dimmable" +
+                     (found ? "; set colour lamps' type by hand" : "; run 'Scan bus' first"));
+}
+
+// Input device slots: 8 slots, each one device (D00..D63) with up to 4 instances
+// starting at "First instance". Input types: 1 push button, 2 occupancy, 3 light.
+// A device status byte packs bits 0-4 instance count, bit 5 button, bit 6
+// occupancy, bit 7 light sensor. Slots already in use are left alone.
+var GW_INPUT_SLOTS = 8;
+var GW_SLOT_INSTANCES = 4;
+
+function gwSlotParam(device, slot, name) {
+    return device.getParameterByName("IN_f" + slot + name);
+}
+
+function inputsActivateFound(device, online, progress, context) {
+    progress.setText("Reading the input devices found on the DALI bus");
+    var resp = gwReadState(online, GW_INPUT_STATE_PROPERTY, 72, "input status");
+    var covered = {};
+    for (var slot = 1; slot <= GW_INPUT_SLOTS; ++slot) {
+        if (Number(gwSlotParam(device, slot, "InstanceCount").value) !== 0) {
+            covered[Number(gwSlotParam(device, slot, "DeviceAddress").value) + "/" +
+                    Number(gwSlotParam(device, slot, "FirstInstance").value)] = true;
+        }
+    }
+    var added = 0;
+    var mixed = 0;
+    var full = 0;
+    var next = 1;
+    for (var address = 0; address < 64; ++address) {
+        if (!gwPresent(resp, 0, address)) {
+            continue;
+        }
+        var summary = resp[8 + address];
+        var instances = Math.max(1, summary & 0x1F);
+        var kinds = [];
+        if (summary & 0x20) kinds.push(1);
+        if (summary & 0x40) kinds.push(2);
+        if (summary & 0x80) kinds.push(3);
+        for (var first = 0; first < instances; first += GW_SLOT_INSTANCES) {
+            if (covered[address + "/" + first]) {
+                continue;
+            }
+            while (next <= GW_INPUT_SLOTS && Number(gwSlotParam(device, next, "InstanceCount").value) !== 0) {
+                ++next;
+            }
+            if (next > GW_INPUT_SLOTS) {
+                ++full;
+                continue;
+            }
+            var count = Math.min(GW_SLOT_INSTANCES, instances - first);
+            gwSlotParam(device, next, "DeviceAddress").value = address;
+            gwSlotParam(device, next, "FirstInstance").value = first;
+            gwSlotParam(device, next, "InstanceCount").value = count;
+            for (var i = 0; i < count; ++i) {
+                gwSlotParam(device, next, "I" + i + "Type").value = kinds.length === 1 ? kinds[0] : 1;
+            }
+            if (kinds.length !== 1) {
+                ++mixed;
+            }
+            ++added;
+            ++next;
+        }
+    }
+    progress.setText(added + " device slots filled" +
+                     (mixed ? ", " + mixed + " with mixed instance kinds: check their instance types" : "") +
+                     (full ? ", " + full + " did not fit (all 8 slots in use)" : ""));
+}

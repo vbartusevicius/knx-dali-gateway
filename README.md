@@ -26,7 +26,7 @@ Open-source DIN-rail gateway between a wired **KNX TP** line and one **DALI / DA
 | --- | --- | --- |
 | **First install (USB)** | [`firmware-full-usb.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Bootloader, partition table and firmware in one image for an empty ESP32-C6. Connect the XIAO over USB-C and write it at `0x0`: `esptool.py --chip esp32c6 write_flash 0x0 firmware-full-usb.bin`. Clears all settings. |
 | **Update** | [`firmware.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drop it onto the **Firmware** tab of the web interface. Updates firmware and web UI together; settings are kept. |
-| **ETS product database** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into ETS 5.7 / 6: 64 lamp channels (DT6/DT7/DT8), 16 groups, broadcast, 32 DALI-2 input channels (1,321 group objects). |
+| **ETS product database** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into ETS 5.7 / 6: 64 lamp channels (DT6/DT7/DT8), 16 groups, broadcast, 8 DALI-2 input devices with up to 4 instances each (1,321 group objects). |
 | **Hardware bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Gerbers, JLCPCB BOM/CPL, STEP assemblies, printable STL/3MF case, `assembly_parts.csv`. |
 
 ---
