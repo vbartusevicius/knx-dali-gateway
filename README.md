@@ -1,154 +1,180 @@
 # KNX–DALI Gateway
 
-Open-source DIN-rail gateway bridging a wired **KNX TP** line and one **DALI / DALI-2** line (up to 64 control gear + DALI-2 multi-master input devices), commissioned through **ETS** and powered from the KNX bus. An integrated isolated DALI bus supply (`RECOM REM3-2415S/A/CTRL`, fed from 20–32 V auxiliary DC or the KNX white/yellow pair) can be enabled or bypassed via jumper. WiFi dashboard and MQTT are optional extras; core lighting control and ETS provisioning never depend on them.
+Open-source DIN-rail gateway between a wired **KNX TP** line and one **DALI / DALI-2** line: up to 64 control gear plus DALI-2 multi-master input devices, commissioned entirely through **ETS**. An optional integrated, isolated DALI bus supply runs from 20–32 V auxiliary DC (a 24 V PSU or the KNX white/yellow pair); the same input also powers the gateway core, with the KNX bus as a seamless fallback. The WiFi dashboard and MQTT are extras: lighting control and ETS provisioning never depend on them.
 
-**Status:** pre-hardware prototype (verified in native unit tests, Docker KNX/DALI integration lab, KiCad DRC/isolation checks, JLCPCB footprint/pinout checks, and 3D CadQuery mechanical fit/probe tests; no physical board has been powered on yet, and no KNX or DALI certification is claimed).
+> [!NOTE]
+> **Pre-hardware prototype.** Verified by native unit tests, a Docker KNX/DALI integration lab, KiCad DRC and isolation checks, JLCPCB footprint and pinout checks, and exact-solid CadQuery fit tests. No board has been powered on yet, and no KNX or DALI certification is claimed.
 
-| Variant | Side-Opening / Exploded View | Internal View | Front Face (Silk + Page 1 OLED) |
-| :---: | :---: | :---: | :---: |
-| **V3**<br>*(1 DIN, 18 mm)* | ![V3 Exploded](hardware/releases/v3/enclosure/renders/exploded.png) | ![V3 Inside](hardware/releases/v3/enclosure/renders/inside.png) | ![V3 Front](hardware/releases/v3/enclosure/renders/front.png) |
-| **V2**<br>*(2 DIN, 36 mm)* | ![V2 Exploded](hardware/releases/v2/enclosure/renders/exploded.png) | ![V2 Inside](hardware/releases/v2/enclosure/renders/inside.png) | ![V2 Front](hardware/releases/v2/enclosure/renders/front.png) |
+<p align="center">
+  <img src="docs/readme/hero.png" alt="V3 (1 DIN) and V2 (2 DIN) gateway enclosures" width="640">
+</p>
+
+<p align="center">
+  <a href="#downloads">Downloads</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#hardware">Hardware</a> ·
+  <a href="#building-one">Building one</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#development">Development</a>
+</p>
 
 ---
 
-## Flashing Firmware & Downloads
+## Downloads
 
-| Method | Link / Files | Description |
+| What | Where | Use |
 | --- | --- | --- |
-| **1. Chrome / Edge USB Web Flasher (Recommended for First Install)** | **[Open Web Flasher →](https://vbartusevicius.github.io/knx-dali-gateway/)** | Plug the XIAO ESP32-C6 into USB-C, open in Chrome/Edge, and click **Connect & Install**. Automatically flashes `bootloader.bin`, `partitions.bin`, `firmware.bin`, and `littlefs.bin` in one step via WebSerial (`manifest.json`). |
-| **2. Wireless OTA Update (Web UI)** | [`firmware.bin` & `littlefs.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drag and drop `firmware.bin` (application) or `littlefs.bin` (Web UI) directly onto the **Firmware** tab of the gateway's web interface. |
-| **3. ETS Product Database (`.knxprod`)** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into **ETS 5.7 / ETS 6** (`64` lamp channels with DT6/DT7/DT8 support, `16` DALI groups, broadcast, and `32` DALI-2 input channels = `1,321` group objects). |
-| **4. Hardware Manufacturing Bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Complete 3D-printable STLs/3MFs, STEP CAD assemblies, JLCPCB Gerbers, BOM & CPL pick-and-place files, and off-board `assembly_parts.csv`. |
+| **USB web flasher** (first install) | **[Open Web Flasher →](https://vbartusevicius.github.io/knx-dali-gateway/)** | Plug the XIAO ESP32-C6 into USB-C, open the page in Chrome/Edge, click **Connect & Install**. Flashes bootloader, partitions, firmware and web UI in one step. |
+| **OTA update** | [`firmware.bin`, `littlefs.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drop either file onto the **Firmware** tab of the web interface. |
+| **ETS product database** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into ETS 5.7 / 6: 64 lamp channels (DT6/DT7/DT8), 16 groups, broadcast, 32 DALI-2 input channels (1,321 group objects). |
+| **Hardware bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Gerbers, JLCPCB BOM/CPL, STEP assemblies, printable STL/3MF case, `assembly_parts.csv`. |
 
 ---
 
-## Web Interface & Diagnostics
+## Screenshots
 
-The built-in web interface runs directly from the ESP32-C6 (`LittleFS` + embedded fallback, live WebSocket updates, zero cloud dependency):
+The web interface is served by the ESP32-C6 itself (LittleFS, live WebSocket updates, no cloud):
 
-### 1. Overview — 64-Lamp Bus Grid, DT8 Color Control & D4i / Calculated Power
-![Web UI Overview](gateway/docs/screenshots/webui-overview.png)
+![Web UI overview: 64-lamp bus grid with lamp inspector](gateway/docs/screenshots/webui-overview.png)
 
-- **Whole-Bus 8×8 Matrix (`A00–A63`):** Shows live brightness `%`, DT8 color preview bar (`2000–6500 K` CCT or `RGBW`), per-lamp wattage (native **D4i Part 252** active power when supported by the ballast, or logarithmic arc-power calculation with configurable `100% W` + `Idle W`), Lamp Finder pulsing indicator, and explicit fault codes (`ERR: E106`, `ERR: E107`).
-- **Two-Tab Lamp Inspector (`Control` | `Settings`):**
-  - **`Control`:** Live brightness slider, mutually exclusive DT8 color modes (`White (CCT)` | `Color (RGBW)` | `CIE xy`), and `Blink` / `Pulse` / `Stop` physical lamp finder.
-  - **`Settings`:** Device type (`DT0..DT8`), dimming curve (`Logarithmic` / `Linear`), percentage dimming limits (`Min %`, `Max %`, `Power-On %`, `Bus-Fail %`), `Fade Time`, `Button Dim Speed`, and one-click `Assign New to Axx` ballast replacement.
-- **DALI-2 Sensors & Buttons (`D00–D63`):** Switch the grid view to discovered `IEC 62386-103 / 301–304` push-button couplers, occupancy sensors, and light sensors with per-instance event filters and physical LED identification (`Identify LED`).
+<details>
+<summary><b>More of the web interface</b>: lamp settings, groups and scenes, error log, bus monitor, settings</summary>
 
-### 2. Groups & Scenes — Scene Toolbar, 4×4 Group Matrix & Lamp Assignment
-![Web UI Groups & Scenes](gateway/docs/screenshots/webui-groups.png)
+<br>
 
-- **Scenes (`1–16`):** Recall or save current lamp levels into any DALI scene.
-- **DALI Groups (`G00–G15`):** Select any group on the left to adjust its group brightness, DT8 group color (`White CCT`, `RGBW`, `CIE xy`), or click installed lamps to add/remove group memberships directly in the ballast's EEPROM.
-
-### 3. Errors & Live DALI Bus Frame Monitor (`1,024`-Row Hardware Ring Buffer + `10,000`-Row Browser Session)
-| Persistent NVS Error History & Remedies | Live DALI Bus Frame Monitor (16-bit & 24-bit) |
+| Lamp settings | Groups & scenes |
 | :---: | :---: |
-| ![Web UI Error Log](gateway/docs/screenshots/webui-logs.png) | ![Web UI Bus Monitor](gateway/docs/screenshots/webui-bus-monitor.png) |
+| <img src="gateway/docs/screenshots/webui-lamp-settings.png" alt="Lamp settings" width="100%"> | <img src="gateway/docs/screenshots/webui-groups.png" alt="Groups and scenes" width="100%"> |
+| Device type, dimming curve, limits, fade, D4i or calculated power, ballast replacement | 16 scenes, 16 groups (G00–G15), group colour, membership written to the ballast |
+| **Error log** | **Live DALI bus monitor** |
+| <img src="gateway/docs/screenshots/webui-logs.png" alt="Error log" width="100%"> | <img src="gateway/docs/screenshots/webui-bus-monitor.png" alt="Bus monitor" width="100%"> |
+| Persistent NVS history with remedies | 8/16/24-bit frames and collisions: 1,024 rows on the device, 10,000 in the browser |
+| **Settings** | |
+| <img src="gateway/docs/screenshots/webui-settings.png" alt="Settings" width="100%"> | |
+| WiFi, MQTT with Home Assistant auto-discovery, power model | |
 
-- **Background Hardware Capture:** Captures 16-bit lamp commands, 8-bit replies, 24-bit DALI-2 sensor events, and bus collisions into a `1,024`-row ring buffer on the ESP32-C6 (filtering out routine `OK` health polls so overnight recording preserves real events even with the browser closed) while accumulating up to `10,000` rows in the browser session.
+- **Overview:** live level, DT8 colour (Tc, RGBW, xy), per-lamp power (native D4i Part 252 or calculated), lamp finder, fault codes; a second grid for DALI-2 buttons and sensors (IEC 62386-103 / 301–304).
+- **Home Assistant:** one gateway device (total power and energy) plus every populated lamp with on/off, dimming, colour, power and fault entities.
 
-### 4. Settings & Home Assistant Auto-Discovery
-![Web UI Settings](gateway/docs/screenshots/webui-settings.png)
+</details>
 
-- **Home Assistant MQTT Auto-Discovery:** Publishes one central Gateway device (with total power `W`, energy `Wh`, firmware version, and `Visit` link) and links only populated DALI lamps (`via_device`) with on/off, dimming, DT8 color, per-lamp power sensor, and fault sensor.
+<details>
+<summary><b>Front-panel OLED pages</b>: V3 portrait 64×128, V2 landscape 128×64</summary>
 
----
+<br>
 
-## Front-Panel OLED Display (V2 Landscape vs. V3 Portrait)
+![V3 portrait OLED pages](gateway/docs/oled-v3-portrait.svg)
 
-The front-panel OLED automatically adapts between **V2 (`128×64` Landscape SSD1306)** and **V3 (`64×128` Portrait SSD1312)**, providing cabinet-level diagnostics and a 5-second `FUNC` hold shortcut to launch the WiFi setup portal:
+![V2 landscape OLED pages](gateway/docs/oled-v2-landscape.svg)
 
-![V3 Portrait OLED Screens](gateway/docs/oled-v3-portrait.svg)
+`FUNC` steps through the pages; holding it for 5 s starts the WiFi setup portal.
 
-![V2 Landscape OLED Screens](gateway/docs/oled-v2-landscape.svg)
-
----
-
-## How It Works
-
-1. **KNX TP Side (`SELV-KNX` domain):**
-   - An **onsemi `NCN5130`** bus transceiver handles KNX TP Layer-2 framing at 19200 baud (9-bit UART) and charges a **470 µF / 35 V storage capacitor** (`VFILT`).
-   - An **`SCT2400`** buck converter steps `VFILT` down to `+5V` (with UVLO above the `NCN5130`'s `SAVEB` threshold), feeding the **Seeed XIAO ESP32-C6** through a **`TI LM66100`** ideal diode so USB-C service power cannot back-feed the KNX side.
-   - **Core supply:** the AUX input is the primary core supply through a **TRACO `TMR 1-2411`** isolated converter (`1.5 kVDC`, SELV-AUX to SELV-KNX) and a **TI `TPS2121`** priority mux; the KNX buck takes over seamlessly when AUX is absent, so ETS and lighting still work from red/black alone.
-2. **DALI Side (`DALI` & `SELV-AUX` domains, 6 mm creepage on the PCB):**
-   - **Auxiliary input (`J2`, 20–32 V DC):** protected by a `1.1 A` 1812 PTC fuse, `SMAJ33A` TVS and reverse-blocking Schottky diode, feeding a **RECOM `REC3-2415SRW/H2/A/CTRL`** (`24 V → 15 V, 200 mA` DC-DC converter, `2 kVDC` / `1 kVAC` functional isolation; no reinforced/medical-grade part by design).
-   - **Firmware supply shut-off (`DALI_SUPPLY_OFF`):** XIAO `D1/GPIO1` drives a **`TLP383`** optocoupler (`U4`) that pulls the converter's pin 1 (`CTRL`) to ~`5.6 V` to switch the internal DALI supply off on a sustained bus short; a `2×2` jumper (`JP1`) also disconnects both DALI poles when an external DALI PSU is used.
-   - **Current limiter & transceiver:** an **`MJD45H11` + `BC857`** linear current limiter caps bus supply current at ~`180 mA`; DALI TX (`IRLML0060` MOSFET sink with bootstrap gate drive and a `275–350 mA` fault clamp, above the 250 mA DALI sink requirement) and DALI RX (two-NPN constant-current threshold detector with `5.6 V` zener) cross the `6 mm` milled isolation barrier through two long-creepage **`TLP383`** optocouplers.
-3. **Front Panel (`ui` board):**
-   - **OLED display** (`I2C`, `0x3C`), **two tactile buttons** (`SW1 PRG/RST`, `SW2 FUNC`) on a single ADC resistor ladder (`D2/GPIO2`), and **three addressable `SK6805-EC15` RGB LEDs** (`D1 STATUS`, `D2 KNX`, `D3 DALI`) driven from `D0/GPIO0` through a 5 V `SN74AHCT1G125` level-shifter.
+</details>
 
 ---
 
-## Hardware Variants
+## Hardware
 
-Both variants share the same circuit blocks (`hardware/circuits/blocks/`), the same `REC3-2415SRW/H2/A/CTRL` converter, and the exact same XIAO ESP32-C6 pinout (`gateway/src/firmware/Board.hpp`):
+Two variants share the circuit blocks (`hardware/circuits/blocks/`), the XIAO ESP32-C6 pinout (`gateway/src/firmware/Board.hpp`) and the firmware:
 
-| Variant | Width | Boards | Interconnect | DALI Terminal | KNX & AUX Terminals | Display | Case Retention | Release Folder |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **V2** (`v2`) | **2 DIN** (`36 mm`) | **3** (`main`, `interface`, `ui`) | 10-pin JST-SH cable + `1×4` & `1×3` B2B headers | `MX126-5.0-02P` screw | `PST 1,0` KNX + `MX126` AUX screw | Winstar `WEA012864D-03` 0.96" 128×64 (4-pin THT) | 2 × `2.5×10` screws + UI snaps | [`hardware/releases/v2/`](hardware/releases/v2/README.md) |
-| **V3** (`v3`) | **1 DIN** (`18 mm`) | **2** (`main` two-sided vertical, `ui`) | 8-pin `0.5 mm` Type B FFC (`50 mm`, `C42416274`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`) | Two `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | 0.96" `64×128` portrait `SSD1312` (`QG-6428TSWCG02`, `14 × 28 mm`, 14-pin `0.62 mm` solder flex tail) | Side-opening clamshell with 4 side snap-clicks + UI snaps | [`hardware/releases/v3/`](hardware/releases/v3/README.md) |
+| | **V3** (`v3`) | **V2** (`v2`) |
+| --- | --- | --- |
+| Width | 1 DIN (18 mm) | 2 DIN (36 mm) |
+| Boards | 2: two-sided vertical `main`, front `ui` | 3: `main`, `interface`, `ui` |
+| AUX core converter | TRACO TMR 2411 (2 W), on a tongue of `main` in the front protrusion | TRACO TRN 3-2411 (3 W), on the back of `main` |
+| DALI terminal | Kefa KF142R push-in | MX126 screw |
+| KNX / AUX | PST 1,0 pin strips (red/black, yellow/white plugs) | PST 1,0 KNX, MX126 screw AUX |
+| Display | 0.96" 64×128 portrait SSD1312, solder flex tail | 0.96" 128×64 SSD1306 module, 4-pin header |
+| Buttons | Omron B3U pressed through C-shaped spring tabs in the cover | same |
+| Main ↔ UI link | 8-pin 0.5 mm FFC (Type B, 50 mm) | 10-pin JST-SH cable |
+| Case | Side-opening clamshell, snap-fit | Two 2.5×10 screws, UI snaps |
+| Release | [`hardware/releases/v3/`](hardware/releases/v3/README.md) | [`hardware/releases/v2/`](hardware/releases/v2/README.md) |
 
-Review findings and the rework for boards/prints made from `59eea1f`: [`hardware/docs/review-2026-10-22.md`](hardware/docs/review-2026-10-22.md), [`hardware/docs/rework-rev-c.md`](hardware/docs/rework-rev-c.md). Re-check before ordering with the `hardware-review` skill (`.claude/skills/hardware-review/`).
+<details>
+<summary><b>V3 renders</b>: assembly and boards</summary>
 
-Detailed electrical and mechanical notes, including the XIAO `D0..D10` pin table, LED chain indexing, and ADC button ladder voltages: [`hardware/docs/variants.md`](hardware/docs/variants.md).
+<br>
 
----
+![V3 exploded, inside and side section](docs/readme/v3-assembly.png)
 
-## Using the Files in `hardware/releases/<variant>/`
+![V3 boards, front and back](docs/readme/v3-boards.png)
 
-Each release folder (`hardware/releases/v2/`, `v3/`) is a complete, DRC-clean, pinout-verified manufacturing package:
+PCB artwork: [`main` top](hardware/releases/v3/main/renders/top.svg) · [bottom](hardware/releases/v3/main/renders/bottom.svg) · [`ui` top](hardware/releases/v3/ui/renders/top.svg) · [bottom](hardware/releases/v3/ui/renders/bottom.svg).
+Fit drawings: [front](hardware/releases/v3/enclosure/fit_front.svg) · [side](hardware/releases/v3/enclosure/fit_side.svg).
 
-### 1. Order PCBs & SMT Assembly at JLCPCB (Single Breakaway Panel or Individual Boards)
-Each release includes a **combined breakaway mouse-bite panel (`panel/`)** so you can order the entire gateway as **1 PCB + 1 PCBA job** (paying only one PCB fee, one stencil fee, and one setup fee, then snapping the sub-boards apart by hand):
+</details>
 
-- **Option A — Single Breakaway Panel (`panel/` — Recommended, Lowest Cost):**
-  1. Upload **`panel/panel_gerbers.zip`** (`55.6 × 78.0 mm` 4-layer `1.2 mm` on **V3**; `98.5 × 76.5 mm` 4-layer `1.6 mm` on **V2** — both under JLCPCB's `100 × 100 mm` tier).
-  2. Enable **PCB Assembly (Both Sides)** and upload **`panel/panel_bom_jlc.csv`** (consolidated BOM) and **`panel/panel_cpl_jlc.csv`** (consolidated Pick & Place).
-- **Option B — Individual Boards (`main/`, `ui/`, and `interface/` on V2):**
-  1. Upload `<board>_gerbers.zip`, `<board>_bom_jlc.csv`, and `<board>_cpl_jlc.csv` per board.
-  2. Check `<board>/renders/top.svg` and `bottom.svg` (or `panel/renders/top.svg` and `bottom.svg`) against JLCPCB's 3D placement preview.
+<details>
+<summary><b>V2 renders</b>: assembly and boards</summary>
 
-### 2. Order Hand-Fitted & Off-Board Parts
-- **`assembly_parts.csv`** (at the root of `hardware/releases/<variant>/`, generated automatically from the circuit netlists and `spec.yaml`) lists every part not placed by JLCPCB:
-  - **Seeed XIAO ESP32-C6 Pre-Soldered (`102010636`)** + two `1×7` `2.54 mm` female socket strips (`5.0 mm` tall on V3, `8.5 mm` tall on V2).
-  - **RECOM `REC3-2415SRW/H2/A/CTRL`** isolated DC-DC converter (`main U3`).
-  - **Phoenix Contact `PST 1,0/2-5,75 R32` (`1574200`)** pin strips + mating **red/black KNX plug (`1574300`)** and (on V3) **yellow/white AUX plug (`1574299`)**.
-  - **OLED display:** Winstar `WEA012864DWPP3N00003` (0.96" `128×64` 4-pin THT on V2) or **`QG-6428TSWCG02` / `JLX12864OLED-S096W`** (0.96" `64×128` portrait `SSD1312`, `14.0 × 28.0 mm`, 14-pin `0.62 mm` solder flex tail on V3, held in its front recess by a `4 mm` foam pad on the UI board).
-  - **Board-to-board cable** (`50 mm` 8-pin `0.5 mm` Type B reverse FFC `C42416274` on V3; `100 mm` 10-pin JST-SH cable on V2) and two `2.54 mm` jumper caps (`C100114`) for `JP1`.
+<br>
 
-### 3. 3D-Print the DIN-Rail Enclosure (`enclosure/`)
-Each release's `enclosure/` directory contains:
-- **`base.stl` / `base.step`:** DIN-rail base with integrated TS35 rail hook and S-meander sliding latch (print rail-face down in PETG or ASA, `0.2 mm` layers).
-- **Three cover options** (all generated from the same `front_legend.svg` artwork):
-  1. **`cover.stl` / `cover.step`:** standard single-colour cover.
-  2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`0.3 mm` recessed (debossed) text and LED rings** cut into the cover faces (ideal for single-colour printing).
-  3. **`cover_color.3mf` / `cover_color_obj.zip`:** multi-material / full-colour WJP resin cover (`0.3 mm` flush inlaid text bodies).
-- **Assembly (`V3` 1-DIN):**
-  1. Lay the OLED face down in the cover's display recess, fold its flex tail through the top notch of the `ui` board and solder it to `J2`, put the `4 mm` foam pad on the UI board front under the panel, then snap the `ui` board in.
-  2. Slide the `main` board into `base` **from the open left side (`-x → +x`)** so `J1` and `J2`'s pins pass straight through the four `Ø 2.2 mm` holes into the right-side KNX/AUX pockets and `J3` (`KF142R`) seats in the top opening.
-  3. Connect the `50 mm` 8-pin FFC cable between `main J4` and `ui J1`, then close `cover` over the left side and front until the **four side snap-click hooks** lock into `base`.
+![V2 exploded, inside and side section](docs/readme/v2-assembly.png)
+
+![V2 boards, front and back](docs/readme/v2-boards.png)
+
+PCB artwork: [`main` top](hardware/releases/v2/main/renders/top.svg) · [bottom](hardware/releases/v2/main/renders/bottom.svg) · [`interface` top](hardware/releases/v2/interface/renders/top.svg) · [bottom](hardware/releases/v2/interface/renders/bottom.svg) · [`ui` top](hardware/releases/v2/ui/renders/top.svg) · [bottom](hardware/releases/v2/ui/renders/bottom.svg).
+Fit drawings: [front](hardware/releases/v2/enclosure/fit_front.svg) · [side](hardware/releases/v2/enclosure/fit_side.svg).
+
+</details>
+
+Pin table, LED chain and button ladder: [`hardware/docs/variants.md`](hardware/docs/variants.md). Pre-manufacturing reviews: [`review-2026-10-23.md`](hardware/docs/review-2026-10-23.md), [`review-2026-10-22.md`](hardware/docs/review-2026-10-22.md); rework for boards made from `59eea1f`: [`rework-rev-c.md`](hardware/docs/rework-rev-c.md).
 
 ---
 
-## Repository Structure & Developer Commands
+## Building one
+
+Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
+
+1. **PCBs with SMT assembly (JLCPCB).** Upload `panel/panel_gerbers.zip` (V3: 66.0 × 78.1 mm, 4 layers, 1.2 mm; V2: 98.5 × 76.6 mm, 4 layers, 1.6 mm) with **assembly on both sides**, `panel/panel_bom_jlc.csv` and `panel/panel_cpl_jlc.csv`. You order one PCB and one PCBA job and snap the boards apart. Per-board files are in `main/`, `ui/` (and `interface/` on V2). Compare `renders/top.svg` / `bottom.svg` with JLCPCB's placement preview.
+2. **Hand-fitted parts.** `assembly_parts.csv` lists everything JLCPCB does not place, with Mouser, Digi-Key and TME numbers:
+   - the XIAO ESP32-C6 (pre-soldered) and its sockets;
+   - the RECOM REC3-2415SRW/H2/A/CTRL DALI supply converter;
+   - the TRACO AUX core converter;
+   - Phoenix PST pin strips and plugs;
+   - the OLED, the main-to-UI cable, and two jumper caps for `JP1`.
+3. **Case.** Print `enclosure/base.stl` and one cover in PETG or ASA at 0.2 mm layers: `cover.stl` (plain), `cover_embossed.stl` (0.3 mm recessed legend) or `cover_color.3mf` (multi-colour inlay).
+
+<details>
+<summary><b>V3 assembly order</b></summary>
+
+1. Lay the OLED face down in the cover recess, fold its flex tail through the UI board's top notch and solder it to `J2`, put the 4 mm foam pad on the UI board, snap the UI board in.
+2. Slide `main` into the base from the open left side, so the KNX/AUX pins pass into the right-side pockets and `J3` seats in the top opening.
+3. Plug the FFC into `main J4` and `ui J1`, then close the cover over the left side and front until the four side snaps lock.
+
+</details>
+
+---
+
+## How it works
+
+- **KNX side:** an onsemi NCN5130 transceiver (TP1, 9-bit UART) charges a 470 µF store. An SCT2400 buck makes 5 V from it, with an undervoltage lockout above the NCN5130 reset level.
+- **Core supply:** the AUX input feeds an isolated TRACO converter (SELV-AUX to SELV-KNX). A TI TPS2121 priority mux prefers it and falls back to the KNX buck. A TI LM66100 keeps USB service power out of the core rail.
+- **DALI supply:** the AUX input (PTC, TVS, reverse diode) feeds a RECOM REC3-2415SRW/H2/A/CTRL (24 V → 15 V, functional isolation), then a linear current limiter. The firmware can switch it off through an optocoupler on its `CTRL` pin, and jumper `JP1` disconnects it for an external DALI PSU.
+- **DALI transceiver:** TX uses a MOSFET sink with bootstrap gate drive and a 275–350 mA fault clamp. RX uses a zener threshold with a constant-current detector. Both cross a 6 mm milled barrier through TLP383 optocouplers.
+- **Front panel:** the OLED (I2C), two buttons on one ADC ladder, and three SK6805 RGB LEDs (status, KNX, DALI) behind a 5 V level shifter.
+
+---
+
+## Development
 
 | Folder | Contents |
 | --- | --- |
-| `gateway/` | ESP32-C6 firmware (`C++17`, ESP-IDF 5.5 / PlatformIO) and 274 native unit tests |
-| `knxprod/` | ETS product database source and `.knxprod` builder (OpenKNXproducer in Docker) |
-| `simulation/` | DALI bus simulator and 22-scenario Docker KNX/DALI integration lab |
-| `hardware/` | SKiDL circuit generators (`circuits/`), KiCad PCB layouts (`layout/`), supplier/pinout data (`product/`), unified build script (`scripts/build.py`), and fabrication packages (`releases/`) |
-| `mechanical/` | Parametric CadQuery DIN enclosures, fit drawings, front legends, 3MF/embossed models, and VTK 3D renders |
+| `gateway/` | ESP32-C6 firmware (C++17, ESP-IDF / PlatformIO) and native unit tests |
+| `knxprod/` | ETS product database source and `.knxprod` builder |
+| `simulation/` | DALI bus simulator and Docker KNX/DALI integration lab |
+| `hardware/` | SKiDL circuits, KiCad layouts, part data, build scripts, release packages |
+| `mechanical/` | CadQuery enclosures, fit drawings, front legends, 3D renders |
 
 | Task | Command |
 | --- | --- |
-| **Build, route, render, release & test all hardware variants (`v2`, `v3`) in parallel** | `python3 hardware/scripts/build.py` |
-| **Build/test a single variant (e.g. `v3`)** | `python3 hardware/scripts/build.py v3` (`--eda`, `--cad`, `--release`, `--test`) |
-| **Firmware unit tests & ESP32-C6 build** | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
-| **Refresh clangd compilation database** | `pio run -d gateway -e dev_c6 -t compiledb` |
-| **Docker KNX/DALI integration lab** | `simulation/run-tests.sh` |
-| **Build ETS `.knxprod` package** | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` |
-| **Lint (Python, YAML, C++)** | `docker compose --profile lint run --rm lint check .` |
+| Build, route, render, release and test both hardware variants | `python3 hardware/scripts/build.py` |
+| One variant or step | `python3 hardware/scripts/build.py v3 --eda` (`--cad`, `--release`, `--test`) |
+| Refresh the README images (after a release) | `docker compose --profile hardware run --rm -T cad "python3 mechanical/scripts/readme_images.py"` |
+| Firmware tests and ESP32-C6 build | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
+| Refresh the clangd compilation database | `pio run -d gateway -e dev_c6 -t compiledb` |
+| Integration lab | `simulation/run-tests.sh` |
+| ETS package | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` |
+| Lint (Python, YAML, C++) | `docker compose --profile lint run --rm lint check .` |
 
 Licences per folder: [`LICENSE.md`](LICENSE.md). Engineering rules and architecture notes: [`AGENTS.md`](AGENTS.md).

@@ -13,7 +13,7 @@ enum class PsuProtectionState : std::uint8_t {
 };
 
 struct PsuSampleResult {
-    bool supply_off_gpio = false;  // True -> drive D1/GPIO1 HIGH to drive the REC3 CTRL pin high through U4 (PSU OFF)
+    bool supply_off_gpio = false;  // true: D1/GPIO1 high switches the REC3 off (CTRL through U4)
     PsuProtectionState state = PsuProtectionState::Normal;
     DaliState dali_led_state = DaliState::Ok;
     bool just_tripped_short = false;
