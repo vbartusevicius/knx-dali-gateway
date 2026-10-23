@@ -18,10 +18,10 @@ APP = f"M-00FA_A-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 HP = f"M-00FA_H-0xFF5A-1_HP-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 
 
-def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets=""):
+def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets="", product="KNX DALI Gateway"):
     hash_ = base64.b64encode(DIGEST).decode() if hash_ is None else hash_
     files = {
-        "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}"><CatalogItem Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
+        "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}" CreatedBy="OpenKNXproducer"><CatalogItem Name="{product}" Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
         "M-00FA/Hardware.xml": f'<KNX xmlns="{ns}"><Hardware2Program Id="{hp}">'
                                f'<ApplicationProgramRef RefId="{app}"/></Hardware2Program></KNX>',
         f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}" {assets}/></KNX>',
@@ -68,3 +68,9 @@ def test_stale_fingerprint_in_catalog_is_caught(tmp_path):
 @pytest.mark.parametrize("hash_", ["", base64.b64encode(bytes(16)).decode()])
 def test_missing_or_mismatching_hash_is_caught(tmp_path, hash_):
     assert v.verify(archive(tmp_path, hash_=hash_), HEADER)
+
+
+def test_reserved_openknx_name_is_rejected_but_the_tool_attribution_is_not(tmp_path):
+    assert v.verify(archive(tmp_path), HEADER) == []
+    problems = v.verify(archive(tmp_path, product="OpenKNX: KNX DALI Gateway"), HEADER)
+    assert problems == ["M-00FA/Catalog.xml: <CatalogItem> Name 'OpenKNX: KNX DALI Gateway' uses the reserved name OpenKNX"]

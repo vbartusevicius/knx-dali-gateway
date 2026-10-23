@@ -73,6 +73,14 @@ folder (including its imports) from KNX Manufacturer Tool 5.7 or KNX member
 support. It is separate from ETS's runtime DLLs and is not included here;
 Wine signing currently uses `-N`, explicitly skipping that validation.
 
+Product names: OpenKNXproducer's built-in template prefixes the catalog section,
+catalog item, product, hardware and application names with "OpenKNX". That name
+is reserved for projects of the OpenKNX GitHub organisation (they asked us not to
+distribute with it), so `scripts/prepare_xml.py` replaces those names before
+hashing and signing, and `scripts/verify_knxprod.py` fails any archive whose
+names or texts still say "OpenKNX". Only the producer's tool attribution
+(`CreatedBy`, its XML namespace URI) keeps the word.
+
 Before distribution, confirm allocation of application number 90 and OpenKNX
 id `0xFF` under manufacturer M-00FA with OpenKNX, or use your own assigned
 manufacturer/product identity.

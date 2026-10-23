@@ -6,7 +6,8 @@ Fails (exit 1, one line per problem) unless the archive holds exactly the
 Catalog, Hardware and one application program of one manufacturer, all in
 schema project/20 (imported by ETS 5.7 and ETS 6); the application id carries
 the header's OpenKNX id, application number and version; Catalog and Hardware
-reference that exact application (fingerprint included); the application
+reference that exact application (fingerprint included); no name or text
+says "OpenKNX" (reserved for the OpenKNX organisation's projects); the application
 program has its registration hash and the id's fingerprint derives from it
 (first and last hash byte, as ETS computes it). With --signed it also requires the
 manufacturer signature and the embedded knx_master.xml.
@@ -19,6 +20,8 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 NAMESPACE = "http://knx.org/xml/project/20"
+RESERVED_NAME = "openknx"
+TOOL_ATTRIBUTES = {"CreatedBy", "ToolVersion"}
 SIGNATURE_BYTES = 128
 
 
@@ -32,6 +35,16 @@ def header_ids(header_text):
 
 def namespace(root):
     return root.tag[1:].split("}")[0] if root.tag.startswith("{") else ""
+
+
+def reserved_names(name, root):
+    found = []
+    for element in root.iter():
+        texts = [(k, v) for k, v in element.attrib.items() if k not in TOOL_ATTRIBUTES]
+        texts.append(("text", element.text or ""))
+        found += [f"{name}: <{element.tag.split('}')[-1]}> {k} {v.strip()[:60]!r} uses the reserved name OpenKNX"
+                  for k, v in texts if RESERVED_NAME in v.lower()]
+    return found
 
 
 def verify(archive, header_text, signed=False):
@@ -54,6 +67,7 @@ def verify(archive, header_text, signed=False):
         for name, root in docs.items():
             if namespace(root) != NAMESPACE:
                 problems.append(f"{name}: schema {namespace(root)!r}, ETS 5.7 and ETS 6 need {NAMESPACE}")
+            problems += reserved_names(name, root)
 
         app_id = apps[0].split("/")[1][:-4]
         openknx, number, version = header_ids(header_text)

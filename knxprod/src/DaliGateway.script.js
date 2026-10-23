@@ -1,6 +1,6 @@
 // ETS parameter-page script for the DALI commissioning page. Buttons call the
 // handlers below; each sends a KNX function-property command to the gateway on
-// object index 160 (OpenKNX convention) via online.invokeFunctionProperty.
+// object index 160 via online.invokeFunctionProperty.
 // Command property ids: 1 scan, 2 assign (data[0]: 0 = unaddressed, 1 = all),
 // 3 replace (data[0] = short address), 4 identify (data[0] = short address),
 // 5 reset all DALI short addresses (no data), 6 scan input devices,

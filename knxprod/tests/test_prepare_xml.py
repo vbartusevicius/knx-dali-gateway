@@ -23,3 +23,24 @@ def test_preserves_xml_namespace_and_script_content():
     result = prepare(source)
     assert result == source.replace('<ApplicationProgram Id=', '<ApplicationProgram Hash="" Id=')
     assert prepare(result) == result
+
+
+PRODUCER_NAMES = (
+    '<KNX CreatedBy="OpenKNXproducer">'
+    '<CatalogSection Id="M-00FA_CS-OpenKNX" Name="OpenKNX" Number="OpenKNX" DefaultLanguage="de-DE">'
+    '<CatalogItem Id="c" Name="OpenKNX: KNX DALI Gateway" Number="1"/></CatalogSection>'
+    '<Hardware Id="h" Name="OpenKNX-KNX-DALI-GW-C6-proto"><Products>'
+    '<Product Id="p" Text="OpenKNX: KNX DALI Gateway"/></Products></Hardware></KNX>'
+)
+
+
+def test_replaces_the_reserved_openknx_names_from_the_producer_template():
+    root = ET.fromstring(prepare(PRODUCER_NAMES))
+    section = root.find("CatalogSection")
+    assert section.attrib == {"Id": "M-00FA_CS-KnxDaliGateway", "Name": "KNX DALI Gateway",
+                              "Number": "KnxDaliGateway", "DefaultLanguage": "de-DE"}
+    assert section.find("CatalogItem").get("Name") == "KNX DALI Gateway"
+    assert root.find("Hardware").get("Name") == "KNX-DALI-GW-C6-proto"
+    assert root.find(".//Product").get("Text") == "KNX DALI Gateway"
+    assert root.get("CreatedBy") == "OpenKNXproducer"
+    assert prepare(prepare(PRODUCER_NAMES)) == prepare(PRODUCER_NAMES)
