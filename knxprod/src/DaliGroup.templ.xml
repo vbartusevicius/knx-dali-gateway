@@ -67,21 +67,21 @@
                 <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
                 <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
                 <ComObjectRefRef RefId="%AID%_O-%TT%%CC%005_R-%TT%%CC%00501" />
-                <choose>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 1">
+                <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                  <when test="1">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%006_R-%TT%%CC%00601" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%007_R-%TT%%CC%00701" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%008_R-%TT%%CC%00801" />
                   </when>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 2">
+                  <when test="2">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%009_R-%TT%%CC%00901" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%010_R-%TT%%CC%01001" />
                   </when>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 3">
+                  <when test="3">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%011_R-%TT%%CC%01101" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%012_R-%TT%%CC%01201" />
                   </when>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 4">
+                  <when test="4">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%013_R-%TT%%CC%01301" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%014_R-%TT%%CC%01401" />
                   </when>

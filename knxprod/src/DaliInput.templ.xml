@@ -52,28 +52,28 @@
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%002_R-%TT%%CC%00201" />
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301" />
-                <choose>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 1">
+                <choose ParamRefId="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301">
+                  <when test="1">
                     <ParameterRefRef RefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401" />
-                    <choose>
-                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 4">
+                    <choose ParamRefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401">
+                      <when test="4">
                         <ParameterRefRef RefId="%AID%_P-%TT%%CC%005_R-%TT%%CC%00501" />
                       </when>
                     </choose>
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
-                    <choose>
-                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 3">
+                    <choose ParamRefId="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401">
+                      <when test="3">
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%002_R-%TT%%CC%00201" />
                       </when>
-                      <when test="%AID%_P-%TT%%CC%004_R-%TT%%CC%00401 == 4">
+                      <when test="4">
                         <ComObjectRefRef RefId="%AID%_O-%TT%%CC%004_R-%TT%%CC%00401" />
                       </when>
                     </choose>
                   </when>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 2">
+                  <when test="2">
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
                   </when>
-                  <when test="%AID%_P-%TT%%CC%003_R-%TT%%CC%00301 == 3">
+                  <when test="3">
                     <ParameterRefRef RefId="%AID%_P-%TT%%CC%006_R-%TT%%CC%00601" />
                     <ComObjectRefRef RefId="%AID%_O-%TT%%CC%003_R-%TT%%CC%00301" />
                   </when>

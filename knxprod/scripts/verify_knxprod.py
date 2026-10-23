@@ -7,7 +7,10 @@ Catalog, Hardware and one application program of one manufacturer, all in
 schema project/20 (imported by ETS 5.7 and ETS 6); the application id carries
 the header's OpenKNX id, application number and version; Catalog and Hardware
 reference that exact application (fingerprint included); no name or text
-says "OpenKNX" (reserved for the OpenKNX organisation's projects); the application
+says "OpenKNX" (reserved for the OpenKNX organisation's projects); every
+ParameterRefRef/ComObjectRefRef resolves, and every <choose> names an existing
+ParameterRef with <when> tests in KNX syntax (ETS crashes on a <choose> without
+ParamRefId when the device is inserted); the application
 program has its registration hash and the id's fingerprint derives from it
 (first and last hash byte, as ETS computes it). With --signed it also requires the
 manufacturer signature and the embedded knx_master.xml.
@@ -45,6 +48,24 @@ def reserved_names(name, root):
         found += [f"{name}: <{element.tag.split('}')[-1]}> {k} {v.strip()[:60]!r} uses the reserved name OpenKNX"
                   for k, v in texts if RESERVED_NAME in v.lower()]
     return found
+
+
+WHEN_TEST = re.compile(r"(?:(?:=|!=|<|>|<=|>=)-?\d+|-?\d+(?: -?\d+)*)")
+
+
+def dynamic_problems(name, root):
+    ids = {e.get("Id") for e in root.iter() if e.get("Id")}
+    refs = {e.get("Id") for e in root.iter() if e.tag.endswith("}ParameterRef")}
+    problems = []
+    for element in root.iter():
+        tag = element.tag.split("}")[-1]
+        if tag in ("ParameterRefRef", "ComObjectRefRef") and element.get("RefId") not in ids:
+            problems.append(f"{name}: <{tag}> RefId {element.get('RefId')!r} does not resolve")
+        elif tag == "choose" and element.get("ParamRefId") not in refs:
+            problems.append(f"{name}: <choose> ParamRefId {element.get('ParamRefId')!r} is not a ParameterRef")
+        elif tag == "when" and element.get("default") != "true" and not WHEN_TEST.fullmatch(element.get("test", "")):
+            problems.append(f"{name}: <when> test {element.get('test')!r} is not KNX syntax")
+    return problems[:20]
 
 
 def verify(archive, header_text, signed=False):
@@ -85,6 +106,7 @@ def verify(archive, header_text, signed=False):
             digest = base64.b64decode(program.get("Hash"))
             if f"{digest[0]:02X}{digest[-1]:02X}" != app_id[-4:]:
                 problems.append(f"{app_id}: fingerprint does not match the registration Hash")
+        problems += dynamic_problems(apps[0], docs[apps[0]])
         if program is not None:
             for name in ("ContextHelpFile", "IconFile"):
                 if "%" in program.get(name, ""):

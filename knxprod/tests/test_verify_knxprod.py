@@ -18,13 +18,16 @@ APP = f"M-00FA_A-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 HP = f"M-00FA_H-0xFF5A-1_HP-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 
 
-def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets="", product="KNX DALI Gateway"):
+def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets="", product="KNX DALI Gateway",
+            dynamic=""):
     hash_ = base64.b64encode(DIGEST).decode() if hash_ is None else hash_
     files = {
         "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}" CreatedBy="OpenKNXproducer"><CatalogItem Name="{product}" Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
         "M-00FA/Hardware.xml": f'<KNX xmlns="{ns}"><Hardware2Program Id="{hp}">'
                                f'<ApplicationProgramRef RefId="{app}"/></Hardware2Program></KNX>',
-        f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}" {assets}/></KNX>',
+        f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}" {assets}>'
+                               f'<ParameterRef Id="P1"/><ComObjectRef Id="O1"/><Dynamic>{dynamic}</Dynamic>'
+                               f'</ApplicationProgram></KNX>',
     }
     if signed:
         files["M-00FA.signature"] = b"\xef\xbb\xbf" + base64.b64encode(bytes(128))
@@ -74,3 +77,19 @@ def test_reserved_openknx_name_is_rejected_but_the_tool_attribution_is_not(tmp_p
     assert v.verify(archive(tmp_path), HEADER) == []
     problems = v.verify(archive(tmp_path, product="OpenKNX: KNX DALI Gateway"), HEADER)
     assert problems == ["M-00FA/Catalog.xml: <CatalogItem> Name 'OpenKNX: KNX DALI Gateway' uses the reserved name OpenKNX"]
+
+
+VALID_DYNAMIC = ('<ParameterRefRef RefId="P1"/><choose ParamRefId="P1"><when test="1 2"><ComObjectRefRef RefId="O1"/></when>'
+                 '<when test="!=255"/><when test="&lt;5"/><when default="true"/></choose>')
+
+
+def test_dynamic_section_with_knx_choose_syntax_passes(tmp_path):
+    assert v.verify(archive(tmp_path, dynamic=VALID_DYNAMIC), HEADER) == []
+
+
+def test_choose_without_paramrefid_and_expression_tests_are_rejected(tmp_path):
+    dynamic = '<choose><when test="P1 == 1"><ComObjectRefRef RefId="O9"/></when></choose>'
+    problems = v.verify(archive(tmp_path, dynamic=dynamic), HEADER)
+    assert any("<choose> ParamRefId None" in p for p in problems)
+    assert any("test 'P1 == 1' is not KNX syntax" in p for p in problems)
+    assert any("RefId 'O9' does not resolve" in p for p in problems)
