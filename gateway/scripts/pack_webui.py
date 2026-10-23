@@ -1,16 +1,14 @@
-"""Pack gateway/data/{index.html,app.css,app.js} into gateway/build/littlefs.bin
-and gateway/src/firmware/WebAssets.hpp (runs both standalone and as a PlatformIO pre-script)."""
+"""Pack gateway/data/{index.html,app.css,app.js} into gateway/src/firmware/WebAssets.hpp
+(runs both standalone and as a PlatformIO pre-script)."""
 
 from __future__ import annotations
 
 import inspect
-import struct
 from pathlib import Path
 
 _SCRIPT_FILE = Path(inspect.getfile(lambda: None)).resolve()
 ROOT = _SCRIPT_FILE.parents[1]
 DATA_DIR = ROOT / "data"
-BUILD_DIR = ROOT / "build"
 HEADER_OUT = ROOT / "src" / "firmware" / "WebAssets.hpp"
 
 FILES = [
@@ -18,28 +16,6 @@ FILES = [
     ("/app.css", "text/css; charset=utf-8", DATA_DIR / "app.css"),
     ("/app.js", "application/javascript; charset=utf-8", DATA_DIR / "app.js"),
 ]
-
-MAGIC = b"KDWFS1\x00\x00"
-
-
-def build_littlefs_bin() -> bytes:
-    """Build deterministic binary WebFS/LittleFS partition image:
-    8B magic ("KDWFS1\\0\\0") + uint32 count + count * (32B path, 40B mime, uint32 offset, uint32 size) + payloads.
-    """
-    header_size = 12 + len(FILES) * 80
-    entries = bytearray()
-    payloads = bytearray()
-    cur_offset = header_size
-
-    for route, mime, path in FILES:
-        raw = path.read_bytes()
-        route_b = route.encode("ascii")[:31].ljust(32, b"\x00")
-        mime_b = mime.encode("ascii")[:39].ljust(40, b"\x00")
-        entries += route_b + mime_b + struct.pack("<II", cur_offset, len(raw))
-        payloads += raw
-        cur_offset += len(raw)
-
-    return MAGIC + struct.pack("<I", len(FILES)) + bytes(entries) + bytes(payloads)
 
 
 def build_cpp_header() -> str:
@@ -65,16 +41,11 @@ def build_cpp_header() -> str:
 
 
 def main() -> None:
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    bin_path = BUILD_DIR / "littlefs.bin"
-    img = build_littlefs_bin()
-    if not bin_path.exists() or bin_path.read_bytes() != img:
-        bin_path.write_bytes(img)
     hdr = build_cpp_header()
     if not HEADER_OUT.exists() or HEADER_OUT.read_text(encoding="utf-8") != hdr:
         HEADER_OUT.write_text(hdr, encoding="utf-8")
     if __name__ == "__main__":
-        print(f"Wrote {bin_path} ({len(img)} bytes) and {HEADER_OUT}")
+        print(f"Wrote {HEADER_OUT}")
 
 
 main()

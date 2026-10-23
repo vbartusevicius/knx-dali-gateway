@@ -14,7 +14,6 @@
 #include <esp_netif.h>
 #include <esp_netif_sntp.h>
 #include <esp_ota_ops.h>
-#include <esp_partition.h>
 #include <esp_system.h>
 #include <esp_timer.h>
 #include <esp_wifi.h>
@@ -85,72 +84,9 @@ void unlock_http() noexcept {
     }
 }
 
-struct WebFsEntry {
-    char path[32];
-    char mime[40];
-    std::uint32_t offset;
-    std::uint32_t size;
-};
-
-// Serves a file from the `storage` flash partition if a valid `littlefs.bin`
-// image ("KDWFS1\0\0") was flashed or uploaded via /api/ota/littlefs.
-bool serve_from_storage_partition(httpd_req_t* req, const char* route) noexcept {
-    const esp_partition_t* part =
-        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
-    if (!part) {
-        return false;
-    }
-    struct Header {
-        char magic[8];
-        std::uint32_t count;
-    } hdr{};
-    if (esp_partition_read(part, 0, &hdr, sizeof(hdr)) != ESP_OK) {
-        return false;
-    }
-    if (std::memcmp(hdr.magic, "KDWFS1\0\0", 8) != 0 || hdr.count == 0 || hdr.count > 16) {
-        return false;
-    }
-    for (std::uint32_t i = 0; i < hdr.count; ++i) {
-        WebFsEntry entry{};
-        if (esp_partition_read(part, sizeof(hdr) + i * sizeof(entry), &entry, sizeof(entry)) != ESP_OK) {
-            return false;
-        }
-        entry.path[sizeof(entry.path) - 1] = '\0';
-        entry.mime[sizeof(entry.mime) - 1] = '\0';
-        if (std::strcmp(entry.path, route) != 0) {
-            continue;
-        }
-        if (entry.offset + entry.size > part->size) {
-            return false;
-        }
-        httpd_resp_set_type(req, entry.mime);
-        std::array<char, 1024> chunk{};
-        std::uint32_t remaining = entry.size;
-        std::uint32_t pos = entry.offset;
-        while (remaining > 0) {
-            const std::uint32_t n =
-                remaining > chunk.size() ? static_cast<std::uint32_t>(chunk.size()) : remaining;
-            if (esp_partition_read(part, pos, chunk.data(), n) != ESP_OK) {
-                return false;
-            }
-            if (httpd_resp_send_chunk(req, chunk.data(), static_cast<ssize_t>(n)) != ESP_OK) {
-                return false;
-            }
-            pos += n;
-            remaining -= n;
-        }
-        httpd_resp_send_chunk(req, nullptr, 0);
-        return true;
-    }
-    return false;
-}
-
 esp_err_t handle_static_asset(httpd_req_t* req) {
     const char* uri = req->uri;
     const char* route = (std::strcmp(uri, "/") == 0) ? "/index.html" : uri;
-    if (serve_from_storage_partition(req, route)) {
-        return ESP_OK;
-    }
     if (std::strcmp(route, "/index.html") == 0) {
         httpd_resp_set_type(req, "text/html; charset=utf-8");
         return httpd_resp_send(req, web_assets::index_html_data,
@@ -447,54 +383,6 @@ esp_err_t handle_ota_firmware(httpd_req_t* req) {
     return ESP_OK;
 }
 
-esp_err_t handle_ota_littlefs(httpd_req_t* req) {
-    const esp_partition_t* part =
-        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
-    if (!part) {
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "storage partition not found");
-    }
-    if (req->content_len < 16 || req->content_len > part->size) {
-        runtime_state().log().record(diagnostics::LogSource::Ota, diagnostics::LogSeverity::Error,
-                                     diagnostics::ErrorCode::OtaValidationFailed, diagnostics::no_address,
-                                     "littlefs.bin invalid size", now_ms());
-        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid littlefs.bin size");
-    }
-
-    const std::size_t erase_size = ((req->content_len + 4095U) / 4096U) * 4096U;
-    if (esp_partition_erase_range(part, 0, erase_size) != ESP_OK) {
-        runtime_state().log().record(diagnostics::LogSource::Ota, diagnostics::LogSeverity::Error,
-                                     diagnostics::ErrorCode::OtaFlashFailed, diagnostics::no_address,
-                                     "storage partition erase failed", now_ms());
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash erase failed");
-    }
-
-    std::array<char, 1024> chunk{};
-    std::size_t remaining = req->content_len;
-    std::size_t offset = 0;
-    while (remaining > 0) {
-        const int to_read =
-            remaining > chunk.size() ? static_cast<int>(chunk.size()) : static_cast<int>(remaining);
-        const int r = httpd_req_recv(req, chunk.data(), to_read);
-        if (r <= 0) {
-            return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Receive error");
-        }
-        if (esp_partition_write(part, offset, chunk.data(), static_cast<std::size_t>(r)) != ESP_OK) {
-            runtime_state().log().record(diagnostics::LogSource::Ota, diagnostics::LogSeverity::Error,
-                                         diagnostics::ErrorCode::OtaFlashFailed, diagnostics::no_address,
-                                         "storage partition write failed", now_ms());
-            return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash write failed");
-        }
-        offset += static_cast<std::size_t>(r);
-        remaining -= static_cast<std::size_t>(r);
-    }
-
-    runtime_state().log().record(diagnostics::LogSource::Ota, diagnostics::LogSeverity::Info,
-                                 diagnostics::ErrorCode::None, diagnostics::no_address,
-                                 "LittleFS Web UI partition updated", now_ms());
-    httpd_resp_sendstr(req, "{\"ok\":true}");
-    return ESP_OK;
-}
-
 void start_http_server() noexcept {
     if (g_httpd) {
         return;
@@ -527,7 +415,6 @@ void start_http_server() noexcept {
         {"/api/debug", HTTP_POST, &handle_api_debug_post, nullptr, false, false, nullptr},
         {"/api/errors", HTTP_GET, &handle_api_errors_get, nullptr, false, false, nullptr},
         {"/api/ota/firmware", HTTP_POST, &handle_ota_firmware, nullptr, false, false, nullptr},
-        {"/api/ota/littlefs", HTTP_POST, &handle_ota_littlefs, nullptr, false, false, nullptr},
     };
     for (const auto& u : uris) {
         httpd_register_uri_handler(g_httpd, &u);

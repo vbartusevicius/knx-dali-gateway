@@ -24,8 +24,8 @@ Open-source DIN-rail gateway between a wired **KNX TP** line and one **DALI / DA
 
 | What | Where | Use |
 | --- | --- | --- |
-| **USB web flasher** (first install) | **[Open Web Flasher →](https://vbartusevicius.github.io/knx-dali-gateway/)** | Plug the XIAO ESP32-C6 into USB-C, open the page in Chrome/Edge, click **Connect & Install**. Flashes bootloader, partitions, firmware and web UI in one step. |
-| **OTA update** | [`firmware.bin`, `littlefs.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drop either file onto the **Firmware** tab of the web interface. |
+| **First install (USB)** | [`firmware-full-usb.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Bootloader, partition table and firmware in one image for an empty ESP32-C6. Connect the XIAO over USB-C and write it at `0x0`: `esptool.py --chip esp32c6 write_flash 0x0 firmware-full-usb.bin`. Clears all settings. |
+| **Update** | [`firmware.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drop it onto the **Firmware** tab of the web interface. Updates firmware and web UI together; settings are kept. |
 | **ETS product database** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into ETS 5.7 / 6: 64 lamp channels (DT6/DT7/DT8), 16 groups, broadcast, 32 DALI-2 input channels (1,321 group objects). |
 | **Hardware bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Gerbers, JLCPCB BOM/CPL, STEP assemblies, printable STL/3MF case, `assembly_parts.csv`. |
 
@@ -33,7 +33,7 @@ Open-source DIN-rail gateway between a wired **KNX TP** line and one **DALI / DA
 
 ## Screenshots
 
-The web interface is served by the ESP32-C6 itself (LittleFS, live WebSocket updates, no cloud):
+The web interface is built into the firmware and served by the ESP32-C6 itself (live WebSocket updates, no cloud):
 
 ![Web UI overview: 64-lamp bus grid with lamp inspector](gateway/docs/screenshots/webui-overview.png)
 
@@ -171,7 +171,7 @@ Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 | Build, route, render, release and test both hardware variants | `python3 hardware/scripts/build.py` |
 | One variant or step | `python3 hardware/scripts/build.py v3 --eda` (`--cad`, `--release`, `--test`) |
 | Refresh the README images (after a release) | `docker compose --profile hardware run --rm -T cad "python3 mechanical/scripts/readme_images.py"` |
-| Firmware tests and ESP32-C6 build | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
+| Firmware tests and ESP32-C6 build (writes `firmware.bin` and `firmware-full-usb.bin`) | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
 | Refresh the clangd compilation database | `pio run -d gateway -e dev_c6 -t compiledb` |
 | Integration lab | `simulation/run-tests.sh` |
 | ETS package | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` |

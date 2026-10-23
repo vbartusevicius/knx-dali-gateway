@@ -1,4 +1,4 @@
-# Docker integration lab, C++ unit/sanitized tests, and ESP32-C6 firmware + LittleFS build.
+# Docker integration lab, C++ unit/sanitized tests, ESP32-C6 firmware build and release (firmware.bin + merged first-install image).
 name: lab
 
 on:
@@ -16,8 +16,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
-      pages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -30,9 +28,6 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio==6.1.16
 
-      - name: Pack Web UI (littlefs.bin + WebAssets.hpp)
-        run: python3 gateway/scripts/pack_webui.py
-
       - name: Run native and sanitized C++ unit tests
         run: pio test -d gateway -e native -e native_sanitized
 
@@ -42,33 +37,9 @@ jobs:
           export FW_VERSION="$(date -u -d "@$COMMIT_TS" +%y.%m.%d.%H%M)"
           echo "FW_VERSION=$FW_VERSION" >> "$GITHUB_ENV"
           pio run -d gateway -e dev_c6 -e release_c6
-          mkdir -p gateway/build/artifacts gateway/build/pages
+          mkdir -p gateway/build/artifacts
           cp gateway/.pio/build/release_c6/firmware.bin gateway/build/artifacts/firmware.bin
-          cp gateway/build/littlefs.bin gateway/build/artifacts/littlefs.bin
-          cp gateway/docs/flasher/index.html gateway/build/pages/index.html
-          cp gateway/.pio/build/release_c6/bootloader.bin gateway/build/pages/bootloader.bin
-          cp gateway/.pio/build/release_c6/partitions.bin gateway/build/pages/partitions.bin
-          cp gateway/.pio/build/release_c6/firmware.bin gateway/build/pages/firmware.bin
-          cp gateway/build/littlefs.bin gateway/build/pages/littlefs.bin
-          cat > gateway/build/pages/manifest.json << EOF
-          {
-            "name": "KNX-DALI Gateway",
-            "version": "${FW_VERSION}",
-            "new_install_prompt_erase": true,
-            "new_install_improv_wait_time": 0,
-            "builds": [
-              {
-                "chipFamily": "ESP32-C6",
-                "parts": [
-                  { "path": "bootloader.bin", "offset": 0 },
-                  { "path": "partitions.bin", "offset": 32768 },
-                  { "path": "firmware.bin", "offset": 131072 },
-                  { "path": "littlefs.bin", "offset": 4325376 }
-                ]
-              }
-            ]
-          }
-          EOF
+          cp gateway/.pio/build/release_c6/firmware-full-usb.bin gateway/build/artifacts/firmware-full-usb.bin
 
       - name: Package Hardware Release Bundles (V2, V3)
         run: |
@@ -77,21 +48,26 @@ jobs:
             (cd hardware/releases/$v && zip -r ../../../gateway/build/artifacts/knx-dali-gateway-hardware-${v}.zip . -x "*.DS_Store")
           done
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload firmware.bin (OTA update through the web UI)
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware-and-hardware-bundles
-          path: gateway/build/artifacts/
+          name: firmware
+          path: gateway/build/artifacts/firmware.bin
+          if-no-files-found: error
 
-      - name: Upload Chrome USB Web Flasher to GitHub Pages artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload firmware-full-usb.bin (USB install at 0x0 on an empty ESP32-C6)
+        uses: actions/upload-artifact@v4
         with:
-          path: gateway/build/pages/
+          name: firmware-full-usb
+          path: gateway/build/artifacts/firmware-full-usb.bin
+          if-no-files-found: error
 
-      - name: Deploy Chrome USB Web Flasher to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        continue-on-error: true
-        uses: actions/deploy-pages@v4
+      - name: Upload hardware bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardware-bundles
+          path: gateway/build/artifacts/knx-dali-gateway-hardware-*.zip
+          if-no-files-found: error
 
       - name: Publish to GitHub Release on push/merge to main, tag, or manual dispatch
         if: github.ref == 'refs/heads/main' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
@@ -109,7 +85,7 @@ jobs:
           gh release view "$REL_TAG" >/dev/null 2>&1 || gh release create "$REL_TAG" --target "$GITHUB_SHA" --title "$REL_TAG" --generate-notes
           gh release upload "$REL_TAG" \
             gateway/build/artifacts/firmware.bin \
-            gateway/build/artifacts/littlefs.bin \
+            gateway/build/artifacts/firmware-full-usb.bin \
             gateway/build/artifacts/knx-dali-gateway-hardware-v2.zip \
             gateway/build/artifacts/knx-dali-gateway-hardware-v3.zip \
             --clobber

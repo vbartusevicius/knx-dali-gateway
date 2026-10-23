@@ -439,41 +439,21 @@
         </div>
       </div>
 
-      <div class="two-col-layout">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>Application Firmware (<code>firmware.bin</code>)</h2>
-              <p class="subtext">Updates the ESP32-C6 gateway application and restarts into the new partition.</p>
-            </div>
-          </div>
-          <label class="dropzone" id="drop-firmware"
-            ondragover="onOtaDragOver(event,this)" ondragleave="onOtaDragLeave(this)" ondrop="onOtaDrop(event,'firmware')">
-            <input type="file" id="file-firmware" accept=".bin" hidden onchange="uploadOta('firmware')">
-            <strong class="dropzone-title">Drop <code>firmware.bin</code> here or click to select file</strong>
-            <span class="subtext" id="status-firmware">Uploads and flashes immediately upon selection</span>
-          </label>
-          <div class="progress-track" id="wrap-prog-firmware" style="display:none;margin-top:10px">
-            <div class="progress-fill" id="prog-firmware" style="width:0%"></div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Application Firmware (<code>firmware.bin</code>)</h2>
+            <p class="subtext">Updates the gateway application and its web interface, then restarts into the new partition. Settings are kept.</p>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>Web Interface (<code>littlefs.bin</code>)</h2>
-              <p class="subtext">Updates the web interface assets without erasing your network or DALI settings.</p>
-            </div>
-          </div>
-          <label class="dropzone" id="drop-littlefs"
-            ondragover="onOtaDragOver(event,this)" ondragleave="onOtaDragLeave(this)" ondrop="onOtaDrop(event,'littlefs')">
-            <input type="file" id="file-littlefs" accept=".bin" hidden onchange="uploadOta('littlefs')">
-            <strong class="dropzone-title">Drop <code>littlefs.bin</code> here or click to select file</strong>
-            <span class="subtext" id="status-littlefs">Uploads and reloads immediately upon selection</span>
-          </label>
-          <div class="progress-track" id="wrap-prog-littlefs" style="display:none;margin-top:10px">
-            <div class="progress-fill" id="prog-littlefs" style="width:0%"></div>
-          </div>
+        <label class="dropzone" id="drop-firmware"
+          ondragover="onOtaDragOver(event,this)" ondragleave="onOtaDragLeave(this)" ondrop="onOtaDrop(event,'firmware')">
+          <input type="file" id="file-firmware" accept=".bin" hidden onchange="uploadOta('firmware')">
+          <strong class="dropzone-title">Drop <code>firmware.bin</code> here or click to select file</strong>
+          <span class="subtext" id="status-firmware">Uploads and flashes immediately upon selection</span>
+        </label>
+        <div class="progress-track" id="wrap-prog-firmware" style="display:none;margin-top:10px">
+          <div class="progress-fill" id="prog-firmware" style="width:0%"></div>
         </div>
       </div>
     </section>

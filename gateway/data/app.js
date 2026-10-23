@@ -1984,10 +1984,7 @@ function uploadOta(target) {
   xhr.onload = () => {
     if (xhr.status === 200) {
       prog.style.width = "100%";
-      status.textContent =
-        target === "firmware"
-          ? "Firmware updated. Gateway is restarting..."
-          : "Web interface updated. Reloading...";
+      status.textContent = "Firmware updated. Gateway is restarting...";
       setTimeout(() => location.reload(), 3000);
     } else {
       status.textContent = `Update failed (${xhr.status}): ${xhr.responseText}`;

@@ -26,7 +26,6 @@ enum class ErrorCode : std::uint16_t {
     KnxUnconfigured = 206,
     NvsOpenFailed = 301,
     NvsCommitFailed = 302,
-    LittleFsMountFailed = 303,
     WatchdogResetRecovered = 304,
     BrownoutResetRecovered = 305,
     PanicResetRecovered = 306,

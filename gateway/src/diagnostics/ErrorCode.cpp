@@ -6,7 +6,7 @@
 namespace gateway::diagnostics {
 namespace {
 
-constexpr std::array<ErrorDescriptor, 24> catalog{{
+constexpr std::array<ErrorDescriptor, 23> catalog{{
     {ErrorCode::None, "OK", "No Error", "Normal operation with no fault condition.", "None required."},
     {ErrorCode::DaliBusShort, "DALI_BUS_SHORT", "DALI Bus Short Circuit",
      "The DALI bus line (DA+/DA-) was held below the logic low threshold continuously for >50 ms.",
@@ -64,9 +64,6 @@ constexpr std::array<ErrorDescriptor, 24> catalog{{
     {ErrorCode::NvsCommitFailed, "NVS_COMMIT_FAILED", "NVS Storage Write Failed",
      "Persisting target level or diagnostic log to NVS flash returned an error.",
      "Check free NVS entries and supply stability."},
-    {ErrorCode::LittleFsMountFailed, "LITTLEFS_MOUNT_FAILED", "LittleFS Web Partition Unmounted",
-     "The LittleFS storage partition had no valid filesystem image; serving built-in fallback Web UI.",
-     "Upload littlefs.bin in the Firmware Update panel to install custom LittleFS assets."},
     {ErrorCode::WatchdogResetRecovered, "WDT_RESET_RECOVERED", "Recovered from Watchdog Reset",
      "Previous boot was terminated by the hardware task or interrupt watchdog.",
      "Inspect prior log entries for hung bus transactions or power brownouts."},
@@ -92,18 +89,18 @@ constexpr std::array<ErrorDescriptor, 6> net_catalog{{
      "Connection to MQTT broker closed; automatic reconnect active.", "Check MQTT broker service status."},
     {ErrorCode::OtaValidationFailed, "OTA_INVALID_IMAGE", "OTA Image Validation Failed",
      "Uploaded .bin file failed ESP-IDF app header magic byte, size, or partition check.",
-     "Upload a valid ESP32-C6 firmware.bin or littlefs.bin image."},
+     "Upload a valid ESP32-C6 firmware.bin image."},
     {ErrorCode::OtaFlashFailed, "OTA_FLASH_FAILED", "OTA Flash Write Error",
      "Flash erase or write operation failed during OTA binary upload.",
      "Ensure stable KNX bus power and retry the firmware upload."},
 }};
 
-constexpr std::array<ErrorDescriptor, 30> full_catalog{{
+constexpr std::array<ErrorDescriptor, 29> full_catalog{{
     catalog[0],     catalog[1],     catalog[2],     catalog[3],     catalog[4],     catalog[5],
     catalog[6],     catalog[7],     catalog[8],     catalog[9],     catalog[10],    catalog[11],
     catalog[12],    catalog[13],    catalog[14],    catalog[15],    catalog[16],    catalog[17],
-    catalog[18],    catalog[19],    catalog[20],    catalog[21],    catalog[22],    catalog[23],
-    net_catalog[0], net_catalog[1], net_catalog[2], net_catalog[3], net_catalog[4], net_catalog[5],
+    catalog[18],    catalog[19],    catalog[20],    catalog[21],    catalog[22],    net_catalog[0],
+    net_catalog[1], net_catalog[2], net_catalog[3], net_catalog[4], net_catalog[5],
 }};
 
 }  // namespace
