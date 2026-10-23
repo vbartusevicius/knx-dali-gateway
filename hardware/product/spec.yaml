@@ -97,20 +97,23 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
   #   front outer z = 61.0, wall 1.6
   #   board z = 53.8, board top = 55.4
   #   OLED glass top = 60.9 (flush, panel through the window, module board in a 0.4 mm pocket)
-  #   PRG/RST and FUNC caps at 62.4 (1.4 mm proud, finger-operated), actuator 7.0 mm
+  #   PRG/RST and FUNC: Omron B3U-1000P (1.6 mm) pressed through C-shaped spring tabs in the
+  #   front wall; a 0.6 mm bump on the front, a plunger behind ending just above the actuator
   #   SMD RGB LEDs on the board shine through a 0.6 mm skin of the front wall, one baffle tube each
   board_z: 53.8
   board_top_z: 55.4
   oled:
-    header_gap: 3.13      # UI board top to module back; keeps the UI board where the 7 mm buttons need it
+    header_gap: 3.13      # UI board top to module back
     module_board: 1.0
     panel: 1.37
     header_plastic_max: 2.5
     pin_tail: 6.0
   buttons:
-    - { id: prg_rst, label: PRG/RST, actuator: tactile-PTS645SL70, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4,
+    - { id: prg_rst, label: PRG/RST, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
+        plunger: true, protrusion_beyond_front: 0.6,
         tap: reboot (ESP32 + KNX stack, configuration kept), hold_5s: KNX programming mode on/off }
-    - { id: func, label: FUNC, actuator: tactile-PTS645SL70, actuator_length_mm: 7.0, protrusion_beyond_front: 1.4,
+    - { id: func, label: FUNC, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
+        plunger: true, protrusion_beyond_front: 0.6,
         tap: next display page / wake the display, hold_5s: WiFi setup }
     - { id: both, hold_10s: factory reset (KNX, lighting and WiFi configuration) }
   leds:   # SK6805-EC15 chain on LED_DATA; always lit, colours in gateway/src/device/StatusLeds.cpp

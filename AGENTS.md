@@ -753,4 +753,5 @@ Research candidates for the future lab are XKNX 3.20.0 and python-dali 0.11; tho
   - `core_power.build(..., converter=...)` takes `TMR2_2411` or `TRN3_2411`.
   - C23 is 100 µF 1206 (C15008).
   - Remaining: AUX hot-unplug during TX, because CP2 is still grounded (100 µs switchover, 3.08 V worst case).
+- UI buttons (user decision 2026-10-23): both variants use Omron B3U-1000P pressed through C-shaped spring tabs in the cover front (`build_enclosure.button_tab`), defined once in `hardware/product/spec.yaml` front_ui.buttons and `blocks/ui.BUTTON_B3U`. The v2 arms are about 7 mm long (v3 about 3 mm), so softer: check the feel on the first print.
 - KiCad checks creepage per net pair: DRC rule conditions on `Reference`/`memberOfFootprint` never match. Where an isolator's own pins sit closer than the domain distance, add a board slot (frame `slots`).

@@ -71,11 +71,6 @@ front_ui:
     panel: 1.00
     header_plastic_max: 2.5
     pin_tail: 24.99
-  buttons:
-    - { id: prg_rst, label: PRG/RST, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
-        plunger: true, protrusion_beyond_front: 0.6 }
-    - { id: func, label: FUNC, actuator: Omron B3U-1000P + cover flexure plunger, actuator_length_mm: 1.6,
-        plunger: true, protrusion_beyond_front: 0.6 }
   display:
     type: oled-0.96in-64x128-ssd1312-i2c-hotbar14
     part: QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (14.0 x 28.0 x 1.22 mm, 14-pin 0.62 mm solder FPC)

@@ -25,7 +25,6 @@ LED_RGB = "gateway_fp:LED_SK6805-EC15_1.5x1.5mm"
 SOT23_5 = "Package_TO_SOT_SMD:SOT-23-5"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 STATUS_LEDS = ("STATUS", "KNX", "DALI")
-TACT_6X6 = "Button_Switch_SMD:SW_SPST_PTS645Sx43SMTR92"
 JST_SH10 = "Connector_JST:JST_SH_BM10B-SRSS-TB_1x10-1MP_P1.00mm_Vertical"
 HDR_4 = "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
 
@@ -92,10 +91,12 @@ WINSTAR_OLED = {"mpn": "WEA012864DWPP3N00003", "mfr": "Winstar", "pins": ("VCC",
                           "over its pins, then solder them from the back"}
 
 
-BUTTON_PTS645 = {"footprint": TACT_6X6, "mpn": "PTS645SL70SMTR92LFS", "mfr": "C&K", "lcsc": "C285485"}
+# Omron B3U-1000P (1.6 mm): pressed through a C-shaped spring tab in the cover front with a plunger
+BUTTON_B3U = {"footprint": "Button_Switch_SMD:SW_SPST_B3U-1000P", "mpn": "B3U-1000P",
+              "mfr": "Omron", "lcsc": "C231329"}
 
 
-def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED, button=BUTTON_PTS645):
+def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED):
     """Create button ladder, LEDs, and OLED header on the UI board."""
     block("btn_ladder")
     r_pull = res("10k", src(source="Ladder pull-up; no-button = 3V3"))
@@ -104,15 +105,15 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
     c_ladder = cap("100n 50V", src(source="Ladder debounce/filter cap"))
     c_ladder[1] += btn_ladder
     c_ladder[2] += gnd
-    sw1 = part("Switch", "SW_Push", "PRG/RST", button["footprint"],
-               src(mpn=button["mpn"], mfr=button["mfr"], lcsc=button["lcsc"],
+    sw1 = part("Switch", "SW_Push", "PRG/RST", BUTTON_B3U["footprint"],
+               src(mpn=BUTTON_B3U["mpn"], mfr=BUTTON_B3U["mfr"], lcsc=BUTTON_B3U["lcsc"],
                    source="tap: reboot; hold 5 s: KNX programming mode"))
     r_prog = res("20k", src(source="PRG/RST ladder: 3V3*20k/30k=2.2V"))
     sw1[1] += btn_ladder
     sw1[2] += r_prog[1]
     r_prog[2] += gnd
-    sw2 = part("Switch", "SW_Push", "FUNC", button["footprint"],
-               src(mpn=button["mpn"], mfr=button["mfr"], lcsc=button["lcsc"],
+    sw2 = part("Switch", "SW_Push", "FUNC", BUTTON_B3U["footprint"],
+               src(mpn=BUTTON_B3U["mpn"], mfr=BUTTON_B3U["mfr"], lcsc=BUTTON_B3U["lcsc"],
                    source="tap: display page / wake; hold 5 s: WiFi setup"))
     r_reset = res("10k", src(source="FUNC ladder: 3V3*10k/20k=1.65V; both 1.32V"))
     sw2[1] += btn_ladder

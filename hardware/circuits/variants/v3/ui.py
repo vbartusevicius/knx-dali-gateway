@@ -20,8 +20,6 @@ SSD1312_64X128_HOTBAR14 = {
               "of the UI board receiving the folded flex tail of the 0.96in 64x128 SSD1312 portrait I2C OLED "
               "(QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY, 14.0x28.0x1.22 mm)",
 }
-BUTTON_B3U = {"footprint": "Button_Switch_SMD:SW_SPST_B3U-1000P", "mpn": "B3U-1000P",
-              "mfr": "Omron", "lcsc": "C231329"}
 
 
 def build():
@@ -35,7 +33,7 @@ def build():
     wire(ffc("Carrier", "J1", "FFC to the carrier"), UI_LINK,
          {"+3V3": v3, "GND": gnd, "BTN_LADDER": btn_ladder, "LED_DATA": led_data, "+5V": v5, "I2C_SDA": sda,
           "I2C_SCL": scl})
-    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=SSD1312_64X128_HOTBAR14, button=BUTTON_B3U)
+    ui.build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=SSD1312_64X128_HOTBAR14)
 
 
 NET_CLASSES = dict(ui.NET_CLASSES)
