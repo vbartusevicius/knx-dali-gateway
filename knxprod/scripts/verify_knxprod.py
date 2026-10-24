@@ -10,7 +10,8 @@ reference that exact application (fingerprint included); no name or text
 says "OpenKNX" (reserved for the OpenKNX organisation's projects); every
 ParameterRefRef/ComObjectRefRef resolves, and every <choose> names an existing
 ParameterRef with <when> tests in KNX syntax (ETS crashes on a <choose> without
-ParamRefId when the device is inserted); the application
+ParamRefId when the device is inserted); the catalog item's description
+links the project repository; the application
 program has its registration hash and the id's fingerprint derives from it
 (first and last hash byte, as ETS computes it). With --signed it also requires the
 manufacturer signature and the embedded knx_master.xml.
@@ -24,6 +25,7 @@ import zipfile
 
 NAMESPACE = "http://knx.org/xml/project/20"
 RESERVED_NAME = "openknx"
+REPO_URL = "https://github.com/vbartusevicius/knx-dali-gateway"
 TOOL_ATTRIBUTES = {"CreatedBy", "ToolVersion"}
 SIGNATURE_BYTES = 128
 
@@ -114,6 +116,9 @@ def verify(archive, header_text, signed=False):
             for name in ("ContextHelpFile", "IconFile"):
                 if "%" in program.get(name, ""):
                     problems.append(f"{apps[0]}: unresolved {name}: {program.get(name)}")
+        for item in docs[f"{manu}/Catalog.xml"].iterfind(".//k:CatalogItem", ns):
+            if REPO_URL not in item.get("VisibleDescription", ""):
+                problems.append(f"Catalog.xml: CatalogItem {item.get('Name')!r} has no link to {REPO_URL}")
         refs = [e.get("RefId") for e in docs[f"{manu}/Hardware.xml"].iterfind(".//k:ApplicationProgramRef", ns)]
         hp_ids = {e.get("Id") for e in docs[f"{manu}/Hardware.xml"].iterfind(".//k:Hardware2Program", ns)}
         catalog_hps = {e.get("Hardware2ProgramRefId") for e in docs[f"{manu}/Catalog.xml"].iterfind(".//k:CatalogItem", ns)}

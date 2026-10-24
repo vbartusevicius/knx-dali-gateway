@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from prepare_xml import prepare
+from prepare_xml import CATALOG_DESCRIPTION, REPO_URL, prepare
 
 
 def test_removes_only_unused_generated_asset_references():
@@ -38,7 +38,9 @@ def test_replaces_the_reserved_openknx_names_from_the_producer_template():
     root = ET.fromstring(prepare(PRODUCER_NAMES))
     section = root.find("CatalogSection")
     assert section.attrib == {"Id": "M-00FA_CS-KnxDaliGateway", "Name": "KNX DALI Gateway",
-                              "Number": "KnxDaliGateway", "DefaultLanguage": "de-DE"}
+                              "Number": "KnxDaliGateway", "DefaultLanguage": "de-DE",
+                              "VisibleDescription": CATALOG_DESCRIPTION}
+    assert REPO_URL in section.find("CatalogItem").get("VisibleDescription")
     assert section.find("CatalogItem").get("Name") == "KNX DALI Gateway"
     assert root.find("Hardware").get("Name") == "KNX-DALI-GW-C6-proto"
     assert root.find(".//Product").get("Text") == "KNX DALI Gateway"

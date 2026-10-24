@@ -314,6 +314,7 @@
           <Dynamic>
             <ChannelIndependentBlock>
               <ParameterBlock Id="%AID%_PB-%TT%00001" Name="General" Text="General">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Open-source project: firmware, documentation and support at https://github.com/vbartusevicius/knx-dali-gateway" UIHint="Information" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Gateway" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00005_R-%TT%0000501" />

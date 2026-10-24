@@ -6,6 +6,11 @@ from pathlib import Path
 # "OpenKNX" catalog section. That name is reserved for the OpenKNX organisation's
 # own projects, so it is replaced before the hash and signature are computed.
 CATALOG_SECTION = {"Id": "M-00FA_CS-KnxDaliGateway", "Name": "KNX DALI Gateway", "Number": "KnxDaliGateway"}
+REPO_URL = "https://github.com/vbartusevicius/knx-dali-gateway"
+CATALOG_DESCRIPTION = (
+    "Open-source KNX TP to DALI-2 gateway: firmware, ETS product, hardware and documentation at " + REPO_URL
+)
+CATALOG_ENTRY = re.compile(r"<(CatalogSection|CatalogItem)\s[^>]*?(/?)>")
 RESERVED_PREFIX = re.compile(r'(\s(?:Name|Text)=")OpenKNX(?::\s*|-)')
 
 
@@ -16,7 +21,15 @@ def rebrand(text):
             tag = re.sub(rf'(\s{attr}=")[^"]*"', rf'\g<1>{value}"', tag, count=1)
         return tag
 
+    def described(match):
+        tag = match.group(0)
+        if " VisibleDescription=" in tag:
+            return tag
+        end = len(tag) - len(match.group(2)) - 1
+        return f'{tag[:end].rstrip()} VisibleDescription="{CATALOG_DESCRIPTION}"{tag[end:]}'
+
     text = re.sub(r'<CatalogSection\s[^>]*Id="M-00FA_CS-OpenKNX"[^>]*>', section, text)
+    text = CATALOG_ENTRY.sub(described, text)
     return RESERVED_PREFIX.sub(r"\g<1>", text)
 
 

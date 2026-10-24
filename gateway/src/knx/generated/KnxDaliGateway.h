@@ -11,7 +11,7 @@
 #define MAIN_FirmwareName "KNX DALI Gateway"
 #define MAIN_OpenKnxId 0xFF
 #define MAIN_ApplicationNumber 90
-#define MAIN_ApplicationVersion 2
+#define MAIN_ApplicationVersion 3
 #define MAIN_ApplicationEncoding iso-8859-15
 #define MAIN_ParameterSize 909
 #define MAIN_MaxKoNumber 1321

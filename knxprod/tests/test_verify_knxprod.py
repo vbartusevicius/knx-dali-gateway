@@ -19,10 +19,11 @@ HP = f"M-00FA_H-0xFF5A-1_HP-FF5A-01-{DIGEST[0]:02X}{DIGEST[-1]:02X}"
 
 
 def archive(tmp_path, ns=NS, app=APP, hp=HP, catalog_hp=HP, signed=True, hash_=None, assets="", product="KNX DALI Gateway",
-            dynamic=""):
+            dynamic="", description=f"Project: {v.REPO_URL}"):
     hash_ = base64.b64encode(DIGEST).decode() if hash_ is None else hash_
     files = {
-        "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}" CreatedBy="OpenKNXproducer"><CatalogItem Name="{product}" Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
+        "M-00FA/Catalog.xml": f'<KNX xmlns="{ns}" CreatedBy="OpenKNXproducer"><CatalogItem Name="{product}" '
+                              f'VisibleDescription="{description}" Hardware2ProgramRefId="{catalog_hp}"/></KNX>',
         "M-00FA/Hardware.xml": f'<KNX xmlns="{ns}"><Hardware2Program Id="{hp}">'
                                f'<ApplicationProgramRef RefId="{app}"/></Hardware2Program></KNX>',
         f"M-00FA/{app}.xml": f'<KNX xmlns="{ns}"><ApplicationProgram Id="{app}" Hash="{hash_}" {assets}>'
@@ -99,3 +100,8 @@ def test_unknown_separator_style_is_rejected(tmp_path):
     dynamic = '<ParameterSeparator Id="S1" Text="x" UIHint="Warning"/><ParameterSeparator Id="S2" Text="y" UIHint="Error"/>'
     problems = v.verify(archive(tmp_path, dynamic=dynamic), HEADER)
     assert len(problems) == 1 and "UIHint 'Warning'" in problems[0]
+
+
+def test_catalog_item_must_link_the_repository(tmp_path):
+    problems = v.verify(archive(tmp_path, description="A DALI gateway"), HEADER)
+    assert problems == [f"Catalog.xml: CatalogItem 'KNX DALI Gateway' has no link to {v.REPO_URL}"]
