@@ -2,7 +2,8 @@
 
 Generates `hardware/releases/<variant>/panel/`:
   - `panel.kicad_pcb`, `panel.kicad_pro`, `panel.kicad_dru`
-  - `panel_gerbers.zip` (single Gerber + drill upload for JLCPCB)
+  - `panel_gerbers.zip` (Gerber X2 + Excellon + IPC-D-356 netlist, any board house)
+  - `panel_odb.zip` (ODB++, e.g. Aisler) and `panel_bom.csv` / `panel_cpl.csv` (generic assembly files)
   - `panel_bom_jlc.csv` (consolidated BOM merging shared LCSC parts across boards)
   - `panel_cpl_jlc.csv` (consolidated Pick-and-Place CPL for the panel)
   - `panel_assembly_check.csv` & `panel_hand_fit.csv`
@@ -18,6 +19,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import fab_outputs
 import pcbnew
 
 REPO = Path("/work")
@@ -271,17 +273,10 @@ def build_panel(
     if problems:
         return problems
 
-    # Export panel_gerbers.zip
-    copper = [pcbnew.LayerName(layer) for layer in panel.GetEnabledLayers().CuStack()]
-    layers = copper + ["F.Mask", "B.Mask", "F.Paste", "B.Paste", "F.SilkS", "B.SilkS", "Edge.Cuts"]
-    gtarget = panel_dir / "gerbers"
-    gtarget.mkdir()
-    run("kicad-cli", "pcb", "export", "gerbers", "--output", f"{gtarget}/",
-        "--layers", ",".join(layers), "--no-protel-ext", str(panel_pcb_path))
-    run("kicad-cli", "pcb", "export", "drill", "--output", f"{gtarget}/",
-        "--format", "excellon", "--excellon-separate-th", str(panel_pcb_path))
-    shutil.make_archive(str(panel_dir / "panel_gerbers"), "zip", gtarget)
-    shutil.rmtree(gtarget)
+    # Gerbers + drill + netlist, ODB++ and the generic assembly files
+    fab_outputs.gerbers(panel_pcb_path, panel_dir, "panel")
+    fab_outputs.odb(panel_pcb_path, panel_dir, "panel")
+    fab_outputs.generic_assembly(panel_pcb_path, panel_dir, "panel", {p["ref"]: p for p in combined_parts})
 
     # Export top and bottom SVG renders of the breakaway panel
     renders_dir = panel_dir / "renders"

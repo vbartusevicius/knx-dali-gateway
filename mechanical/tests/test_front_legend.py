@@ -41,9 +41,9 @@ def test_dali_bracket_encloses_both_pairs_without_touching_text(labels):
     assert all(outline[0] < lb.box()[0] and lb.box()[2] < outline[2] for lb in pin_texts)
 
 
-def test_colour_inlays_fill_exactly_what_they_cut_from_the_cover():
-    """WJP full-colour print: colour bodies flush with the faces, sharing
-    faces with the cover, no gap or overlap."""
+def test_legend_recess_bodies_cut_exactly_their_own_volume_from_the_cover():
+    """Embossed cover: the legend bodies sit flush with the faces and are
+    cut out of the cover completely, no partial or missed recess."""
     import build_enclosure as be
     import legend_color_model as lcm
 

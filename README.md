@@ -127,13 +127,14 @@ Pin table, LED chain and button ladder: [`hardware/docs/variants.md`](hardware/d
 Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 
 1. **PCBs with SMT assembly (JLCPCB).** Upload `panel/panel_gerbers.zip` (V3: 66.0 × 78.1 mm, 4 layers, 1.2 mm; V2: 98.5 × 76.6 mm, 4 layers, 1.6 mm) with **assembly on both sides**, `panel/panel_bom_jlc.csv` and `panel/panel_cpl_jlc.csv`. You order one PCB and one PCBA job and snap the boards apart. Per-board files are in `main/`, `ui/` (and `interface/` on V2). Compare `renders/top.svg` / `bottom.svg` with JLCPCB's placement preview.
+   **Other board houses** (Aisler, PCBWay, Eurocircuits, ...): every folder also has `<board>_odb.zip` (ODB++), Gerbers with drills and an IPC-D-356 netlist in `<board>_gerbers.zip`, and a generic `<board>_bom.csv` / `<board>_cpl.csv` with manufacturer part numbers and KiCad rotations.
 2. **Hand-fitted parts.** `assembly_parts.csv` lists everything JLCPCB does not place, with Mouser, Digi-Key and TME numbers:
    - the XIAO ESP32-C6 (pre-soldered) and its sockets;
    - the RECOM REC3-2415SRW/H2/A/CTRL DALI supply converter;
    - the TRACO AUX core converter;
    - Phoenix PST pin strips and plugs;
    - the OLED, the main-to-UI cable, and two jumper caps for `JP1`.
-3. **Case.** Print `enclosure/base.stl` and one cover in PETG or ASA at 0.2 mm layers: `cover.stl` (plain), `cover_embossed.stl` (0.3 mm recessed legend) or `cover_color.3mf` (multi-colour inlay).
+3. **Case.** Print `enclosure/base.stl` and one cover in PETG or ASA at 0.2 mm layers: `cover.stl` (plain) or `cover_embossed.stl` (0.3 mm recessed legend).
 
 <details>
 <summary><b>V3 assembly order</b></summary>

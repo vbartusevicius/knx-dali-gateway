@@ -36,6 +36,23 @@ JST-SH jumper.
    Pin 1 / polarity: optocouplers, transistors, the bridge's + corner, SK6805
    corner marks, diode bands.
 
+
+## Ordering elsewhere (Aisler, PCBWay, Eurocircuits, ...)
+
+Each board folder and `panel/` also holds fab-independent files:
+
+- `<board>_odb.zip`: ODB++ (copper, drills, outline, netlist, component
+  placement). Aisler's preferred upload; PCBWay and Eurocircuits accept it.
+- `<board>_gerbers.zip`: Gerber X2 per layer, Excellon drills (plated and
+  non-plated) and `<board>.d356`, the IPC-D-356 netlist for the electrical test.
+- `<board>_bom.csv`: every part with value, footprint, manufacturer part number
+  (LCSC number for reference), SMD/THT, and whether the assembler or you fit it.
+- `<board>_cpl.csv`: placement of the assembled parts in KiCad's coordinates
+  and rotations (the `_jlc` files use JLCPCB's rotations and are for JLCPCB only).
+
+Order the stack-up, thickness and finish given above; check the assembler's
+placement preview for the bottom-side and rotated parts as for JLCPCB.
+
 ## Front legend (optional print)
 
 Three flat faces carry the legend: bottom shoulder (KNX + -), front (PRG/RST,
@@ -49,15 +66,8 @@ supply or the MDT STC-1280.01 30 V output are both inside.
   print, cyan = face edges and openings for positioning only. For UV/pad
   printing on an FDM cover (custom quote) or an adhesive polyester label cut
   along the cyan lines.
-- `enclosure/cover_embossed.stl (0.3 mm recessed text) or cover_color.3mf` or `enclosure/cover_color_obj.zip` (OBJ + MTL):
-  the cover for full-colour resin printing (JLC3DP "Full-Color Resin", WJP).
-  Upload either one instead of `cover.stl` and select full-colour printing.
-  The legend is a separate black body 0.3 mm deep, flush with the faces; the
-  cover is light grey. WJP resin is rigid and JLC3DP recommends walls >= 1 mm
-  (snap features >= 2 mm): the cover's 0.6 mm LED skins, 0.8 mm baffles and the
-  sprung snap tongues are below that, and opaque white resin passes less LED
-  light than translucent PETG. Ask for their review, or print the cover in
-  PETG and use the PDF instead.
+- `enclosure/cover_embossed.stl` (also `.step`): the cover with the legend
+  recessed 0.3 mm into its faces, for single-colour FDM printing.
 
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 

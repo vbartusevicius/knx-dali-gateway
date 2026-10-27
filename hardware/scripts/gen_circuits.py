@@ -332,8 +332,8 @@ def collect_assembly_parts(variant, spec):
     items.append({
         "item": f"Case cover{snap_note}",
         "qty": 1,
-        "part": "enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf)",
-        "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)",
+        "part": "enclosure/cover.stl (or cover_embossed.stl)",
+        "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text)",
         "mouser": "-",
         "digikey": "-",
         "tme": "-",

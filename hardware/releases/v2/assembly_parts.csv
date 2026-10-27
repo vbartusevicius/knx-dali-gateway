@@ -10,4 +10,4 @@ Main-to-UI cable,1,JST A10SR10SR30K102A,485-4396,455-3086-ND,CAB-JST-SH-10P,"SH 
 DALI supply jumper caps,2,Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114),710-60900213421,732-2703-ND (or S9001-ND),MJ-0-6 (LCSC C100114),"2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",Mouser / Digi-Key / TME / LCSC
 Case screws,2,"2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",710-97790803111,H742-ND,B2.5X10/BN13257,through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot),any
 Case base,1,enclosure/base.stl,-,-,-,"PETG or ASA, 0.2 mm layers, rail channel face down",printed
-Case cover,1,enclosure/cover.stl (or cover_embossed.stl / cover_color.3mf),-,-,-,"PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text, cover_color.3mf multi-colour inlay)",printed
+Case cover,1,enclosure/cover.stl (or cover_embossed.stl),-,-,-,"PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text)",printed

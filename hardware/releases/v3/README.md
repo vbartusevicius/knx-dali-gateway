@@ -29,6 +29,23 @@ A single 8-pin 0.5 mm **Type B (reverse / opposite-side contacts)** FFC cable (`
 3. `<board>_assembly_check.csv` (and `panel/panel_assembly_check.csv`) lists JLCPCB footprint, rotation and stock for
    every part.
 
+
+## Ordering elsewhere (Aisler, PCBWay, Eurocircuits, ...)
+
+Each board folder and `panel/` also holds fab-independent files:
+
+- `<board>_odb.zip`: ODB++ (copper, drills, outline, netlist, component
+  placement). Aisler's preferred upload; PCBWay and Eurocircuits accept it.
+- `<board>_gerbers.zip`: Gerber X2 per layer, Excellon drills (plated and
+  non-plated) and `<board>.d356`, the IPC-D-356 netlist for the electrical test.
+- `<board>_bom.csv`: every part with value, footprint, manufacturer part number
+  (LCSC number for reference), SMD/THT, and whether the assembler or you fit it.
+- `<board>_cpl.csv`: placement of the assembled parts in KiCad's coordinates
+  and rotations (the `_jlc` files use JLCPCB's rotations and are for JLCPCB only).
+
+Order the stack-up, thickness and finish given above; check the assembler's
+placement preview for the bottom-side and rotated parts as for JLCPCB.
+
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
 - `main` J1, J2: two **Phoenix Contact 1574200** (PST 1,0/2-5,75) pin strips on

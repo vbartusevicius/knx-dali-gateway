@@ -1,18 +1,14 @@
-"""Full-colour cover for WJP (White Jet Process) resin printing, e.g. JLC3DP
-"Full-Color Resin".
+"""Embossed cover: the front legend recessed into the cover faces.
 
     python3 mechanical/scripts/legend_color_model.py
 
-Writes mechanical/build/<variant>/cover_color.3mf and cover_color_obj.zip
-(OBJ + MTL, one material per colour). The legend artwork from front_legend.py
-(text outlines, LED rings, the DALI bracket) is inlaid flush into the cover's
-faces as separate black bodies INLAY_DEPTH deep; the cover is cut by exactly
-the same bodies, so colour and cover share faces without gaps or overlaps, as
-JLC3DP asks for separately coloured regions.
+Writes mechanical/build/<variant>/cover_embossed.step and .stl. The legend
+artwork from front_legend.py (text outlines, LED rings, the DALI bracket)
+becomes solid bodies INLAY_DEPTH deep, flush with the cover's faces, and is
+cut out of the cover. render_assembly3d.py uses the same bodies to show the
+legend.
 """
 
-import io
-import zipfile
 from pathlib import Path
 
 import build_enclosure as be
@@ -25,7 +21,6 @@ REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "mechanical/build" / ef.VARIANT
 INLAY_DEPTH = 0.3
 TOLERANCE = 0.02
-COLOURS = {"cover": (0.95, 0.95, 0.95), "legend": (0.05, 0.05, 0.05)}
 FACE_Z = {"front": ef.TOTAL_D, "top": ef.SHOULDER_Z["top"], "bottom": ef.SHOULDER_Z["bottom"]}
 
 
@@ -77,65 +72,13 @@ def legend_bodies():
     return legend
 
 
-def mesh(shape):
-    vertices, triangles = shape.val().tessellate(TOLERANCE, 0.2)
-    return [(v.x, v.y, v.z) for v in vertices], triangles
-
-
-def write_3mf(parts, path):
-    materials = "".join(f'<base name="{name}" displaycolor="#{"".join(f"{round(c * 255):02X}" for c in rgb)}"/>'
-                        for name, rgb in COLOURS.items())
-    objects, items = [], []
-    for index, (name, (vertices, triangles)) in enumerate(parts.items(), start=2):
-        v = "".join(f'<vertex x="{x:.4f}" y="{y:.4f}" z="{z:.4f}"/>' for x, y, z in vertices)
-        t = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in triangles)
-        objects.append(f'<object id="{index}" name="{name}" type="model" pid="1" pindex="{list(COLOURS).index(name)}">'
-                       f'<mesh><vertices>{v}</vertices><triangles>{t}</triangles></mesh></object>')
-        items.append(f'<item objectid="{index}"/>')
-    model = ('<?xml version="1.0" encoding="UTF-8"?>'
-             '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
-             f'<resources><basematerials id="1">{materials}</basematerials>{"".join(objects)}</resources>'
-             f'<build>{"".join(items)}</build></model>')
-    types = ('<?xml version="1.0" encoding="UTF-8"?>'
-             '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-             '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-             '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>')
-    rels = ('<?xml version="1.0" encoding="UTF-8"?>'
-            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            '<Relationship Target="/3D/3dmodel.model" Id="rel0" '
-            'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("[Content_Types].xml", types)
-        archive.writestr("_rels/.rels", rels)
-        archive.writestr("3D/3dmodel.model", model)
-
-
-def write_obj_zip(parts, path):
-    obj, mtl = io.StringIO(), io.StringIO()
-    obj.write("mtllib cover_color.mtl\n")
-    offset = 1
-    for name, (vertices, triangles) in parts.items():
-        mtl.write(f"newmtl {name}\nKd {' '.join(f'{c:.3f}' for c in COLOURS[name])}\nKa 0 0 0\nKs 0 0 0\nd 1\nillum 1\n\n")
-        obj.write(f"o {name}\nusemtl {name}\n")
-        obj.writelines(f"v {x:.4f} {y:.4f} {z:.4f}\n" for x, y, z in vertices)
-        obj.writelines(f"f {a + offset} {b + offset} {c + offset}\n" for a, b, c in triangles)
-        offset += len(vertices)
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("cover_color.obj", obj.getvalue())
-        archive.writestr("cover_color.mtl", mtl.getvalue())
-
-
 def main():
-    legend = legend_bodies()
-    cover = be.build_cover().cut(legend)
-    parts = {"cover": mesh(cover), "legend": mesh(legend)}
+    cover = be.build_cover().cut(legend_bodies())
     OUT.mkdir(parents=True, exist_ok=True)
-    write_3mf(parts, OUT / "cover_color.3mf")
-    write_obj_zip(parts, OUT / "cover_color_obj.zip")
     cq.exporters.export(cover, str(OUT / "cover_embossed.step"), cq.exporters.ExportTypes.STEP)
     cq.exporters.export(cover, str(OUT / "cover_embossed.stl"), cq.exporters.ExportTypes.STL,
                         tolerance=TOLERANCE, angularTolerance=0.1)
-    print(f"cover_color.3mf + cover_color_obj.zip + cover_embossed.stl/.step written to {OUT.relative_to(REPO)}")
+    print(f"cover_embossed.stl/.step written to {OUT.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

@@ -8,9 +8,10 @@ the assembly parts list and the enclosure are always refreshed.
 <version> defaults to the variant's product.release (v2 -> v2, v3 -> v3).
 
 Writes hardware/releases/<version>/<board>/ for every board: KiCad sources,
-Gerbers and drill files (one zip for upload), JLCPCB BOM and placement files
-for the parts JLCPCB assembles, an assembly check report, a hand-fit list, a
-STEP model, renders and the DRC report. Stops without writing a board when its
+Gerbers + drill + IPC-D-356 netlist (one zip), ODB++ (one zip, e.g. Aisler),
+a generic BOM and placement file for any assembly house (fab_outputs.py),
+JLCPCB BOM and placement files with JLC-fitted rotations, an assembly check
+report, a hand-fit list, a STEP model, renders and the DRC report. Stops without writing a board when its
 DRC has an error or an unrouted connection, when a part is neither orderable
 nor hand-fit, or when jlc_parts.py finds a JLC part that is not what the
 circuit wants, would not land pin for pin, or is short of stock. Placement
@@ -25,6 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import fab_outputs
 import jlc_parts
 import panelize
 import pcbnew
@@ -74,20 +76,6 @@ def gate(board, out, checks):
         + [f"unsourced parts {unsourced}"] * bool(unsourced) \
         + [f"{c.ref} ({c.lcsc}): {problem}" for c in checks for problem in c.problems]
     return problems
-
-
-def gerbers(board, out):
-    pcb = pcbnew.LoadBoard(str(layout_path(board)))
-    copper = [pcbnew.LayerName(layer) for layer in pcb.GetEnabledLayers().CuStack()]
-    layers = copper + ["F.Mask", "B.Mask", "F.Paste", "B.Paste", "F.SilkS", "B.SilkS", "Edge.Cuts"]
-    target = out / "gerbers"
-    target.mkdir()
-    run("kicad-cli", "pcb", "export", "gerbers", "--output", f"{target}/",
-        "--layers", ",".join(layers), "--no-protel-ext", str(layout_path(board)))
-    run("kicad-cli", "pcb", "export", "drill", "--output", f"{target}/",
-        "--format", "excellon", "--excellon-separate-th", str(layout_path(board)))
-    shutil.make_archive(str(out / f"{board}_gerbers"), "zip", target)
-    shutil.rmtree(target)
 
 
 def assembly_files(board, out, checks):
@@ -145,7 +133,9 @@ def release_board(board, root):
         return problems, ([], []), []
     for suffix in (".kicad_pcb", ".kicad_pro", ".kicad_dru"):
         shutil.copy(layout_path(board).with_suffix(suffix), out)
-    gerbers(board, out)
+    fab_outputs.gerbers(layout_path(board), out, board)
+    fab_outputs.odb(layout_path(board), out, board)
+    fab_outputs.generic_assembly(layout_path(board), out, board, {p["ref"]: p for p in parts(board)})
     placement = assembly_files(board, out, checks)
     step = REPO / "hardware/build" / VARIANT / board / f"{board}.step"
     run("kicad-cli", "pcb", "export", "step", "--grid-origin", "--subst-models", "--force",
