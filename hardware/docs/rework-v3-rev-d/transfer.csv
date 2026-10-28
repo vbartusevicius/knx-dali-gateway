@@ -1,0 +1,85 @@
+Ref,Value,Footprint,Action,Rev C side,Rev D side,Method
+C1,47n 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C2,100n 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C3,220n 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C4,470u 35V,CP_Elec_10x10,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
+C5,100n 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C6,100n 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C7,22u 25V,C_0805_2012Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C8,18p C0G 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C9,18p C0G 50V,C_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C10,100n 50V,C_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C11,10u 50V,C_0805_2012Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C12,22u 25V,C_0805_2012Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C13,22u 25V,C_0805_2012Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C14,100n 50V,C_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C15,1u 50V,C_0805_2012Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C16,10u 50V,C_0805_2012Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C17,10u 25V,C_0805_2012Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C18,1u 50V,C_0805_2012Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+C19,10u 10V,C_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+C20,10u 50V,C_0805_2012Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+C21,10u 10V,C_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+C22,100n 50V,C_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+C23,100u 6.3V,C_1206_3216Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+D1,SMAJ40CA,D_SMA,move,front,front,hot air or two irons; tweezers
+D2,SS16,D_SMA,move,front,front,hot air or two irons; tweezers
+D3,SS16,D_SMA,move,front,front,hot air or two irons; tweezers
+D4,SMAJ33A,D_SMA,move,front,front,hot air or two irons; tweezers
+D5,5V6,D_SOD-123,move,front,front,hot air or two irons; tweezers
+D6,DF06S,Diode_Bridge_Vishay_DFS,move,back,back,hot air or two irons; tweezers
+D7,SMAJ24A,D_SMA,move,back,back,hot air or two irons; tweezers
+D8,SS16,D_SMA,move,back,back,hot air or two irons; tweezers
+D9,12V,D_SOD-123,move,back,back,hot air or two irons; tweezers
+D10,5V6,D_SOD-123,move,back,back,hot air or two irons; tweezers
+F1,1.1A,Fuse_1812_4532Metric,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
+J1,KNX bus terminal pins,"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",move,front,front,"through-hole: desoldering pump or braid, both sides"
+J2,AUX 20-32 V (yellow/white),"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",move,front,front,"through-hole: desoldering pump or braid, both sides"
+J3,DALI bus (push-in),TerminalBlock_Kefa_KF142R-5.08-2P,move,front,front,"through-hole: desoldering pump or braid, both sides"
+J4,UI board,FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+JP1,DALI supply,PinHeader_2x02_P2.54mm_Vertical,move,front,front,"through-hole: desoldering pump or braid, both sides"
+L1,220uH,L_Sunlord_SWPA6045S,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
+L2,4.7uH,L_APV_ANR4012,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
+Q1,MJD45H11,TO-252-2,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
+Q2,BC857,SOT-23,move,front,front,hot air or two irons; tweezers
+Q3,IRLML0060,SOT-23,move,back,back,hot air or two irons; tweezers
+Q4,BC847,SOT-23,move,back,back,hot air or two irons; tweezers
+Q5,BC847,SOT-23,move,back,back,hot air or two irons; tweezers
+Q6,BC847,SOT-23,move,back,back,hot air or two irons; tweezers
+R1,10k 1%,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R2,10k,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R3,27R,R_2512_6332Metric,move,back,back,"hot air, large nozzle (big thermal mass); lift straight up"
+R4,1R,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R5,100k 1%,R_0603_1608Metric,buy,-,front,two irons or hot air; tweezers (or buy new: cents per part)
+R6,10k 1%,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R7,51k 1%,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R8,10k 1%,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R9,1k,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R10,330R,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R11,10k,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R12,3R3,R_1206_3216Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R13,4k7,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R14,330R,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R15,10k,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R16,4k7,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R17,10k,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R18,2R,R_1206_3216Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R19,100k,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R20,680R,R_0603_1608Metric,move,back,back,two irons or hot air; tweezers (or buy new: cents per part)
+R21,4k7,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R22,4k7,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R23,4k7,R_0603_1608Metric,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
+R24,30k,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R25,10k,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+R26,100k 1%,R_0603_1608Metric,buy,-,back,two irons or hot air; tweezers (or buy new: cents per part)
+U1,NCN5130MNTWG,QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm,move,back,back,hot air 300-330 C with flux; clean and re-tin pads; check bridges under magnification
+U2,SCT2400TVBR,TSOT-23-6,move,front,front,hot air 300-330 C with flux; clean and re-tin pads; check bridges under magnification
+U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,Converter_DCDC_RECOM_REM3_DIP24_CTRL,move,front,front,"through-hole: desoldering pump or braid, both sides"
+U4,TLP383,SO-6L_10x3.84mm_P1.27mm,move,front,front,hot air or two irons; tweezers
+U5,"TLP383(D4BLLTL,E",SO-6L_10x3.84mm_P1.27mm,move,front,front,hot air or two irons; tweezers
+U6,"TLP383(D4BLLTL,E",SO-6L_10x3.84mm_P1.27mm,move,front,front,hot air or two irons; tweezers
+U7,LM66100,SOT-363_SC-70-6,move,front,front,hot air 300-330 C with flux; clean and re-tin pads; check bridges under magnification
+U8,XIAO ESP32C6,XIAO_ESP32C6_Header,move,front,front,"through-hole: desoldering pump or braid, both sides"
+U9,TMR 2411 24V->5V 2W iso,Converter_DCDC_TRACO_TMR2_SIP8,buy,-,front,"through-hole: desoldering pump or braid, both sides"
+U10,TPS2121RUXR,Texas_VQFN-HR-12_2x2.5mm_P0.5mm,buy,-,back,hot air 300-330 C with flux; clean and re-tin pads; check bridges under magnification
+Y1,16MHz,Crystal_SMD_3225-4Pin_3.2x2.5mm,move,back,back,hot air or two irons; tweezers
