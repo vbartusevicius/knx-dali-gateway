@@ -11,7 +11,8 @@
   source: Seeed Studio / Digi-Key / Mouser
 - item: XIAO sockets (hand-soldered)
   qty: 2
-  part: 1x7 2.54 mm female header, 5.0 mm tall (CST 1165SDIG-07, LCSC C2886701; or Samtec SLW-107-01-G-S)
+  part: 1x7 2.54 mm female header, 5.0 mm tall (CST 1165SDIG-07, LCSC C2886701; or
+    Samtec SLW-107-01-G-S)
   description: 1x7 female header, 2.54 mm, 5.0 mm tall, soldered into main U8; the
     XIAO stays detachable
   mouser: 200-SLW10701GS (or 855-M20-7890746)
