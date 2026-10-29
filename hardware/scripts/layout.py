@@ -36,6 +36,7 @@ from shapely.geometry import Polygon
 REPO = Path("/work")
 sys.path.insert(0, str(REPO / "hardware/circuits"))
 from product_spec import load_spec
+from track_joints import seat_track_ends
 
 SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
@@ -916,8 +917,9 @@ def import_ses(board_name):
         sys.exit("SES import failed")
     widened = widen_neckdown_stubs(board) + widen_thin_tracks(board, plan["frame"])
     removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
+    seated = seat_track_ends(board)
     print(f"{board_name}: removed {removed} ground tracks the pours already cover, "
-          f"widened {widened} neck-down stubs")
+          f"widened {widened} neck-down stubs, seated {seated} grazing track ends")
     save(board, plan, board_name)
     print(f"{board_name}: imported {ses.relative_to(REPO)}")
 

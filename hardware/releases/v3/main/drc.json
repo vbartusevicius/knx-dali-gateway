@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-10-27T13:58:00",
+    "date": "2026-10-29T20:30:46",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -37,12 +37,492 @@
             "description": "Track has unconnected end",
             "items": [
                 {
-                    "description": "Track [VFILT] on B.Cu, length 0.7125 mm",
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.4265,
+                        "y": -30.7378
+                    },
+                    "uuid": "1401761b-09e0-4628-8f27-e7d35dd14bcb"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.4265,
+                        "y": -30.8515
+                    },
+                    "uuid": "1fa633e9-dff2-4e9b-83e0-d5666c4d7ada"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.8298,
+                        "y": -33.8044
+                    },
+                    "uuid": "2aa8f3f4-243b-4ab9-8414-8da00b75f39d"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 33.5991,
+                        "y": -26.8782
+                    },
+                    "uuid": "34062258-3783-46bc-ab4a-911178ef00e6"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 16.3745,
+                        "y": -35.4255
+                    },
+                    "uuid": "3866b494-ae4e-4e2f-8dd9-091dfa975e13"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.2528,
+                        "y": -30.2113
+                    },
+                    "uuid": "4705f02d-ad7b-420b-882b-d8cc62c562eb"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.8298,
+                        "y": -33.9467
+                    },
+                    "uuid": "708668f7-00d2-4ee2-883d-7b1b637af757"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 18.2528,
+                        "y": -30.0511
+                    },
+                    "uuid": "861b18e3-ab35-4c7d-a214-d483fed84a23"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 33.5991,
+                        "y": -27.0241
+                    },
+                    "uuid": "8af7e3b0-0391-465f-a1b7-2e7e4fa49d97"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 19.2255,
+                        "y": -33.4307
+                    },
+                    "uuid": "b26e2c97-8d44-475f-a98f-1c769f36a213"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 22.52,
+                        "y": -32.3527
+                    },
+                    "uuid": "ba889f70-89d9-4f45-afbc-0d951088faa7"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 19.2035,
+                        "y": -33.4307
+                    },
+                    "uuid": "e9bae99d-f9b3-461e-944a-f9048e81008e"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 33.5209,
+                        "y": -26.8
+                    },
+                    "uuid": "ff7d9283-d27d-46b9-bb46-e4803fa5eef0"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 5.3019,
+                        "y": -29.926
+                    },
+                    "uuid": "186457e4-aaba-4d17-8910-d90c6d9059b2"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 31.7045,
+                        "y": -26.0506
+                    },
+                    "uuid": "30823391-5a37-484e-830e-e40322f71696"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 11.9746,
+                        "y": -20.0396
+                    },
+                    "uuid": "44836069-6783-45d2-9673-245adb85724f"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 2.0831,
+                        "y": -39.086
+                    },
+                    "uuid": "9d2d5ae7-4ed6-4dbc-b9a7-2d49debb035a"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 2.2004,
+                        "y": -39.2033
+                    },
+                    "uuid": "a84843af-a6b8-40bd-8c00-c91cd6f354a2"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 31.8546,
+                        "y": -26.0506
+                    },
+                    "uuid": "cd8c8801-a223-45ed-b8fa-d1e6fb331247"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 30.8174,
+                        "y": -26.4915
+                    },
+                    "uuid": "db864077-9b22-4569-832e-49a95ba27e94"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 5.4039,
+                        "y": -29.824
+                    },
+                    "uuid": "f415dff4-8533-4189-8f07-cbf9b92b224f"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -0.7396,
+                        "y": -20.3151
+                    },
+                    "uuid": "2bef196e-daa4-4869-b14e-7722f187a644"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -9.6396,
+                        "y": -38.9007
+                    },
+                    "uuid": "30759ff4-ffe4-4275-964c-af639c1b061c"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -1.2738,
+                        "y": -37.8832
+                    },
+                    "uuid": "31f1ca6e-88d5-446a-80ed-8a06f97cd74f"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 0.6604,
+                        "y": -3.8151
+                    },
+                    "uuid": "8cbef425-ff92-42ad-a1e4-b76011719f28"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 0.5431,
+                        "y": -3.9324
+                    },
+                    "uuid": "baee272b-adde-4d3f-82a9-8f8d74134e1e"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -1.1903,
+                        "y": -37.8832
+                    },
+                    "uuid": "e4b31e6a-8d80-4cf4-9d60-80eddc437315"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -9.6396,
+                        "y": -39.0151
+                    },
+                    "uuid": "ec4f69f9-2a51-464c-8878-4a62d5ede134"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDA] on In2.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": -0.8569,
+                        "y": -20.4324
+                    },
+                    "uuid": "fab246a2-3289-4152-973a-56422f47aa87"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDD] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 12.5919,
+                        "y": -60.4076
+                    },
+                    "uuid": "5d060450-be86-4767-9390-83da7da29360"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDD] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 24.6,
+                        "y": -65.6317
+                    },
+                    "uuid": "888441e4-9967-4b37-a05d-4746929ebf15"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [GNDD] on B.Cu, length 0.0000 mm",
+                    "pos": {
+                        "x": 12.5987,
+                        "y": -60.4008
+                    },
+                    "uuid": "ca1c9d10-6fe0-46a4-a955-fce70d783839"
+                }
+            ],
+            "severity": "warning",
+            "type": "track_dangling"
+        },
+        {
+            "description": "Track has unconnected end",
+            "items": [
+                {
+                    "description": "Track [VFILT] on B.Cu, length 0.0000 mm",
                     "pos": {
                         "x": 6.15,
-                        "y": -23.0625
+                        "y": -22.35
                     },
-                    "uuid": "7553a507-2327-4ae5-967f-2cc285e916f3"
+                    "uuid": "06aad16d-1b0e-419a-8558-a13d636c04dc"
                 }
             ],
             "severity": "warning",
