@@ -77,6 +77,43 @@ parts". They are the `assembler` rows with `R_`/`C_` footprints in `main_bom.csv
 - Kapton tape and aluminium foil to shield neighbours; IPA and a brush; ESD mat and tweezers;
   magnifier or microscope; multimeter.
 
+### 2d. Recommended path: salvage only the expensive parts
+
+Live JLCPCB unit prices (2026-10-29): **all JLC-assembled parts on the rev D main board cost about
+$12, of which the NCN5130 alone is $5.43** and everything else together about $6.50. So moving the
+small parts saves little and costs the most time. Move only:
+
+| Ref | Part | Why move it | Method |
+|---|---|---|---|
+| U8 | XIAO ESP32-C6 | expensive module | unplug from its sockets, no soldering |
+| U8 sockets | 2 × 1×7 female headers, 5.0 mm | optional, cheap | desoldering pump |
+| U3 | REC3-2415SRW/H2/A/CTRL | most expensive part | pump or low-melt alloy, iron |
+| J1, J2 | Phoenix PST 1,0 pin strips | not on LCSC | low-melt alloy, iron |
+| U1 | NCN5130 (QFN-40) | $5.43 new, stock 1884 | hot air; optional, buying new is safer |
+| J4 | 8-pin FFC connector | only 31 in stock at LCSC | hot air with Kapton shielding; buy new if available |
+
+Buy everything else new from LCSC (`main_bom.csv` lists every part with LCSC number), plus U9 from
+Mouser. LCSC sells passives in reels of 10-100 pieces, which still cost cents.
+
+### 2e. Oven, hotplate, hot air or iron?
+
+| Parts | Method |
+|---|---|
+| Back side (U1, U10, Y1, D6-D10, Q3-Q6, R3, all back passives) | **Stencil + paste + reflow (oven or hotplate): yes, best.** QFN parts solder far more reliably this way than by hand. |
+| Front side SMD (U2, U4-U7, Q1, Q2, L1, L2, C4, D1-D5, F1, J4, passives) | Second reflow pass in the oven is fine: the back-side parts are light and stay put by surface tension. Use hot air instead if U1 is salvaged (see below). |
+| Through-hole: U3, U9, J1, J2, J3, JP1, XIAO sockets | **Soldering iron only.** Never reflow them; their plastic bodies are not rated for it. |
+| XIAO | never heat; it plugs into its sockets |
+
+- **Oven:** use a reflow oven, or a toaster oven with a reflow controller and a thermocouple on the
+  board, never one used for food. Leaded paste (Sn63Pb37, peak 210-225 °C) is gentler on salvaged
+  parts than lead-free SAC305 (peak 235-245 °C).
+- **Salvaged ICs and heat cycles:** packages are typically qualified for three reflows (J-STD-020). A
+  salvaged U1 has already had two: JLCPCB's reflow and your removal. The back-side oven pass is its
+  third, so fit the front-side SMD parts by hot air rather than a second oven pass. With a new U1, two
+  oven passes are fine.
+- **Moisture:** salvaged plastic ICs have absorbed moisture since manufacture. Bake them before reflow
+  (J-STD-033: 125 °C for 24 h, or follow the datasheet's moisture level) to avoid internal cracking.
+
 ## 3. Maps
 
 Green = moves, blue dashed = hand-fit part (moves), orange = buy new, red = changed, leave on the old
