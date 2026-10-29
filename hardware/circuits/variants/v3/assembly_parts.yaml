@@ -11,12 +11,12 @@
   source: Seeed Studio / Digi-Key / Mouser
 - item: XIAO sockets (hand-soldered)
   qty: 2
-  part: 1x7 2.54 mm female header, 5.0 mm tall (e.g. Samtec SLW-107-01-G-S / HC-PM254-5.0H)
+  part: 1x7 2.54 mm female header, 5.0 mm tall (CST 1165SDIG-07, LCSC C2886701; or Samtec SLW-107-01-G-S)
   description: 1x7 female header, 2.54 mm, 5.0 mm tall, soldered into main U8; the
     XIAO stays detachable
   mouser: 200-SLW10701GS (or 855-M20-7890746)
   digikey: SAM1111-07-ND (or 952-3228-ND)
-  tme: ZL262-40SG (LCSC C2886526)
+  tme: '-'
   source: Mouser / Digi-Key / TME / LCSC
 - item: Isolated DALI DC-DC converter (hand-soldered)
   qty: 1

@@ -127,6 +127,7 @@ Pin table, LED chain and button ladder: [`hardware/docs/variants.md`](hardware/d
 Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 
 1. **PCBs with SMT assembly (JLCPCB).** Upload `panel/panel_gerbers.zip` (V3: 66.0 × 78.1 mm, 4 layers, 1.2 mm; V2: 98.5 × 76.6 mm, 4 layers, 1.6 mm) with **assembly on both sides**, `panel/panel_bom_jlc.csv` and `panel/panel_cpl_jlc.csv`. You order one PCB and one PCBA job and snap the boards apart. Per-board files are in `main/`, `ui/` (and `interface/` on V2). Compare `renders/top.svg` / `bottom.svg` with JLCPCB's placement preview.
+   **Building it yourself:** `order_lcsc.csv` (LCSC BOM tool: map *LCSC Part Number* and *Quantity*), `order_mouser.csv` (Mouser BOM tool) and `order_elsewhere.csv` list every part of one complete gateway.
    **Other board houses** (Aisler, PCBWay, Eurocircuits, ...): every folder also has `<board>_odb.zip` (ODB++), Gerbers with drills and an IPC-D-356 netlist in `<board>_gerbers.zip`, and a generic `<board>_bom.csv` / `<board>_cpl.csv` with manufacturer part numbers and KiCad rotations.
 2. **Hand-fitted parts.** `assembly_parts.csv` lists everything JLCPCB does not place, with Mouser, Digi-Key and TME numbers:
    - the XIAO ESP32-C6 (pre-soldered) and its sockets;

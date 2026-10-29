@@ -137,12 +137,12 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "XIAO sockets (hand-soldered)",
             "qty": 2 * len(hand_by_mpn["102010636"]["locs"]),
-            "part": "1x7 2.54 mm female header, 5.0 mm tall (e.g. Samtec SLW-107-01-G-S / HC-PM254-5.0H)" if variant == "v3"
+            "part": "1x7 2.54 mm female header, 5.0 mm tall (CST 1165SDIG-07, LCSC C2886701; or Samtec SLW-107-01-G-S)" if variant == "v3"
                     else "PM2.54-1x7PZZ-H8.5 (LCSC C54876729)",
             "description": f"1x7 female header, 2.54 mm, {sock_h} tall, soldered into {locs}; the XIAO stays detachable",
             "mouser": "200-SLW10701GS (or 855-M20-7890746)" if variant == "v3" else "200-SSW10701GS (or 855-M20-7820746)",
             "digikey": "SAM1111-07-ND (or 952-3228-ND)" if variant == "v3" else "SAM1123-07-ND (or S7040-ND)",
-            "tme": "ZL262-40SG (LCSC C2886526)" if variant == "v3" else "ZL262-7SG (LCSC C54876729)",
+            "tme": "-" if variant == "v3" else "ZL262-7SG (LCSC C54876729)",
             "source": "Mouser / Digi-Key / TME / LCSC",
         })
     for dcdc_mpn in ("REC3-2415SRW/H2/A/CTRL",):

@@ -53,6 +53,21 @@ Each board folder and `panel/` also holds fab-independent files:
 Order the stack-up, thickness and finish given above; check the assembler's
 placement preview for the bottom-side and rotated parts as for JLCPCB.
 
+
+## Ordering the parts yourself
+
+For one complete gateway (all boards and hand-fit parts), in this folder:
+
+- `order_lcsc.csv`: LCSC BOM tool (lcsc.com → BOM Tool, map **LCSC Part Number** and
+  **Quantity**). Every board part plus the hand-fit parts LCSC sells; one line per LCSC number,
+  designators as `board:ref`. Multiply the quantities for more gateways; LCSC rounds up to each
+  part's minimum order.
+- `order_mouser.csv`: Mouser BOM tool (map **Mouser Part Number** and **Quantity**): the hand-fit
+  parts LCSC does not sell.
+- `order_elsewhere.csv`: what neither sells (with Digi-Key / TME numbers and sources where known).
+
+Not needed when JLCPCB assembles the boards: then order only the hand-fit lines.
+
 ## Front legend (optional print)
 
 Three flat faces carry the legend: bottom shoulder (KNX + -), front (PRG/RST,

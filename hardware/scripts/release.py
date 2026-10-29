@@ -11,7 +11,9 @@ Writes hardware/releases/<version>/<board>/ for every board: KiCad sources,
 Gerbers + drill + IPC-D-356 netlist (one zip), ODB++ (one zip, e.g. Aisler),
 a generic BOM and placement file for any assembly house (fab_outputs.py),
 JLCPCB BOM and placement files with JLC-fitted rotations, an assembly check
-report, a hand-fit list, a STEP model, renders and the DRC report. Stops without writing a board when its
+report, a hand-fit list, a STEP model, renders and the DRC report. The
+variant root gets order_lcsc.csv / order_mouser.csv / order_elsewhere.csv:
+upload-ready orders for one complete gateway, for building it yourself. Stops without writing a board when its
 DRC has an error or an unrouted connection, when a part is neither orderable
 nor hand-fit, or when jlc_parts.py finds a JLC part that is not what the
 circuit wants, would not land pin for pin, or is short of stock. Placement
@@ -21,6 +23,7 @@ Enclosure files are copied from mechanical/build/<variant>/ when present.
 
 import csv
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -122,6 +125,58 @@ def assembly_files(board, out, checks):
     return turned, bottom
 
 
+LCSC_IN_TEXT = re.compile(r"LCSC (C\d+)")
+NOT_BOUGHT = ("enclosure/", "flush cutters")
+
+
+def primary(number):
+    """First supplier number of a parts-list cell like '651-1574200 (or 651-...)'."""
+    number = str(number or "-").split(" (or ")[0].strip()
+    return "" if number == "-" else number
+
+
+def order_files(root):
+    """Upload-ready orders for one complete gateway (all boards): LCSC BOM tool
+    (every board part with an LCSC number, plus hand-fit parts that name one),
+    Mouser BOM tool (the other hand-fit parts) and what neither sells."""
+    lcsc = {}
+    for board in BOARDS:
+        for p in parts(board):
+            if p["assembly"] == "jlc" and p["lcsc"].startswith("C"):
+                line = lcsc.setdefault(p["lcsc"], {"qty": 0, "mpn": p["mpn"], "value": p["value"],
+                                                   "footprint": p["footprint"].split(":")[-1], "refs": []})
+                line["qty"] += 1
+                line["refs"].append(f"{board}:{p['ref']}")
+    mouser, elsewhere = [], []
+    for p in yaml.safe_load(assembly_parts_path().read_text()):
+        if str(p["part"]).startswith(NOT_BOUGHT):
+            continue
+        text = f"{p['part']} {p.get('tme', '')} {p.get('source', '')}"
+        if match := LCSC_IN_TEXT.search(text):
+            line = lcsc.setdefault(match.group(1), {"qty": 0, "mpn": p["part"], "value": p["item"],
+                                                    "footprint": "", "refs": []})
+            line["qty"] += p["qty"]
+            line["refs"].append("hand-fit")
+        elif primary(p.get("mouser")):
+            mouser.append([primary(p["mouser"]), p["qty"], p["part"], p["item"]])
+        else:
+            elsewhere.append([p["item"], p["qty"], p["part"], primary(p.get("digikey")), primary(p.get("tme")),
+                              p["source"]])
+    with open(root / "order_lcsc.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["LCSC Part Number", "Quantity", "Manufacturer Part Number", "Value", "Footprint", "Designators"])
+        for number, line in sorted(lcsc.items(), key=lambda item: (item[1]["footprint"] == "", item[1]["value"])):
+            w.writerow([number, line["qty"], line["mpn"], line["value"], line["footprint"], ",".join(sorted(line["refs"]))])
+    with open(root / "order_mouser.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Mouser Part Number", "Quantity", "Part", "Item"])
+        w.writerows(mouser)
+    with open(root / "order_elsewhere.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Item", "Quantity", "Part", "Digi-Key", "TME", "Source"])
+        w.writerows(elsewhere)
+
+
 def release_board(board, root):
     out = root / board
     shutil.rmtree(out, ignore_errors=True)
@@ -184,6 +239,7 @@ def main(version, boards=BOARDS):
                 p["description"],
                 p["source"],
             ])
+    order_files(root)
     enclosure = REPO / "mechanical/build" / VARIANT
     if enclosure.exists():
         shutil.copytree(enclosure, root / "enclosure", dirs_exist_ok=True,

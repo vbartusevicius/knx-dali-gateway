@@ -1,0 +1,7 @@
+Mouser Part Number,Quantity,Part,Item
+713-102010636,1,Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636),MCU module (hand-fitted into sockets)
+919-REC3-2415SRWH2AC,1,RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15 without CTRL),Isolated DALI DC-DC converter (hand-soldered)
+495-TMR-2411,1,"TRACO TMR 2411 (18-36 V in, 5 V 400 mA, 1.6 kVDC, SIP-8; or TMR 3-2411, same package)",AUX-to-core isolated DC-DC converter (hand-soldered)
+651-1574200,2,"Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",KNX / AUX PCB pin strips (hand-soldered)
+651-1574300,1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211",KNX bus plug (red/black)
+651-1574299,1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212",AUX 20-32 V plug (yellow/white)

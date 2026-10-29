@@ -66,3 +66,12 @@ def test_release_has_files_for_any_board_house(folder):
     assert any("steps/" in n and n.endswith("/profile") for n in odb), odb[:10]
     for name in (f"{folder}_bom.csv", f"{folder}_cpl.csv"):
         assert (LATEST / folder / name).stat().st_size > 0
+
+
+def test_release_order_files_match_a_fresh_export(tmp_path):
+    release.order_files(tmp_path)
+    for name in ("order_lcsc.csv", "order_mouser.csv", "order_elsewhere.csv"):
+        assert (tmp_path / name).read_text() == (LATEST / name).read_text(), f"{LATEST.name}/{name}"
+    with open(LATEST / "order_lcsc.csv") as f:
+        numbers = [line.split(",")[0] for line in f.readlines()[1:]]
+    assert len(numbers) == len(set(numbers)), "one line per LCSC part"
