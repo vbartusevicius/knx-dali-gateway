@@ -1,3 +1,8 @@
-Item,Quantity,Part,Digi-Key,TME,Source
-OLED display (14-pin 0.62 mm solder FPC),1,QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312 I2C),,,AliExpress (1005003749452625) / Panelook / JLX
-OLED backing foam,1,"open-cell PU or EPDM foam pad, 4 mm thick, 10 x 20 mm",,,any
+Item,Quantity,Part,Mouser,Digi-Key,TME,Source
+MCU module (hand-fitted into sockets),1,Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636),713-102010636 (or 713-113991254),1597-102010636-ND (or 1597-113991254-ND),SEEED-113991254,Seeed Studio / Digi-Key / Mouser
+Isolated DALI DC-DC converter (hand-soldered),1,RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15 without CTRL),919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15),945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND),REC3-2415SRWZ/H4/A (or SCWN06B-15),Digi-Key / Mouser / TME
+AUX-to-core isolated DC-DC converter (hand-soldered),1,"TRACO TMR 2411 (18-36 V in, 5 V 400 mA, 1.6 kVDC, SIP-8; or TMR 3-2411, same package)",495-TMR-2411,1951-2741-ND,,Mouser / Digi-Key / TME
+KNX / AUX PCB pin strips (hand-soldered),2,"Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",651-1574200,277-1574200CT-ND,1574200,Phoenix Contact / Digi-Key / Mouser
+KNX bus plug (red/black),1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211",651-1574300,277-1574300-ND,WAGO 243-211,Phoenix Contact / Digi-Key / Mouser / WAGO
+AUX 20-32 V plug (yellow/white),1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212",651-1574299,277-1574299-ND,WAGO 243-212,Phoenix Contact / Digi-Key / Mouser / WAGO
+OLED display (14-pin 0.62 mm solder FPC),1,QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312 I2C),,,,AliExpress (1005003749452625) / Panelook / JLX

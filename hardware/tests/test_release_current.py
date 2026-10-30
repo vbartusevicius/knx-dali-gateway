@@ -4,6 +4,7 @@ files match a fresh, fully checked export, and every board and the panel ship
 Gerbers with drills and netlist plus ODB++ for any board house. A board change therefore needs a new
 release before anything is ordered."""
 
+import csv
 import filecmp
 import sys
 import zipfile
@@ -70,8 +71,21 @@ def test_release_has_files_for_any_board_house(folder):
 
 def test_release_order_files_match_a_fresh_export(tmp_path):
     release.order_files(tmp_path)
-    for name in ("order_lcsc.csv", "order_mouser.csv", "order_elsewhere.csv"):
+    names = ("order_lcsc.csv", "order_elsewhere.csv", "assembly_parts.csv")
+    for name in names:
         assert (tmp_path / name).read_text() == (LATEST / name).read_text(), f"{LATEST.name}/{name}"
+    assert sorted(p.name for p in LATEST.glob("*.csv")) == sorted(names), "only these order / parts lists"
     with open(LATEST / "order_lcsc.csv") as f:
         numbers = [line.split(",")[0] for line in f.readlines()[1:]]
     assert len(numbers) == len(set(numbers)), "one line per LCSC part"
+
+
+def test_order_elsewhere_holds_only_electronics_lcsc_does_not_sell():
+    with open(LATEST / "assembly_parts.csv") as f:
+        kinds = {row["Item"]: row["Kind"] for row in csv.DictReader(f)}
+    with open(LATEST / "order_elsewhere.csv") as f:
+        rows = list(csv.DictReader(f))
+    for row in rows:
+        assert kinds[row["Item"]] == "electronics", row["Item"]
+        assert "LCSC C" not in row["Part"] + row["TME"] + row["Source"], row["Item"]
+        assert row["Mouser"] or row["Digi-Key"] or row["TME"] or row["Source"], row["Item"]

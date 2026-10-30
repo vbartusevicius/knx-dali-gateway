@@ -62,9 +62,12 @@ For one complete gateway (all boards and hand-fit parts), in this folder:
   **Quantity**). Every board part plus the hand-fit parts LCSC sells; one line per LCSC number,
   designators as `board:ref`. Multiply the quantities for more gateways; LCSC rounds up to each
   part's minimum order.
-- `order_mouser.csv`: Mouser BOM tool (map **Mouser Part Number** and **Quantity**): the hand-fit
-  parts LCSC does not sell.
-- `order_elsewhere.csv`: what neither sells (with Digi-Key / TME numbers and sources where known).
+- `order_elsewhere.csv`: the electronics LCSC does not sell (XIAO, REC3, converters, Phoenix pin
+  strips and plugs, OLED, cable), with every Mouser / Digi-Key / TME number. A cell may list
+  alternatives, e.g. `713-102010636 (or 713-113991254)`; buy one of them.
+- `assembly_parts.csv`: everything not placed by the assembler, with a **Kind** column:
+  `electronics` (the hand-fit parts above), `utility` (screws, foam pad, lead trimming) and
+  `printed` (case parts). Utility and printed items are not in the order files; get them locally.
 
 Not needed when JLCPCB assembles the boards: then order only the hand-fit lines.
 

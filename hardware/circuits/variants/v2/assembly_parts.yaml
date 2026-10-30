@@ -2,6 +2,7 @@
 # Copied by hardware/scripts/release.py into the release as assembly_parts.csv.
 - item: MCU module (hand-fitted into sockets)
   qty: 1
+  kind: electronics
   part: Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)
   description: ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two
     8.5 mm female sockets (ui U2)
@@ -11,6 +12,7 @@
   source: Seeed Studio / Digi-Key / Mouser
 - item: XIAO sockets (hand-soldered)
   qty: 2
+  kind: electronics
   part: PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
   description: 1x7 female header, 2.54 mm, 8.5 mm tall, soldered into ui U2; the XIAO
     stays detachable
@@ -20,6 +22,7 @@
   source: Mouser / Digi-Key / TME / LCSC
 - item: Isolated DALI DC-DC converter (hand-soldered)
   qty: 1
+  kind: electronics
   part: RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15
     without CTRL)
   description: 24 V -> 15 V 3 W isolated DC-DC converter, DIP-24 A-pinning with pin
@@ -30,6 +33,7 @@
   source: Digi-Key / Mouser / TME
 - item: AUX-to-core isolated DC-DC converter (hand-soldered)
   qty: 1
+  kind: electronics
   part: TRACO TRN 3-2411 (18-36 V in, 5 V 600 mA, 1.6 kVDC, SIP 11.9 x 7.7 x 11.0)
   description: powers the gateway core from the AUX input, ORed with the KNX buck
     (main U9)
@@ -39,6 +43,7 @@
   source: Newark 47AC2160 / LCSC C5987491
 - item: OLED display module (hand-soldered)
   qty: 1
+  kind: electronics
   part: Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik
     DEP 128064F1-W / Raystar REA012864DWPP3N00003
   description: 0.96 in 128x64 SSD1306 I2C OLED module (27.3 x 27.3 mm), 4-pin header
@@ -50,6 +55,7 @@
   source: RS / TME / Digi-Key / Mouser / AliExpress (VCC-GND-SCL-SDA 4-pin)
 - item: KNX PCB pin strip (hand-soldered)
   qty: 1
+  kind: electronics
   part: Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)
   description: "2-pin 5.75 mm pitch \xD8 1.0 mm pin strip soldered into main J1"
   mouser: 651-1574200
@@ -58,6 +64,7 @@
   source: Phoenix Contact / Digi-Key / Mouser
 - item: KNX bus plug (red/black)
   qty: 1
+  kind: electronics
   part: Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211
   description: red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip
     (main J1)
@@ -67,6 +74,7 @@
   source: Phoenix Contact / Digi-Key / Mouser / WAGO
 - item: Main-to-UI cable
   qty: 1
+  kind: electronics
   part: JST A10SR10SR30K102A
   description: SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); main
     J4 <-> ui J1
@@ -76,6 +84,7 @@
   source: Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works
 - item: DALI supply jumper caps
   qty: 2
+  kind: electronics
   part: Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114)
   description: 2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply
     on
@@ -85,6 +94,7 @@
   source: Mouser / Digi-Key / TME / LCSC
 - item: Case screws
   qty: 2
+  kind: utility
   part: 2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10
     or Wuerth WUEPLAST 2.5x10)
   description: through the top and bottom walls (the wire sides) into the cover's
@@ -95,6 +105,7 @@
   source: any
 - item: Case base
   qty: 1
+  kind: printed
   part: enclosure/base.stl
   description: PETG or ASA, 0.2 mm layers, rail channel face down
   mouser: '-'
@@ -103,6 +114,7 @@
   source: printed
 - item: Case cover
   qty: 1
+  kind: printed
   part: enclosure/cover.stl (or cover_embossed.stl)
   description: PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth,
     cover_embossed.stl 0.3 mm recessed text)

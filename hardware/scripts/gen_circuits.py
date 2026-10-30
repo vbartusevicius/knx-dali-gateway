@@ -127,6 +127,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "MCU module (hand-fitted into sockets)",
             "qty": len(hand_by_mpn["102010636"]["locs"]),
+            "kind": "electronics",
             "part": "Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636)",
             "description": f"ESP32-C6 module with pre-soldered 2x7 pin headers; plugs into the two {sock_h} female sockets ({locs})",
             "mouser": "713-102010636 (or 713-113991254)",
@@ -137,6 +138,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "XIAO sockets (hand-soldered)",
             "qty": 2 * len(hand_by_mpn["102010636"]["locs"]),
+            "kind": "electronics",
             "part": "1x7 2.54 mm female header, 5.0 mm tall (CST 1165SDIG-07, LCSC C2886701; or Samtec SLW-107-01-G-S)" if variant == "v3"
                     else "PM2.54-1x7PZZ-H8.5 (LCSC C54876729)",
             "description": f"1x7 female header, 2.54 mm, {sock_h} tall, soldered into {locs}; the XIAO stays detachable",
@@ -151,6 +153,7 @@ def collect_assembly_parts(variant, spec):
             items.append({
                 "item": "Isolated DALI DC-DC converter (hand-soldered)",
                 "qty": len(hand_by_mpn[dcdc_mpn]["locs"]),
+                "kind": "electronics",
                 "part": "RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15 without CTRL)",
                 "description": f"24 V -> 15 V 3 W isolated DC-DC converter, DIP-24 A-pinning with pin 1 CTRL ({locs}; clip unused pins 3 and 11 flush before soldering)",
                 "mouser": "919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15)",
@@ -168,6 +171,7 @@ def collect_assembly_parts(variant, spec):
             items.append({
                 "item": "AUX-to-core isolated DC-DC converter (hand-soldered)",
                 "qty": len(hand_by_mpn[mpn]["locs"]),
+                "kind": "electronics",
                 "part": part_text,
                 "description": f"powers the gateway core from the AUX input, ORed with the KNX buck ({locs})",
                 "mouser": mouser,
@@ -180,6 +184,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "OLED display module (hand-soldered)",
             "qty": len(hand_by_mpn["WEA012864DWPP3N00003"]["locs"]),
+            "kind": "electronics",
             "part": "Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik DEP 128064F1-W / Raystar REA012864DWPP3N00003",
             "description": f"0.96 in 128x64 SSD1306 I2C OLED module (27.3 x 27.3 mm), 4-pin header (1 VCC, 2 GND, 3 SCL, 4 SDA); sits face-down in the cover pocket and solders into {locs}",
             "mouser": "485-326",
@@ -192,6 +197,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "KNX / AUX PCB pin strips (hand-soldered)" if len(locs) > 1 else "KNX PCB pin strip (hand-soldered)",
             "qty": len(locs),
+            "kind": "electronics",
             "part": "Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",
             "description": f"2-pin 5.75 mm pitch Ø 1.0 mm pin strip soldered into {', '.join(locs)}",
             "mouser": "651-1574200",
@@ -202,6 +208,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "KNX bus plug (red/black)",
             "qty": 1,
+            "kind": "electronics",
             "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211",
             "description": "red/black KNX bus push-in connector mating the PST 1,0/2-5,75 pin strip (main J1)",
             "mouser": "651-1574300",
@@ -213,6 +220,7 @@ def collect_assembly_parts(variant, spec):
             items.append({
                 "item": "AUX 20-32 V plug (yellow/white)",
                 "qty": 1,
+                "kind": "electronics",
                 "part": "Phoenix Contact PTS 0,5/ 2-PH-5,75 GY35YE (1574299) or WAGO 243-212",
                 "description": "yellow/grey auxiliary-voltage connector mating the rear PST 1,0/2-5,75 pin strip (main J2; 20-32 V for the internal DALI supply and the AUX core converter)",
                 "mouser": "651-1574299",
@@ -226,6 +234,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "OLED display (14-pin 0.62 mm solder FPC)",
             "qty": 1,
+            "kind": "electronics",
             "part": "QG-6428TSWCG02 / JLX12864OLED-S096W / NFP1312-15AY (0.96 in 64x128 SSD1312 I2C)",
             "description": "0.96 in 64x128 portrait SSD1312 I2C OLED (14.0 x 28.0 x 1.22 mm); 12.0 mm x 9.3 mm flex tail folds through the 9.8 mm top notch on UI and solders directly onto the 14-pad 0.62 mm pitch footprint ui J2",
             "mouser": "-",
@@ -236,6 +245,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "OLED backing foam",
             "qty": 1,
+            "kind": "utility",
             "part": "open-cell PU or EPDM foam pad, 4 mm thick, 10 x 20 mm",
             "description": "sits on the UI board front under the panel (no parts there) and presses the 1.22 mm OLED into "
                            "its recess behind the 0.8 mm front skin; compresses to about 3.6 mm when the UI board snaps in",
@@ -250,6 +260,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Through-hole lead trim (hand)",
             "qty": 1,
+            "kind": "utility",
             "part": "flush cutters",
             "description": f"after soldering, cut every through-hole lead on main to <= {trim} mm above the back "
                            "copper (REC3, sockets, PST strips, KF142R, JP1); the cover wall is 2.0 mm away",
@@ -267,6 +278,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Main-to-UI FFC cable",
             "qty": len(ffc_links),
+            "kind": "electronics",
             "part": "Wuerth 687708050002 / Molex 15166-0076 / GCT 05-08-D-0050-A / SHOU HAN FFC-0.5-8P-50mm-B",
             "description": f"8-pin 0.5 mm reverse/opposite-side (Type B / Type 2, 1:1 pin-to-pin between bottom-contact connectors) FFC, 50 mm (0.3 mm insert thickness); {pairs}",
             "mouser": "710-687708050002 (or 538-15166-0076)",
@@ -279,6 +291,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Main-to-UI cable",
             "qty": len(cable_links),
+            "kind": "electronics",
             "part": "JST A10SR10SR30K102A",
             "description": f"SH 1.0 mm 10-position jumper, 101.6 mm, 1:1 (pin 1 to pin 1); {pairs}",
             "mouser": "485-4396",
@@ -292,6 +305,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "DALI supply jumper caps",
             "qty": 2,
+            "kind": "electronics",
             "part": "Wuerth 60900213421 / Sullins SPC02SYAN (LCSC C100114)",
             "description": "2.54 mm closed jumper cap, 3 A; both on main JP1 = internal DALI supply on",
             "mouser": "710-60900213421",
@@ -311,6 +325,7 @@ def collect_assembly_parts(variant, spec):
         items.append({
             "item": "Case screws",
             "qty": len(screws),
+            "kind": "utility",
             "part": "2.5 x 10 mm thread-forming screw for plastics, pan head (e.g. EJOT PT K25x10 or Wuerth WUEPLAST 2.5x10)",
             "description": "through the top and bottom walls (the wire sides) into the cover's screw tabs (2.2 mm pilot)",
             "mouser": "710-97790803111",
@@ -322,6 +337,7 @@ def collect_assembly_parts(variant, spec):
     items.append({
         "item": f"Case base{snap_note}",
         "qty": 1,
+        "kind": "printed",
         "part": "enclosure/base.stl",
         "description": "PETG or ASA, 0.2 mm layers, rail channel face down",
         "mouser": "-",
@@ -332,6 +348,7 @@ def collect_assembly_parts(variant, spec):
     items.append({
         "item": f"Case cover{snap_note}",
         "qty": 1,
+        "kind": "printed",
         "part": "enclosure/cover.stl (or cover_embossed.stl)",
         "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text)",
         "mouser": "-",

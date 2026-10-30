@@ -92,7 +92,7 @@ small parts saves little and costs the most time. Move only:
 | U1 | NCN5130 (QFN-40) | $5.43 new, stock 1884 | hot air; optional, buying new is safer |
 | J4 | 8-pin FFC connector | only 31 in stock at LCSC | hot air with Kapton shielding; buy new if available |
 
-Buy everything else new: `hardware/releases/v3/order_lcsc.csv` and `order_mouser.csv` list every part
+Buy everything else new: `hardware/releases/v3/order_lcsc.csv` and `order_elsewhere.csv` list every electronic part
 of a complete gateway; leave out the salvaged lines (U1 `C513000`, J4 `C48532769`, the XIAO, REC3 and
 PST strips) and the UI board's parts (`ui:` designators), which you keep.
 

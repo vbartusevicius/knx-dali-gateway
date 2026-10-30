@@ -1,1 +1,7 @@
-Item,Quantity,Part,Digi-Key,TME,Source
+Item,Quantity,Part,Mouser,Digi-Key,TME,Source
+MCU module (hand-fitted into sockets),1,Seeed Studio XIAO ESP32C6 Pre-Soldered (SKU 102010636),713-102010636 (or 713-113991254),1597-102010636-ND (or 1597-113991254-ND),SEEED-113991254,Seeed Studio / Digi-Key / Mouser
+Isolated DALI DC-DC converter (hand-soldered),1,RECOM REC3-2415SRW/H2/A/CTRL (or /H4/A/M/CTRL; or Mean Well SCWN06B-15 / SCW03B-15 without CTRL),919-REC3-2415SRWH2AC (or 709-SCW03B-15 / 709-SCWN06B-15),945-1695-5-ND (or 1866-4410-ND / 1866-4346-ND),REC3-2415SRWZ/H4/A (or SCWN06B-15),Digi-Key / Mouser / TME
+OLED display module (hand-soldered),1,Winstar WEA012864DWPP3N00003 / Midas MDOB128064V2V-WI / Display Elektronik DEP 128064F1-W / Raystar REA012864DWPP3N00003,485-326,3086-MDOB128064V2V-WI-ND (RS 225-6202),DEP128064F1-W (or DEP128064F1-Y),RS / TME / Digi-Key / Mouser / AliExpress (VCC-GND-SCL-SDA 4-pin)
+KNX PCB pin strip (hand-soldered),1,"Phoenix Contact PST 1,0/ 2-5,75 R32 (1574200)",651-1574200,277-1574200CT-ND,1574200,Phoenix Contact / Digi-Key / Mouser
+KNX bus plug (red/black),1,"Phoenix Contact PTS 0,5/ 2-PH-5,75 BKRD (1574300) or WAGO 243-211",651-1574300,277-1574300-ND,WAGO 243-211,Phoenix Contact / Digi-Key / Mouser / WAGO
+Main-to-UI cable,1,JST A10SR10SR30K102A,485-4396,455-3086-ND,CAB-JST-SH-10P,Digi-Key / Mouser; any 1:1 JST-SH 10P cable of 80-120 mm works

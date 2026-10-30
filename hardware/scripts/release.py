@@ -12,8 +12,8 @@ Gerbers + drill + IPC-D-356 netlist (one zip), ODB++ (one zip, e.g. Aisler),
 a generic BOM and placement file for any assembly house (fab_outputs.py),
 JLCPCB BOM and placement files with JLC-fitted rotations, an assembly check
 report, a hand-fit list, a STEP model, renders and the DRC report. The
-variant root gets order_lcsc.csv / order_mouser.csv / order_elsewhere.csv:
-upload-ready orders for one complete gateway, for building it yourself. Stops without writing a board when its
+variant root gets order_lcsc.csv / order_elsewhere.csv (orders for one complete
+gateway, for building it yourself) and assembly_parts.csv. Stops without writing a board when its
 DRC has an error or an unrouted connection, when a part is neither orderable
 nor hand-fit, or when jlc_parts.py finds a JLC part that is not what the
 circuit wants, would not land pin for pin, or is short of stock. Placement
@@ -126,19 +126,18 @@ def assembly_files(board, out, checks):
 
 
 LCSC_IN_TEXT = re.compile(r"LCSC (C\d+)")
-NOT_BOUGHT = ("enclosure/", "flush cutters")
 
 
-def primary(number):
-    """First supplier number of a parts-list cell like '651-1574200 (or 651-...)'."""
-    number = str(number or "-").split(" (or ")[0].strip()
-    return "" if number == "-" else number
+def shop(number):
+    return "" if str(number or "-").strip() == "-" else str(number)
 
 
 def order_files(root):
-    """Upload-ready orders for one complete gateway (all boards): LCSC BOM tool
-    (every board part with an LCSC number, plus hand-fit parts that name one),
-    Mouser BOM tool (the other hand-fit parts) and what neither sells."""
+    """Orders for one complete gateway (all boards): order_lcsc.csv for the LCSC
+    BOM tool (every board part with an LCSC number, plus hand-fit electronics that
+    name one) and order_elsewhere.csv (hand-fit electronics LCSC does not sell, with
+    every Mouser / Digi-Key / TME number). Utility and printed items stay in
+    assembly_parts.csv only."""
     lcsc = {}
     for board in BOARDS:
         for p in parts(board):
@@ -147,9 +146,15 @@ def order_files(root):
                                                    "footprint": p["footprint"].split(":")[-1], "refs": []})
                 line["qty"] += 1
                 line["refs"].append(f"{board}:{p['ref']}")
-    mouser, elsewhere = [], []
-    for p in yaml.safe_load(assembly_parts_path().read_text()):
-        if str(p["part"]).startswith(NOT_BOUGHT):
+    hand_fit = yaml.safe_load(assembly_parts_path().read_text())
+    with open(root / "assembly_parts.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Item", "Kind", "Qty", "Part", "Mouser", "DigiKey", "TME", "Description", "Source"])
+        w.writerows([p["item"], p["kind"], p["qty"], p["part"], p.get("mouser", "-"), p.get("digikey", "-"),
+                     p.get("tme", "-"), p["description"], p["source"]] for p in hand_fit)
+    elsewhere = []
+    for p in hand_fit:
+        if p["kind"] != "electronics":
             continue
         text = f"{p['part']} {p.get('tme', '')} {p.get('source', '')}"
         if match := LCSC_IN_TEXT.search(text):
@@ -157,24 +162,19 @@ def order_files(root):
                                                     "footprint": "", "refs": []})
             line["qty"] += p["qty"]
             line["refs"].append("hand-fit")
-        elif primary(p.get("mouser")):
-            mouser.append([primary(p["mouser"]), p["qty"], p["part"], p["item"]])
         else:
-            elsewhere.append([p["item"], p["qty"], p["part"], primary(p.get("digikey")), primary(p.get("tme")),
-                              p["source"]])
+            elsewhere.append([p["item"], p["qty"], p["part"], shop(p.get("mouser")), shop(p.get("digikey")),
+                              shop(p.get("tme")), p["source"]])
     with open(root / "order_lcsc.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["LCSC Part Number", "Quantity", "Manufacturer Part Number", "Value", "Footprint", "Designators"])
         for number, line in sorted(lcsc.items(), key=lambda item: (item[1]["footprint"] == "", item[1]["value"])):
             w.writerow([number, line["qty"], line["mpn"], line["value"], line["footprint"], ",".join(sorted(line["refs"]))])
-    with open(root / "order_mouser.csv", "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["Mouser Part Number", "Quantity", "Part", "Item"])
-        w.writerows(mouser)
     with open(root / "order_elsewhere.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["Item", "Quantity", "Part", "Digi-Key", "TME", "Source"])
+        w.writerow(["Item", "Quantity", "Part", "Mouser", "Digi-Key", "TME", "Source"])
         w.writerows(elsewhere)
+    (root / "order_mouser.csv").unlink(missing_ok=True)
 
 
 def release_board(board, root):
@@ -225,20 +225,6 @@ def main(version, boards=BOARDS):
             failed = True
             for problem in panel_problems:
                 print(f"  {problem}")
-    with open(root / "assembly_parts.csv", "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["Item", "Qty", "Part", "Mouser", "DigiKey", "TME", "Description", "Source"])
-        for p in yaml.safe_load(assembly_parts_path().read_text()):
-            w.writerow([
-                p["item"],
-                p["qty"],
-                p["part"],
-                p.get("mouser", "-"),
-                p.get("digikey", "-"),
-                p.get("tme", "-"),
-                p["description"],
-                p["source"],
-            ])
     order_files(root)
     enclosure = REPO / "mechanical/build" / VARIANT
     if enclosure.exists():
