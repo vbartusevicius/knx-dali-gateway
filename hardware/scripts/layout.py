@@ -49,6 +49,7 @@ MODELS_3D = {
     "Converter_DCDC_RECOM_REM3_DIP24_CTRL": ("REM3_DIP24.step", 0),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": ("TerminalBlock_MaiXu_MX126-5.0-02P.step", 0),
     "TerminalBlock_Kefa_KF142R-5.08-2P": ("TerminalBlock_Kefa_KF142R-5.08-2P.step", 0),
+    "TerminalBlock_WAGO_2086-1202_SMD": ("TerminalBlock_WAGO_2086-1202_SMD.step", 0),
     "Fuse_1812_4532Metric": ("Fuse_1812_4532Metric.step", 0),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": ("Phoenix_PST_1,0-2-5,75_R32.step", 0),
     "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent": ("CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent.step", 0),
@@ -909,6 +910,57 @@ def widen_thin_tracks(board, frame):
     return widened
 
 
+NEAR_MISS = 0.01
+
+
+def shift_near_miss_tracks(board_name):
+    """Freerouting rounds coordinates to its DSN grid, so a few tracks end up a
+    micrometre or two inside a clearance. Move each such segment away from the
+    item it is too close to by the shortfall (+1 um), dragging the ends of the
+    tracks joined to it along; DRC checks the result. Returns the number of
+    segments moved."""
+    import math
+    path = stored_board_path(board_name)
+    report = build_dir(board_name) / "near_miss_drc.json"
+    subprocess.run(["kicad-cli", "pcb", "drc", "--format", "json", "--output", str(report), str(path)],
+                   capture_output=True, check=False)
+    moves = {}
+    for v in json.loads(report.read_text())["violations"]:
+        m = re.search(r"clearance ([\d.]+) mm; actual ([\d.]+) mm", v["description"])
+        if v["type"] != "clearance" or not m or not 0 < float(m[1]) - float(m[2]) <= NEAR_MISS:
+            continue
+        tracks = [i for i in v["items"] if i["description"].startswith("Track")]
+        others = [i for i in v["items"] if not i["description"].startswith("Track")] or tracks[1:]
+        if tracks and others:
+            moves[tracks[0]["uuid"]] = (float(m[1]) - float(m[2]) + 0.001, others[0]["pos"])
+    if not moves:
+        return 0
+    plan = load_plan(board_name)
+    board = pcbnew.LoadBoard(str(path))
+    traces = [t for t in board.GetTracks() if t.Type() == pcbnew.PCB_TRACE_T]
+    for track in traces:
+        if track.m_Uuid.AsString() not in moves:
+            continue
+        shift, other = moves[track.m_Uuid.AsString()]
+        a, b = track.GetStart(), track.GetEnd()
+        dx, dy = b.x - a.x, b.y - a.y
+        length = math.hypot(dx, dy) or 1.0
+        nx, ny = -dy / length, dx / length
+        ox, oy = pcbnew.FromMM(other["x"]), pcbnew.FromMM(other["y"])
+        if (ox - (a.x + b.x) / 2) * nx + (oy - (a.y + b.y) / 2) * ny > 0:
+            nx, ny = -nx, -ny
+        step = pcbnew.VECTOR2I(round(nx * pcbnew.FromMM(shift)), round(ny * pcbnew.FromMM(shift)))
+        for end in (a, b):
+            for t in traces:
+                if t.GetNetCode() == track.GetNetCode() and t.GetLayer() == track.GetLayer():
+                    if t.GetStart() == end:
+                        t.SetStart(end + step)
+                    if t.GetEnd() == end:
+                        t.SetEnd(end + step)
+    save(board, plan, board_name)
+    return len(moves)
+
+
 def import_ses(board_name):
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
@@ -921,7 +973,8 @@ def import_ses(board_name):
     print(f"{board_name}: removed {removed} ground tracks the pours already cover, "
           f"widened {widened} neck-down stubs, seated {seated} grazing track ends")
     save(board, plan, board_name)
-    print(f"{board_name}: imported {ses.relative_to(REPO)}")
+    print(f"{board_name}: imported {ses.relative_to(REPO)}; moved {shift_near_miss_tracks(board_name)} "
+          f"tracks that missed a clearance by <= {NEAR_MISS} mm")
 
 
 FREEROUTING = ["java", "-jar", os.environ.get("FREEROUTING_JAR", "/opt/freerouting.jar"),

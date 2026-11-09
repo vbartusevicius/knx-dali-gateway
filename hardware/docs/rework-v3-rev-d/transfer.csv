@@ -35,7 +35,7 @@ D10,5V6,D_SOD-123,move,back,back,hot air or two irons; tweezers
 F1,1.1A,Fuse_1812_4532Metric,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"
 J1,KNX bus terminal pins,"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",move,front,front,"through-hole: desoldering pump or braid, both sides"
 J2,AUX 20-32 V (yellow/white),"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",move,front,front,"through-hole: desoldering pump or braid, both sides"
-J3,DALI bus (push-in),TerminalBlock_Kefa_KF142R-5.08-2P,move,front,front,"through-hole: desoldering pump or braid, both sides"
+J3,DALI bus (push-in),TerminalBlock_WAGO_2086-1202_SMD,buy,-,front,two irons or hot air; tweezers (or buy new: cents per part)
 J4,UI board,FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P,move,front,front,two irons or hot air; tweezers (or buy new: cents per part)
 JP1,DALI supply,PinHeader_2x02_P2.54mm_Vertical,move,front,front,"through-hole: desoldering pump or braid, both sides"
 L1,220uH,L_Sunlord_SWPA6045S,move,front,front,"hot air, large nozzle (big thermal mass); lift straight up"

@@ -32,7 +32,6 @@ R7,1,51k 1%,R_0603_1608Metric,0603WAF5102T5E,C23196,SMD,assembler
 R20,1,680R,R_0603_1608Metric,0603WAF6800T5E,C23228,SMD,assembler
 "Q4,Q5,Q6",3,BC847,SOT-23,BC847B,C57668,SMD,assembler
 Q2,1,BC857,SOT-23,BC857C,C181147,SMD,assembler
-J3,1,DALI bus (push-in),TerminalBlock_Kefa_KF142R-5.08-2P,KF142R-5.08-2P,C475144,THT,assembler
 JP1,1,DALI supply,PinHeader_2x02_P2.54mm_Vertical,2.54-2*2PPin,C66690,THT,assembler
 D6,1,DF06S,Diode_Bridge_Vishay_DFS,DF06S-T,C460867,SMD,assembler
 Q3,1,IRLML0060,SOT-23,IRLML0060TRPBF,C67274,SMD,assembler
@@ -49,6 +48,7 @@ U4,1,TLP383,SO-6L_10x3.84mm_P1.27mm,"TLP383(D4BLLTL,E",C3002263,SMD,assembler
 U10,1,TPS2121RUXR,Texas_VQFN-HR-12_2x2.5mm_P0.5mm,TPS2121RUXR,C485916,SMD,assembler
 J4,1,UI board,FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P,KH-FPC0.5-H1.2SMT-8P-QCHF,C48532769,SMD,assembler
 J2,1,AUX 20-32 V (yellow/white),"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",1574200,,THT,hand-fit (not assembled)
+J3,1,DALI bus (push-in),TerminalBlock_WAGO_2086-1202_SMD,2086-1202/700-000/997-604,,SMD,hand-fit (not assembled)
 J1,1,KNX bus terminal pins,"Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm",1574200,,THT,hand-fit (not assembled)
 U3,1,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,Converter_DCDC_RECOM_REM3_DIP24_CTRL,REC3-2415SRW/H2/A/CTRL,,THT,hand-fit (not assembled)
 U9,1,TMR 2411 24V->5V 2W iso,Converter_DCDC_TRACO_TMR2_SIP8,TMR 2411,,THT,hand-fit (not assembled)

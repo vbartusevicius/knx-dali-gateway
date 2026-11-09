@@ -94,6 +94,7 @@ def run_cad(*, do_test=False):
             "mechanical/tests/test_enclosure_probe.py",
             "mechanical/tests/test_enclosure_solids.py",
             "mechanical/tests/test_front_legend.py",
+            "mechanical/tests/test_print_rules.py",
             "hardware/tests/test_step_geometry.py", "-q", "-p", "no:cacheprovider",
         ], cwd=REPO, check=True)
 

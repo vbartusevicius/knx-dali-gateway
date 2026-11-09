@@ -42,7 +42,9 @@ from enclosure_features import (
     board_slab,
     button_holes,
     components,
+    front_posts,
     horizontal_capacitor,
+    knx_plug,
     led_windows,
     legs,
     main_ribs,
@@ -56,6 +58,7 @@ from enclosure_features import (
     shoulder_of,
     standoffs,
     terminal_holes,
+    vertical_main,
     wire_entries,
 )
 from ui_stackup import compute_ui_stackup
@@ -96,9 +99,26 @@ BUTTON_TAB = {"pad": 2.6, "arm": 2.0, "root_x": 0.9, "slot": 0.45, "thickness": 
 RAIL = {"centre": HIDDEN_H / 2, "slot": 35.4, "lip": 1.0, "clearance": 0.1}
 BACK_DEPTH = 5.0
 HOOK_REACH = 1.5
-LATCH = {"half_width": min(5.0, WIDTH / 2 - 4.5), "gap": 0.4, "tab_bottom": -6.0, "beam": 0.8,
-         "beam_ys": (9.0, 11.4), "beam_reach": min(16.0, WIDTH / 2 - 1.5), "hole": (4.0, 2.0),
-         "hole_y": -4.0, "travel": 2.0}
+MIN_PRINT_GAP = 0.6       # MJF/SLS: narrower gaps between separate features fuse
+LATCH_MAX_STRAIN = 0.025  # PA12 / PETG flexure, repeated use
+LATCH = {"half_width": 1.8 if WIDTH < 30 else 5.0, "tab_half_width": 3.0 if WIDTH < 30 else 5.0, "gap": 0.7,
+         "tab_bottom": -6.0, "beam": 0.6, "y0": 3.0, "skin": 1.0, "hole": (3.0, 1.6), "hole_y": -4.0,
+         "travel": HOOK_REACH + 0.3}
+LATCH["reach"] = min(16.0, WIDTH / 2 - LATCH["skin"] - LATCH["gap"])
+
+
+def latch_leg_length(latch=LATCH):
+    """Free length of one spring leg between its two turns."""
+    return latch["reach"] - (latch["half_width"] + latch["gap"]) - 2 * latch["beam"]
+
+
+def latch_strain(legs, latch=LATCH):
+    """Peak bending strain of a fixed-guided leg when the bar travels its full
+    release travel, shared equally by `legs` legs in series: 3 t d / L^2."""
+    return 3 * latch["beam"] * (latch["travel"] / legs) / latch_leg_length(latch) ** 2
+
+
+LATCH["legs"] = next(n for n in range(1, 40, 2) if latch_strain(n) <= LATCH_MAX_STRAIN)
 
 
 def box(x0, x1, y0, y1, z0, z1):
@@ -154,32 +174,34 @@ def rail_blocks():
 
 def latch_parts():
     """Sliding latch under the rail's bottom lip. A bar carries the lip at its
-    top; its lower end is a tab sticking out below the case with a hole facing
-    the front. Two S-shaped meander flexure springs (one on each side of the
-    bar) let the bar slide down and spring it back."""
+    top; its lower end is a wider tab below the case with a hole facing the
+    front for a flat screwdriver. On each side of the bar a serpentine spring
+    of LATCH["legs"] legs in series (enough that no leg bends past
+    LATCH_MAX_STRAIN over the release travel) springs it back. Every gap is at
+    least MIN_PRINT_GAP so powder prints do not fuse the latch to the case."""
     low, _ = rail_edges()
     back = -BACK_DEPTH
-    w, g, b = LATCH["half_width"], LATCH["gap"], LATCH["beam"]
-    reach = LATCH["beam_reach"]
-    y0, y1 = LATCH["beam_ys"]
-    y2 = y1 + (y1 - y0)
+    w, g, b, n = LATCH["half_width"], LATCH["gap"], LATCH["beam"], LATCH["legs"]
+    reach, pitch, y0 = LATCH["reach"], b + g, LATCH["y0"]
+    y_last = y0 + (n - 1) * pitch
     pocket = box(-w - g, w + g, LATCH["tab_bottom"] - 1, low + 1, back - 1, 0).union(
-        box(-reach - g, reach + g, y0 - LATCH["travel"], y2 + b + g, back - 1, 0))
+        box(-reach - g, reach + g, y0 - LATCH["travel"] - g, y_last + b + g, back - 1, 0))
     bar_z = (back, -g)
-    bar = box(-w, w, LATCH["tab_bottom"], low - g, *bar_z)
+    tw = LATCH["tab_half_width"]
+    latch = box(-w, w, LATCH["tab_bottom"], low - g, *bar_z).union(
+        box(-tw, tw, LATCH["tab_bottom"], -g, *bar_z))
     lip = box(-w, w, low - g, low + HOOK_REACH, *lip_z())
-    lip = lip.edges("|X and <Z and >Y").chamfer(1.0)
-    latch = bar.union(lip)
+    latch = latch.union(lip.edges("|X and <Z and >Y").chamfer(1.0))
+    x_in = w + g
     for s in (-1, 1):
-        # 3-leg S-meander spring: bar at y0 -> outer turn -> middle leg at y1 ->
-        # inner turn -> wall at y2
-        leg1 = box(*sorted((s * w, s * (reach - g))), y0, y0 + b, *bar_z)
-        turn1 = box(*sorted((s * (reach - g - b), s * (reach - g))), y0, y1 + b, *bar_z)
-        leg2 = box(*sorted((s * (w + g), s * (reach - g))), y1, y1 + b, *bar_z)
-        turn2 = box(*sorted((s * (w + g), s * (w + g + b))), y1, y2 + b, *bar_z)
-        leg3 = box(*sorted((s * (w + g), s * (reach + g + 0.5))), y2, y2 + b, *bar_z)
-        for seg in (leg1, turn1, leg2, turn2, leg3):
-            latch = latch.union(seg)
+        for i in range(n):
+            y = y0 + i * pitch
+            start = w if i == 0 else x_in
+            end = reach + g + 0.5 if i == n - 1 else reach
+            latch = latch.union(box(*sorted((s * start, s * end)), y, y + b, *bar_z))
+            if i < n - 1:
+                x_turn = (reach - b, reach) if i % 2 == 0 else (x_in, x_in + b)
+                latch = latch.union(box(*sorted((s * x_turn[0], s * x_turn[1])), y, y + pitch + b, *bar_z))
     hole_w, hole_h = LATCH["hole"]
     hole = box(-hole_w / 2, hole_w / 2, LATCH["hole_y"] - hole_h / 2, LATCH["hole_y"] + hole_h / 2, back - 1, 1)
     return pocket, latch.cut(hole)
@@ -201,37 +223,45 @@ def plate_inner(tab):
     return SHOULDER_Z[tab["side"]] - WALL
 
 
+SIDE_SNAPS = {"right_y": (16.8, 63.3), "left_z": ((15.0, 21.0), (33.0, 39.0)), "half": 1.4}
+
+
 def shoulder_snap_bodies():
-    """On V3, the base is open on the left side (-x) so the vertical main board
-    (with its +x J1/J2 pins) slides in from the left. The cover carries the left
-    side wall (x = -WIDTH/2..-INNER_W/2) and clicks onto the base with four side
-    snap-click hooks (two on the right side wall at y = 14.8 and y = 64.5, clear
-    of the KNX/AUX and DALI connectors, and two on the left side wall at z = 15..21)."""
+    """On V3 the base is open on the left side (-x) so the vertical main board
+    slides in from the left; the cover carries the left side wall and clicks
+    onto the base with six snap hooks: two on the right side wall (clear of
+    the plug block and the DALI terminal) and two pairs on the left edge
+    of the top and bottom walls, so the cover cannot pivot about one edge."""
     if screw_tabs():
         return []
     bodies = []
-    for y_c in (14.8, 64.5):
-        tongue = box(INNER_W / 2 - 1.1, INNER_W / 2, y_c - 1.4, y_c + 1.4, 39.2, BASE_TOP_Z + 0.4)
-        barb = box(INNER_W / 2 - 1.1, INNER_W / 2 + 0.5, y_c - 1.4, y_c + 1.4, 39.2, 40.4)
+    half = SIDE_SNAPS["half"]
+    for y_c in SIDE_SNAPS["right_y"]:
+        tongue = box(INNER_W / 2 - 1.1, INNER_W / 2, y_c - half, y_c + half, 39.2, BASE_TOP_Z + 0.4)
+        barb = box(INNER_W / 2 - 1.1, INNER_W / 2 + 0.5, y_c - half, y_c + half, 39.2, 40.4)
         bodies.append(tongue.union(barb))
     for y_wall, d in ((WALL, 1), (HIDDEN_H - WALL, -1)):
         y0, y1 = sorted((y_wall, y_wall + d * 1.1))
         yb0, yb1 = sorted((y_wall - d * 0.5, y_wall + d * 1.1))
-        tongue = box(-WIDTH / 2, -INNER_W / 2 + 1.2, y0, y1, 15.0, 21.0)
-        barb = box(-INNER_W / 2, -INNER_W / 2 + 1.2, yb0, yb1, 15.0, 21.0)
-        bodies.append(tongue.union(barb))
+        for z0, z1 in SIDE_SNAPS["left_z"]:
+            tongue = box(-WIDTH / 2, -INNER_W / 2 + 1.2, y0, y1, z0, z1)
+            barb = box(-INNER_W / 2, -INNER_W / 2 + 1.2, yb0, yb1, z0, z1)
+            bodies.append(tongue.union(barb))
     return bodies
 
 
 def shoulder_snap_keepers():
-    """Matching keeper recesses on the right side wall (y = 14.8, 64.5) and left
-    top/bottom wall rims (z = 14.8..21.2) of the V3 base."""
+    """Matching keeper recesses in the V3 base: right side wall and the left
+    rims of the top and bottom walls."""
     if screw_tabs():
         return []
-    keepers = [box(INNER_W / 2 - 0.1, INNER_W / 2 + 0.6, y_c - 1.6, y_c + 1.6, 39.0, 40.6)
-               for y_c in (14.8, 64.5)]
-    keepers += [box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, WALL - 0.6, WALL + 0.1, 14.8, 21.2),
-                box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, HIDDEN_H - WALL - 0.1, HIDDEN_H - WALL + 0.6, 14.8, 21.2)]
+    half = SIDE_SNAPS["half"] + 0.2
+    keepers = [box(INNER_W / 2 - 0.1, INNER_W / 2 + 0.6, y_c - half, y_c + half, 39.0, 40.6)
+               for y_c in SIDE_SNAPS["right_y"]]
+    for z0, z1 in SIDE_SNAPS["left_z"]:
+        keepers += [box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, WALL - 0.6, WALL + 0.1, z0 - 0.2, z1 + 0.2),
+                    box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.3, HIDDEN_H - WALL - 0.1, HIDDEN_H - WALL + 0.6,
+                        z0 - 0.2, z1 + 0.2)]
     return keepers
 
 
@@ -270,6 +300,61 @@ def knx_pin_centres(board="main", ref="J1"):
     return [board_point(board, px, py) for px, py, _ in components(board)[ref]["pads"]]
 
 
+PLUG_CLEARANCE = 0.3
+PLUG_KEY = {"depth": 1.4, "from_back": (1.0, 7.0)}
+BOARD_SUPPORT_GAP = 0.1
+PLUG_REFS_V3 = ("J2", "J1")
+
+
+def plug_pocket(ref):
+    """The mated plug plus PLUG_CLEARANCE all round, open to the right side
+    (+x, where the plug goes in) and to the bottom (-y, wire entries)."""
+    p, c = knx_plug(ref), PLUG_CLEARANCE
+    return {"x0": p["x0"], "y1": p["y1"] + c, "z0": p["z0"] - c, "z1": p["z1"] + c}
+
+
+def strip_box(ref):
+    """The PST strip's plastic body on the board front, with clearance."""
+    b, c = components("main")[ref]["bbox"], PLUG_CLEARANCE
+    (x0, y0, za), (_, y1, zb) = board_point("main", b["x0"], b["y0"]), board_point("main", b["x1"], b["y1"])
+    return x0 - 0.01, knx_plug(ref)["x0"] + c, min(y0, y1) - c, max(y0, y1) + c, min(za, zb) - c, max(za, zb) + c
+
+
+def plug_openings():
+    """Each plug's pocket through the base (open to the right side and the
+    bottom) and its key slot on the -z wall."""
+    cuts = []
+    for ref in PLUG_REFS_V3:
+        p, back = plug_pocket(ref), knx_plug(ref)["y1"]
+        cuts.append(box(p["x0"], WIDTH / 2 + 1, -1, p["y1"], p["z0"], p["z1"]))
+        cuts.append(box(p["x0"], WIDTH / 2 + 1, back - PLUG_KEY["from_back"][1], back - PLUG_KEY["from_back"][0],
+                        p["z0"] - PLUG_KEY["depth"], p["z0"] + 0.01))
+    return cuts
+
+
+def plug_block():
+    """Block in the bottom-right corner of the base holding both plug pockets.
+    Its left face stops 0.1 mm short of the main board's front, so the board
+    rests on it instead of on its parts; the PST strips sit in recesses and
+    every other front part gets PART_AIR. Each pocket has a slot on its -z wall
+    for the plug's butterfly key (its exact y position is not measured, so the
+    slot covers 1..7 mm below the plug's back)."""
+    pockets = [plug_pocket(r) for r in PLUG_REFS_V3]
+    x_board = SPEC["boards"]["main"]["x"]
+    block = box(x_board + BOARD_SUPPORT_GAP, WIDTH / 2, 0.0, max(p["y1"] for p in pockets) + 1.2,
+                WALL - 0.01, max(p["z1"] for p in pockets) + 1.0)
+    for opening in plug_openings():
+        block = block.cut(opening)
+    for ref in PLUG_REFS_V3:
+        block = block.cut(box(*strip_box(ref)))
+    for b in part_boxes():
+        comp = components("main").get(b["ref"]) if b["board"] == "main" else None
+        if comp and comp["side"] == "front" and b["ref"] not in PLUG_REFS_V3:
+            block = block.cut(box(b["x0"] - PART_AIR - 1, b["x1"] + PART_AIR, b["y0"] - PART_AIR, b["y1"] + PART_AIR,
+                                  b["z0"] - PART_AIR, b["z1"] + PART_AIR))
+    return block
+
+
 def dovetail_xy(x_wall, y_mid, z0, z1, neck=2.6, flare=3.5, depth=1.1):
     """30-deg 'half-butterfly' dovetail keyway on the +x wall of a front-facing
     KNX pocket (WAGO 243-211 drawing: 2.5 mm neck widening at 30 deg to 3.4 mm,
@@ -293,10 +378,6 @@ def walls_clip(solid):
     return solid.intersect(box(-WIDTH / 2, WIDTH / 2, 0, HIDDEN_H, -BACK_DEPTH, BASE_TOP_Z))
 
 
-def vertical_main():
-    return SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail"
-
-
 def board_edge_reliefs():
     """Clearance in the base's bottom and top walls along the path of a
     vertical main board, which slides in from the open left side."""
@@ -311,6 +392,19 @@ def board_edge_reliefs():
 
 def main_back_face_x():
     return SPEC["boards"]["main"]["x"] - MAIN_THICK
+
+
+POST_HALF = 1.0
+
+
+def post_bodies():
+    """Base posts from the right wall to 0.1 mm short of the vertical main
+    board's front face (layout case.front_posts)."""
+    if not vertical_main():
+        return []
+    x0 = SPEC["boards"]["main"]["x"] + BOARD_SUPPORT_GAP
+    return [box(x0, INNER_W / 2 + 0.01, y - POST_HALF, y + POST_HALF, z - POST_HALF, z + POST_HALF)
+            for _, y, z in front_posts()]
 
 
 def rib_bodies():
@@ -352,7 +446,7 @@ def tall_front_parts():
     found = []
     for b in part_boxes():
         comp = components(b["board"]).get(b["ref"]) if b["board"] == "main" else None
-        if comp is None or comp["side"] != "front" or b["x1"] <= wall_in - PART_AIR:
+        if comp is None or comp["side"] != "front" or b["x1"] <= wall_in - PART_AIR or b["ref"] in PLUG_REFS_V3:
             continue
         x1 = b["x1"] + PART_AIR
         if x1 > WIDTH / 2 - MIN_SKIN:
@@ -379,7 +473,7 @@ def protrusion_part_reliefs():
 
 def terminal_reliefs():
     """Clearance in the cover's shoulder plate over a vertical-board terminal
-    whose body reaches the plate (the KF142R overhangs the board edge)."""
+    whose body reaches the plate (the DALI terminal overhangs the board edge)."""
     if not vertical_main():
         return []
     reliefs = []
@@ -439,28 +533,15 @@ def build_base():
         base = base.cut(box(slot["x0"], slot["x1"], HIDDEN_H - WALL - 1, HIDDEN_H + 1, slot["z0"], slot["z1"]))
     x0, x1, _y1 = knx_recess()
     if VARIANT == "v3":
-        # J1 (KNX red/black, front) and J2 (AUX yellow/white, rear) sit on main
-        # (x = -5.7) with their pins pointing +x to the right (turned 90 deg to
-        # the right) and their 4+4 wire holes facing straight down (-y). A solid
-        # inner wall at x = -2.8..-1.8 seals the PCB and the 2.8 mm PST 1,0
-        # plastic strips; only the 4 metal pins poke through 2.2 mm holes, and
-        # each pocket has a 30-deg half-butterfly dovetail on its -z (+) wall
-        # 3.3 mm below the pocket roof (not in the corner).
-        # Bottom pockets for J2 (AUX, rear) and J1 (KNX, front), and top pocket
-        # for J3 (DALI, top-front): solid inner wall at x = -1.3..-0.3 covers the
-        # 2.8 mm PST 1,0 plastic strips on main (x = -4.2); only the metal pins
-        # poke through 2.2 mm holes, and each pocket has a 30-deg half-butterfly
-        # dovetail keyway on its + wall.
-        # Open the left side wall so the vertical main board (and its +x pins)
-        # slides straight in from the left (-x -> +x); the cover closes the left wall.
+        # J1 (KNX red/black, front) and J2 (AUX yellow/white, rear): pins point
+        # +x, wire entries face down (-y); each plug sits on its PST strip in a
+        # pocket open to the right side and the bottom (plug_block). The left
+        # side is open so main slides in along +x until its front face meets
+        # the block; the cover closes the left wall.
         base = base.cut(box(-WIDTH / 2 - 1, -INNER_W / 2 + 0.01, WALL, HIDDEN_H - WALL, WALL, BASE_TOP_Z + 1))
-        base = base.union(box(-1.3, WIDTH / 2, 0.0, 12.2, 14.8, 39.8))
-        for ref, z_lo, z_hi in (("J2", 16.3, 26.8), ("J1", 29.3, 39.8)):
-            base = base.cut(box(-0.3, WIDTH / 2 + 1, -1, 11.2, z_lo, z_hi))
-            base = base.cut(dovetail_zy(z_lo, 8.0, -0.3, WIDTH / 2 + 1, sign=-1))
-            for _, py, pz in knx_pin_centres("main", ref):
-                base = base.cut(cq.Workplane("YZ", origin=(-1.6, 0, 0)).center(py, pz)
-                                .circle(1.1).extrude(1.6))
+        base = base.union(plug_block())
+        for opening in plug_openings():
+            base = base.cut(opening)
         # Flat-screwdriver pry recesses at the left-side top/bottom snap seams
         base = base.cut(box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.4, -0.1, 0.8, 16.5, 19.5))
         base = base.cut(box(-INNER_W / 2 - 0.1, -INNER_W / 2 + 1.4, HIDDEN_H - 0.8, HIDDEN_H + 0.1, 16.5, 19.5))
@@ -471,7 +552,7 @@ def build_base():
 
     else:
         base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
-    for body in leg_bodies() + capacitor_cradles():
+    for body in leg_bodies() + capacitor_cradles() + post_bodies():
         base = base.union(walls_clip(body))
     for cut in shoulder_snap_keepers() + board_edge_reliefs() + front_part_reliefs():
         base = base.cut(cut)
@@ -479,7 +560,18 @@ def build_base():
         outer, wall_in, _ = screw_axis_y(tab)
         overshoot = 1 if tab["side"] == "top" else -1
         base = base.cut(screw_cylinder(tab, CASE_SCREW["clearance"], outer + overshoot, wall_in - overshoot))
+    for cut in side_legend_cuts():
+        base = base.cut(cut)
     return base
+
+
+def side_legend_cuts():
+    """V3 connector names (front_legend.side_labels) engraved INLAY_DEPTH into
+    the base's right side face."""
+    import front_legend
+    import legend_color_model
+    return [legend_color_model.inlay(label.path(), 0.0).rotate((0, 0, 0), (0, 1, 0), 90).translate((WIDTH / 2, 0, 0))
+            for label in front_legend.side_labels()]
 
 
 def peg_bodies():
@@ -539,24 +631,41 @@ def snap_bodies():
     return [tongue for _, tongue in snap_geometry()]
 
 
+LIP_BOND = {"over_wall": 0.6, "height": 1.2}
+SNAP_FREE = 0.6
+
+
 def lip_bodies():
-    """Locating lips on the inside of the base side walls, interrupted where a
-    stacked board's edge passes through their height."""
+    """Locating lips on the inside of the base side walls. Each lip hangs
+    0.15 mm inside the base wall, so a LIP_BOND bridge on top ties it into the
+    cover's side wall along its whole length. Lips are interrupted where a
+    stacked board's edge or a part passes, around the side snap tongues (so
+    those stay free to flex) and over the V3 plug block."""
     x_out = INNER_W / 2 - 0.15
     z0 = BASE_TOP_Z - LIP["depth"]
+    top = BASE_TOP_Z + LIP_BOND["height"]
     sides = (1,) if VARIANT == "v3" else (1, -1)
-    lips = [box(*sorted((s * x_out, s * (x_out - LIP["thickness"]))), WALL + 1, HIDDEN_H - WALL - 1,
-                z0, BASE_TOP_Z) for s in sides]
-    for slab in (board_slab(b) for b in SPEC["variants"][VARIANT]["boards"] if b not in ("main", "ui")):
-        if slab["z0"] < BASE_TOP_Z and slab["z1"] > z0:
-            notch = box(-WIDTH / 2, WIDTH / 2, slab["y0"] - 0.5, slab["y1"] + 0.5, z0 - 1, BASE_TOP_Z + 1)
-            lips = [lip.cut(notch) for lip in lips]
+    lips = []
+    for s in sides:
+        lip = box(*sorted((s * x_out, s * (x_out - LIP["thickness"]))), WALL + 1, HIDDEN_H - WALL - 1, z0, BASE_TOP_Z)
+        bond = box(*sorted((s * (x_out - LIP["thickness"]), s * (INNER_W / 2 + LIP_BOND["over_wall"]))),
+                   WALL + 1, HIDDEN_H - WALL - 1, BASE_TOP_Z - 0.01, top)
+        lips.append(lip.union(bond))
+    notches = [box(-WIDTH / 2, WIDTH / 2, slab["y0"] - 0.5, slab["y1"] + 0.5, z0 - 1, top + 1)
+               for slab in (board_slab(b) for b in SPEC["variants"][VARIANT]["boards"] if b not in ("main", "ui"))
+               if slab["z0"] < BASE_TOP_Z and slab["z1"] > z0]
     reach = x_out - LIP["thickness"] - PART_AIR
-    for b in part_boxes("body"):
-        if b["board"] == "main" and b["z1"] > z0 and (b["x1"] > reach or b["x0"] < -reach):
-            notch = box(b["x0"] - PART_AIR, b["x1"] + PART_AIR, b["y0"] - PART_AIR, b["y1"] + PART_AIR, z0 - 1,
-                        BASE_TOP_Z + 1)
-            lips = [lip.cut(notch) for lip in lips]
+    notches += [box(b["x0"] - PART_AIR, b["x1"] + PART_AIR, b["y0"] - PART_AIR, b["y1"] + PART_AIR, z0 - 1, top + 1)
+                for b in part_boxes("body")
+                if b["board"] == "main" and b["z1"] > z0 and (b["x1"] > reach or b["x0"] < -reach)]
+    if not screw_tabs():
+        free = SIDE_SNAPS["half"] + SNAP_FREE
+        notches += [box(-WIDTH / 2, WIDTH / 2, y - free, y + free, z0 - 1, top + 1) for y in SIDE_SNAPS["right_y"]]
+    if VARIANT == "v3":
+        bb = plug_block().val().BoundingBox()
+        notches.append(box(-WIDTH / 2, WIDTH / 2, -1, bb.ymax + PART_AIR, z0 - 1, top + 1))
+    for notch in notches:
+        lips = [lip.cut(notch) for lip in lips]
     return lips
 
 

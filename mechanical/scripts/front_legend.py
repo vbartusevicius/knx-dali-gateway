@@ -28,28 +28,32 @@ from matplotlib.transforms import Affine2D
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "mechanical/build" / ef.VARIANT
-LABEL_H = 1.8
-LED_LABEL_H = (1.4, 1.2, 1.0, 0.85)
-TITLE_H = 2.2
+# Smallest legend a powder print (MJF / SLS) keeps legible when recessed
+# INLAY_DEPTH deep: 3 mm letters, whose DejaVu Sans Bold strokes are about 0.5 mm.
+MIN_TEXT_H = 3.0
+MIN_STROKE = 0.4
+LABEL_H = 3.0
+TITLE_H = 3.0
 GAP = 0.8
 EDGE = 1.0
 LABEL_SPACING = 0.3
-LED_LABEL_SPACING = 1.5
 INK = "#000000"
 GUIDE = "#00acc1"
-LED_RING = 0.25 if ef.VARIANT in ("v3", "v4") else 0.8
-RING_LINE = 0.25 if ef.VARIANT in ("v3", "v4") else 0.4
+LED_RING = 0.6 if ef.VARIANT in ("v3", "v4") else 0.8
+RING_LINE = 0.5
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
 
-SUPPLY_LABEL = "PSU 20-32V"
-ROW_PITCH = 1.5
-BRACKET_LINE = 0.3
-BRACKET_CLEARANCE = 1.2
+SUPPLY_LABEL = "20-32V"
+ROW_PITCH = 1.3
+BRACKET_LINE = 0.5
+BRACKET_CLEARANCE = 1.0
 BRACKET_TITLE_GAP = 0.8
 TITLE_CLEARANCE = 1.4
 LINE_SPACING = 1.3
 SIGN_REFERENCE = "+"
+SIGNS = ("+", "\u2212")
+SIGN_BAR = 0.6
 
 
 @dataclass
@@ -63,6 +67,8 @@ class Label:
     height: float
 
     def path(self):
+        if self.text in SIGNS:
+            return self.sign_path()
         lines = self.text.split("\n")
         parts = []
         for i, line in enumerate(lines):
@@ -74,6 +80,14 @@ class Label:
             parts.append(raw.transformed(Affine2D().translate(self.x - ext.x0 - ext.width / 2,
                                                               self.y + dy - vertical.y0 - vertical.height / 2)))
         return MplPath.make_compound_path(*parts)
+
+    def sign_path(self):
+        """+ and - as solid bars (the font's are thinner than MIN_STROKE)."""
+        half, bar = 0.35 * self.height, max(SIGN_BAR, 0.18 * self.height) / 2
+        bars = [(self.x - half, self.y - bar, self.x + half, self.y + bar)]
+        if self.text == "+":
+            bars.append((self.x - bar, self.y - half, self.x + bar, self.y + half))
+        return stroke_path(bars)
 
     def box(self):
         ext = self.path().get_extents()
@@ -165,7 +179,7 @@ def dali_terminals(terminals=None, main=None):
     bracket's strokes as boxes."""
     terminals = terminals or ef.SPEC["terminals"]
     if ef.VARIANT in ("v3", "v4") and main is None:
-        return [Label("DALI", 0.0, 72.0, 2.6)], []
+        return [], []
     else:
         main = main or ef.components("main")
         radius = be.SCREW_HOLE / 2
@@ -205,15 +219,42 @@ def marks():
     return [stroke_path(strokes)] if strokes else []
 
 
+# The 18 mm V3 face has no room for full words at MIN_TEXT_H: the buttons get
+# short forms. On both variants the LED row (STATUS, KNX, DALI from left to
+# right) has only its rings, as no LED word fits its pitch at MIN_TEXT_H; the
+# release READMEs explain both. The V3 connector names sit on the right side
+# face next to their connectors (side_labels), engraved into the base.
+V3_SHORT = {"PRG": "PRG/RST", "FN": "FUNC"}
+SIDE_GAP = 1.5
+
+
 def v3_labels():
-    placed, _ = dali_terminals()
-    placed.append(Label("BUS   POWER", 0.0, 5.5, 1.45))
-    placed.append(Label("KNX", 0.0, 11.2, 2.6))
-    placed.append(Label("PRG/RST", -4.1, 29.0, 1.15))
-    placed.append(Label("FUNC", 4.1, 29.0, 1.15))
-    for text, x in (("STATUS", -4.8), ("KNX", 0.0), ("DALI", 4.8)):
-        placed.append(Label(text, x, 19.6, 0.85))
+    placed = []
+    buttons = ef.button_holes()
+    for name, text in (("PROG", "PRG"), ("RESET", "FN")):
+        (cx, cy, d), _ = be.button_tab_outline(buttons[name], be.BUTTON_TAB["slot"])
+        place(text, (cx - d / 2, cy - d / 2, cx + d / 2, cy + d / 2), LABEL_H, placed, prefer=("above",))
     return placed
+
+
+def side_to_enc(u, v):
+    """Right side face (x = WIDTH / 2), seen from the right with the device
+    upright: u runs from the front towards the rail (-z), v up (+y)."""
+    return -u, v
+
+
+def side_labels():
+    """V3 connector names on the right side face: KNX and AUX above their
+    plug pockets, DALI level with the DALI terminal near the top. Label
+    coordinates are (u, v) = (-z, y)."""
+    if ef.VARIANT not in ("v3", "v4"):
+        return []
+    above_pockets = be.plug_block().val().BoundingBox().ymax + SIDE_GAP + LABEL_H / 2
+    labels = [Label(name, -(p["z0"] + p["z1"]) / 2, above_pockets, LABEL_H)
+              for name, p in (("KNX", be.plug_pocket("J1")), ("AUX", be.plug_pocket("J2")))]
+    j3 = next(b for b in ef.part_boxes("body") if (b["board"], b["ref"]) == ("main", "J3"))
+    labels.append(Label("DALI", -(j3["z0"] + j3["z1"]) / 2, (j3["y0"] + j3["y1"]) / 2, LABEL_H))
+    return labels
 
 
 def labels():
@@ -233,18 +274,7 @@ def labels():
     for name, text in (("PROG", "PRG/RST"), ("RESET", "FUNC")):
         place(text, hole_box(buttons[name], be.BUTTON_HOLE), LABEL_H, placed,
               prefer=("above", "below", "left", "right"))
-    leds = {led["ref"]: led["id"].upper() for led in ef.SPEC["front_ui"]["leds"]}
-    windows = [(leds[ref], hole_box(w, be.LED_WINDOW + 2 * LED_RING)) for ref, w in zip(("D1", "D2", "D3"), ef.led_windows())]
-    for height in LED_LABEL_H:
-        for side in ("below", "above"):
-            row = list(placed)
-            try:
-                for text, box in windows:
-                    place(text, box, height, row, prefer=(side,), spacing=LED_LABEL_SPACING)
-            except ValueError:
-                continue
-            return row
-    raise ValueError("no room for one row of LED labels")
+    return placed
 
 
 def draw(ax, placed):

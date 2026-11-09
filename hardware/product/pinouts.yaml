@@ -16,6 +16,19 @@
   pads: {"2": [0, 0], "1": [5.75, 0]}
   nets: {"1": [KNX_P, AUX_IN], "2": [GND, GNDA]}
 
+"2086-1202/700-000/997-604":
+  source: >-
+    WAGO 2086-1202/700-000/997-604 (SMD PCB terminal block, push-button, side
+    entry, 2 poles, 3.5 mm; data sheet 05.01.2026: 7.7 x 8.15 x 13.6 mm,
+    L = (poles - 1) x 3.5 + 4.2). JLCPCB lists it (C3309855) without an
+    EasyEDA footprint. Land pattern per pole as the EasyEDA footprint of the
+    4-pole 2086-1204/700-000/997-605 (C3309718): two 1.6 x 3.9 mm pads per
+    pole at +-4.4 mm, 3.5 mm pitch.
+  pads:
+    "1": [[-1.75, 4.4], [-1.75, -4.4]]
+    "2": [[1.75, 4.4], [1.75, -4.4]]
+  nets: {"1": DA1, "2": DA2}
+
 WEA012864DWPP3N00003:
   source: >-
     Winstar WEA012864D-03 specification p.3 (contour drawing, interface pin

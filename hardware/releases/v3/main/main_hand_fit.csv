@@ -1,6 +1,7 @@
 Designator,Value,Manufacturer part,Notes
 J1,KNX bus terminal pins,1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
 J2,AUX 20-32 V (yellow/white),1574200,"Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"
+J3,DALI bus (push-in),2086-1202/700-000/997-604,"2-pole 3.5 mm SMD push-in terminal, push-button in the wire-entry direction (160 V III/2, 320 V II/2; JLCPCB C3309855 has no stock: hand-soldered)"
 U3,REC3-2415SRW/H2/A/CTRL 24V->15V 3W iso,REC3-2415SRW/H2/A/CTRL,"RECOM REC3-RW datasheet: 18-36V in, 15V 200mA out, 2kVDC/4kVDC (/H4) isolated, DIP-24 A-pinning with pin 1 CTRL"
 U8,XIAO ESP32C6,102010636,XIAO ESP32C6 Pre-Soldered (pin headers fitted; the bare 113991254 ships without); plugs into 2x 1x7 female headers PM2.54-1x7PZZ-H8.5 (LCSC C54876729)
 U9,TMR 2411 24V->5V 2W iso,TMR 2411,"TRACO TMR 2 datasheet: 18-36 V in, 5 V 400 mA regulated (+/-1 %), 1.6 kVDC functional isolation, no minimum load, continuous short-circuit protection, 1000 uF max capacitive load, remote open = on; SIP-8 21.8 x 9.1 x 11.2"

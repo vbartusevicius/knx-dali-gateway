@@ -106,6 +106,7 @@ def test_ui_front_parts_stay_behind_front_wall():
 
 
 FLUSH_TOLERANCE = 0.25
+PLUG_RECESS_MAX = 3.0
 
 
 def test_connector_faces_flush_with_the_top_and_bottom_faces():
@@ -114,8 +115,10 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
     faces = ef.connector_faces()
     if ef.VARIANT in ("v3", "v4"):
         assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
-        assert abs(faces["J1"]) <= FLUSH_TOLERANCE
-        assert abs(faces["J2"]) <= FLUSH_TOLERANCE
+        # the plugs sit where their sockets meet the pins (measured WAGO 243-211),
+        # wire entries a little inside the open bottom of their pockets
+        assert 0 <= faces["J1"] <= PLUG_RECESS_MAX
+        assert 0 <= faces["J2"] <= PLUG_RECESS_MAX
         return
     assert abs(faces["J2"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
     assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE

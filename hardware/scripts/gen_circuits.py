@@ -192,6 +192,20 @@ def collect_assembly_parts(variant, spec):
             "tme": "DEP128064F1-W (or DEP128064F1-Y)",
             "source": "RS / TME / Digi-Key / Mouser / AliExpress (VCC-GND-SCL-SDA 4-pin)",
         })
+    if "2086-1202/700-000/997-604" in hand_by_mpn:
+        locs = hand_by_mpn["2086-1202/700-000/997-604"]["locs"]
+        items.append({
+            "item": "DALI push-in terminal (hand-soldered, SMD)",
+            "qty": len(locs),
+            "kind": "electronics",
+            "part": "WAGO 2086-1202/700-000/997-604",
+            "description": f"2-pole 3.5 mm SMD push-in terminal, push-buttons beside the wire entries, 0.14-1.5 mm2, "
+                           f"strip 8-9 mm; solder onto {', '.join(locs)} (JLCPCB C3309855 has no stock)",
+            "mouser": "-",
+            "digikey": "2946-2086-1202/700-000/997-604CT-ND",
+            "tme": "-",
+            "source": "Digi-Key / Farnell",
+        })
     if "1574200" in hand_by_mpn:
         locs = hand_by_mpn["1574200"]["locs"]
         items.append({
@@ -263,7 +277,7 @@ def collect_assembly_parts(variant, spec):
             "kind": "utility",
             "part": "flush cutters",
             "description": f"after soldering, cut every through-hole lead on main to <= {trim} mm above the back "
-                           "copper (REC3, sockets, PST strips, KF142R, JP1); the cover wall is 2.0 mm away",
+                           "copper (REC3, sockets, PST strips, JP1); the cover wall is 2.0 mm away",
             "mouser": "-",
             "digikey": "-",
             "tme": "-",

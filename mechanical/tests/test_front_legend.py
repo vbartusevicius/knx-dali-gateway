@@ -2,15 +2,18 @@
 openings and the other labels, and the polarity marks sit over the right pins."""
 
 import sys
-from itertools import pairwise
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "mechanical/scripts"))
+import build_enclosure as be
+import cadquery as cq
 import enclosure_features as ef
 import front_legend as fl
+import legend_color_model as lcm
 
 
 @pytest.fixture(scope="module")
@@ -52,8 +55,9 @@ def test_legend_recess_bodies_cut_exactly_their_own_volume_from_the_cover():
     removed = cover.val().Volume() - cover.cut(legend).val().Volume()
     assert removed == pytest.approx(legend.val().Volume(), rel=1e-4)
     box = legend.val().BoundingBox()
-    assert box.zmax == pytest.approx(max(lcm.FACE_Z.values()), abs=1e-3)
-    assert box.zmin == pytest.approx(min(lcm.FACE_Z.values()) - lcm.INLAY_DEPTH, abs=1e-3)
+    used = {lcm.FACE_Z[fl.face_of(lb.y)] for lb in fl.labels()} | {lcm.FACE_Z["front"]}
+    assert box.zmax == pytest.approx(max(used), abs=1e-3)
+    assert box.zmin == pytest.approx(min(used) - lcm.INLAY_DEPTH, abs=1e-3)
 
 
 def test_overlap_check_catches_a_label_on_an_opening(labels):
@@ -64,8 +68,10 @@ def test_overlap_check_catches_a_label_on_an_opening(labels):
 
 def test_every_marking_is_present(labels):
     texts = [lb.text for lb in labels]
-    for expected in ("KNX", "DALI", "PRG/RST", "FUNC", "STATUS"):
-        assert expected in texts
+    expected = ("PRG", "FN") if ef.VARIANT in ("v3", "v4") else \
+        ("KNX", "DALI", "PRG/RST", "FUNC")
+    for text in expected:
+        assert text in texts
     if ef.VARIANT not in ("v3", "v4"):
         assert texts.count("DA") == 2 and texts.count("+") == 2 and texts.count("\u2212") == 2
 
@@ -92,8 +98,118 @@ def test_signs_side_by_side_share_one_axis(labels, face):
     assert abs(centre[0] - centre[1]) < 0.05
 
 
-def test_led_labels_keep_their_distance(labels):
-    names = {led["id"].upper() for led in ef.SPEC["front_ui"]["leds"]}
-    row = sorted((lb for lb in labels if lb.text in names and fl.face_of(lb.y) == "front"), key=lambda lb: lb.x)
-    assert len(row) == 3
-    assert all(b.box()[0] - a.box()[2] >= fl.LED_LABEL_SPACING - 1e-6 for a, b in pairwise(row))
+PIXEL = 0.02
+
+
+def raster(path):
+    """Filled path on a PIXEL grid (even-odd, so letter counters stay open)."""
+    ext = path.get_extents()
+    xs = np.arange(ext.x0 - 0.5, ext.x1 + 0.5, PIXEL)
+    ys = np.arange(ext.y0 - 0.5, ext.y1 + 0.5, PIXEL)
+    gx, gy = np.meshgrid(xs, ys)
+    points = np.column_stack([gx.ravel(), gy.ravel()])
+    inside = np.zeros(len(points), dtype=bool)
+    for ring in path.to_polygons(closed_only=True):
+        if len(ring) > 3:
+            inside ^= fl.MplPath(ring).contains_points(points)
+    return inside.reshape(gx.shape)
+
+
+def opened(mask, radius):
+    """Morphological opening with a disc: what a tool of that radius can fill."""
+    r = round(radius / PIXEL)
+    offsets = [(dy, dx) for dy in range(-r, r + 1) for dx in range(-r, r + 1) if dx * dx + dy * dy <= r * r]
+
+    def shifted(m, dy, dx):
+        out = np.zeros_like(m)
+        out[max(dy, 0):m.shape[0] + min(dy, 0), max(dx, 0):m.shape[1] + min(dx, 0)] = \
+            m[max(-dy, 0):m.shape[0] + min(-dy, 0), max(-dx, 0):m.shape[1] + min(-dx, 0)]
+        return out
+
+    eroded = np.ones_like(mask)
+    for dy, dx in offsets:
+        eroded &= shifted(mask, dy, dx)
+    dilated = np.zeros_like(mask)
+    for dy, dx in offsets:
+        dilated |= shifted(eroded, dy, dx)
+    return dilated & mask
+
+
+def thin_fraction(path, stroke=fl.MIN_STROKE):
+    """Share of the ink in strokes narrower than `stroke`, which a powder
+    print (MJF / SLS) fills in or smears."""
+    mask = raster(path)
+    return 1 - opened(mask, stroke / 2).sum() / mask.sum()
+
+
+def test_legend_text_is_big_enough_for_a_powder_print(labels):
+    """The first MJF print (2026-11-09) had 0.85-2.6 mm letters 0.3 mm deep: unreadable."""
+    assert lcm.INLAY_DEPTH >= 0.6
+    assert all(lb.height >= fl.MIN_TEXT_H for lb in labels), [(lb.text, lb.height) for lb in labels]
+
+
+def test_legend_strokes_are_wide_enough_for_a_powder_print(labels):
+    thin = {lb.text: round(thin_fraction(lb.path()), 3) for lb in labels}
+    assert all(v <= 0.2 for v in thin.values()), thin
+
+
+def test_stroke_check_catches_the_old_small_text():
+    assert thin_fraction(fl.Label("STATUS", 0, 0, 0.85).path()) > 0.5
+
+
+def test_led_rings_and_brackets_print():
+    assert fl.RING_LINE >= fl.MIN_STROKE and fl.BRACKET_LINE >= fl.MIN_STROKE
+
+
+V3 = ef.VARIANT in ("v3", "v4")
+
+
+@pytest.fixture(scope="module")
+def side():
+    return fl.side_labels()
+
+
+@pytest.fixture(scope="module")
+def base():
+    return be.build_base().val()
+
+
+def ink_points(label, n=12):
+    mask = raster(label.path())
+    ext = label.path().get_extents()
+    ys, xs = np.nonzero(opened(mask, fl.MIN_STROKE / 2))
+    pick = np.linspace(0, len(xs) - 1, n).astype(int)
+    return [(ext.x0 - 0.5 + xs[i] * PIXEL, ext.y0 - 0.5 + ys[i] * PIXEL) for i in pick]
+
+
+@pytest.mark.skipif(not V3, reason="v3/v4 name the connectors on the right side")
+def test_connector_names_sit_on_the_right_side_next_to_their_connectors(side):
+    """User request 2026-11-09: KNX, AUX and DALI beside their connectors, not on the front."""
+    by_text = {lb.text: lb for lb in side}
+    assert set(by_text) == {"KNX", "AUX", "DALI"}
+    for text, pocket in (("KNX", be.plug_pocket("J1")), ("AUX", be.plug_pocket("J2"))):
+        z, _ = fl.side_to_enc(by_text[text].x, by_text[text].y)
+        assert pocket["z0"] < z < pocket["z1"], text
+        assert by_text[text].box()[1] > pocket["y1"], f"{text} above its pocket"
+    j3 = next(b for b in ef.part_boxes("body") if (b["board"], b["ref"]) == ("main", "J3"))
+    z, y = fl.side_to_enc(by_text["DALI"].x, by_text["DALI"].y)
+    assert j3["z0"] < z < j3["z1"] and j3["y0"] < y < j3["y1"]
+    assert not {"KNX", "AUX", "DALI"} & {lb.text for lb in fl.labels()}, "not repeated on the front"
+
+
+@pytest.mark.skipif(not V3, reason="v3/v4 name the connectors on the right side")
+def test_connector_names_are_engraved_into_solid_wall(side, base):
+    depth = lcm.INLAY_DEPTH
+    for label in side:
+        assert label.height >= fl.MIN_TEXT_H and thin_fraction(label.path()) <= 0.2, label.text
+        u0, v0, u1, v1 = label.box()
+        z_lo, z_hi = sorted((fl.side_to_enc(u0, v0)[0], fl.side_to_enc(u1, v1)[0]))
+        assert 0 < z_lo and z_hi < ef.BASE_TOP_Z and 0 < v0 and v1 < ef.HIDDEN_H, label.text
+        for u, v in ink_points(label):
+            z, y = fl.side_to_enc(u, v)
+            assert not base.isInside(cq.Vector(ef.WIDTH / 2 - depth / 2, y, z)), f"{label.text} not engraved"
+        for i in range(5):
+            for j in range(3):
+                u, v = u0 + (u1 - u0) * i / 4, v0 + (v1 - v0) * j / 2
+                z, y = fl.side_to_enc(u, v)
+                assert base.isInside(cq.Vector(ef.WIDTH / 2 - depth - 0.3, y, z)), f"no wall behind {label.text}"

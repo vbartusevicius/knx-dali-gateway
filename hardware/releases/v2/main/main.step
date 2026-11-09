@@ -1,7 +1,7 @@
 ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('KiCad electronic assembly'),'2;1');
-FILE_NAME('main.step','2026-10-27T13:59:15',('Pcbnew'),('Kicad'),
+FILE_NAME('main.step','2026-11-09T09:01:01',('Pcbnew'),('Kicad'),
   'Open CASCADE STEP processor 7.8','KiCad to STEP converter','Unknown'
   );
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));
@@ -95,8 +95,8 @@ SHAPE_REPRESENTATION_RELATIONSHIP() );
 #73 = PRODUCT_DEFINITION_SHAPE('','',#74);
 #74 = PRODUCT_DEFINITION('design','',#75,#78);
 #75 = PRODUCT_DEFINITION_FORMATION('','',#76);
-#76 = PRODUCT('Open CASCADE STEP translator 7.9 6',
-  'Open CASCADE STEP translator 7.9 6','',(#77));
+#76 = PRODUCT('Open CASCADE STEP translator 7.9 7',
+  'Open CASCADE STEP translator 7.9 7','',(#77));
 #77 = PRODUCT_CONTEXT('',#2,'mechanical');
 #78 = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');
 #79 = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#11,#80),#230);
@@ -510,8 +510,8 @@ SHAPE_REPRESENTATION_RELATIONSHIP() );
 #457 = PRODUCT_DEFINITION_SHAPE('','',#458);
 #458 = PRODUCT_DEFINITION('design','',#459,#462);
 #459 = PRODUCT_DEFINITION_FORMATION('','',#460);
-#460 = PRODUCT('Open CASCADE STEP translator 7.9 5',
-  'Open CASCADE STEP translator 7.9 5','',(#461));
+#460 = PRODUCT('Open CASCADE STEP translator 7.9 6',
+  'Open CASCADE STEP translator 7.9 6','',(#461));
 #461 = PRODUCT_CONTEXT('',#2,'mechanical');
 #462 = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');
 #463 = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#11,#464),#614);

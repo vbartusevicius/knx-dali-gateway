@@ -43,6 +43,16 @@
   digikey: 1951-2741-ND
   tme: '-'
   source: Mouser / Digi-Key / TME
+- item: DALI push-in terminal (hand-soldered, SMD)
+  qty: 1
+  kind: electronics
+  part: WAGO 2086-1202/700-000/997-604
+  description: 2-pole 3.5 mm SMD push-in terminal, push-buttons beside the wire entries,
+    0.14-1.5 mm2, strip 8-9 mm; solder onto main J3 (JLCPCB C3309855 has no stock)
+  mouser: '-'
+  digikey: 2946-2086-1202/700-000/997-604CT-ND
+  tme: '-'
+  source: Digi-Key / Farnell
 - item: KNX / AUX PCB pin strips (hand-soldered)
   qty: 2
   kind: electronics
@@ -101,8 +111,7 @@
   kind: utility
   part: flush cutters
   description: after soldering, cut every through-hole lead on main to <= 1.5 mm above
-    the back copper (REC3, sockets, PST strips, KF142R, JP1); the cover wall is 2.0
-    mm away
+    the back copper (REC3, sockets, PST strips, JP1); the cover wall is 2.0 mm away
   mouser: '-'
   digikey: '-'
   tme: '-'

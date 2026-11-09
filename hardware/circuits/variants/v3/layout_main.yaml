@@ -84,8 +84,22 @@ case:
   ribs:
     - { x: 3.0,  y: 0.6 }
     - { x: 37.0, y: 0.6 }
+    - { x: 11.9, y: 10.5 }
+    - { x: 31.9, y: 10.5 }
+    - { x: 11.9, y: 45.5 }
+    - { x: 31.9, y: 45.5 }
     - { x: 3.0,  y: 77.4 }
     - { x: 37.0, y: 77.4 }
+  # Base posts (2 x 2 mm, right wall -> 0.1 mm short of the front face) in
+  # front-side columns free of parts over the whole case width, so the board
+  # rests on the case instead of on C4 / U3 when the plugs are pushed in.
+  front_posts:
+    - { x: 34.9, y: 15.0 }
+    - { x: 32.9, y: 37.5 }
+    - { x: 11.4, y: 37.5 }
+    - { x: 38.7, y: 41.0 }
+    - { x: 16.1, y: 50.5 }
+    - { x: 6.9,  y: 61.5 }
 
 pad_ties: { U1: 41 }
 pin_bridges: { U1: [[9, 10]] }
@@ -95,7 +109,7 @@ heights:
   default: 1.2
   J1: 9.9
   J2: 9.9
-  J3: 11.1
+  J3: 8.15
   C4: 10.5
   L1: 4.5
   U3: 10.9
@@ -149,12 +163,12 @@ parts:
   D5:  { x: 34.4,  y: 40.2,  rot: 0,   block: dali_supply_off }
   C16: { x: 28.4,  y: 42.6,  rot: 0,   block: dcdc_iso }
 
-  # Top front (DALI): REC3 DC-DC on rear half, DALI optos across y 42..48, KF142R-5.08-2P
-  # push-in spring terminal J3 at top-front (flush with y=81), JP1 and current limiter
+  # Top front (DALI): REC3 DC-DC on rear half, DALI optos across y 42..48, WAGO 2086-1202
+  # SMD push-in terminal J3 at top-front (wire entry + push-buttons flush with y=81), JP1 and current limiter
   U3:  { x: 36.9,  y: 46.8,  rot: 180, block: dcdc_iso, locked: true }
   U5:  { x: 4.2,   y: 45.0,  rot: 90,  block: dali_tx_led, locked: true }
   U6:  { x: 11.2,  y: 45.0,  rot: -90, block: dali_rx, locked: true }
-  J3:  { x: 6.4,   y: 71.1,  rot: 180, block: dali_terminal, locked: true }
+  J3:  { x: 6.4,   y: 70.35, rot: 180, block: dali_terminal, locked: true }
   JP1: { x: 14.2,  y: 72.5,  rot: 0,   block: dali_switch, locked: true }
   Q1:  { x: 8.6,   y: 56.4,  rot: 0,   block: dali_limit }
   Q2:  { x: 15.6,  y: 60.8,  rot: 0,   block: dali_limit }

@@ -8,7 +8,7 @@ and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button lad
 | Variant | Width | Boards | Main-to-UI Link | DALI Terminal | KNX / AUX Terminals | OLED Display | Case Closure |
 |---|---|---|---|---|---|---|---|
 | **V2** (`v2`) | 2 DIN (`36 mm`) | 3 (`main`, `interface`, `ui`) | 10-pin JST-SH cable (`100 mm`) + 2 B2B headers (`1x4`, `1x3`) | MaiXu `MX126-5.0-02P` screw | Phoenix `PST 1,0` (KNX) + `MX126` screw (AUX) | Winstar `WEA012864D-03` 0.96" 128x64 (4-pin THT) | 2 x 2.5x10 screws + UI snap hooks |
-| **V3** (`v3`) | 1 DIN (`18 mm`) | 2 (`main` two-sided vertical, `ui`) | 8-pin 0.5 mm Type B FFC (`50 mm`, `C42416274`) | Kefa `KF142R-5.08-2P` push-in spring (`C475144`, 250 V 15 A) | Two Phoenix `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | `QG-6428TSWCG02` / `NFP1312-15AY` 0.96" `64×128` portrait `SSD1312` (`14 × 28 mm`, 14-pin 0.62 mm solder FPC) | Side-opening clamshell with 4 side snap-clicks + UI snaps |
+| **V3** (`v3`) | 1 DIN (`18 mm`) | 2 (`main` two-sided vertical, `ui`) | 8-pin 0.5 mm Type B FFC (`50 mm`, `C42416274`) | WAGO `2086-1202/700-000/997-604` 3.5 mm SMD push-in, buttons in the wire-entry face (hand-soldered; 160 V III / 320 V II) | Two Phoenix `PST 1,0` pin strips on `main` (red/black KNX + yellow/white AUX, right-side pockets) | `QG-6428TSWCG02` / `NFP1312-15AY` 0.96" `64×128` portrait `SSD1312` (`14 × 28 mm`, 14-pin 0.62 mm solder FPC) | Side-opening clamshell with 6 side snap-clicks + UI snaps |
 
 ## Unified XIAO ESP32-C6 Pin Map (`V2`, `V3`)
 

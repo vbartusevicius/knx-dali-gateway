@@ -50,6 +50,10 @@ def components(board):
     return {c["ref"]: c for c in json.loads(path.read_text())}
 
 
+def vertical_main():
+    return SPEC["boards"]["main"].get("plane") == "perpendicular-to-rail"
+
+
 def main_to_enc(x, y):
     return x - MAIN_W / 2, y + (HIDDEN_H - MAIN_H) / 2
 
@@ -213,10 +217,8 @@ def connector_faces():
     """Outer faces of the connector bodies at the case's top and bottom faces:
     the terminals' wire-entry faces and the KNX plug's underside."""
     if VARIANT in ("v3", "v4"):
-        main = components("main")
-        return {"J3": board_point("main", 0, main["J3"]["y"] + 8.40)[1],
-                "J1": board_point("main", 0, main["J1"]["bbox"]["y0"] + BODY_MARGIN)[1],
-                "J2": board_point("main", 0, main["J2"]["bbox"]["y0"] + BODY_MARGIN)[1]}
+        j3 = next(b for b in part_boxes("body") if (b["board"], b["ref"]) == ("main", "J3"))
+        return {"J3": j3["y1"], "J1": knx_plug("J1")["y0"], "J2": knx_plug("J2")["y0"]}
     main = components("main")
     faces = {ref: main_to_enc(0, max(y for _, y, _ in main[ref]["pads"]) + TERMINAL_PIN_TO_WIRE_FACE)[1]
              for ref in ("J2", "J3")}
@@ -245,6 +247,13 @@ def main_ribs():
     on the board's back face (layout case.ribs, board coordinates)."""
     return [board_point("main", p["x"], p["y"], -SPEC["boards"]["main"]["thickness"])
             for p in layout_plan("main").get("case", {}).get("ribs", [])]
+
+
+def front_posts():
+    """Base posts in front of a vertical main board, as enclosure (x, y, z)
+    points on the board's front face (layout case.front_posts)."""
+    return [board_point("main", p["x"], p["y"])
+            for p in layout_plan("main").get("case", {}).get("front_posts", [])]
 
 
 def standoffs():
@@ -312,6 +321,26 @@ THROUGH_FRONT = {"SW1", "SW2"}
 
 PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT in ("v3", "v4") else {("main", "J1")}
 
+# WAGO 243-211 KNX plug, measured with calipers (2026-11-09): 11.5 mm along
+# the pins, 10.2 mm along the wires and 10.2 mm along the pole pitch without
+# the butterfly key; each socket 3.5 mm from the back (the face opposite the
+# wire entries) and 2.5 mm from the key side. It seats on the PST 1,0 strip's
+# 2.8 mm plastic body.
+KNX_PLUG = {"along_pins": 11.5, "wire": 10.2, "pitch": 10.2, "socket_from_back": 3.5, "socket_from_key": 2.5,
+            "seat": 2.8, "key_depth": 1.0}
+
+
+def knx_plug(ref):
+    """Mated plug on a vertical-main PST strip as an enclosure box: pins along
+    +x, wire entries facing -y, butterfly key on the -z side."""
+    pins = [board_point("main", px, py) for px, py, _ in components("main")[ref]["pads"]]
+    p = KNX_PLUG
+    x0 = SPEC["boards"]["main"]["x"] + p["seat"]
+    y1 = pins[0][1] + p["socket_from_back"]
+    z0 = min(pz for _, _, pz in pins) - p["socket_from_key"]
+    return {"board": "main", "ref": ref, "x0": x0, "x1": x0 + p["along_pins"], "y0": y1 - p["wire"], "y1": y1,
+            "z0": z0, "z1": z0 + p["pitch"], "through_front": False}
+
 
 def part_boxes(outline="bbox"):
     """Every part as a box in enclosure coordinates: its outline (courtyard
@@ -326,6 +355,9 @@ def part_boxes(outline="bbox"):
                 boxes.append(horizontal)
                 continue
             plug = (board, ref) in PLUG_REFS
+            if plug and vertical_main():
+                boxes.append(knx_plug(ref))
+                continue
             h = PLUG_HEIGHT if plug else c["height"]
             base = 3.9 if plug else 0.0
             n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)

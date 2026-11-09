@@ -13,8 +13,8 @@ Generated data: [`rework-v3-rev-d/transfer.csv`](rework-v3-rev-d/transfer.csv), 
 | Board | Rev C → rev D | What to do |
 |---|---|---|
 | **UI** | identical: same 25 parts, positions and outline | **Keep the rev C UI board as it is.** Nothing to order or move. |
-| **Main** | new PCB: tongue for the 2 W AUX converter U9, re-placed parts | Order a new main PCB. **70 of 84 parts move** (same reference, value and footprint); **14 are new or changed**. |
-| **Enclosure** | rev D case (U9 channel, tongue, button tabs) | **Print the rev D enclosure** from `hardware/releases/v3/enclosure/`. The rev C print cannot take the tongue or U9. |
+| **Main** | new PCB: tongue for the 2 W AUX converter U9, re-placed parts | Order a new main PCB. **69 of 84 parts move** (same reference, value and footprint); **15 are new or changed** (J3 is now a WAGO 2086 terminal, 2026-11-09). |
+| **Enclosure** | rev D case (U9 channel, tongue, button tabs) | **Print the rev D enclosure** from `hardware/releases/v3/enclosure/`. The rev C print cannot take the tongue, U9 or the WAGO terminal, and had the print defects fixed on 2026-11-09 (fused latch, loose lip, unreadable text, tight KNX pockets). |
 
 ## 2. Order
 
@@ -33,6 +33,7 @@ all SMD work; the cost is a second set of SMD parts.
 | Ref | Value | Package | Qty (+ spare) | LCSC | Note |
 |---|---|---|---|---|---|
 | **U9** | TRACO **TMR 2411** (24 V → 5 V, 2 W, isolated) | SIP-8 | 1 | — | Mouser `495-TMR-2411`, Digi-Key `1951-2741-ND` |
+| **J3** | WAGO **2086-1202/700-000/997-604** DALI push-in terminal | SMD 3.5 mm 2-pole | 1 | — | Digi-Key `2946-2086-1202/700-000/997-604CT-ND`; replaces the KF142R, whose release buttons faced the case wall |
 | **U10** | TI **TPS2121RUXR** power mux | VQFN-HR-12 2 × 2.5 mm | 1 (+1) | C485916 | fine pitch; buy a spare |
 | C20 | 10 µF 50 V X5R | 0805 | 1 (+1) | C440198 | |
 | C21 | 10 µF 10 V | 0603 | 1 (+1) | C19702 | |
@@ -46,7 +47,7 @@ all SMD work; the cost is a second set of SMD parts.
 
 Leave the rev C R5, R16, R17, R18 and R21 on the old board (red on the maps): the values changed.
 
-**Optional, recommended: buy the passives new instead of moving them.** 35 of the 70 movable parts are
+**Optional, recommended: buy the passives new instead of moving them.** 35 of the 69 movable parts are
 0603/0805/1206 resistors and capacitors worth cents each. Reheated ceramic capacitors can crack
 invisibly, and moving them costs most of the time. Buying them turns the job into "move 35 real
 parts". They are the `assembler` rows with `R_`/`C_` footprints in `main_bom.csv`:
@@ -102,7 +103,7 @@ PST strips) and the UI board's parts (`ui:` designators), which you keep.
 |---|---|
 | Back side (U1, U10, Y1, D6-D10, Q3-Q6, R3, all back passives) | **Stencil + paste + reflow (oven or hotplate): yes, best.** QFN parts solder far more reliably this way than by hand. |
 | Front side SMD (U2, U4-U7, Q1, Q2, L1, L2, C4, D1-D5, F1, J4, passives) | Second reflow pass in the oven is fine: the back-side parts are light and stay put by surface tension. Use hot air instead if U1 is salvaged (see below). |
-| Through-hole: U3, U9, J1, J2, J3, JP1, XIAO sockets | **Soldering iron only.** Never reflow them; their plastic bodies are not rated for it. |
+| Through-hole: U3, U9, J1, J2, JP1, XIAO sockets | **Soldering iron only.** Never reflow them; their plastic bodies are not rated for it. |
 | XIAO | never heat; it plugs into its sockets |
 
 - **Oven:** use a reflow oven, or a toaster oven with a reflow controller and a thermocouple on the
@@ -135,7 +136,7 @@ been heated many times. Put each part in a labelled compartment or on tape on a 
 reference.
 
 1. **Hand-fit and through-hole parts (front):** unplug the XIAO (U8); desolder the two 1×7 sockets, U3
-   (REC3), J1/J2 (PST strips), J3 (KF142R terminal) and JP1. Pump each pin from the back with plenty of
+   (REC3), J1/J2 (PST strips) and JP1 (leave the rev C KF142R J3 on the old board). Pump each pin from the back with plenty of
    fresh solder first; for the PST strips and U3, flood all pins with low-melt alloy and lift the part
    out evenly. Skip any hand-fit part you never soldered.
 2. **Big front SMD parts:** C4 (470 µF electrolytic, note the polarity stripe), L1 and L2 (inductors),
@@ -181,11 +182,13 @@ fit the tall front parts.
    - Fit these one at a time with hot air (shield back-side parts and the board edge with foil):
      U2, U4–U6, U7, Q1, Q2, L1, L2, C4 (polarity), D1–D5, F1, J4, and the front passives (including
      the new R5).
-3. **Through-hole parts, last:** J3, JP1, the XIAO sockets, U3 (REC3; clip pins 3 and 11 flush first),
+3. **J3 (WAGO 2086, SMD):** tin one pad, place the terminal with its wire entries over the board edge, tack it, then
+   solder the other three pads with the iron; it is plastic, so no hot air on the housing.
+4. **Through-hole parts, last:** JP1, the XIAO sockets, U3 (REC3; clip pins 3 and 11 flush first),
    J1/J2 PST strips, and the new **U9 (TMR 2411)** on the tongue. U9 fits either way round in the
    footprint's outline, but pin 1 must go to the square pad: check the dot or notch on the part
    against the TRACO datasheet. Cut every lead on the back to **at most 1.5 mm**.
-4. **Cleaning and inspection:** clean with IPA, then inspect every joint under magnification. Look in
+5. **Cleaning and inspection:** clean with IPA, then inspect every joint under magnification. Look in
    particular at U1, U10, U7 and the SOT-23 parts.
 
 ## 6. Checks before power

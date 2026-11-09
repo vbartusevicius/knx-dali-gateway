@@ -67,15 +67,32 @@ Not needed when JLCPCB assembles the boards: then order only the hand-fit lines.
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
 - `main` J1, J2: two **Phoenix Contact 1574200** (PST 1,0/2-5,75) pin strips on
-  the bottom shoulder of `main` (pins pointing +x to the right), mated from the
-  right side through crafted pockets with 30-deg half-butterfly dovetail keyways
-  by the red/black KNX plug (`1574300`, bottom-front, flush with y=0) and the
-  yellow/grey 20-32 V AUX plug (`1574299`, bottom-rear, flush with y=0).
-  (`main` J3, the DALI push-in spring terminal `KF142R-5.08-2P`, LCSC `C475144`,
-  is JLC-assembled on the top shoulder of `main`.)
+  the bottom shoulder of `main` (pins pointing +x to the right). The red/black KNX
+  plug (front) and the yellow/grey 20-32 V AUX plug (rear) go in from the right
+  side into pockets sized for the WAGO 243-211 (11.5 x 10.2 x 10.2 mm, measured,
+  0.3 mm clearance all round, a slot for the butterfly key on the lower wall)
+  and sit on the strips, where their sockets meet the pins. Their wire entries
+  face down, about 2.8 mm inside the open bottom of the pockets. With the
+  11.5 mm plug, about 1 mm of it stands out of the case's right side: leave
+  that gap to the next device on the rail.
+- `main` J3: **WAGO 2086-1202/700-000/997-604**, the 2-pole 3.5 mm SMD DALI
+  push-in terminal. Hand-solder it (JLCPCB has none in stock; Digi-Key
+  `2946-2086-1202/700-000/997-604CT-ND`). Its wire entries and both release
+  buttons are in the face that sits in the top-wall opening: press a button
+  with a 2-2.5 mm flat screwdriver to release a wire. Strip 8-9 mm,
+  0.14-1.5 mm2. Rated 160 V (overvoltage cat. III) / 320 V (cat. II): fine for
+  DALI, not for a 230 V circuit.
 - `main` U3: RECOM **REC3-2415SRW/H2/A/CTRL** (or **REC3-2415SRW/H4/A/M/CTRL**, DIP-24, A pinning with pin 1 CTRL; clip unused pins 3 and 11 flush before soldering; or Mean Well **SCWN06B-15** / **SCW03B-15** if software PSU shut-off is not needed).
 - `main` U8: Seeed **XIAO ESP32C6 Pre-Soldered (SKU 102010636)** in two 1x7
   5.0 mm female headers (`assembly_parts.csv`).
+
+Legend (3 mm letters, 0.6 mm deep, so a powder print keeps them):
+- Right side of the base, next to the connectors: `KNX` above the front plug
+  pocket, `AUX` above the rear one, `DALI` level with the DALI terminal at the
+  top. They are engraved into `base.stl`, so every print has them.
+- Front (`cover_embossed.stl` only): the 18 mm face has room only for short
+  forms, `PRG` = PRG/RST button and `FN` = FUNC button. The three LED rings
+  are, from left to right, STATUS, KNX and DALI.
 
 Off-board parts (including the **0.96" 64x128 SSD1312** 14-pin `0.62 mm`-pitch
 OLED `QG-6428TSWCG02` / `NFP1312-15AY`, whose `12.0 mm` flex tail folds through

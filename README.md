@@ -82,7 +82,7 @@ Two variants share the circuit blocks (`hardware/circuits/blocks/`), the XIAO ES
 | Width | 1 DIN (18 mm) | 2 DIN (36 mm) |
 | Boards | 2: two-sided vertical `main`, front `ui` | 3: `main`, `interface`, `ui` |
 | AUX core converter | TRACO TMR 2411 (2 W), on a tongue of `main` in the front protrusion | TRACO TRN 3-2411 (3 W), on the back of `main` |
-| DALI terminal | Kefa KF142R push-in | MX126 screw |
+| DALI terminal | WAGO 2086 push-in (SMD, hand-soldered), buttons beside the wire entries | MX126 screw |
 | KNX / AUX | PST 1,0 pin strips (red/black, yellow/white plugs) | PST 1,0 KNX, MX126 screw AUX |
 | Display | 0.96" 64×128 portrait SSD1312, solder flex tail | 0.96" 128×64 SSD1306 module, 4-pin header |
 | Buttons | Omron B3U pressed through C-shaped spring tabs in the cover | same |

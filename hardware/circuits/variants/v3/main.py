@@ -56,9 +56,10 @@ def build():
 
     block("dali_terminal")
     dali_conn = part("Connector", "Screw_Terminal_01x02", "DALI bus (push-in)",
-                     "gateway_fp:TerminalBlock_Kefa_KF142R-5.08-2P",
-                     src(mpn="KF142R-5.08-2P", mfr="Cixi Kefa Elec", lcsc="C475144",
-                         source="2-pole 5.08 mm right-angle push-in spring-clamp terminal block (250 V, 15 A, 1.5 mm2)"),
+                     "gateway_fp:TerminalBlock_WAGO_2086-1202_SMD",
+                     src(mpn="2086-1202/700-000/997-604", mfr="WAGO", hand=True,
+                         source="2-pole 3.5 mm SMD push-in terminal, push-button in the wire-entry direction "
+                                "(160 V III/2, 320 V II/2; JLCPCB C3309855 has no stock: hand-soldered)"),
                      ref="J3")
     dali_conn[1] += da1
     dali_conn[2] += da2

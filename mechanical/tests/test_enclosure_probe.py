@@ -188,7 +188,7 @@ def test_rail_channel_matches_ts35(solids):
 
 
 def test_back_is_at_most_5mm_deep(solids):
-    x = ef.WIDTH / 2 - 2
+    x = ef.WIDTH / 2 - be.LATCH["skin"] / 2
     assert not solid_at(solids, x, 5, -be.BACK_DEPTH - 0.2)
     assert solid_at(solids, x, 5, -be.BACK_DEPTH + 0.2)
 
@@ -208,15 +208,16 @@ def test_latch_lip_has_a_lead_in(solids):
 
 def test_latch_slides_on_its_flexures(solids):
     l = be.LATCH
-    w, g, b = l["half_width"], l["gap"], l["beam"]
+    w, g, b, n = l["half_width"], l["gap"], l["beam"], l["legs"]
     z = -be.BACK_DEPTH / 2
-    assert not solid_at(solids, w + g / 2, 16, z)
-    assert not solid_at(solids, w + g / 2, -2, z)
-    y_beam = l["beam_ys"][0]
-    x_beam = (w + l["beam_reach"]) / 2
-    assert solid_at(solids, x_beam, y_beam + b / 2, z)
-    assert not solid_at(solids, x_beam, (l["beam_ys"][0] + l["beam_ys"][1]) / 2, z)
-    assert not solid_at(solids, x_beam, y_beam - l["travel"] / 2, z)
+    pitch = b + g
+    x_leg = (w + g + l["reach"]) / 2
+    assert not solid_at(solids, w + g / 2, l["y0"] + b + g / 2, z)
+    assert not solid_at(solids, w + g / 2, -g / 2, z)
+    for i in range(n):
+        assert solid_at(solids, x_leg, l["y0"] + i * pitch + b / 2, z)
+        assert not solid_at(solids, x_leg, l["y0"] + i * pitch + b + g / 2, z)
+    assert not solid_at(solids, x_leg, l["y0"] - l["travel"] / 2, z)
 
 
 def test_latch_tab_sticks_out_below_the_case_with_a_front_facing_hole(solids):

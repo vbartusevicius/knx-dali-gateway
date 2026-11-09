@@ -20,8 +20,8 @@ terminals:
     board: main
     shoulder: top
     poles: 2
-    pitch: 5.08
-    type: push-in spring terminal (Kefa KF142R-5.08-2P), wire entry in the top face
+    pitch: 3.5
+    type: push-in spring terminal (WAGO 2086-1202 SMD), wire entry and push-buttons in the top face
     labels: [DA, DA]
   aux_dc:
     board: main

@@ -5,7 +5,8 @@
 Component volumes come from enclosure_features.part_boxes (the same boxes the
 collision tests check), rendered with realistic package geometry and materials
 (aluminium electrolytic cans, XIAO sockets + PCB + RF shield + USB-C, green
-KF142R push-in terminal with orange push-buttons, white SO-6L optocouplers with
+KF142R push-in terminal with orange push-buttons, black WAGO 2086 push-in
+terminal, white SO-6L optocouplers with
 leads, DPAK with heatsink tab, ceramic caps with silver end caps, resistors,
 diodes with cathode bands, ZIF FFC connectors with latches, etc.).
 Writes mechanical/build/<variant>/assembly.step and renders/*.png.
@@ -144,6 +145,15 @@ def realistic_part(b, comp):
                 housing = housing.cut(h)
             return [(housing, GREEN_TERM)] + [(bt, ORANGE_BTN) for bt in btns]
         return [(box(x0, x1, y0, y1, z0, z1), GREEN_TERM)]
+
+    # WAGO 2086 SMD push-in terminal: black housing, wire entries and push-buttons in the top face
+    if "WAGO_2086" in fp:
+        housing = box(x0, x1, y0, y1, z0, z1)
+        if perp:
+            for z in (cz - 1.75, cz + 1.75):
+                housing = housing.cut(box(x0 + 0.8, x0 + 3.2, y1 - 2.0, y1 + 0.1, z - 0.8, z + 0.8))
+                housing = housing.cut(box(x0 + 4.0, x1 - 0.8, y1 - 1.0, y1 + 0.1, z - 0.6, z + 0.6))
+        return [(housing, PART)]
 
     # SMD 470 uF electrolytic capacitor (CP_Elec_10x10): black base + silver cylindrical can
     if "CP_Elec" in fp:

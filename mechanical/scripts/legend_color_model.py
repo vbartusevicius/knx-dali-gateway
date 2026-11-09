@@ -19,7 +19,7 @@ from matplotlib.path import Path as MplPath
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "mechanical/build" / ef.VARIANT
-INLAY_DEPTH = 0.3
+INLAY_DEPTH = 0.6
 TOLERANCE = 0.02
 FACE_Z = {"front": ef.TOTAL_D, "top": ef.SHOULDER_Z["top"], "bottom": ef.SHOULDER_Z["bottom"]}
 
