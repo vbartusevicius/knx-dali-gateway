@@ -82,7 +82,6 @@ STANDOFF_DIAMETER = 3.0
 LED_WINDOW = 2.2 if VARIANT == "v3" else 3.0
 BAFFLE_WALL = 0.4 if VARIANT == "v3" else 0.8
 BUTTON_HOLE = 2.6 if VARIANT == "v3" else 4.0
-KNX_OPENING = 10.6
 SCREW_HOLE = 3.2 if VARIANT == "v3" else 4.0
 CASE_SCREW = {"pilot": 2.2, "clearance": 2.8, "depth": 8.5, "z": BASE_TOP_Z - 2.0}
 SCREW_TAB = {"width": 4.0 if VARIANT == "v3" else 5.0, "depth": 8.5,
@@ -289,11 +288,23 @@ def screw_cylinder(tab, diameter, y0, y1):
 
 
 def knx_recess():
-    """The KNX plug sits in a recess open to the front and to the bottom face,
-    so the bus cable can come in from below and the plug lifts straight out."""
-    knx = terminal_holes()["KNX"][0]
-    half = KNX_OPENING / 2
-    return knx["x"] - half, knx["x"] + half, knx["y"] + half
+    """x0, x1 and top y of the KNX plug's pocket: the measured plug
+    (enclosure_features.KNX_PLUG, sockets on the pins) plus PLUG_CLEARANCE.
+    On v2 it is open to the front and to the bottom face, so the bus cable
+    comes in from below and the plug lifts straight out."""
+    p, c = knx_plug("J1"), PLUG_CLEARANCE
+    return p["x0"] - c, p["x1"] + c, p["y1"] + c
+
+
+KNX_WALL = 1.2
+
+
+def knx_pocket_walls():
+    """v2 cover pocket walls: x extent (key slot on +x) and bottom z, 0.3 mm
+    above the PST strip so they never touch the board."""
+    x0, x1, _ = knx_recess()
+    return (x0 - KNX_WALL, min(x1 + PLUG_KEY["depth"] + KNX_WALL, INNER_W / 2 - 0.2),
+            knx_plug("J1")["z0"] + PLUG_CLEARANCE)
 
 
 def knx_pin_centres(board="main", ref="J1"):
@@ -531,7 +542,6 @@ def build_base():
     base = base.cut(pocket).union(latch)
     for slot in wire_entries():
         base = base.cut(box(slot["x0"], slot["x1"], HIDDEN_H - WALL - 1, HIDDEN_H + 1, slot["z0"], slot["z1"]))
-    x0, x1, _y1 = knx_recess()
     if VARIANT == "v3":
         # J1 (KNX red/black, front) and J2 (AUX yellow/white, rear): pins point
         # +x, wire entries face down (-y); each plug sits on its PST strip in a
@@ -551,7 +561,8 @@ def build_base():
             base = base.cut(box(vx - 0.45, vx + 0.45, HIDDEN_H - WALL - 0.1, HIDDEN_H + 0.1, 7.5, 12.5))
 
     else:
-        base = base.cut(box(x0 - 1.25, min(x1 + 1.85, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
+        x0, x1, _ = knx_pocket_walls()
+        base = base.cut(box(x0 - 0.05, min(x1 + 0.05, INNER_W / 2), -1, WALL + 1, MAIN_Z + 2.8, BASE_TOP_Z + 1))
     for body in leg_bodies() + capacitor_cradles() + post_bodies():
         base = base.union(walls_clip(body))
     for cut in shoulder_snap_keepers() + board_edge_reliefs() + front_part_reliefs():
@@ -692,20 +703,16 @@ def build_cover():
     for slot, tongue in snap_geometry():
         cover = cover.cut(slot).union(tongue)
     if VARIANT != "v3":
-        # Crafted inverted-L pocket on the cover: reaches down to z = MAIN_Z + 2.8
-        # with a 1.0 mm floor over the PST 1,0 plastic strip, two 2.2 mm holes for
-        # the protruding KNX pins, 1.2 mm side/top walls protecting the board, and
-        # a coding notch on the right (+) wall for the red half's key tab.
+        # Pocket hanging from the bottom shoulder around the KNX plug, which
+        # sits on its PST strip (no floor in between); open to the front and
+        # the bottom, with a slot for the butterfly key on the +x wall.
         x0, x1, y1 = knx_recess()
-        pins = knx_pin_centres("main", "J1")
-        pins[0][1]
-        x_hi = min(x1 + 1.8, INNER_W / 2 - 0.2)
-        pocket = box(x0 - 1.2, x_hi, 0.0, y1 + 1.2, MAIN_Z + 2.8, SHOULDER_Z["bottom"])
-        cover = cover.union(pocket)
-        cover = cover.cut(box(x0, x1, -1, y1, MAIN_Z + 3.8, SHOULDER_Z["bottom"] + 1))
-        cover = cover.cut(dovetail_xy(x1, y1 - 3.3, MAIN_Z + 3.8, SHOULDER_Z["bottom"] + 1))
-        for px, py_p, _ in pins:
-            cover = cover.cut(cylinder(px, py_p, MAIN_Z + 2.0, MAIN_Z + 4.5, 2.2))
+        w_x0, w_x1, z_wall = knx_pocket_walls()
+        back = knx_plug("J1")["y1"]
+        cover = cover.union(box(w_x0, w_x1, 0.0, y1 + KNX_WALL, z_wall, SHOULDER_Z["bottom"]))
+        cover = cover.cut(box(x0, x1, -1, y1, z_wall - 1, SHOULDER_Z["bottom"] + 1))
+        cover = cover.cut(box(x1 - 0.01, x1 + PLUG_KEY["depth"], back - PLUG_KEY["from_back"][1],
+                              back - PLUG_KEY["from_back"][0], z_wall - 1, SHOULDER_Z["bottom"] + 1))
     if VARIANT != "v3":
         for name in ("DALI", "AUX"):
             for hole in terminal_holes()[name]:

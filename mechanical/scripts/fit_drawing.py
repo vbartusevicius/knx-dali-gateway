@@ -27,7 +27,6 @@ MAIN_TOP_Z = SPEC["boards"]["main"].get("z", 21.2)
 MAIN_THICK = SPEC["boards"]["main"]["thickness"]
 UI_BOTTOM_Z = SPEC["front_ui"]["board_z"]
 UI_THICK = SPEC["boards"]["ui"]["thickness"]
-PLUG_HEIGHT = 11.5
 LABELLED = {"main": {"J1", "J2", "J3", "J4", "J5", "J6", "JP1", "U8", "U7", "U5", "U4", "C4", "U3", "U2", "U1"},
             "ui": {"SW1", "SW2", "D1", "D2", "D3", "J1", "J2"},
             "interface": {"J1", "J2", "U1", "U2"},

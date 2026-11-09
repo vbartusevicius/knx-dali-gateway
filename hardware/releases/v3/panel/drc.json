@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-11-09T09:18:28",
+    "date": "2026-11-09T11:05:27",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -522,7 +522,7 @@
                         "x": 39.8,
                         "y": -28.775
                     },
-                    "uuid": "e8bb898a-7141-4d15-929a-a7f0bfd3e374"
+                    "uuid": "c4998fa6-edd1-4094-86ee-5eee4c6114de"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -568,7 +568,7 @@
                         "x": 41.8,
                         "y": -40.5
                     },
-                    "uuid": "674351d2-9f38-44b5-8f32-585b5e778b90"
+                    "uuid": "160d9640-b46c-469a-86cd-8f5a8543d44a"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -632,66 +632,20 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
-                    "description": "NPTH pad of MB7",
+                    "description": "NPTH pad of MB6",
                     "pos": {
-                        "x": 39.949999,
-                        "y": -29.475
-                    },
-                    "uuid": "13c9254e-4788-4f07-8364-ef60e7d5356a"
-                },
-                {
-                    "description": "NPTH pad of MB5",
-                    "pos": {
-                        "x": 39.949999,
+                        "x": 41.65,
                         "y": -30.075
                     },
-                    "uuid": "21737fd4-bc0e-4888-ac14-e49741688060"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB5",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -30.075
-                    },
-                    "uuid": "21737fd4-bc0e-4888-ac14-e49741688060"
+                    "uuid": "38e328f6-41bd-4a35-ba4e-66d789756b02"
                 },
-                {
-                    "description": "NPTH pad of MB3",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -30.675
-                    },
-                    "uuid": "2c9cbd69-0338-4e77-bf30-fbbe223a0ea4"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
                 {
                     "description": "NPTH pad of MB8",
                     "pos": {
                         "x": 41.65,
                         "y": -29.475
                     },
-                    "uuid": "381537d0-1e66-497c-b61b-cd57298603a3"
-                },
-                {
-                    "description": "NPTH pad of MB6",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -30.075
-                    },
-                    "uuid": "c06d4db9-53bd-44bd-a44f-de36e2fecc56"
+                    "uuid": "bc3b5da6-a4eb-4357-a0c6-1c625c53f273"
                 }
             ],
             "severity": "warning",
@@ -700,90 +654,21 @@
         {
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
-                {
-                    "description": "NPTH pad of MB3",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -30.675
-                    },
-                    "uuid": "2c9cbd69-0338-4e77-bf30-fbbe223a0ea4"
-                },
                 {
                     "description": "NPTH pad of MB1",
                     "pos": {
                         "x": 39.949999,
                         "y": -31.275
                     },
-                    "uuid": "4d33df67-adde-4546-8245-9b11e7bb4d69"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB11",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -10.425
-                    },
-                    "uuid": "214f5040-b05a-4915-8e20-4d3a7287fbc5"
+                    "uuid": "0c1362a2-8d4e-4af8-8dfe-c8a38d3073c9"
                 },
                 {
-                    "description": "NPTH pad of MB13",
+                    "description": "NPTH pad of MB3",
                     "pos": {
                         "x": 39.949999,
-                        "y": -9.825
-                    },
-                    "uuid": "4eefc6f6-be3e-45fc-b73f-94b45ea49e39"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB11",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -10.425
-                    },
-                    "uuid": "214f5040-b05a-4915-8e20-4d3a7287fbc5"
-                },
-                {
-                    "description": "NPTH pad of MB9",
-                    "pos": {
-                        "x": 39.949999,
-                        "y": -11.025
-                    },
-                    "uuid": "7e16e567-b9b9-4a05-8624-527b4a904e81"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB4",
-                    "pos": {
-                        "x": 41.65,
                         "y": -30.675
                     },
-                    "uuid": "3a8e9cd0-188f-4ea8-8bc2-ea4e9ef53eb9"
-                },
-                {
-                    "description": "NPTH pad of MB2",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -31.275
-                    },
-                    "uuid": "a60ea677-ff36-48ca-8494-261ffc2a882a"
+                    "uuid": "28a15a52-68f4-49ee-bf33-1d8f61102be0"
                 }
             ],
             "severity": "warning",
@@ -798,7 +683,7 @@
                         "x": 39.949999,
                         "y": -9.225
                     },
-                    "uuid": "0ef03f00-ee5a-4b87-b7db-692dd1071b4d"
+                    "uuid": "ac798d68-d7a6-40d4-ab70-238d95a264d3"
                 },
                 {
                     "description": "NPTH pad of MB13",
@@ -806,7 +691,7 @@
                         "x": 39.949999,
                         "y": -9.825
                     },
-                    "uuid": "4eefc6f6-be3e-45fc-b73f-94b45ea49e39"
+                    "uuid": "e33f7abc-e149-49ee-b0d7-c3ac72f00c00"
                 }
             ],
             "severity": "warning",
@@ -816,58 +701,35 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
-                    "description": "NPTH pad of MB14",
+                    "description": "NPTH pad of MB7",
                     "pos": {
-                        "x": 41.65,
-                        "y": -9.825
+                        "x": 39.949999,
+                        "y": -29.475
                     },
-                    "uuid": "91b74148-b59a-454a-bc36-03b33867e185"
+                    "uuid": "4ef18aef-6a57-4478-a980-aeeaef5768c4"
                 },
+                {
+                    "description": "NPTH pad of MB5",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -30.075
+                    },
+                    "uuid": "f27144a6-5d21-4c19-8f58-64649dfe6a49"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
                 {
                     "description": "NPTH pad of MB16",
                     "pos": {
                         "x": 41.65,
                         "y": -9.225
                     },
-                    "uuid": "a1ba97b8-33d2-425c-a313-9530ed2bf6db"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB10",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -11.025
-                    },
-                    "uuid": "1dcbb3e9-5ede-4862-b38b-0a3b4cdaed5b"
-                },
-                {
-                    "description": "NPTH pad of MB12",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -10.425
-                    },
-                    "uuid": "51c101ee-3c12-4f71-838a-e35613f0bc60"
-                }
-            ],
-            "severity": "warning",
-            "type": "hole_to_hole"
-        },
-        {
-            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
-            "items": [
-                {
-                    "description": "NPTH pad of MB12",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -10.425
-                    },
-                    "uuid": "51c101ee-3c12-4f71-838a-e35613f0bc60"
+                    "uuid": "544006d9-9aba-4f79-8275-ac54a6a8be34"
                 },
                 {
                     "description": "NPTH pad of MB14",
@@ -875,7 +737,7 @@
                         "x": 41.65,
                         "y": -9.825
                     },
-                    "uuid": "91b74148-b59a-454a-bc36-03b33867e185"
+                    "uuid": "a03fc004-c46c-42b7-8872-c21c00a75637"
                 }
             ],
             "severity": "warning",
@@ -885,20 +747,158 @@
             "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
             "items": [
                 {
+                    "description": "NPTH pad of MB14",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -9.825
+                    },
+                    "uuid": "a03fc004-c46c-42b7-8872-c21c00a75637"
+                },
+                {
+                    "description": "NPTH pad of MB12",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -10.425
+                    },
+                    "uuid": "b58f98de-e7f5-4cc3-a4d7-7d46573d80e1"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MB3",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -30.675
+                    },
+                    "uuid": "28a15a52-68f4-49ee-bf33-1d8f61102be0"
+                },
+                {
+                    "description": "NPTH pad of MB5",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -30.075
+                    },
+                    "uuid": "f27144a6-5d21-4c19-8f58-64649dfe6a49"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MB11",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -10.425
+                    },
+                    "uuid": "30be52f8-f6ab-4d27-84a6-19e645451073"
+                },
+                {
+                    "description": "NPTH pad of MB13",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -9.825
+                    },
+                    "uuid": "e33f7abc-e149-49ee-b0d7-c3ac72f00c00"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MB2",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -31.275
+                    },
+                    "uuid": "71f6bb67-8b90-40f2-ac1b-f195d2458862"
+                },
+                {
                     "description": "NPTH pad of MB4",
                     "pos": {
                         "x": 41.65,
                         "y": -30.675
                     },
-                    "uuid": "3a8e9cd0-188f-4ea8-8bc2-ea4e9ef53eb9"
+                    "uuid": "778b1135-7483-41a4-82a1-003f0a6f9ebb"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MB11",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -10.425
+                    },
+                    "uuid": "30be52f8-f6ab-4d27-84a6-19e645451073"
                 },
+                {
+                    "description": "NPTH pad of MB9",
+                    "pos": {
+                        "x": 39.949999,
+                        "y": -11.025
+                    },
+                    "uuid": "3404e985-a969-4732-93a1-77d8a2f97786"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
+                {
+                    "description": "NPTH pad of MB12",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -10.425
+                    },
+                    "uuid": "b58f98de-e7f5-4cc3-a4d7-7d46573d80e1"
+                },
+                {
+                    "description": "NPTH pad of MB10",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -11.025
+                    },
+                    "uuid": "f709aa93-f129-47f7-be15-fdd3af16eb53"
+                }
+            ],
+            "severity": "warning",
+            "type": "hole_to_hole"
+        },
+        {
+            "description": "Drilled hole too close to other hole (board setup constraints min 0.2500 mm; actual 0.1000 mm)",
+            "items": [
                 {
                     "description": "NPTH pad of MB6",
                     "pos": {
                         "x": 41.65,
                         "y": -30.075
                     },
-                    "uuid": "c06d4db9-53bd-44bd-a44f-de36e2fecc56"
+                    "uuid": "38e328f6-41bd-4a35-ba4e-66d789756b02"
+                },
+                {
+                    "description": "NPTH pad of MB4",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -30.675
+                    },
+                    "uuid": "778b1135-7483-41a4-82a1-003f0a6f9ebb"
                 }
             ],
             "severity": "warning",
@@ -2763,30 +2763,7 @@
                         "x": 41.65,
                         "y": -29.475
                     },
-                    "uuid": "381537d0-1e66-497c-b61b-cd57298603a3"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_over_copper"
-        },
-        {
-            "description": "Silkscreen clipped by solder mask",
-            "items": [
-                {
-                    "description": "Segment on F.Silkscreen",
-                    "pos": {
-                        "x": 41.8,
-                        "y": -39.5
-                    },
-                    "uuid": "3a5c8971-2e87-4e49-906b-004f090ab2c0"
-                },
-                {
-                    "description": "NPTH pad of MB2",
-                    "pos": {
-                        "x": 41.65,
-                        "y": -31.275
-                    },
-                    "uuid": "a60ea677-ff36-48ca-8494-261ffc2a882a"
+                    "uuid": "bc3b5da6-a4eb-4357-a0c6-1c625c53f273"
                 }
             ],
             "severity": "warning",
@@ -2809,7 +2786,30 @@
                         "x": 41.65,
                         "y": -30.075
                     },
-                    "uuid": "c06d4db9-53bd-44bd-a44f-de36e2fecc56"
+                    "uuid": "38e328f6-41bd-4a35-ba4e-66d789756b02"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment on F.Silkscreen",
+                    "pos": {
+                        "x": 41.8,
+                        "y": -39.5
+                    },
+                    "uuid": "3a5c8971-2e87-4e49-906b-004f090ab2c0"
+                },
+                {
+                    "description": "NPTH pad of MB2",
+                    "pos": {
+                        "x": 41.65,
+                        "y": -31.275
+                    },
+                    "uuid": "71f6bb67-8b90-40f2-ac1b-f195d2458862"
                 }
             ],
             "severity": "warning",
@@ -2832,7 +2832,7 @@
                         "x": 41.65,
                         "y": -30.675
                     },
-                    "uuid": "3a8e9cd0-188f-4ea8-8bc2-ea4e9ef53eb9"
+                    "uuid": "778b1135-7483-41a4-82a1-003f0a6f9ebb"
                 }
             ],
             "severity": "warning",
@@ -3218,12 +3218,12 @@
                     "uuid": "3622e666-a781-4aa0-912c-5df77689ab8b"
                 },
                 {
-                    "description": "PTH pad 2 [GNDA] of J2",
+                    "description": "PTH pad 1 [AUX_IN] of J2",
                     "pos": {
-                        "x": 17.5,
+                        "x": 23.25,
                         "y": -8.0
                     },
-                    "uuid": "86c24849-5e02-456d-bdb8-c78319d607c1"
+                    "uuid": "602fd820-35d4-4565-8144-9d13b14a6841"
                 }
             ],
             "severity": "warning",
@@ -3241,12 +3241,12 @@
                     "uuid": "3622e666-a781-4aa0-912c-5df77689ab8b"
                 },
                 {
-                    "description": "PTH pad 1 [AUX_IN] of J2",
+                    "description": "PTH pad 2 [GNDA] of J2",
                     "pos": {
-                        "x": 23.25,
+                        "x": 17.5,
                         "y": -8.0
                     },
-                    "uuid": "602fd820-35d4-4565-8144-9d13b14a6841"
+                    "uuid": "86c24849-5e02-456d-bdb8-c78319d607c1"
                 }
             ],
             "severity": "warning",

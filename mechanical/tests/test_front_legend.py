@@ -28,7 +28,8 @@ def test_every_label_sits_on_one_face(labels):
 def test_labels_clear_openings_and_each_other(labels):
     boxes = [lb.box() for lb in labels]
     hits = [lb.text for lb in labels for _, *o in fl.openings() if fl.overlaps(lb.box(), o)]
-    pairs = [(a.text, b.text) for i, a in enumerate(labels) for b in labels[i + 1:] if fl.overlaps(a.box(), b.box())]
+    pairs = [(a.text, b.text) for i, a in enumerate(labels) for b in labels[i + 1:]
+             if fl.overlaps(a.box(), b.box(), fl.LABEL_SPACING - 1e-6)]   # the first v2 print read "DADA"
     assert not hits and not pairs, (hits, pairs, len(boxes))
 
 
@@ -38,7 +39,7 @@ def test_dali_bracket_encloses_both_pairs_without_touching_text(labels):
     outline = fl.union(strokes)
     assert fl.inside(outline, fl.faces()["top"])
     assert not [o for _, *o in fl.openings() if fl.overlaps(outline, o)]
-    touching = [lb.text for lb in labels for s in strokes if fl.overlaps(s, lb.box(), fl.LABEL_SPACING)]
+    touching = [lb.text for lb in labels for s in strokes if fl.overlaps(s, lb.box(), fl.STROKE_SPACING)]
     assert not touching, f"bracket strokes touch {touching}"
     pin_texts = [lb for lb in labels if lb.text in ("DA", "+", "\u2212") and fl.face_of(lb.y) == "top"]
     assert all(outline[0] < lb.box()[0] and lb.box()[2] < outline[2] for lb in pin_texts)
@@ -73,7 +74,8 @@ def test_every_marking_is_present(labels):
     for text in expected:
         assert text in texts
     if ef.VARIANT not in ("v3", "v4"):
-        assert texts.count("DA") == 2 and texts.count("+") == 2 and texts.count("\u2212") == 2
+        assert texts.count("DA") == 0 and texts.count("+") == 1 and texts.count("\u2212") == 1
+        assert not signs(labels, "bottom"), "the keyed KNX plug needs no +/-"
 
 
 def signs(labels, face):
@@ -81,9 +83,9 @@ def signs(labels, face):
 
 
 @pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 puts KNX and AUX on the right side without front +/-")
-@pytest.mark.parametrize(("ref", "face"), [("J1", "bottom"), ("J2", "top")])
+@pytest.mark.parametrize(("ref", "face"), [("J2", "top")])
 def test_plus_is_over_pin_1(labels, ref, face):
-    """KNX J1 pin 1 is KNX+ and AUX J2 pin 1 the fused + input (blocks/knx.py, blocks/dali.py)."""
+    """AUX J2 pin 1 is the fused + input (blocks/dali.py)."""
     pads = {p[2]: ef.main_to_enc(p[0], p[1])[0] for p in ef.components("main")[ref]["pads"]}
     pair = signs(labels, face)
     assert abs(pair["+"].x - pads["1"]) < abs(pair["+"].x - pads["2"])
@@ -91,7 +93,7 @@ def test_plus_is_over_pin_1(labels, ref, face):
 
 
 @pytest.mark.skipif(ef.VARIANT in ("v3", "v4"), reason="v3/v4 puts KNX and AUX on the right side without front +/-")
-@pytest.mark.parametrize("face", ["bottom", "top"])
+@pytest.mark.parametrize("face", ["top"])
 def test_signs_side_by_side_share_one_axis(labels, face):
     plus, minus = signs(labels, face).values()
     centre = [(b[1] + b[3]) / 2 for b in (plus.box(), minus.box())]
@@ -157,8 +159,18 @@ def test_stroke_check_catches_the_old_small_text():
     assert thin_fraction(fl.Label("STATUS", 0, 0, 0.85).path()) > 0.5
 
 
-def test_led_rings_and_brackets_print():
-    assert fl.RING_LINE >= fl.MIN_STROKE and fl.BRACKET_LINE >= fl.MIN_STROKE
+def test_brackets_print():
+    assert fl.BRACKET_LINE >= fl.MIN_STROKE
+
+
+def test_no_rings_around_the_leds():
+    """User decision 2026-11-09: the LED windows get no debossed rings."""
+    import cadquery as cq
+    legend = lcm.legend_bodies().val()
+    for w in ef.led_windows():
+        r = be.LED_WINDOW / 2 + 0.3
+        for dx, dy in ((r, 0), (-r, 0), (0, r), (0, -r)):
+            assert not legend.isInside(cq.Vector(w["x"] + dx, w["y"] + dy, lcm.FACE_Z["front"] - lcm.INLAY_DEPTH / 2))
 
 
 V3 = ef.VARIANT in ("v3", "v4")

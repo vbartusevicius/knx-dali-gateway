@@ -122,15 +122,16 @@ def test_connector_faces_flush_with_the_top_and_bottom_faces():
         return
     assert abs(faces["J2"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
     assert abs(faces["J3"] - ef.HIDDEN_H) <= FLUSH_TOLERANCE
-    assert abs(faces["J1"]) <= FLUSH_TOLERANCE
+    assert 0 <= faces["J1"] <= PLUG_RECESS_MAX
 
 
 def test_knx_plug_top_below_the_shoulder_face():
+    plug_top = max(b["z1"] for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS)
     if ef.VARIANT in ("v3", "v4"):
-        plug_top = max(b["z1"] for b in ef.part_boxes() if (b["board"], b["ref"]) in ef.PLUG_REFS)
         assert 0 <= ef.SHOULDER_Z["bottom"] - plug_top <= 8.0
         return
-    plug_top = MAIN_TOP_Z + ef.PLUG_HEIGHT
+    # v2: the measured 11.5 mm WAGO 243-211 seated on the PST strip (the first
+    # model assumed 7.6 mm on a 1 mm floor and let the real plug stand 1.5 mm proud)
     assert 0 <= ef.SHOULDER_Z["bottom"] - plug_top <= 1.5
 
 

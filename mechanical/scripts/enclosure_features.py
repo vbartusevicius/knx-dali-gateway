@@ -191,8 +191,34 @@ def layout_plan(board):
     return yaml.safe_load((REPO / "hardware/circuits/variants" / VARIANT / f"layout_{board}.yaml").read_text())
 
 
-PLUG_HEIGHT = 11.5
-BODY_MARGIN = 0.5
+# WAGO 243-211 KNX plug, measured with calipers (2026-11-09): 11.5 mm along
+# the pins, 10.2 mm along the wires and 10.2 mm along the pole pitch without
+# the butterfly key; each socket 3.5 mm from the back (the face opposite the
+# wire entries) and 2.5 mm from the key side. It seats on the PST 1,0 strip's
+# 2.8 mm plastic body.
+KNX_PLUG = {"along_pins": 11.5, "wire": 10.2, "pitch": 10.2, "socket_from_back": 3.5, "socket_from_key": 2.5,
+            "seat": 2.8, "key_depth": 1.0}
+KNX_PLUG_TOP = KNX_PLUG["seat"] + KNX_PLUG["along_pins"]   # above the board face
+
+
+def knx_plug(ref):
+    """Mated plug on a PST strip as an enclosure box, its sockets on the pins
+    and its wire entries facing -y. Vertical main (v3): pins along +x, key on
+    the -z side. Main parallel to the front (v2): pins along +z, key on the +x
+    side (the red half's coding tab)."""
+    p = KNX_PLUG
+    pins = [board_point("main", px, py) for px, py, _ in components("main")[ref]["pads"]]
+    y1 = pins[0][1] + p["socket_from_back"]
+    common = {"board": "main", "ref": ref, "y0": y1 - p["wire"], "y1": y1, "through_front": False}
+    if vertical_main():
+        x0 = SPEC["boards"]["main"]["x"] + p["seat"]
+        z0 = min(pz for _, _, pz in pins) - p["socket_from_key"]
+        return {**common, "x0": x0, "x1": x0 + p["along_pins"], "z0": z0, "z1": z0 + p["pitch"]}
+    x1 = max(px for px, _, _ in pins) + p["socket_from_key"]
+    z0 = SPEC["boards"]["main"]["z"] + p["seat"]
+    return {**common, "x0": x1 - p["pitch"], "x1": x1, "z0": z0, "z1": z0 + p["along_pins"]}
+
+
 PART_AIR = 0.3
 MIN_SKIN = 0.6
 if "shoulder_z" in SPEC["enclosure"]:
@@ -200,7 +226,7 @@ if "shoulder_z" in SPEC["enclosure"]:
 else:
     _MAIN_HEIGHTS = layout_plan("main")["heights"]
     _MAIN_Z = SPEC["boards"]["main"]["z"]
-    _TALLEST_CONNECTOR = max(PLUG_HEIGHT, _MAIN_HEIGHTS["J2"], _MAIN_HEIGHTS["J3"])
+    _TALLEST_CONNECTOR = max(KNX_PLUG_TOP, _MAIN_HEIGHTS["J2"], _MAIN_HEIGHTS["J3"])
     SHOULDER_Z = dict.fromkeys(("bottom", "top"), round(_MAIN_Z + _TALLEST_CONNECTOR + 1.3, 2))
 HIDDEN_D = max(SHOULDER_Z.values())
 BASE_TOP_Z = min(SHOULDER_Z.values()) - WALL
@@ -222,7 +248,7 @@ def connector_faces():
     main = components("main")
     faces = {ref: main_to_enc(0, max(y for _, y, _ in main[ref]["pads"]) + TERMINAL_PIN_TO_WIRE_FACE)[1]
              for ref in ("J2", "J3")}
-    faces["J1"] = main_to_enc(0, main["J1"]["bbox"]["y0"] + BODY_MARGIN)[1]
+    faces["J1"] = knx_plug("J1")["y0"]
     return faces
 
 
@@ -321,27 +347,6 @@ THROUGH_FRONT = {"SW1", "SW2"}
 
 PLUG_REFS = {("main", "J1"), ("main", "J2")} if VARIANT in ("v3", "v4") else {("main", "J1")}
 
-# WAGO 243-211 KNX plug, measured with calipers (2026-11-09): 11.5 mm along
-# the pins, 10.2 mm along the wires and 10.2 mm along the pole pitch without
-# the butterfly key; each socket 3.5 mm from the back (the face opposite the
-# wire entries) and 2.5 mm from the key side. It seats on the PST 1,0 strip's
-# 2.8 mm plastic body.
-KNX_PLUG = {"along_pins": 11.5, "wire": 10.2, "pitch": 10.2, "socket_from_back": 3.5, "socket_from_key": 2.5,
-            "seat": 2.8, "key_depth": 1.0}
-
-
-def knx_plug(ref):
-    """Mated plug on a vertical-main PST strip as an enclosure box: pins along
-    +x, wire entries facing -y, butterfly key on the -z side."""
-    pins = [board_point("main", px, py) for px, py, _ in components("main")[ref]["pads"]]
-    p = KNX_PLUG
-    x0 = SPEC["boards"]["main"]["x"] + p["seat"]
-    y1 = pins[0][1] + p["socket_from_back"]
-    z0 = min(pz for _, _, pz in pins) - p["socket_from_key"]
-    return {"board": "main", "ref": ref, "x0": x0, "x1": x0 + p["along_pins"], "y0": y1 - p["wire"], "y1": y1,
-            "z0": z0, "z1": z0 + p["pitch"], "through_front": False}
-
-
 def part_boxes(outline="bbox"):
     """Every part as a box in enclosure coordinates: its outline (courtyard
     `bbox`, or the Fab-layer `body`) times its height, on the side it is
@@ -354,17 +359,14 @@ def part_boxes(outline="bbox"):
             if horizontal and board == "main" and ref == horizontal["ref"]:
                 boxes.append(horizontal)
                 continue
-            plug = (board, ref) in PLUG_REFS
-            if plug and vertical_main():
+            if (board, ref) in PLUG_REFS:
                 boxes.append(knx_plug(ref))
                 continue
-            h = PLUG_HEIGHT if plug else c["height"]
-            base = 3.9 if plug else 0.0
-            n0, n1 = (-thick - h, -thick - base) if c["side"] == "back" else (base, h)
-            b = c["bbox"] if plug else c.get(outline, c["bbox"])
-            m = BODY_MARGIN if plug and (VARIANT == "v3" or outline == "body") else 0.0
-            boxes.append(span_box(board_point(board, b["x0"], b["y0"] + m, n0),
-                                  board_point(board, b["x1"], b["y1"] - m, n1),
+            h = c["height"]
+            n0, n1 = (-thick - h, -thick) if c["side"] == "back" else (0.0, h)
+            b = c.get(outline, c["bbox"])
+            boxes.append(span_box(board_point(board, b["x0"], b["y0"], n0),
+                                  board_point(board, b["x1"], b["y1"], n1),
                                   board=board, ref=ref, through_front=board == "ui" and ref in THROUGH_FRONT))
     top = SPEC["front_ui"]["board_top_z"]
     module_z = top + OLED_HEADER_SPACER

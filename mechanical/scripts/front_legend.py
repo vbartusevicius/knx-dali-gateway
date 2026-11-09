@@ -36,11 +36,12 @@ LABEL_H = 3.0
 TITLE_H = 3.0
 GAP = 0.8
 EDGE = 1.0
-LABEL_SPACING = 0.3
+LABEL_SPACING = 1.0   # at 3 mm, closer labels read as one word
+OPENING_SPACING = 0.3
+STROKE_SPACING = 0.3   # bracket lines to text
 INK = "#000000"
 GUIDE = "#00acc1"
-LED_RING = 0.6 if ef.VARIANT in ("v3", "v4") else 0.8
-RING_LINE = 0.5
+LED_KEEPOUT = 0.6 if ef.VARIANT in ("v3", "v4") else 0.8   # labels stay this far outside an LED window
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
 
@@ -121,7 +122,7 @@ def openings():
         r = be.BUTTON_HOLE / 2
         items.append(("circle", h["x"] - r, h["y"] - r, h["x"] + r, h["y"] + r))
     for h in ef.led_windows():
-        r = be.LED_WINDOW / 2 + LED_RING
+        r = be.LED_WINDOW / 2 + LED_KEEPOUT
         items.append(("led", h["x"] - r, h["y"] - r, h["x"] + r, h["y"] + r))
     win = ef.oled_window()
     items.append(("rect", win["cx"] - win["w"] / 2, win["cy"] - win["h"] / 2,
@@ -155,7 +156,7 @@ def place(text, anchor, height, placed, prefer=("below", "above", "left", "right
     for side in prefer:
         label = Label(text, *centres[side], height)
         box = label.box()
-        if inside(box, face) and not any(overlaps(box, b, LABEL_SPACING) for b in openings_) \
+        if inside(box, face) and not any(overlaps(box, b, OPENING_SPACING) for b in openings_) \
                 and not any(overlaps(box, lb.box(), spacing) for lb in placed):
             placed.append(label)
             return label
@@ -189,7 +190,8 @@ def dali_terminals(terminals=None, main=None):
             hole_y = screws[0][1]
             pin_y = hole_y - radius - GAP - LABEL_H / 2
             pins = [lb.replace("AUX", "").replace("-", "\u2212") or lb for lb in terminals[key]["labels"]]
-            labels += [Label(pin, x, pin_y, LABEL_H) for (x, _), pin in zip(screws, pins)]
+            if key != "dali":   # DALI is not polarised: the pair name says it all
+                labels += [Label(pin, x, pin_y, LABEL_H) for (x, _), pin in zip(screws, pins)]
             names.append(Label(name, sum(x for x, _ in screws) / 2, pin_y - LABEL_H * ROW_PITCH, LABEL_H))
     labels += names
     text = union([lb.box() for lb in labels])
@@ -264,12 +266,8 @@ def labels():
     main = ef.components("main")
     placed, _ = dali_terminals(terminals, main)
     x0, x1, y1 = be.knx_recess()
-    knx_pins = sorted(main["J1"]["pads"], key=lambda p: int(p[2]))
-    for (px, _, _), text in zip(knx_pins, ("+", "\u2212")):
-        x = ef.main_to_enc(px, 0)[0]
-        place(text, (x - 1, y1 - 2, x + 1, y1), TITLE_H, placed, prefer=("above",))
-    place("KNX", (x0, y1, x1, max(lb.box()[3] for lb in placed[-2:])), TITLE_H, placed,
-          prefer=("above", "left", "right"))
+    # no +/- over the KNX plug: its coding key lets it in only one way round
+    place("KNX", (x0, y1 - 2, x1, y1), TITLE_H, placed, prefer=("above", "left", "right"))
     buttons = ef.button_holes()
     for name, text in (("PROG", "PRG/RST"), ("RESET", "FUNC")):
         place(text, hole_box(buttons[name], be.BUTTON_HOLE), LABEL_H, placed,
@@ -287,9 +285,6 @@ def draw(ax, placed):
             r = be.LED_WINDOW / 2 if kind == "led" else (x1 - x0) / 2
             ax.add_patch(Circle(((x0 + x1) / 2, (y0 + y1) / 2), r, fill=False, ec=GUIDE, lw=0.3,
                                 gid="guides-opening"))
-    for window in ef.led_windows():
-        ax.add_patch(Circle((window["x"], window["y"]), be.LED_WINDOW / 2 + LED_RING - RING_LINE / 2, fill=False,
-                            ec=INK, lw=RING_LINE * 72 / 25.4, gid="print-led-ring"))
     for label in placed:
         ax.add_patch(PathPatch(label.path(), fc=INK, ec="none", gid="print-text"))
     for mark in marks():

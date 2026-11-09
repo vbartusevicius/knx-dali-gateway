@@ -73,8 +73,8 @@ Not needed when JLCPCB assembles the boards: then order only the hand-fit lines.
 
 ## Front legend (optional print)
 
-Three flat faces carry the legend: bottom shoulder (KNX + -), front (PRG/RST,
-FUNC, LED names and rings) and top shoulder (- + "PSU 20-32V" and DA DA "BUS", enclosed by one bracket
+Three flat faces carry the legend (3 mm letters, 0.6 mm deep): bottom shoulder (KNX only: the keyed plug fits one way round), front (PRG/RST,
+FUNC; the LEDs are unmarked: STATUS, KNX, DALI from left to right) and top shoulder (- + "20-32V" and DA DA "BUS", enclosed by one bracket
 with DALI in its bar: this input feeds only the internal DALI bus supply,
 not the gateway). 20-32 V keeps margin to the REC3 start-up (18 V max plus
 the SS16 reverse-polarity drop) and to the 33 V PTC/TVS limit; a 24 V
@@ -85,11 +85,16 @@ supply or the MDT STC-1280.01 30 V output are both inside.
   printing on an FDM cover (custom quote) or an adhesive polyester label cut
   along the cyan lines.
 - `enclosure/cover_embossed.stl` (also `.step`): the cover with the legend
-  recessed 0.3 mm into its faces, for single-colour FDM printing.
+  recessed 0.6 mm into its faces, for single-colour printing.
 
 ## Hand-fitted parts (`<board>_hand_fit.csv`)
 
-- Main J1: Phoenix 1574200 KNX pin strip.
+- Main J1: Phoenix 1574200 KNX pin strip. The red/black KNX plug goes in from
+  the front into a cover pocket sized for the WAGO 243-211 (11.5 x 10.2 x 10.2 mm,
+  measured, 0.3 mm clearance all round, a slot for the butterfly key on the
+  right wall). It sits directly on the strip, where its sockets meet the pins;
+  its wire entries face down, about 2.8 mm inside the open bottom of the
+  pocket, and its top stays 1.3 mm behind the bottom shoulder face.
 - Main U3: RECOM REC3-2415SRW/H2/A/CTRL (DIP-24, A pinning with pin 1 CTRL; clip unused pins 3 and 11 flush).
 - Main C4: 470 uF 35 V, D10 x 16 (SamYoung KMG35V470M10*16 LO, LCSC C165500), **lying down
   on the back**: bend both leads 90 deg 3 mm from the body, insert from the

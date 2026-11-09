@@ -84,26 +84,44 @@ def test_cover_clicks_on_at_both_ends_of_both_sides():
     assert right[0] < ef.HIDDEN_H / 3 and right[-1] > 2 * ef.HIDDEN_H / 3
 
 
-@needs_v3
-@pytest.mark.parametrize("ref", be.PLUG_REFS_V3)
+PLUG_REFS = sorted(ref for _, ref in ef.PLUG_REFS)
+
+
+@pytest.mark.parametrize("ref", PLUG_REFS)
 def test_plug_has_clearance_all_round_in_its_pocket(solids, ref):
     """The plug (measured WAGO 243-211, sockets on the pins) misses the case by
-    nearly PLUG_CLEARANCE on every side; the first pocket was 0.3 mm wider
-    than the plug in total and 2.8 mm off the sockets."""
+    nearly PLUG_CLEARANCE on every side but the face it seats on. The first
+    pockets (v2 and v3) were 0.1-0.4 mm wider than the plug in total and
+    2.8 mm off the sockets."""
     plug, c = ef.knx_plug(ref), be.PLUG_CLEARANCE - 0.05
-    probe = be.box(plug["x0"] + 0.05, plug["x1"], plug["y0"] - c, plug["y1"] + c, plug["z0"] - c, plug["z1"] + c).val()
+    if V3:
+        probe = be.box(plug["x0"] + 0.05, plug["x1"], plug["y0"] - c, plug["y1"] + c, plug["z0"] - c, plug["z1"] + c)
+    else:
+        probe = be.box(plug["x0"] - c, plug["x1"] + c, plug["y0"] - c, plug["y1"] + c, plug["z0"] + 0.05, plug["z1"])
     for part in solids:
-        assert part.intersect(probe).Volume() < 1e-3, ref
+        assert part.intersect(probe.val()).Volume() < 1e-3, ref
 
 
-@needs_v3
-@pytest.mark.parametrize("ref", be.PLUG_REFS_V3)
+@pytest.mark.parametrize("ref", PLUG_REFS)
 def test_plug_key_slot_runs_the_length_of_the_pocket(solids, ref):
-    base, _ = solids
-    plug = ef.knx_plug(ref)
-    z = plug["z0"] - be.PLUG_CLEARANCE - be.PLUG_KEY["depth"] / 2
-    for x in (plug["x0"] + 0.5, ef.WIDTH / 2 - 0.5):
-        assert not inside(base, x, plug["y1"] - 4.0, z)
+    plug, c, depth = ef.knx_plug(ref), be.PLUG_CLEARANCE, be.PLUG_KEY["depth"]
+    y = plug["y1"] - 4.0
+    if V3:
+        z = plug["z0"] - c - depth / 2
+        points = [(plug["x0"] + 0.5, y, z), (ef.WIDTH / 2 - 0.5, y, z)]
+    else:
+        x = plug["x1"] + c + depth / 2
+        points = [(x, y, plug["z0"] + 1.0), (x, y, plug["z1"] - 0.5)]
+    for point in points:
+        assert not any(inside(s, *point) for s in solids), (ref, point)
+
+
+def test_plug_stays_behind_the_shoulder_face():
+    """v2's first model (7.6 mm on a 1 mm floor) let the real 11.5 mm plug
+    stand 1.5 mm proud of the bottom shoulder."""
+    for _, ref in ef.PLUG_REFS:
+        if not V3:
+            assert ef.knx_plug(ref)["z1"] <= ef.SHOULDER_Z["bottom"], ref
 
 
 @needs_v3

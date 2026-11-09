@@ -50,14 +50,6 @@ def inlay(path, face_z):
     return solid
 
 
-def led_ring(window):
-    outer = be.LED_WINDOW / 2 + fl.LED_RING
-    inner = outer - fl.RING_LINE
-    z0 = FACE_Z["front"] - INLAY_DEPTH
-    return (cq.Workplane("XY", origin=(window["x"], window["y"], z0)).circle(outer).circle(inner)
-            .extrude(INLAY_DEPTH))
-
-
 def legend_bodies():
     bodies = []
     for label in fl.labels():
@@ -65,7 +57,6 @@ def legend_bodies():
     for mark in fl.marks():
         ext = mark.get_extents()
         bodies.append(inlay(mark, FACE_Z[fl.face_of((ext.y0 + ext.y1) / 2)]))
-    bodies += [led_ring(w) for w in ef.led_windows()]
     legend = bodies[0]
     for body in bodies[1:]:
         legend = legend.union(body)

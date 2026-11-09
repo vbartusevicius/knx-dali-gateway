@@ -91,8 +91,8 @@ Legend (3 mm letters, 0.6 mm deep, so a powder print keeps them):
   pocket, `AUX` above the rear one, `DALI` level with the DALI terminal at the
   top. They are engraved into `base.stl`, so every print has them.
 - Front (`cover_embossed.stl` only): the 18 mm face has room only for short
-  forms, `PRG` = PRG/RST button and `FN` = FUNC button. The three LED rings
-  are, from left to right, STATUS, KNX and DALI.
+  forms, `PRG` = PRG/RST button and `FN` = FUNC button. The three LEDs are
+  unmarked; from left to right they are STATUS, KNX and DALI.
 
 Off-board parts (including the **0.96" 64x128 SSD1312** 14-pin `0.62 mm`-pitch
 OLED `QG-6428TSWCG02` / `NFP1312-15AY`, whose `12.0 mm` flex tail folds through
