@@ -4,6 +4,7 @@ makes a hairline joint): find them and seat them.
     loose_ends(board)        -> [(track, end point)]
     seat_track_ends(board)   -> number of segments added (extends grazing ends into the
                                 pad / via centre or onto the other track's centreline)
+    remove_dead_ends(board)  -> number of dangling stubs removed (unused escapes, leftovers)
 
 hardware/tests/test_track_joints.py checks every stored board.
 """
@@ -78,3 +79,29 @@ def seat_track_ends(board):
         seg.SetNetCode(net)
         added += 1
     return added
+
+
+def remove_dead_ends(board):
+    """Remove tracks with an end that touches no same-net copper at all, such
+    as pad escapes the router did not use or pruning leftovers (repeated until
+    none remain). Returns how many were removed."""
+    removed = 0
+    while True:
+        tracks, vias, pads = _items(board)
+        dead = []
+        for t, end in loose_ends(board):
+            net, layer, w = t.GetNetCode(), t.GetLayer(), t.GetWidth()
+            uid = t.m_Uuid.AsString()
+            touches = any(o.m_Uuid.AsString() != uid and o.GetNetCode() == net and o.GetLayer() == layer
+                          and _nearest(end, o)[1] <= (w + o.GetWidth()) / 2 + TOL for o in tracks) or \
+                any(v.GetNetCode() == net and math.hypot(end.x - v.GetPosition().x, end.y - v.GetPosition().y)
+                    <= v.GetWidth(layer) / 2 + w / 2 + TOL for v in vias) or \
+                any(p.GetNetCode() == net and p.IsOnLayer(layer) and p.HitTest(end, w // 2 + TOL) for p in pads)
+            if not touches:
+                dead.append(t)
+        if not dead:
+            return removed
+        for t in {t.m_Uuid.AsString(): t for t in dead}.values():
+            board.Remove(t)
+            removed += 1
+

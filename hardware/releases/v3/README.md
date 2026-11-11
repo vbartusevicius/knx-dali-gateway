@@ -10,6 +10,7 @@
 - **Still fine-pitch:** the NCN5130 (QFN-40; no leaded KNX transceiver exists: hot plate or hot air) and the LM66100 (SC-70-6, leaded).
 - **Isolation:** DALI isolation is 5.5 mm (reinforced, IEC 60664-1 230 V OVC III PD2); SELV-AUX to SELV-KNX is 1 mm (functional).
 - **Buttons:** left = SCROLL (plain bump), right = RESET (X bump).
+- **USB service:** the XIAO is turned so its USB-C faces the main board's rail-side edge (x 38.1, 1.7 mm from the edge, nothing tall in the path). Lift main out of the base to plug in: with the board in the base the plug overmould does not fit under the right wall. test_usb_access.py keeps the plug path clear.
 - `<board>/<board>_assembly.pdf`: hand-soldering guide. One page per populated side (the bottom mirrored, as seen from below), each part's body, reference and value, a red dot on pin 1, a black corner on hand-fitted parts and one colour per value. Large parts are dashed under the small ones. A values page lists quantity, side and references.
 
 

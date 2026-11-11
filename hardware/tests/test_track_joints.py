@@ -58,3 +58,17 @@ def test_a_track_stopping_short_of_its_pad_is_caught():
     board.Remove(short)
     track(0.0)                           # into the pad centre: solid
     assert not [end for _, end in loose_ends(board) if math.hypot(end.x - pcbnew.FromMM(-5), end.y) > 1]
+
+
+def test_dead_end_stub_is_removed():
+    """A pad escape the router never joined dangles: remove_dead_ends drops it."""
+    import track_joints
+    board = pcbnew.BOARD()
+    stub = pcbnew.PCB_TRACK(board)
+    stub.SetStart(pcbnew.VECTOR2I(0, 0))
+    stub.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(1), 0))
+    stub.SetWidth(pcbnew.FromMM(0.25))
+    stub.SetLayer(pcbnew.B_Cu)
+    board.Add(stub)
+    assert track_joints.remove_dead_ends(board) == 1
+    assert not [t for t in board.GetTracks()]

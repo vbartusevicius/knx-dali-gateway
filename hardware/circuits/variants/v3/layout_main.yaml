@@ -140,7 +140,7 @@ parts:
   J4: { x: 15.8, y: 31.0, rot: -90, block: int_ui, locked: true }
 
   # Middle-right front (under U3): XIAO U8 on 5 mm sockets, with 5 V buck underneath (y +0.6 for U9)
-  U8: { x: 27.6, y: 26.8, rot: 90,  block: mcu, locked: true }
+  U8: { x: 27.6, y: 26.8, rot: 270, block: mcu, locked: true }   # USB-C at the board's rail-side edge (x 38.1): free once main is out of the base; antenna towards the case middle
   U2: { x: 22.4, y: 25.4, rot: 0,   block: buck5v }
   L2: { x: 22.4, y: 30.2, rot: 0,   block: buck5v }
   C10: { x: 26.3, y: 22.8, rot: 0,   block: buck5v }
@@ -152,10 +152,10 @@ parts:
   R6: { x: 19.0, y: 30.8, rot: 90,  block: buck5v }
   R7: { x: 29.8, y: 23.0, rot: 0,   block: buck5v }
   R8: { x: 26.71, y: 25.0, rot: 0,   block: buck5v }
-  U7: { x: 33.4, y: 30.8, rot: 0,   block: mcu_power }
+  U7: { x: 33.4, y: 23.0, rot: 0,   block: mcu_power }
   C19: { x: 33.7, y: 27.6, rot: 0,   block: mcu_power }
-  R22: { x: 33.4, y: 23.0, rot: 0,   block: mcu }
-  R23: { x: 33.69, y: 25.07, rot: 0,   block: mcu }
+  R22: { x: 33.4, y: 30.8, rot: 0,   block: mcu }
+  R23: { x: 33.69, y: 25.17, rot: 0,   block: mcu }
 
   # Supply-off opto and DC-DC input passives (y 38..43, below U3 courtyard at y 44.5)
   U4: { x: 19.5, y: 39.8, rot: 0,   block: dali_supply_off, locked: true }
@@ -200,13 +200,13 @@ parts:
   R3: { x: 8.0, y: 11.3, rot: 0,   side: back, block: ncn_left }
 
   # Back core rail: TPS2121 priority mux between the XIAO socket rows, U9 decoupling
-  U10:  { x: 30.2, y: 12.6, rot: 0, side: back, block: core_mux }
-  R24:  { x: 32.2, y: 16.0, rot: 0, side: back, block: core_mux }
-  R25:  { x: 28.6, y: 16.0, rot: 0, side: back, block: core_mux }
-  Q9:  { x: 16.0, y: 12.6, rot: 0, side: back, block: core_mux }
-  Q10:  { x: 34.6, y: 12.6, rot: 90, side: back, block: core_mux }
-  D11:  { x: 20.6, y: 12.6, rot: 0, side: back, block: core_mux }
-  C23:  { x: 25.6, y: 12.6, rot: 0, side: back, block: core_mux }
+  U10:  { x: 20.6, y: 12.6, rot: 0, side: back, block: core_mux }
+  R24:  { x: 20.6, y: 16.0, rot: 0, side: back, block: core_mux }
+  R25:  { x: 32.2, y: 16.0, rot: 0, side: back, block: core_mux }
+  Q9:  { x: 34.6, y: 12.6, rot: 0, side: back, block: core_mux }
+  Q10:  { x: 16.0, y: 12.6, rot: 90, side: back, block: core_mux }
+  D11:  { x: 25.6, y: 12.6, rot: 0, side: back, block: core_mux }
+  C23:  { x: 28.11, y: 15.02, rot: 0, side: back, block: core_mux }
   C20: { x: -7.6, y: 56.3, rot: 90,  side: back, block: aux_core }
   C21: { x: 8.7, y: 40.9, rot: 0,   side: back, block: aux_core }
 

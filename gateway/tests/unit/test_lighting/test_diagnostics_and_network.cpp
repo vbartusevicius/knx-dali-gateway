@@ -369,18 +369,18 @@ void test_oled_button_hints_fit_their_screen_width() {
     // draw_text_medium silently clips at the edge, so every button hint must
     // fit from its x: portrait (64 px) and landscape (128 px) wording.
     device::OledCanvas canvas{};
-    struct Hint {
-        int width;
-        int x;
-        const char* text;
+    const auto fits = [&canvas](int width, int x, const char* text) {
+        TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(width, x + canvas.measure_text_medium(text), text);
     };
-    constexpr Hint hints[] = {{64, 4, "OR TAP RESET"}, {64, 4, "HOLD RESET"}, {64, 4, "5S TO EXIT"},
-                              {64, 4, "HOLD SCROLL"}, {64, 2, "HOLD SCROLL"}, {128, 6, "WEBUI OR TAP RESET"},
-                              {128, 6, "HOLD RESET 5S: EXIT"}, {128, 6, "HOLD SCROLL 5S: EXIT"},
-                              {128, 3, "NO WIFI: SCROLL 5S"}};
-    for (const auto& h : hints) {
-        TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(h.width, h.x + canvas.measure_text_medium(h.text), h.text);
-    }
+    fits(64, 4, "OR TAP RESET");
+    fits(64, 4, "HOLD RESET");
+    fits(64, 4, "5S TO EXIT");
+    fits(64, 4, "HOLD SCROLL");
+    fits(64, 2, "HOLD SCROLL");
+    fits(128, 6, "WEBUI OR TAP RESET");
+    fits(128, 6, "HOLD RESET 5S: EXIT");
+    fits(128, 6, "HOLD SCROLL 5S: EXIT");
+    fits(128, 3, "NO WIFI: SCROLL 5S");
 }
 
 }  // namespace
