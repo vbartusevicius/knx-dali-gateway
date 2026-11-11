@@ -35,3 +35,22 @@ def test_same_value_same_colour():
 def test_release_ships_the_assembly_drawing(board):
     pdf = REPO / "hardware/releases" / VARIANT / board / f"{board}_assembly.pdf"
     assert pdf.exists() and pdf.read_bytes().startswith(b"%PDF")
+
+
+def test_only_polarised_parts_carry_a_mark():
+    assert assembly_drawing.polarity("R_0805_2012Metric") == "none"
+    assert assembly_drawing.polarity("C_0805_2012Metric") == "none"
+    assert assembly_drawing.polarity("Crystal_SMD_5032-2Pin_5.0x3.2mm") == "none"
+    assert assembly_drawing.polarity("D_SMA") == "cathode"
+    assert assembly_drawing.polarity("D_SOD-123") == "cathode"
+    assert assembly_drawing.polarity("D_SMA", "SMAJ40CA") == "none"   # bidirectional TVS
+    assert assembly_drawing.polarity("D_SMA", "SMAJ33A") == "cathode"
+    assert assembly_drawing.polarity("CP_Elec_10x10") == "plus"
+    assert assembly_drawing.polarity("SOT-23") == "pin1"
+    assert assembly_drawing.polarity("LED_WS2812B-MINI-V3J_3.5x3.5mm") == "pin1"
+
+
+@pytest.mark.parametrize("board", BOARDS)
+def test_every_polarised_part_has_a_pin_1_to_mark(board):
+    _, items = assembly_drawing.parts(board)
+    assert not [p["ref"] for p in items if p["polarity"] in ("cathode", "plus") and not p["pin1"]]
