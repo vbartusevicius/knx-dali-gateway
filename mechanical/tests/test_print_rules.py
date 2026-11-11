@@ -162,3 +162,29 @@ def test_dali_terminal_face_with_its_push_buttons_is_open(solids):
     for x in (j3["x0"] + 0.3, (j3["x0"] + j3["x1"]) / 2, j3["x1"] - 0.3):
         for z in (j3["z0"] + 0.3, (j3["z0"] + j3["z1"]) / 2, j3["z1"] - 0.3):
             assert not any(inside(s, x, ef.HIDDEN_H - be.WALL / 2, z) for s in solids), (x, z)
+
+
+def test_reset_bump_carries_a_recessed_x_and_scroll_stays_plain():
+    """SW1 (left, SCROLL) is a plain bump, SW2 (right, RESET) has an X cut
+    into it: bars wide enough to print, shallower than the bump, longer than
+    it so they run out through the rim, and solid bump left between the arms."""
+    assert be.BUTTON_MARK == {"SW1": "dot", "SW2": "cross"}
+    c, t = be.BUTTON_CROSS, be.BUTTON_TAB
+    assert c["bar"] >= 0.4 + 0.1 and c["depth"] < t["boss_height"]
+    top = 10.0
+    groove = be.button_cross(0, 0, top).val()
+    assert groove.BoundingBox().xlen > t["boss"]
+    assert groove.isInside(cq.Vector(0, 0, top - c["depth"] / 2))
+    assert not groove.isInside(cq.Vector(0, 0, top - c["depth"] - 0.05))
+    arm = t["boss"] / 2 * 0.6
+    assert not groove.isInside(cq.Vector(arm, 0, top - c["depth"] / 2))
+
+
+def test_led_baffles_print_and_clear_the_led():
+    """Light tubes: walls thick enough for a powder print, neighbours apart, and
+    the tube starts above the WS2812B-MINI-V3J's top (1.57 mm) instead of on it."""
+    assert be.BAFFLE_WALL >= 0.6
+    outer = be.LED_WINDOW + 2 * be.BAFFLE_WALL
+    xs = sorted(w["x"] for w in ef.led_windows())
+    assert min(b - a for a, b in pairwise(xs)) - outer >= 0.6
+    assert be.STACK.baffle_bottom_z >= be.STACK.board_top_z + ef.SPEC["front_ui"]["led_top"] + 0.15

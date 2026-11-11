@@ -7,5 +7,5 @@
   (constraint track_width (min 0.22mm))
   (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
 (rule creepage_selv-knx_dali
-  (constraint creepage (min 6.0mm))
-  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('DALI') || B.hasNetclass('DALI-Power')) && !(A.Reference == 'U1' && B.Reference == 'U1') && !(A.Reference == 'U2' && B.Reference == 'U2')"))
+  (constraint creepage (min 5.5mm))
+  (condition "(A.hasNetclass('SELV-KNX') || A.hasNetclass('KNX-Power')) && (B.hasNetclass('DALI') || B.hasNetclass('DALI-Power'))"))

@@ -57,7 +57,7 @@ constexpr std::array<ErrorDescriptor, 23> catalog{{
      "Verify KNX TP bus is connected and acknowledging frames."},
     {ErrorCode::KnxUnconfigured, "KNX_UNCONFIGURED", "KNX Application Not Programmed",
      "Gateway has no ETS application loaded or retains default address 15.15.255.",
-     "Hold SW1 (PRG/RST) for 5 s to enter programming mode and download from ETS."},
+     "Hold the right button (RESET, X) for 5 s to enter programming mode and download from ETS."},
     {ErrorCode::NvsOpenFailed, "NVS_OPEN_FAILED", "NVS Storage Partition Error",
      "Non-volatile storage partition could not be opened at startup.",
      "Check partition table or run a Factory Reset if flash sector corruption occurred."},

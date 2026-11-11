@@ -460,7 +460,11 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "CORE_PR1"
+        "pattern": "CORE_AUX_GOOD"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CORE_PFET_G"
       },
       {
         "netclass": "DALI-Power",
@@ -576,14 +580,6 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "N$14"
-      },
-      {
-        "netclass": "SELV-KNX",
-        "pattern": "N$15"
-      },
-      {
-        "netclass": "SELV-KNX",
         "pattern": "N$2"
       },
       {
@@ -667,13 +663,7 @@
     "bus_aliases": {},
     "legacy_lib_dir": "",
     "legacy_lib_list": [],
-    "top_level_sheets": [
-      {
-        "filename": "main.kicad_sch",
-        "name": "main",
-        "uuid": "00000000-0000-0000-0000-000000000000"
-      }
-    ]
+    "top_level_sheets": []
   },
   "sheets": [],
   "text_variables": {},

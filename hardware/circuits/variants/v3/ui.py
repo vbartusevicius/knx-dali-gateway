@@ -2,7 +2,7 @@
 OLED (QG-6428TSWCG02 / JLX12864OLED-S096W, 14.0 x 28.0 x 1.22 mm) connected via
 a JLC-assembled 14-pin 0.5 mm Flip-Top ZIF FPC connector J2 on the back (zero
 hand-soldering) with its 3.3 V charge-pump passives on the back, two Omron
-B3U-1000P switches pressed through printed plungers, and three SK6805 RGB LEDs
+B3U-1000P switches pressed through printed plungers, and three WS2812B-MINI-V3J RGB LEDs
 below the buttons; FFC J1 to the carrier."""
 
 from blocks import ui

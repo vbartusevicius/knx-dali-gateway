@@ -59,7 +59,8 @@ def seat_track_ends(board):
         mine = [p for p in pads if p.GetNetCode() == net and p.IsOnLayer(layer)]
         target = next((p.GetPosition() for p in mine if p.HitTest(end, w // 2 + TOL)), None)
         if target is None:
-            same = [o for o in tracks if o is not t and o.GetNetCode() == net and o.GetLayer() == layer]
+            uid = t.m_Uuid.AsString()   # pcbnew returns new wrappers per call: identity never matches
+            same = [o for o in tracks if o.m_Uuid.AsString() != uid and o.GetNetCode() == net and o.GetLayer() == layer]
             hits = [(q, d) for o in same for q, d in [_nearest(end, o)] if d <= (w + o.GetWidth()) / 2 + TOL]
             target = min(hits, key=lambda h: h[1])[0] if hits else None
         if target is None:

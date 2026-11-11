@@ -168,7 +168,7 @@ commissioning::InputSnapshot KnxDevice::drain_input_snapshots() {
 void KnxDevice::handle_button(std::uint32_t now) {
     switch (panel_.sample(read_buttons(), now)) {
     case device::Gesture::Reboot:
-        ESP_LOGW(log_tag, "PRG/RST tapped: reboot");
+        ESP_LOGW(log_tag, "RESET tapped: reboot");
         esp_restart();
     case device::Gesture::ToggleProgMode:
         knx_.toggleProgMode();
@@ -180,7 +180,7 @@ void KnxDevice::handle_button(std::uint32_t now) {
         runtime_state().next_oled_page(now);
         break;
     case device::Gesture::WifiSetup:
-        ESP_LOGI(log_tag, "FUNC held 5s: starting WiFi SoftAP setup portal");
+        ESP_LOGI(log_tag, "SCROLL held 5s: starting WiFi SoftAP setup portal");
         if (net_) {
             net_->start_wifi_setup_portal();
         }

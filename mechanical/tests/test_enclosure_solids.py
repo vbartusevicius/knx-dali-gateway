@@ -149,7 +149,8 @@ def test_each_button_can_be_pressed_from_the_front(case, ref):
     assert not material_at(case, x, y, top - 0.02), "plunger presses the button at rest"
     assert any(material_at(case, x, y, top + d / 10) for d in range(1, int(NUB_GAP_MAX * 10) + 1)), \
         "no plunger nub above the actuator"
-    assert material_at(case, x, y, ef.TOTAL_D + 0.3), "no finger boss on the front"
+    below_groove = ef.TOTAL_D + be.BUTTON_TAB["boss_height"] - be.BUTTON_CROSS["depth"] - 0.05
+    assert material_at(case, x, y, below_groove), "no finger boss on the front"
     t = be.BUTTON_TAB
     pad_edge_x = x + math.copysign((t["pad"] + t["slot"]) / 2, x)
     arm_edge_y = (x + math.copysign(t["root_x"], x)) / 2, y + (t["arm"] + t["slot"]) / 2

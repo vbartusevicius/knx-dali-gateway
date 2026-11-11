@@ -24,6 +24,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -53,7 +54,7 @@ MODELS_3D = {
     "Fuse_1812_4532Metric": ("Fuse_1812_4532Metric.step", 0),
     "Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm": ("Phoenix_PST_1,0-2-5,75_R32.step", 0),
     "CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent": ("CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent.step", 0),
-    "LED_SK6805-EC15_1.5x1.5mm": ("LED_SK6805-EC15_1.5x1.5mm.step", 0),
+    "LED_WS2812B-MINI-V3J_3.5x3.5mm": ("LED_WS2812B-MINI-V3J_3.5x3.5mm.step", 0),
     "FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P": ("FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P.step", 0),
     "FPC_XUNPU_FPC-05F-14PH20": ("FPC_XUNPU_FPC-05F-14PH20.step", 0),
 }
@@ -105,7 +106,7 @@ def dru_rules(domains, isolation, base):
             cond_a = f"(A.hasNetclass('{a}') || A.hasNetclass('{power[a]}'))"
             cond_b = f"(B.hasNetclass('{b}') || B.hasNetclass('{power[b]}'))"
             rules.append(f"(rule creepage_{a.lower()}_{b.lower()}\n"
-                         f"  (constraint creepage (min {minimum.get(frozenset((a, b)), 6.0)}mm))\n"
+                         f"  (constraint creepage (min {minimum.get(frozenset((a, b)), 5.5)}mm))\n"
                          f"  (condition \"{cond_a} && {cond_b}\"))\n")
     return "".join(rules)
 
@@ -371,6 +372,17 @@ def raised_module_rule(refs):
             f"  (condition \"{either}\"))\n")
 
 
+def cutout_part_rule(refs):
+    """Reverse-mount parts sit in their own board cutout; their legs land
+    0.1 mm from its edge by design (manufacturer land pattern)."""
+    if not refs:
+        return ""
+    either = " || ".join(f"A.memberOfFootprint('{r}')" for r in refs)
+    return ("(rule reverse_mount_cutouts\n"
+            "  (constraint edge_clearance (min 0.05mm))\n"
+            f"  (condition \"{either}\"))\n")
+
+
 POWER_CLASS = {"SELV-KNX": "KNX-Power", "DALI": "DALI-Power", "SELV-AUX": "AUX-Power"}
 
 
@@ -421,7 +433,8 @@ def write_rules(board, plan, board_name, pcb_path):
     frame = plan["frame"]
     dru = dru_rules(frame["domains"], SPEC["boards"].get(board_name, {}).get("isolation"),
                     DRU_4LAYER + neck_down_rule(frame.get("fine_pitch_power_pads", []))
-                    + raised_module_rule(frame.get("raised_modules", [])))
+                    + raised_module_rule(frame.get("raised_modules", []))
+                    + cutout_part_rule(frame.get("cutout_parts", [])))
     pcb_path.with_suffix(".kicad_dru").write_text(dru)
     pro_path = pcb_path.with_suffix(".kicad_pro")
     project = json.loads(pro_path.read_text())
@@ -710,7 +723,7 @@ def add_pad_escapes(board, plan):
     so the router joins a full-width stub instead of necking down between pins.
     Locked; pins already tied into an exposed pad and stubs that would come too
     close to other copper are skipped."""
-    existing = {(t.GetStart().x, t.GetStart().y) for t in board.GetTracks()}
+    existing = {(p.x, p.y) for t in board.GetTracks() for p in (t.GetStart(), t.GetEnd())}
     for ref, escape in plan.get("pad_escapes", {}).items():
         length, skip = escape["length"], {str(n) for n in escape.get("skip", [])}
         fp = board.FindFootprintByReference(ref)
@@ -978,21 +991,33 @@ def import_ses(board_name):
 
 
 FREEROUTING = ["java", "-jar", os.environ.get("FREEROUTING_JAR", "/opt/freerouting.jar"),
-               "-mp", "100", "-mt", "4", "--gui.enabled=false"]
+               "-mp", os.environ.get("FREEROUTING_PASSES", "100"), "-mt", "4", "--gui.enabled=false"]
 
 
-def route(board_name, attempts=4):
+def route(board_name, attempts=None):
+    """Freerouting is not deterministic with several threads: run up to
+    `attempts` (ROUTE_ATTEMPTS, default 4) and import the attempt with the
+    fewest unrouted connections, stopping early at zero."""
+    attempts = attempts or int(os.environ.get("ROUTE_ATTEMPTS", "4"))
     export_dsn(board_name)
     bdir = build_dir(board_name)
     dsn, ses = bdir / f"{board_name}.dsn", bdir / f"{board_name}.ses"
+    best = None
     for attempt in range(1, attempts + 1):
-        run = subprocess.run(FREEROUTING + ["-de", str(dsn), "-do", str(ses)], capture_output=True, text=True,
+        trial = bdir / f"{board_name}.attempt{attempt}.ses"
+        run = subprocess.run(FREEROUTING + ["-de", str(dsn), "-do", str(trial)], capture_output=True, text=True,
                              check=True)
         summary = next((line for line in (run.stdout + run.stderr).splitlines()
                         if "Auto-routing stage completed" in line), "no summary")
+        found = re.search(r"\((\d+) unrouted", summary)
+        unrouted = int(found[1]) if found else 10 ** 6
         print(f"{board_name}: route attempt {attempt}: {summary.split('completed')[-1].strip()[:120]}")
-        if "(0 unrouted" in summary:
+        if best is None or unrouted < best[0]:
+            best = (unrouted, trial)
+        if unrouted == 0:
             break
+    shutil.copy(best[1], ses)
+    print(f"{board_name}: using the attempt with {best[0]} unrouted")
     import_ses(board_name)
 
 

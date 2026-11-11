@@ -15,7 +15,7 @@ import json
 import pcbnew
 import pytest
 import yaml
-from board_variant import BOARDS, REPO, VARIANT, layout_path
+from board_variant import BOARDS, REPO, SPEC, VARIANT, layout_path
 from shapely.affinity import translate
 from shapely.geometry import Polygon
 from shapely.ops import nearest_points, unary_union
@@ -28,7 +28,11 @@ def frame(board):
 ISOLATED_BOARDS = [b for b in BOARDS if len(frame(b)["domains"]) > 1]
 DOMAIN_OF_CLASS = {"SELV-KNX": "KNX", "KNX-Power": "KNX", "DALI": "DALI",
                    "DALI-Power": "DALI", "SELV-AUX": "AUX", "AUX-Power": "AUX"}
-REQUIRED = {("DALI", "KNX"): 6.0, ("AUX", "DALI"): 6.0, ("AUX", "KNX"): 2.0}
+# Minimum spacings from the spec (user 2026-11-11: DALI reinforced 5.5 mm per
+# IEC 60664-1 230 V OVC III PD2; SELV-AUX | SELV-KNX functional 1 mm).
+_SHORT = {"SELV-KNX": "KNX", "SELV-AUX": "AUX", "DALI": "DALI"}
+_ISOLATION = SPEC["boards"]["main"]["isolation"]
+REQUIRED = {tuple(sorted(_SHORT[d] for d in i["between"])): i["creepage_min"] for i in _ISOLATION}
 COPPER = (pcbnew.F_Cu, pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu)
 
 

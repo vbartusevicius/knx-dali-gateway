@@ -651,8 +651,8 @@ def test_dali_rx_from_opto():
 
 def test_led_chain_is_buffered_to_5v_with_series_resistor():
     """LED_DATA (3.3 V) drives the 5 V buffer, whose output reaches the first
-    SK6805 through a series resistor; each LED feeds the next one. Pin numbers
-    from the SK6805-EC15 datasheet p.4: 1 DIN, 2 VDD, 3 DOUT, 4 GND."""
+    LED through a series resistor; each LED feeds the next one. Pin numbers of
+    the WS2812B-MINI-V3J (EasyEDA C22371519): 1 VDD, 2 DOUT, 3 GND, 4 DIN."""
     ui = _parse_netlist("ui")
     buf = "U3" if VARIANT == "v2" else "U1"
     assert (buf, "2") in ui["LED_DATA"]
@@ -660,11 +660,11 @@ def test_led_chain_is_buffered_to_5v_with_series_resistor():
     buffered = next(n for n, m in ui.items() if (buf, "4") in m)
     resistor = next(ref for ref, _ in ui[buffered] if ref.startswith("R"))
     first = next(n for n, m in ui.items() if (resistor, "1") in m or (resistor, "2") in m if n != buffered)
-    assert ("D1", "1") in ui[first]
-    assert ("D1", "3") in ui["LED_CHAIN1"] and ("D2", "1") in ui["LED_CHAIN1"]
-    assert ("D2", "3") in ui["LED_CHAIN2"] and ("D3", "1") in ui["LED_CHAIN2"]
+    assert ("D1", "4") in ui[first]
+    assert ("D1", "2") in ui["LED_CHAIN1"] and ("D2", "4") in ui["LED_CHAIN1"]
+    assert ("D2", "2") in ui["LED_CHAIN2"] and ("D3", "4") in ui["LED_CHAIN2"]
     for led in ("D1", "D2", "D3"):
-        assert (led, "2") in ui["+5V"] and (led, "4") in ui["GND"]
+        assert (led, "1") in ui["+5V"] and (led, "3") in ui["GND"]
 
 
 def test_i2c_pullups_present():

@@ -1,33 +1,19 @@
-"""Front legend artwork for printing onto the cover (UV/pad print) or as an
-adhesive label, at 1:1 in the case's front view.
-
-    python3 mechanical/scripts/front_legend.py
-
-Writes mechanical/build/<variant>/front_legend.svg/.pdf (1:1). The front view
-shows three flat faces: the bottom shoulder (KNX plug), the front protrusion
-(display, buttons, LEDs) and the top shoulder (DALI and AUX screws). Every
-label is placed from the same opening positions the CadQuery cover uses and
-kept off the openings and the other labels. Text is converted to outlines.
-Group "print" is the artwork; group "guides" (face edges, openings, cyan) is
-for positioning only and must not be printed.
+"""Legend artwork (outlined text, + / - signs, the DALI bracket) placed on
+the case's front faces from the same opening positions the CadQuery cover
+uses, kept off the openings and the other labels. legend_color_model.py cuts
+it into cover_embossed.stl; on v3 the connector names are engraved into the
+base's right side (side_labels). No separate SVG/PDF artwork is written
+(user, 2026-11-11).
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
 import build_enclosure as be
 import enclosure_features as ef
-import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, PathPatch, Rectangle
 from matplotlib.path import Path as MplPath
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
 
-REPO = Path(__file__).resolve().parents[2]
-OUT = REPO / "mechanical/build" / ef.VARIANT
 # Smallest legend a powder print (MJF / SLS) keeps legible when recessed
 # INLAY_DEPTH deep: 3 mm letters, whose DejaVu Sans Bold strokes are about 0.5 mm.
 MIN_TEXT_H = 3.0
@@ -39,8 +25,6 @@ EDGE = 1.0
 LABEL_SPACING = 1.0   # at 3 mm, closer labels read as one word
 OPENING_SPACING = 0.3
 STROKE_SPACING = 0.3   # bracket lines to text
-INK = "#000000"
-GUIDE = "#00acc1"
 LED_KEEPOUT = 0.6 if ef.VARIANT in ("v3", "v4") else 0.8   # labels stay this far outside an LED window
 FONT = {"family": "DejaVu Sans", "weight": "bold"}
 
@@ -221,22 +205,18 @@ def marks():
     return [stroke_path(strokes)] if strokes else []
 
 
-# The 18 mm V3 face has no room for full words at MIN_TEXT_H: the buttons get
-# short forms. On both variants the LED row (STATUS, KNX, DALI from left to
-# right) has only its rings, as no LED word fits its pitch at MIN_TEXT_H; the
-# release READMEs explain both. The V3 connector names sit on the right side
-# face next to their connectors (side_labels), engraved into the base.
-V3_SHORT = {"PRG": "PRG/RST", "FN": "FUNC"}
+# The 18 mm V3 face has no room for words at MIN_TEXT_H, and the flat buttons
+# sit right under the OLED window, so the front carries no legend: the finger
+# bumps tell the buttons apart, plain on SCROLL (left) and with a recessed X
+# on RESET (right) (build_enclosure.BUTTON_MARK). On both variants the LED row (STATUS, KNX,
+# DALI from left to right) is unmarked; the release READMEs explain both. The
+# V3 connector names sit on the right side face next to their connectors
+# (side_labels), engraved into the base.
 SIDE_GAP = 1.5
 
 
 def v3_labels():
-    placed = []
-    buttons = ef.button_holes()
-    for name, text in (("PROG", "PRG"), ("RESET", "FN")):
-        (cx, cy, d), _ = be.button_tab_outline(buttons[name], be.BUTTON_TAB["slot"])
-        place(text, (cx - d / 2, cy - d / 2, cx + d / 2, cy + d / 2), LABEL_H, placed, prefer=("above",))
-    return placed
+    return []
 
 
 def side_to_enc(u, v):
@@ -269,54 +249,7 @@ def labels():
     # no +/- over the KNX plug: its coding key lets it in only one way round
     place("KNX", (x0, y1 - 2, x1, y1), TITLE_H, placed, prefer=("above", "left", "right"))
     buttons = ef.button_holes()
-    for name, text in (("PROG", "PRG/RST"), ("RESET", "FUNC")):
+    for name, text in (("PROG", "SCROLL"), ("RESET", "RESET")):
         place(text, hole_box(buttons[name], be.BUTTON_HOLE), LABEL_H, placed,
               prefer=("above", "below", "left", "right"))
     return placed
-
-
-def draw(ax, placed):
-    for name, (x0, y0, x1, y1) in faces().items():
-        ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, ec=GUIDE, lw=0.3, gid=f"guides-face-{name}"))
-    for kind, x0, y0, x1, y1 in openings():
-        if kind == "rect":
-            ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, ec=GUIDE, lw=0.3, gid="guides-opening"))
-        else:
-            r = be.LED_WINDOW / 2 if kind == "led" else (x1 - x0) / 2
-            ax.add_patch(Circle(((x0 + x1) / 2, (y0 + y1) / 2), r, fill=False, ec=GUIDE, lw=0.3,
-                                gid="guides-opening"))
-    for label in placed:
-        ax.add_patch(PathPatch(label.path(), fc=INK, ec="none", gid="print-text"))
-    for mark in marks():
-        ax.add_patch(PathPatch(mark, fc=INK, ec="none", gid="print-bracket"))
-
-
-def render(placed):
-    margin = 6.0
-    width, height = ef.WIDTH + 2 * margin, ef.HIDDEN_H + 2 * margin + 8
-    fig = plt.figure(figsize=(width / 25.4, height / 25.4))
-    ax = fig.add_axes((0, 0, 1, 1))
-    ax.set_xlim(-ef.WIDTH / 2 - margin, ef.WIDTH / 2 + margin)
-    ax.set_ylim(-margin, ef.HIDDEN_H + margin + 8)
-    ax.set_aspect("equal")
-    ax.axis("off")
-    draw(ax, placed)
-    ax.plot([-ef.WIDTH / 2, -ef.WIDTH / 2 + 10], [-margin / 2] * 2, color=GUIDE, lw=0.5, gid="guides-scale")
-    ax.text(-ef.WIDTH / 2 + 11, -margin / 2, "10 mm (1:1); cyan = guides, not printed", fontsize=4,
-            va="center", color=GUIDE, gid="guides-note")
-    ax.text(0, ef.HIDDEN_H + margin / 2 + 4, f"KNX-DALI gateway {ef.VARIANT} front legend, front view",
-            fontsize=5, ha="center", color=GUIDE, gid="guides-title")
-    OUT.mkdir(parents=True, exist_ok=True)
-    plt.rcParams["svg.fonttype"] = "path"
-    for suffix in ("svg", "pdf"):
-        fig.savefig(OUT / f"front_legend.{suffix}")
-    plt.close(fig)
-
-
-def main():
-    render(labels())
-    print(f"front_legend written to {OUT.relative_to(REPO)}")
-
-
-if __name__ == "__main__":
-    main()

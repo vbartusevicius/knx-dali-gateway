@@ -448,13 +448,14 @@ def main():
     ]
     inside = boards + parts + supports
     legend = lcm.legend_bodies()
-    cover_silk = cover.cut(legend)
+    cover_silk = cover if legend is None else cover.cut(legend)
     SILK = (0.10, 0.10, 0.12)
+    silk = [] if legend is None else [(legend, SILK, 1.0)]
     iso = (150, 150, 190)
     oled_act = oled_pixels_actor(0.0)
-    render("front", [(base, CASE, 1.0), (cover_silk, CASE, 1.0), (legend, SILK, 1.0)] + inside + led_lenses,
+    render("front", [(base, CASE, 1.0), (cover_silk, CASE, 1.0)] + silk + inside + led_lenses,
            (0, 40.5, 300), zoom=1.1, extra_actors=(oled_act,))
-    render("iso", [(base, CASE, 1.0), (cover_silk, CASE, 1.0), (legend, SILK, 1.0)] + inside + led_lenses,
+    render("iso", [(base, CASE, 1.0), (cover_silk, CASE, 1.0)] + silk + inside + led_lenses,
            iso, extra_actors=(oled_act,))
     render("inside", [(base, CASE, 0.12), (cover, CASE, 0.12)] + inside, iso, extra_actors=(oled_act,))
     keep = box(-40, 0, -20, 100, -20, 80)
@@ -464,7 +465,7 @@ def main():
     main_layer = [b for b in boards if b[1] == MAIN] + [p for p in parts if p[0].val().BoundingBox().zmax < 45]         + [s for s in supports if s[0].val().BoundingBox().zmax < 45]
     ui_layer = [b for b in boards if b[1] == UI] + [p for p in parts if p[0].val().BoundingBox().zmax >= 45]         + [s for s in supports if s[0].val().BoundingBox().zmax >= 45]
     exploded = (shifted([(base, CASE, 1.0)], -35) + main_layer + shifted(ui_layer, 25)
-                + shifted([(cover_silk, CASE, 0.35), (legend, SILK, 0.85)], 55))
+                + shifted([(cover_silk, CASE, 0.35)] + [(b, c, 0.85) for b, c, _ in silk], 55))
     render("exploded", exploded, (190, 140, 220), focal=(0, 40.5, 25), extra_actors=(oled_pixels_actor(25.0),))
     board_views(plates, full_parts)
 

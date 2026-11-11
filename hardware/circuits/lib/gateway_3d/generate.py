@@ -24,7 +24,7 @@ PARTS = {
     "TerminalBlock_WAGO_2086-1202_SMD": (7.7, 13.6, 8.15, -2.25),  # body y -4.55..9.05 in the footprint
     "Fuse_1812_4532Metric": (4.5, 3.2, 1.2),
     "Phoenix_PST_1,0-2-5,75_R32": (8.55, 2.8, 9.9),
-    "LED_SK6805-EC15_1.5x1.5mm": (1.5, 1.5, 0.65),
+    "LED_WS2812B-MINI-V3J_3.5x3.5mm": (3.5, 3.5, 1.57),   # legs only below the mounting face; body in the cutout
     "FPC_Kinghelm_KH-FPC0.5-H1.2SMT-8P": (8.9, 4.2, 1.2),
     "FPC_XUNPU_FPC-05F-14PH20": (11.6, 4.5, 2.0),
 }

@@ -5,7 +5,7 @@
 # JLX12864OLED-S096W / NFP1312-15AY, 14.0 x 28.0 mm, y 11.5..39.5, supported on
 # double-sided foam tape over the cover backing rails), two Omron B3U-1000P
 # compact-pad switches at y 6.0 rotated 90 deg and aligned at x 2.8 and x 11.0
-# directly above D1 and D3, and the three SK6805-EC15 RGB LEDs in a horizontal
+# directly above D1 and D3, and the three WS2812B-MINI-V3J RGB LEDs in a horizontal
 # row below the buttons at y 2.0.
 # Back: 14-pin 0.62 mm pitch (P0.62x13=8.06 mm) hotbar/solder FPC footprint J2
 # at y 34.2 (5.0 mm below the top notch so the 12.0 mm flex tail lands squarely
@@ -45,24 +45,28 @@ case:
   standoffs:
     - { x: 0.95,  y: 40.475, w: 1.5, h: 1.35 }
     - { x: 12.85, y: 40.475, w: 1.5, h: 1.35 }
-    - { x: 0.95,  y: 0.075,  w: 1.5, h: 1.45 }
-    - { x: 12.85, y: 0.075,  w: 1.5, h: 1.45 }
+    - { x: 0.45,  y: 0.075,  w: 0.6, h: 1.45 }   # narrowed: the WS2812B-MINI-V3J courtyards reach x 0.85 / 12.95
+    - { x: 13.35, y: 0.075,  w: 0.6, h: 1.45 }
 
 heights:
   default: 1.2
   SW1: 1.6
   SW2: 1.6
+  D1: 1.57
+  D2: 1.57
+  D3: 1.57
   J1: 1.2
   J2: 0.3
 
 parts:
   # Front: SW1 and SW2 rotated 90 deg and aligned at x 2.8 and x 11.0 with D1
   # and D3; D1, D2, D3 in a horizontal row below the buttons at y 2.0
-  SW1: { x: 2.8,   y: 6.0,   rot: 90,  block: btn_ladder, locked: true }
-  SW2: { x: 11.0,  y: 6.0,   rot: 90,  block: btn_ladder, locked: true }
-  D1:  { x: 2.8,   y: 2.0,   rot: 0,   block: leds, locked: true }
-  D2:  { x: 6.9,   y: 2.0,   rot: 0,   block: leds, locked: true }
-  D3:  { x: 11.0,  y: 2.0,   rot: 0,   block: leds, locked: true }
+  # WS2812B-MINI-V3J on the front, legs along y; buttons lie flat (rot 0) above them
+  SW1:  { x: 2.8, y: 9.5, rot: 0, block: btn_ladder, locked: true }
+  SW2:  { x: 11.0, y: 9.5, rot: 0, block: btn_ladder, locked: true }
+  D1:  { x: 2.8, y: 3.95, rot: 0, block: leds, locked: true }
+  D2:  { x: 6.9, y: 3.95, rot: 0, block: leds, locked: true }
+  D3:  { x: 11.0, y: 3.95, rot: 0, block: leds, locked: true }
 
   # Back: 14-pin 0.62 mm pitch solder FPC footprint J2 at y 34.5 (rot 180)
   # directly below the 9.8 mm top notch (y 39.2) so the 12.0 mm flex tail lands
@@ -79,11 +83,11 @@ parts:
   C1:  { x: 10.6,  y: 21.5,  rot: 0,   side: back, block: btn_ladder }
   R2:  { x: 3.2,   y: 21.5,  rot: 0,   side: back, block: btn_ladder }
   J1:  { x: 6.9,   y: 14.8,  rot: 180, side: back, block: int_main, locked: true }
-  U1:  { x: 6.9,   y: 9.2,   rot: 0,   side: back, block: leds }
-  C2:  { x: 2.8,   y: 9.2,   rot: 90,  side: back, block: leds }
-  C3:  { x: 11.0,  y: 9.2,   rot: 90,  side: back, block: leds }
-  R4:  { x: 6.9,   y: 6.0,   rot: 0,   side: back, block: leds }
-  R3:  { x: 11.0,  y: 6.0,   rot: 0,   side: back, block: btn_ladder }
-  C4:  { x: 2.8,   y: 3.0,   rot: 0,   side: back, block: leds }
-  C5:  { x: 6.9,   y: 3.0,   rot: 0,   side: back, block: leds }
-  C6:  { x: 11.0,  y: 3.0,   rot: 0,   side: back, block: leds }
+  U1:  { x: 7.0, y: 18.73, rot: 0,   side: back, block: leds }
+  C2:  { x: 2.47, y: 10.83, rot: 0,   side: back, block: leds }
+  C3:  { x: 10.9, y: 10.83, rot: 0,   side: back, block: leds }
+  R4:  { x: 3.13, y: 18.83, rot: 0,   side: back, block: leds }
+  R3:  { x: 10.9, y: 18.9, rot: 0,   side: back, block: btn_ladder }
+  C4:  { x: 2.8, y: 3.0, rot: 0,   side: back, block: leds }
+  C5:  { x: 6.9, y: 3.0, rot: 0,   side: back, block: leds }
+  C6:  { x: 11.0, y: 3.0, rot: 0,   side: back, block: leds }

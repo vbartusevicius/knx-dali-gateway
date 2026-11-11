@@ -38,13 +38,13 @@ from builtins import NC
 from common import block, part, src
 from skidl import Net
 
-R0603 = "Resistor_SMD:R_0603_1608Metric"
-C0603 = "Capacitor_SMD:C_0603_1608Metric"
+R_SMD = "Resistor_SMD:R_0805_2012Metric"   # hand-solderable size (user, 2026-11-11)
+C_SMD = "Capacitor_SMD:C_0805_2012Metric"
 SC70_6 = "Package_TO_SOT_SMD:SOT-363_SC-70-6"
 XIAO_FP = "gateway_fp:XIAO_ESP32C6_Header"
 
 MCU_PINS = {
-    "led_data": {"pin": "D0/GPIO0", "net": "LED_DATA", "note": "RMT, SK6805 chain via 5 V buffer on UI"},
+    "led_data": {"pin": "D0/GPIO0", "net": "LED_DATA", "note": "RMT, WS2812B-MINI-V3J chain via 5 V buffer on UI"},
     "dali_supply_off": {"pin": "D1/GPIO1", "net": "DALI_SUPPLY_OFF",
                         "note": "high switches the isolated DALI supply off via the CTRL optocoupler"},
     "button_ladder": {"pin": "D2/GPIO2", "net": "BTN_LADDER",
@@ -66,11 +66,11 @@ MCU_PINS = {
 }
 
 
-def res(value, fields=None, footprint=R0603):
+def res(value, fields=None, footprint=R_SMD):
     return part("Device", "R", value, footprint, fields)
 
 
-def cap(value, fields=None, footprint=C0603):
+def cap(value, fields=None, footprint=C_SMD):
     return part("Device", "C", value, footprint, fields)
 
 
@@ -106,7 +106,7 @@ def build(gnd, v3, v5_knx, knx_txd, knx_rxd, dali_tx, dali_rx, saveb, dali_suppl
     d_ideal["GND"] += gnd
     d_ideal["VOUT"] += v5
     d_ideal["ST"] += NC
-    c_v5 = cap("10u 10V", src(source="XIAO 5V decoupling"))
+    c_v5 = cap("10u 25V", src(source="XIAO 5V decoupling"))
     c_v5[1] += v5
     c_v5[2] += gnd
 

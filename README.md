@@ -67,7 +67,7 @@ The web interface is built into the firmware and served by the ESP32-C6 itself (
 
 ![V2 landscape OLED pages](gateway/docs/oled-v2-landscape.svg)
 
-`FUNC` steps through the pages; holding it for 5 s starts the WiFi setup portal.
+The left button (SCROLL, plain bump) steps through the pages; holding it for 5 s starts the WiFi setup portal. The right button (RESET, bump with an X) reboots on a tap and toggles KNX programming mode when held for 5 s; both held for 10 s is a factory reset.
 
 </details>
 
@@ -135,7 +135,7 @@ Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
    - the TRACO AUX core converter;
    - Phoenix PST pin strips and plugs;
    - the OLED, the main-to-UI cable, and two jumper caps for `JP1`.
-3. **Case.** Print `enclosure/base.stl` and one cover in PETG or ASA at 0.2 mm layers: `cover.stl` (plain) or `cover_embossed.stl` (0.3 mm recessed legend).
+3. **Case.** Print `enclosure/base.stl` and one cover in PETG or ASA at 0.2 mm layers: `cover.stl`; V2 also has `cover_embossed.stl` (0.6 mm recessed legend). V3 has no front text: the button bumps tell the buttons apart.
 
 <details>
 <summary><b>V3 assembly order</b></summary>
@@ -151,10 +151,10 @@ Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 ## How it works
 
 - **KNX side:** an onsemi NCN5130 transceiver (TP1, 9-bit UART) charges a 470 µF store. An SCT2400 buck makes 5 V from it, with an undervoltage lockout above the NCN5130 reset level.
-- **Core supply:** the AUX input feeds an isolated TRACO converter (SELV-AUX to SELV-KNX). A TI TPS2121 priority mux prefers it and falls back to the KNX buck. A TI LM66100 keeps USB service power out of the core rail.
+- **Core supply:** the AUX input feeds an isolated TRACO converter (SELV-AUX to SELV-KNX). A leaded priority path prefers it (TLV803 supervisor, 2N7002 and AO3401A switch) and a B5819W Schottky falls back to the KNX buck without a gap. A TI LM66100 keeps USB service power out of the core rail.
 - **DALI supply:** the AUX input (PTC, TVS, reverse diode) feeds a RECOM REC3-2415SRW/H2/A/CTRL (24 V → 15 V, functional isolation), then a linear current limiter. The firmware can switch it off through an optocoupler on its `CTRL` pin, and jumper `JP1` disconnects it for an external DALI PSU.
-- **DALI transceiver:** TX uses a MOSFET sink with bootstrap gate drive and a 275–350 mA fault clamp. RX uses a zener threshold with a constant-current detector. Both cross a 6 mm milled barrier through TLP383 optocouplers.
-- **Front panel:** the OLED (I2C), two buttons on one ADC ladder, and three SK6805 RGB LEDs (status, KNX, DALI) behind a 5 V level shifter.
+- **DALI transceiver:** TX uses a MOSFET sink with bootstrap gate drive and a 275–350 mA fault clamp. RX uses a zener threshold with a constant-current detector. Both cross a 5.5 mm (reinforced, IEC 60664-1 230 V OVC III) milled barrier through TLP383 optocouplers.
+- **Front panel:** the OLED (I2C), two buttons on one ADC ladder, and three WS2812B-MINI-V3J RGB LEDs with gull-wing legs (status, KNX, DALI) behind a 5 V level shifter. All passives are 0805 or larger except three 0603 bus caps next to the NCN5130 on V3; the NCN5130 (QFN-40) is the only leadless chip, as no leaded KNX transceiver exists.
 
 ---
 

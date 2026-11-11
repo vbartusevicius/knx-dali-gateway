@@ -14,9 +14,9 @@ and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button lad
 
 | XIAO Pin | ESP32-C6 GPIO | Schematic Net | Direction | Function |
 |---|---|---|---|---|
-| **1 (`D0`)** | `GPIO0` | `LED_DATA` | Output (RMT) | Drives the 5 V `SN74AHCT1G125` level-shifter (`U1` on UI) into the 3-LED `SK6805-EC15` chain |
+| **1 (`D0`)** | `GPIO0` | `LED_DATA` | Output (RMT) | Drives the 5 V `SN74AHCT1G125` level-shifter (`U1` on UI) into the 3-LED `WS2812B-MINI-V3J` chain |
 | **2 (`D1`)** | `GPIO1` | `DALI_SUPPLY_OFF` | Output | High drives the `TLP383` optocoupler (`U4` on `main`) to pull `REC3-2415SRW/H2/A/CTRL` pin 1 (`CTRL`) to ~5.6 V (supply off); low/Hi-Z = supply on |
-| **3 (`D2`)** | `GPIO2` (`ADC1_CH2`) | `BTN_LADDER` | Analog in | Reads the two-button resistor ladder on the UI board (`SW1` PRG/RST, `SW2` FUNC) |
+| **3 (`D2`)** | `GPIO2` (`ADC1_CH2`) | `BTN_LADDER` | Analog in | Reads the two-button resistor ladder on the UI board (`SW1` SCROLL left, `SW2` RESET right) |
 | **4 (`D3`)** | `GPIO21` | `NC` | Unused | Unconnected spare GPIO on all variants |
 | **5 (`D4`)** | `GPIO22` | `I2C_SDA` | I2C | SSD1306 OLED data (`4.7k` pull-up to `+3V3`, I2C address `0x3C`) |
 | **6 (`D5`)** | `GPIO23` | `I2C_SCL` | I2C | SSD1306 OLED clock (`4.7k` pull-up to `+3V3`) |
@@ -29,11 +29,11 @@ and the exact same **Seeed XIAO ESP32-C6** pin map, LED chain and ADC button lad
 | **13 (`GND`)** | — | `GND` | Ground | SELV-KNX ground |
 | **14 (`5V`)** | — | `+5V_XIAO` | Power in | Fed from the KNX `+5V` buck (`SCT2400`) through the `LM66100` ideal diode so USB-C power cannot back-feed the KNX buck |
 
-Core rail (v2 and v3): `+5V` comes from the `TPS2121` priority mux (`U10`): IN1 is the AUX `TMR 1-2411` converter (`U9`, priority above 4.4 V), IN2 the KNX `SCT2400` buck (`+5V_BUCK`). The XIAO's `LM66100` has CE on VOUT for reverse current blocking (USB back-feed).
+Core rail (v2 and v3): `+5V` comes from a leaded priority path: the AUX converter (`U9`) through `AO3401A` `Q9`, switched on by the `TLV803M` supervisor `U10` (4.38 V) via `2N7002` `Q10` while AUX is healthy, and the KNX `SCT2400` buck (`+5V_BUCK`, 4.94 V) through the `B5819W` Schottky `D11`, which takes over without a gap when AUX goes away (rail ~4.6 V on KNX alone). The XIAO's `LM66100` has CE on VOUT for reverse current blocking (USB back-feed).
 
 ## Addressable Status LEDs (`D0 / GPIO0 = LED_DATA`)
 
-Three `SK6805-EC15` addressable RGB LEDs (`D1 -> D2 -> D3`) sit on the UI board,
+Three `WS2812B-MINI-V3J` addressable RGB LEDs (gull-wing legs, LCSC C22371519) (`D1 -> D2 -> D3`) sit on the UI board,
 buffered to 5 V by `U1` (`SN74AHCT1G125`) through a `330R` series resistor
 (`gateway/src/device/StatusLeds.hpp`):
 
@@ -47,14 +47,14 @@ buffered to 5 V by `U1` (`SN74AHCT1G125`) through a `330R` series resistor
 
 On the UI board, `BTN_LADDER` has a `10k` pull-up (`R1`) to `+3V3` and a `100nF`
 filter capacitor (`C1`) to `GND`:
-- **`SW1` (`PRG/RST`, left button):** switches `20k` (`R2`) to `GND`.
-- **`SW2` (`FUNC`, right button):** switches `10k` (`R3`) to `GND`.
+- **`SW1` (`SCROLL`, left button, plain bump):** switches `10k` to `GND`.
+- **`SW2` (`RESET`, right button, X bump):** switches `20k` to `GND`.
 
 | Buttons Pressed | Equivalent Pull-Down | Nominal Voltage (`BTN_LADDER`) | ADC Threshold Window (`ButtonLadder.hpp`) | Gestures (`FrontPanel.hpp` / `KnxDevice.cpp`) |
 |---|---|---|---|---|
 | **None (idle)** | `open` | **`3300 mV`** | `>= 2750 mV` | Idle |
-| **`SW1` (`PRG/RST`) only** | `20.0 kΩ` | **`2200 mV`** | `1925 .. 2749 mV` | **Tap (`< 5 s`):** `Gesture::Reboot` — calls `esp_restart()`, which reboots the ESP32-C6 and, on startup (`app_.start()`), sends the TP-UART `U_Reset.req` (`0x01`) command over `KNX_RXD` (`D6/GPIO16`) to reset the `NCN5130` transceiver state machine while preserving all NVS configuration.<br>**Hold `5 s`:** `Gesture::ToggleProgMode` — calls `knx_.toggleProgMode()`, putting the `thelsing/knx` stack into ETS programming mode (reported on the KNX bus via TP-UART and indicated by `D2 KNX` turning solid red). |
-| **`SW2` (`FUNC`) only** | `10.0 kΩ` | **`1650 mV`** | `1485 .. 1924 mV` | **Tap (`< 5 s`):** `Gesture::NextPage` — wakes the OLED and advances the status page.<br>**Hold `5 s`:** `Gesture::WifiSetup` — enters WiFi provisioning mode. |
+| **`SW2` (`RESET`) only** | `20.0 kΩ` | **`2200 mV`** | `1925 .. 2749 mV` | **Tap (`< 5 s`):** `Gesture::Reboot` — calls `esp_restart()`, which reboots the ESP32-C6 and, on startup (`app_.start()`), sends the TP-UART `U_Reset.req` (`0x01`) command over `KNX_RXD` (`D6/GPIO16`) to reset the `NCN5130` transceiver state machine while preserving all NVS configuration.<br>**Hold `5 s`:** `Gesture::ToggleProgMode` — calls `knx_.toggleProgMode()`, putting the `thelsing/knx` stack into ETS programming mode (reported on the KNX bus via TP-UART and indicated by `D2 KNX` turning solid red). |
+| **`SW1` (`SCROLL`) only** | `10.0 kΩ` | **`1650 mV`** | `1485 .. 1924 mV` | **Tap (`< 5 s`):** `Gesture::NextPage` — wakes the OLED and advances the status page.<br>**Hold `5 s`:** `Gesture::WifiSetup` — enters WiFi provisioning mode. |
 | **Both `SW1 + SW2`** | `6.67 kΩ` (`20k ∥ 10k`) | **`1320 mV`** | `< 1485 mV` | **Hold `10 s`:** `Gesture::FactoryReset` (`PanelHint::FactoryResetArming` blinks `D1 STATUS` fast red while held) — erases KNX (`eeprom`) and DALI (`targets_v1`) NVS namespaces and calls `esp_restart()`. |
 
 ## Cover Variants Generated in Each Release (`enclosure/`)
@@ -62,4 +62,4 @@ filter capacitor (`C1`) to `GND`:
 Every variant (`v2`, `v3`) includes two ready-to-print cover files generated
 from the exact same `front_legend.py` geometry:
 1. **`cover.stl` / `cover.step`:** plain cover without legend cuts.
-2. **`cover_embossed.stl` / `cover_embossed.step`:** single-colour cover with **`0.6 mm` recessed text** (no marks around the LEDs) matching `front_legend.svg`.
+2. **`cover_embossed.stl` / `cover_embossed.step` (v2 only):** single-colour cover with **`0.6 mm` recessed text** (no marks around the LEDs). V3 has no front text; its button bumps are plain (SCROLL) and X-grooved (RESET).

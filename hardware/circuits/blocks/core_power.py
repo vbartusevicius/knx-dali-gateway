@@ -14,9 +14,10 @@ from builtins import NC
 from common import block, part, src
 from skidl import Net
 
-VQFN_HR_12 = "Package_DFN_QFN:Texas_VQFN-HR-12_2x2.5mm_P0.5mm"
-R0603 = "Resistor_SMD:R_0603_1608Metric"
-C0603 = "Capacitor_SMD:C_0603_1608Metric"
+SOT23 = "Package_TO_SOT_SMD:SOT-23"
+SOD123 = "Diode_SMD:D_SOD-123"
+R_SMD = "Resistor_SMD:R_0805_2012Metric"   # hand-solderable size (user, 2026-11-11)
+C_SMD = "Capacitor_SMD:C_0805_2012Metric"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 C1206 = "Capacitor_SMD:C_1206_3216Metric"
 
@@ -37,10 +38,10 @@ TMR2_2411 = {
 
 
 def res(value, source, ref):
-    return part("Device", "R", value, R0603, src(source=source), ref=ref)
+    return part("Device", "R", value, R_SMD, src(source=source), ref=ref)
 
 
-def cap(value, source, ref, footprint=C0603):
+def cap(value, source, ref, footprint=C_SMD):
     return part("Device", "C", value, footprint, src(source=source), ref=ref)
 
 
@@ -50,7 +51,6 @@ def build(gnd, gnda, aux_p, v5_buck, v5, converter):
     its numbering."""
     block("aux_core")
     v5_aux = Net("+5V_AUX")
-    pr1 = Net("CORE_PR1")
     c_in = cap("10u 50V", f"{converter['series']} input decoupling next to pins 1/2 (AUX up to the 53 V TVS clamp)",
                "C20", C0805)
     c_in[1] += aux_p
@@ -63,36 +63,47 @@ def build(gnd, gnda, aux_p, v5_buck, v5, converter):
     u["-Vout"] += gnd
     if converter is TMR2_2411:
         u["Remote"] += NC
-    c_out = cap("10u 10V", f"{converter['series']} output decoupling", "C21")
+    c_out = cap("10u 25V", f"{converter['series']} output decoupling", "C21")
     c_out[1] += v5_aux
     c_out[2] += gnd
 
     block("core_mux")
-    mux = part("gateway", "TPS2121", "TPS2121RUXR", VQFN_HR_12,
-               src(mpn="TPS2121RUXR", mfr="TI", lcsc="C485916",
-                   source="TI TPS2121 datasheet: priority power mux 2.8-22 V, 56 mOhm, reverse blocking; "
-                          "PR1 vs internal 1.04-1.10 V reference, CP2/OV1/OV2 grounded (tSW up to 100 us)"),
+    gate, good = Net("CORE_PFET_G"), Net("CORE_AUX_GOOD")
+    sup = part("Power_Supervisor", "LM809", "TLV803M supervisor", SOT23,
+               src(mpn="TLV803MDBZR-TP", mfr="MCC", lcsc="C52817175",
+                   source="TLV803M: 4.38 V supervisor, open-drain active-low RESET (1 GND, 2 RESET, 3 VCC), "
+                          "~240 ms delay after VCC rises, releases low within us when VCC falls"),
                ref="U10")
-    mux["IN1"] += v5_aux
-    mux["IN2"] += v5_buck
-    mux["OUT"] += v5
-    mux["PR1"] += pr1
-    for pin in ("CP2", "OV1", "OV2", "ST", "GND"):
-        mux[pin] += gnd
-    r_top = res("30k", "TPS2121 PR1 divider top: 4.95 V AUX -> 1.24 V > 1.10 V rising reference; "
-                       "falls back to the KNX buck below 3.96-4.36 V", "R24")
-    r_top[1] += v5_aux
-    r_top[2] += pr1
-    r_bot = res("10k", "TPS2121 PR1 divider bottom", "R25")
-    r_bot[1] += pr1
-    r_bot[2] += gnd
-    r_ilm = res("100k 1%", "TPS2121 ILM: 65.2 / 100^0.861 = 1.24 A current limit", "R26")
-    r_ilm[1] += mux["ILM"]
-    r_ilm[2] += gnd
-    c_ss = cap("100n 50V", "TPS2121 SS: 780 V/s soft start at 5 V (datasheet table 9-1)", "C22")
-    c_ss[1] += mux["SS"]
-    c_ss[2] += gnd
-    c_core = cap("100u 6.3V", "core rail hold-up during the TPS2121 switchover (up to 100 us with CP2 grounded)",
+    sup["VCC"] += v5_aux
+    sup["GND"] += gnd
+    sup["~{RESET}"] += good
+    r_good = res("100k", "TLV803M open-drain pull-up: AUX good -> Q10 on", "R24")
+    r_good[1] += v5_aux
+    r_good[2] += good
+    q_n = part("Transistor_FET", "2N7002", "2N7002", SOT23,
+               src(mpn="2N7002", mfr="Changjiang", lcsc="C8545", source="pulls Q9's gate low while AUX is good"),
+               ref="Q10")
+    q_n["G"] += good
+    q_n["S"] += gnd
+    q_n["D"] += gate
+    r_gate = res("10k", "Q9 gate pull-up to the rail: off (~10 us) as soon as Q10 lets go", "R25")
+    r_gate[1] += v5
+    r_gate[2] += gate
+    q_p = part("Transistor_FET", "AO3401A", "AO3401A", SOT23,
+               src(mpn="AO3401A", mfr="AOS", lcsc="C15127",
+                   source="AUX -> rail switch: drain on +5V_AUX, source on the rail (body diode AUX -> rail), "
+                          "60 mOhm at Vgs -4.5 V"),
+               ref="Q9")
+    q_p["D"] += v5_aux
+    q_p["S"] += v5
+    q_p["G"] += gate
+    d_knx = part("Device", "D_Schottky", "B5819W", SOD123,
+                 src(mpn="B5819W SL", mfr="Changjiang", lcsc="C8598",
+                     source="KNX buck -> rail OR diode, 40 V 1 A; ~0.3 V at the core load"),
+                 ref="D11")
+    d_knx["A"] += v5_buck
+    d_knx["K"] += v5
+    c_core = cap("100u 6.3V", "core rail bulk: WiFi TX peaks and the AUX -> KNX handover",
                  "C23", C1206)
     c_core[1] += v5
     c_core[2] += gnd

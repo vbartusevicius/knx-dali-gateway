@@ -109,7 +109,7 @@ def test_refresh_fetches_even_when_download_cache_exists(monkeypatch, tmp_path):
 
 def test_missing_reference_fails_without_network_fallback(monkeypatch):
     references = jp.load_reference()
-    references.pop("C2890035")
+    references.pop("C22371519")   # the WS2812B-MINI-V3J status LEDs
     monkeypatch.setattr(jp, "load_reference", lambda: references)
     pcb = pcbnew.LoadBoard(str(layout_path("ui")))
     parts = json.loads(build_path("ui", "parts.json").read_text())
@@ -189,3 +189,9 @@ def test_pinout_check_catches_a_wrong_net():
 
     wanted = {"1": "+3V3", "2": "GND"}
     assert any("pin 1 carries 'GND'" in p for p in jp.net_problems(FakeFootprint(), wanted))
+
+
+def test_diode_pins_named_by_polarity_sign_match_k_and_a():
+    """EasyEDA symbols name some diode pins '-' (cathode) and '+' (anode), e.g. B5819W C8598."""
+    assert jp.canonical_pin("D11", "-") == "K" and jp.canonical_pin("D11", "+") == "A"
+    assert jp.canonical_pin("U1", "+") == "+"

@@ -52,6 +52,9 @@ def test_legend_recess_bodies_cut_exactly_their_own_volume_from_the_cover():
     import legend_color_model as lcm
 
     legend = lcm.legend_bodies()
+    if legend is None:
+        assert ef.VARIANT in ("v3", "v4") and not fl.labels() and not fl.marks()
+        return
     cover = be.build_cover()
     removed = cover.val().Volume() - cover.cut(legend).val().Volume()
     assert removed == pytest.approx(legend.val().Volume(), rel=1e-4)
@@ -69,8 +72,8 @@ def test_overlap_check_catches_a_label_on_an_opening(labels):
 
 def test_every_marking_is_present(labels):
     texts = [lb.text for lb in labels]
-    expected = ("PRG", "FN") if ef.VARIANT in ("v3", "v4") else \
-        ("KNX", "DALI", "PRG/RST", "FUNC")
+    expected = () if ef.VARIANT in ("v3", "v4") else \
+        ("KNX", "DALI", "SCROLL", "RESET")
     for text in expected:
         assert text in texts
     if ef.VARIANT not in ("v3", "v4"):
@@ -147,7 +150,10 @@ def thin_fraction(path, stroke=fl.MIN_STROKE):
 def test_legend_text_is_big_enough_for_a_powder_print(labels):
     """The first MJF print (2026-11-09) had 0.85-2.6 mm letters 0.3 mm deep: unreadable."""
     assert lcm.INLAY_DEPTH >= 0.6
-    assert all(lb.height >= fl.MIN_TEXT_H for lb in labels), [(lb.text, lb.height) for lb in labels]
+    # +/- are drawn as SIGN_BAR bars, so their legibility is the stroke test's job
+    assert all(lb.height >= fl.MIN_TEXT_H for lb in labels if lb.text not in fl.SIGNS), \
+        [(lb.text, lb.height) for lb in labels]
+    assert fl.SIGN_BAR >= 0.6
 
 
 def test_legend_strokes_are_wide_enough_for_a_powder_print(labels):
@@ -166,7 +172,10 @@ def test_brackets_print():
 def test_no_rings_around_the_leds():
     """User decision 2026-11-09: the LED windows get no debossed rings."""
     import cadquery as cq
-    legend = lcm.legend_bodies().val()
+    legend = lcm.legend_bodies()
+    if legend is None:
+        return
+    legend = legend.val()
     for w in ef.led_windows():
         r = be.LED_WINDOW / 2 + 0.3
         for dx, dy in ((r, 0), (-r, 0), (0, r), (0, -r)):

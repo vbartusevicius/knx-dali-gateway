@@ -2,7 +2,7 @@
 
   - OLED glass flush with the front face (0.1 mm below it), its panel passing
     through a window in the front wall, the module board in a pocket behind it
-  - PRG/RST and FUNC caps protruding through round holes, so they can be
+  - SCROLL and RESET caps protruding through round holes, so they can be
     pressed with a finger
   - SMD RGB LEDs on the board shining through a thin skin of the front wall,
     each inside its own baffle tube so no light reaches a neighbour's window
@@ -49,7 +49,11 @@ BUTTON_PROTRUSION = (0.5, 2.0)
 LED_HEIGHT = 0.65
 LED_WINDOW_SKIN = 0.6
 LED_SKIN_RANGE = (0.4, 0.8)
-LED_BAFFLE_GAP = 0.2
+# How far the status LEDs stand above the UI board's front face (spec
+# front_ui.led_top: the 1.57 mm WS2812B-MINI-V3J on both variants). The baffle
+# tubes start 0.2 mm above that.
+LED_TOP = SPEC_DATA["front_ui"]["led_top"]
+LED_BAFFLE_GAP = LED_TOP + 0.2
 
 
 @dataclass
@@ -99,7 +103,7 @@ class UIStackup:
             violations.append(f"OLED pins end at z={pin_end:.2f}, not through the UI board")
         if self.pocket_depth > WALL - 0.8:
             violations.append(f"pocket {self.pocket_depth:.2f} leaves less than 0.8 mm of front wall")
-        for name, cap_z in (("PRG/RST", self.prog_cap_z), ("FUNC", self.reset_cap_z)):
+        for name, cap_z in (("SCROLL", self.prog_cap_z), ("RESET", self.reset_cap_z)):
             lo, hi = (FRONT_OUTER_Z + p for p in BUTTON_PROTRUSION)
             if not lo <= cap_z <= hi:
                 violations.append(f"{name} cap z={cap_z:.2f} outside [{lo:.2f}, {hi:.2f}]")

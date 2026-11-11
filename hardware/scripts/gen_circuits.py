@@ -363,8 +363,10 @@ def collect_assembly_parts(variant, spec):
         "item": f"Case cover{snap_note}",
         "qty": 1,
         "kind": "printed",
-        "part": "enclosure/cover.stl (or cover_embossed.stl)",
-        "description": "PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth, cover_embossed.stl 0.3 mm recessed text)",
+        "part": "enclosure/cover.stl" + ("" if variant == "v3" else " (or cover_embossed.stl)"),
+        "description": "PETG or ASA, 0.2 mm layers, front face down" + (
+            " (no front text: the left button bump is plain, the right one carries an X)" if variant == "v3"
+            else " (cover.stl plain smooth, cover_embossed.stl 0.6 mm recessed text)"),
         "mouser": "-",
         "digikey": "-",
         "tme": "-",

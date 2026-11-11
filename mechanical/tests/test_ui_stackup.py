@@ -49,4 +49,4 @@ def test_board_moved_back_sinks_the_glass():
 def test_short_button_fails():
     s = compute_ui_stackup()
     ok, violations = replace(s, prog_actuator_mm=4.3, prog_cap_z=s.board_top_z + 4.3).fits()
-    assert not ok and any("PRG/RST" in v for v in violations)
+    assert not ok and any("SCROLL" in v for v in violations)

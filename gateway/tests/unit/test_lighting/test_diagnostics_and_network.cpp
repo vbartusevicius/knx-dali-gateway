@@ -365,6 +365,24 @@ void test_oled_strategy_supplies_ssd1306_registers_and_dimensions() {
     }
 }
 
+void test_oled_button_hints_fit_their_screen_width() {
+    // draw_text_medium silently clips at the edge, so every button hint must
+    // fit from its x: portrait (64 px) and landscape (128 px) wording.
+    device::OledCanvas canvas{};
+    struct Hint {
+        int width;
+        int x;
+        const char* text;
+    };
+    constexpr Hint hints[] = {{64, 4, "OR TAP RESET"}, {64, 4, "HOLD RESET"}, {64, 4, "5S TO EXIT"},
+                              {64, 4, "HOLD SCROLL"}, {64, 2, "HOLD SCROLL"}, {128, 6, "WEBUI OR TAP RESET"},
+                              {128, 6, "HOLD RESET 5S: EXIT"}, {128, 6, "HOLD SCROLL 5S: EXIT"},
+                              {128, 3, "NO WIFI: SCROLL 5S"}};
+    for (const auto& h : hints) {
+        TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(h.width, h.x + canvas.measure_text_medium(h.text), h.text);
+    }
+}
+
 }  // namespace
 
 void run_diagnostics_and_network_tests() {
@@ -375,6 +393,7 @@ void run_diagnostics_and_network_tests() {
     RUN_TEST(test_dali_debug_trace_decodes_frames_and_auto_triggers);
     RUN_TEST(test_tracing_transport_logs_collisions_and_gear_faults);
     RUN_TEST(test_oled_display_renders_both_128x64_and_64x128_geometries);
+    RUN_TEST(test_oled_button_hints_fit_their_screen_width);
     RUN_TEST(test_ha_discovery_and_mqtt_command_codec);
     RUN_TEST(test_api_codec_and_reconnect_backoff);
     RUN_TEST(test_lighting_service_queries_and_configures_gear_details);

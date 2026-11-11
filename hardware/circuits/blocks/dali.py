@@ -59,9 +59,9 @@ AUX protection:
 from common import block, part, power, power_flag, src
 from skidl import Net
 
-R0603 = "Resistor_SMD:R_0603_1608Metric"
+R_SMD = "Resistor_SMD:R_0805_2012Metric"   # hand-solderable size (user, 2026-11-11)
 R1206 = "Resistor_SMD:R_1206_3216Metric"
-C0603 = "Capacitor_SMD:C_0603_1608Metric"
+C_SMD = "Capacitor_SMD:C_0805_2012Metric"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 D_SMA = "Diode_SMD:D_SMA"
 D_SOD123 = "Diode_SMD:D_SOD-123"
@@ -76,11 +76,11 @@ DCDC_DIP24_CTRL_FP = "gateway_fp:Converter_DCDC_RECOM_REM3_DIP24_CTRL"
 JUMPER_2X2 = "Connector_PinHeader_2.54mm:PinHeader_2x02_P2.54mm_Vertical"
 
 
-def res(value, fields=None, footprint=R0603):
+def res(value, fields=None, footprint=R_SMD):
     return part("Device", "R", value, footprint, fields)
 
 
-def cap(value, fields=None, footprint=C0603):
+def cap(value, fields=None, footprint=C_SMD):
     return part("Device", "C", value, footprint, fields)
 
 

@@ -1,5 +1,13 @@
 # Moving a rev C v3 gateway onto rev D boards
 
+> **Superseded parts list (2026-11-11).** The current release swaps most parts for hand-solderable ones:
+> - 0805 passives;
+> - leaded LEDs, crystal and core power path;
+> - SCROLL/RESET button roles swapped.
+>
+> The rev C → D part transfer below is no longer accurate, so treat a rev C board as a donor for the connectors, optocouplers, REC3, TRACO and XIAO only. Order all passives, LEDs, the crystal and the power path new.
+
+
 For a v3 PCBA ordered from commit `59eea1f` (rev C), rebuilt on the current rev D **main** board by
 moving parts across. It replaces the in-place fixes in [rework-rev-c.md](rework-rev-c.md) (rev D already
 has them), except sections 6 (FFC check) and 7 (bring-up measurements).

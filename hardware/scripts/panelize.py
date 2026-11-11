@@ -21,6 +21,7 @@ from pathlib import Path
 
 import fab_outputs
 import pcbnew
+import yaml
 
 REPO = Path("/work")
 SLOT_W = 2.0       # mm routing slot between adjacent sub-boards
@@ -132,6 +133,14 @@ def build_panel(
     base_path = REPO / "hardware/layout" / variant / base_name / f"{base_name}.kicad_pcb"
     for suffix in (".kicad_pro", ".kicad_dru"):
         shutil.copy(base_path.with_suffix(suffix), panel_dir / f"panel{suffix}")
+    cutouts = [offset_ref(b, r) for b in boards
+               for r in yaml.safe_load((REPO / "hardware/circuits/variants" / variant / f"layout_{b}.yaml")
+                                       .read_text())["frame"].get("cutout_parts", [])]
+    if cutouts:   # every board's reverse-mount cutout rule, with the panel's references
+        either = " || ".join(f"A.memberOfFootprint('{r}')" for r in cutouts)
+        with open(panel_dir / "panel.kicad_dru", "a") as f:
+            f.write(f"(rule panel_reverse_mount_cutouts\n  (constraint edge_clearance (min 0.05mm))\n"
+                    f"  (condition \"{either}\"))\n")
 
     panel, x0_0, y0_0, w0, h0 = loaded[base_name]
     placements: list[tuple[str, float, float, float, float, float, float]] = [

@@ -204,8 +204,10 @@ def canonical_pin(ref, name):
     text = re.sub(r"[^A-Z0-9+\-]", "", (name or "").upper()).replace("0", "O")
     if not text or re.fullmatch(r"(PIN)?[O0-9]+", text.replace("O", "0")):
         return None
-    if ref.startswith("D") and text == "C":
+    if ref.startswith("D") and text in ("C", "-"):
         return "K"
+    if ref.startswith("D") and text == "+":
+        return "A"
     return PIN_ALIASES.get(text, text)
 
 

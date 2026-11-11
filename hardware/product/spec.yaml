@@ -53,9 +53,9 @@ boards:
       DALI: top          # DALI terminal, bridge, TX sink, RX threshold, supply output
       SELV-AUX: top-right corner next to DALI   # aux terminal, protection, DC-DC primary
     isolation:
-      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
-      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [isolated DC-DC] }
-      - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, note: "both SELV; kept separate so the KNX bus stays floating" }
+      - { between: [SELV-KNX, DALI], creepage_min: 5.5, bridged_by: [optocouplers] }
+      - { between: [SELV-AUX, DALI], creepage_min: 5.5, bridged_by: [isolated DC-DC] }
+      - { between: [SELV-KNX, SELV-AUX], creepage_min: 1.0, note: "both SELV; kept separate so the KNX bus stays floating" }
     side_assignment:
       front: "terminals (screws face front), XIAO on female headers, optos, small parts"
       rear: "tall parts toward rail — storage cap, isolated DC-DC, pass transistor with copper pour"
@@ -116,7 +116,7 @@ front_ui:                # on the 45 mm x width front face, mounted on the UI bo
         plunger: true, protrusion_beyond_front: 0.6,
         tap: next display page / wake the display, hold_5s: WiFi setup }
     - { id: both, hold_10s: factory reset (KNX, lighting and WiFi configuration) }
-  leds:   # SK6805-EC15 chain on LED_DATA; always lit, colours in gateway/src/device/StatusLeds.cpp
+  leds:   # WS2812B-MINI-V3J chain on LED_DATA; always lit, colours in gateway/src/device/StatusLeds.cpp
     - { id: status, ref: D1, shows: "green healthy, blue blink WiFi connected, amber degraded, red fault, blue blinking WiFi setup" }
     - { id: knx, ref: D2, shows: "dim green idle, green traffic, red programming mode, red blinking no bus" }
     - { id: dali, ref: D3, shows: "dim green idle, green our frames, cyan other masters, amber gear fault, red no power, red blinking short, blue commissioning" }
@@ -140,7 +140,7 @@ checks:
   component_to_cover_min_gap: 0.5
   component_air_gap: 2.0    # air between parts and the case (connectors that reach openings excepted)
   board_to_board_component_gap: 1.0
-  dali_to_selv_creepage_min: 6.0
+  dali_to_selv_creepage_min: 5.5   # reinforced, IEC 60664-1 230 V OVC III PD2 (user 2026-11-11)
 
 rejected_variants:
   din2_three_boards:     # 2 modules: main (vertical) + power (vertical) + ui (front)

@@ -57,6 +57,8 @@ def legend_bodies():
     for mark in fl.marks():
         ext = mark.get_extents()
         bodies.append(inlay(mark, FACE_Z[fl.face_of((ext.y0 + ext.y1) / 2)]))
+    if not bodies:
+        return None
     legend = bodies[0]
     for body in bodies[1:]:
         legend = legend.union(body)
@@ -64,8 +66,14 @@ def legend_bodies():
 
 
 def main():
-    cover = be.build_cover().cut(legend_bodies())
+    legend = legend_bodies()
     OUT.mkdir(parents=True, exist_ok=True)
+    if legend is None:   # v3: the buttons' finger bumps are the only front marking
+        for suffix in (".step", ".stl"):
+            (OUT / f"cover_embossed{suffix}").unlink(missing_ok=True)
+        print("no front legend: cover_embossed not written (cover.stl is the only cover)")
+        return
+    cover = be.build_cover().cut(legend)
     cq.exporters.export(cover, str(OUT / "cover_embossed.step"), cq.exporters.ExportTypes.STEP)
     cq.exporters.export(cover, str(OUT / "cover_embossed.stl"), cq.exporters.ExportTypes.STL,
                         tolerance=TOLERANCE, angularTolerance=0.1)

@@ -41,7 +41,7 @@ def build():
     v3 = power("+3V3")
     supply_off = Net("DALI_SUPPLY_OFF")
 
-    knx_nets = knx.build(gnd, smd_storage=True, thermal_vias=False)
+    knx_nets = knx.build(gnd, smd_storage=True, thermal_vias=False, compact_bus_caps=True)
     v5, knx_txd, knx_rxd, saveb = (knx_nets[k] for k in ("v5", "knx_txd", "knx_rxd", "saveb"))
 
     dali_nets = dali.build(gnd, v3, terminals=False, supply_off=supply_off)

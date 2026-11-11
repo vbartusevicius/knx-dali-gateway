@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-11-09T11:04:49",
+    "date": "2026-11-11T20:43:25",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -34,156 +34,6 @@
     "unconnected_items": [],
     "violations": [
         {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on F.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 5.9122,
-                        "y": -3.1029
-                    },
-                    "uuid": "8911da4a-96e4-462b-a9e0-cda314bf8614"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.9239,
-                        "y": -30.4678
-                    },
-                    "uuid": "01a3dddb-524c-4e69-b36b-38800093437d"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.4998,
-                        "y": -26.424
-                    },
-                    "uuid": "226babb5-fc1c-4218-a7bc-ad09ad06976e"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.2996,
-                        "y": -26.3411
-                    },
-                    "uuid": "250eb70c-fb58-4cbb-b838-719d20b036b1"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.8363,
-                        "y": -26.424
-                    },
-                    "uuid": "3f1d0b27-8c30-4c7c-8a0f-5192b9b4475f"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.944,
-                        "y": -30.4879
-                    },
-                    "uuid": "4842ce31-f622-4473-8159-c26757b8a9b9"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.9239,
-                        "y": -26.5116
-                    },
-                    "uuid": "64d5508f-32a7-4876-a28b-bab8717c2f25"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 6.3635,
-                        "y": -26.2877
-                    },
-                    "uuid": "bb20ff34-c724-4f17-aacc-4e4677d9972d"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 8.121,
-                        "y": -12.4463
-                    },
-                    "uuid": "bba56d0e-f22c-4669-9016-a4bcc5f0c792"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
-            "description": "Track has unconnected end",
-            "items": [
-                {
-                    "description": "Track [GND] on B.Cu, length 0.0000 mm",
-                    "pos": {
-                        "x": 3.975,
-                        "y": -26.3911
-                    },
-                    "uuid": "fbaeda04-0e76-4b5c-8592-95955f7cdb44"
-                }
-            ],
-            "severity": "warning",
-            "type": "track_dangling"
-        },
-        {
             "description": "Silkscreen clipped by board edge",
             "items": [
                 {
@@ -192,7 +42,7 @@
                         "x": 0.0,
                         "y": -40.5
                     },
-                    "uuid": "e13141c9-e218-49ca-953a-065292442c4b"
+                    "uuid": "980b3df3-45be-4b33-8fc8-487b2cde5cb0"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -200,7 +50,7 @@
                         "x": 0.0,
                         "y": -39.5
                     },
-                    "uuid": "3a5c8971-2e87-4e49-906b-004f090ab2c0"
+                    "uuid": "4db1a7d2-3e37-400e-a638-fd9eea05aa8d"
                 }
             ],
             "severity": "warning",
@@ -215,7 +65,7 @@
                         "x": 0.0,
                         "y": -40.5
                     },
-                    "uuid": "e13141c9-e218-49ca-953a-065292442c4b"
+                    "uuid": "980b3df3-45be-4b33-8fc8-487b2cde5cb0"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -223,7 +73,7 @@
                         "x": 0.0,
                         "y": -11.5
                     },
-                    "uuid": "abd36e90-e4c5-49bd-a2db-00eefb04285a"
+                    "uuid": "59426257-0f50-4c8d-bcf4-4cd015d03331"
                 }
             ],
             "severity": "warning",
@@ -238,7 +88,7 @@
                         "x": 0.0,
                         "y": -40.5
                     },
-                    "uuid": "e13141c9-e218-49ca-953a-065292442c4b"
+                    "uuid": "980b3df3-45be-4b33-8fc8-487b2cde5cb0"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -246,7 +96,7 @@
                         "x": 13.8,
                         "y": -39.5
                     },
-                    "uuid": "8bd46b04-1968-41e1-adbb-c38167e42359"
+                    "uuid": "509fe235-3068-4ffb-9aaf-f55c844e1456"
                 }
             ],
             "severity": "warning",
@@ -261,7 +111,7 @@
                         "x": 13.8,
                         "y": 0.0
                     },
-                    "uuid": "b5e6748f-30e8-4d51-81e8-3d67221c9859"
+                    "uuid": "e860117a-9443-4dfe-8129-4349b9503244"
                 },
                 {
                     "description": "Segment on F.Silkscreen",
@@ -269,7 +119,7 @@
                         "x": 13.8,
                         "y": -11.5
                     },
-                    "uuid": "e2d51000-46e2-4ee7-bdad-849a2fc4e2ee"
+                    "uuid": "b95e6488-4e7a-49cc-b426-e8864a9407c8"
                 }
             ],
             "severity": "warning",
@@ -279,42 +129,12 @@
             "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint D2",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -2.0
-                    },
-                    "uuid": "260645f2-bc75-4240-9dc2-b1ed4113eacc"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'gateway_fp'",
-            "items": [
-                {
                     "description": "Footprint D3",
                     "pos": {
                         "x": 11.0,
-                        "y": -2.0
+                        "y": -3.95
                     },
-                    "uuid": "761b351a-9f35-422b-9ea9-a63ecea2ace4"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
-            "items": [
-                {
-                    "description": "Footprint SW2",
-                    "pos": {
-                        "x": 11.0,
-                        "y": -6.0
-                    },
-                    "uuid": "8c6705d2-46e9-4d51-acc4-2a8e280f556c"
+                    "uuid": "40029cc4-0c44-4f3e-9cae-4b13f51454e2"
                 }
             ],
             "severity": "warning",
@@ -327,9 +147,24 @@
                     "description": "Footprint SW1",
                     "pos": {
                         "x": 2.8,
-                        "y": -6.0
+                        "y": -9.5
                     },
-                    "uuid": "c72f878a-65b2-4ea1-99d6-12326b1d51a2"
+                    "uuid": "5e4ecb9e-e9e4-4586-82bc-09eda584dd36"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Button_Switch_SMD'",
+            "items": [
+                {
+                    "description": "Footprint SW2",
+                    "pos": {
+                        "x": 11.0,
+                        "y": -9.5
+                    },
+                    "uuid": "8dcf76b2-3897-4786-8c44-226e8da302d2"
                 }
             ],
             "severity": "warning",
@@ -342,84 +177,24 @@
                     "description": "Footprint D1",
                     "pos": {
                         "x": 2.8,
-                        "y": -2.0
+                        "y": -3.95
                     },
-                    "uuid": "e50eda15-3e0a-41ae-a68e-eac50e89a17d"
+                    "uuid": "d5c72ac2-19e2-451e-b56d-39cc1d01bd76"
                 }
             ],
             "severity": "warning",
             "type": "lib_footprint_issues"
         },
         {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "description": "The current configuration does not include the footprint library 'gateway_fp'",
             "items": [
                 {
-                    "description": "Footprint C1",
-                    "pos": {
-                        "x": 10.6,
-                        "y": -21.5
-                    },
-                    "uuid": "022c3d37-bbb0-41d3-87d9-dece6f781216"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C7",
+                    "description": "Footprint D2",
                     "pos": {
                         "x": 6.9,
-                        "y": -24.4
+                        "y": -3.95
                     },
-                    "uuid": "26a09623-5dcf-49eb-a15d-b6e3bcf3c80c"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C9",
-                    "pos": {
-                        "x": 10.6,
-                        "y": -30.0
-                    },
-                    "uuid": "548a36eb-2e57-46d5-8199-adc90da6644f"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R6",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -27.2
-                    },
-                    "uuid": "574d9fbc-7b1f-4cff-b97b-86731d5b56c4"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R1",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -21.5
-                    },
-                    "uuid": "5a5a204f-0a1c-45ef-81f9-b23167dfe7d8"
+                    "uuid": "dd37e91f-29d1-498b-8efa-7ac6178d7202"
                 }
             ],
             "severity": "warning",
@@ -434,112 +209,7 @@
                         "x": 6.9,
                         "y": -30.0
                     },
-                    "uuid": "60c032d2-dd66-4ffa-bed3-31baaf2094d9"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
-            "items": [
-                {
-                    "description": "Footprint U1",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -9.2
-                    },
-                    "uuid": "6c777647-59f9-446f-a783-42662ec74053"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C10",
-                    "pos": {
-                        "x": 3.2,
-                        "y": -27.2
-                    },
-                    "uuid": "7c0a2eff-5c09-4264-a700-98ee0099826b"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'gateway_fp'",
-            "items": [
-                {
-                    "description": "Footprint J2",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -34.5
-                    },
-                    "uuid": "88091cbe-a3a3-46ca-bbe5-25c08133a2f1"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C5",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -3.0
-                    },
-                    "uuid": "ad0f3c7e-6f26-4cfa-9cb5-da7fa047c79d"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R3",
-                    "pos": {
-                        "x": 11.0,
-                        "y": -6.0
-                    },
-                    "uuid": "bab5a0f5-69fa-46b9-8e65-f1f110126d21"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C6",
-                    "pos": {
-                        "x": 11.0,
-                        "y": -3.0
-                    },
-                    "uuid": "d3a17171-b129-4314-a38a-7c684f380189"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C2",
-                    "pos": {
-                        "x": 2.8,
-                        "y": -9.2
-                    },
-                    "uuid": "d6807c5a-b85c-4919-8828-6c3e386ac110"
+                    "uuid": "1179dd8d-4639-4cf7-a400-31112a92ecc9"
                 }
             ],
             "severity": "warning",
@@ -554,7 +224,7 @@
                         "x": 6.9,
                         "y": -14.8
                     },
-                    "uuid": "e0c5d32f-0ed3-4bac-a9f8-61842af9f68f"
+                    "uuid": "26bd33d4-a5ae-435f-bac5-275321ecd83c"
                 }
             ],
             "severity": "warning",
@@ -564,72 +234,72 @@
             "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
             "items": [
                 {
-                    "description": "Footprint C11",
-                    "pos": {
-                        "x": 3.2,
-                        "y": -30.0
-                    },
-                    "uuid": "efd45fca-3d5c-4174-8984-e19e4b5a13f6"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint C3",
-                    "pos": {
-                        "x": 11.0,
-                        "y": -9.2
-                    },
-                    "uuid": "f1ca1908-b7e1-4c37-acee-2934cd752b9e"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R4",
-                    "pos": {
-                        "x": 6.9,
-                        "y": -6.0
-                    },
-                    "uuid": "f3d1e7da-e455-40aa-80b2-d41731395306"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R2",
-                    "pos": {
-                        "x": 3.2,
-                        "y": -21.5
-                    },
-                    "uuid": "f70685a4-d98d-4bb4-b7ac-d1e5a74dff93"
-                }
-            ],
-            "severity": "warning",
-            "type": "lib_footprint_issues"
-        },
-        {
-            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
-            "items": [
-                {
-                    "description": "Footprint R5",
+                    "description": "Footprint C9",
                     "pos": {
                         "x": 10.6,
+                        "y": -30.0
+                    },
+                    "uuid": "27426fb6-d497-4652-9a03-4eb646324dc7"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R1",
+                    "pos": {
+                        "x": 6.9,
+                        "y": -21.5
+                    },
+                    "uuid": "307842e2-cfd4-4a49-bab3-2beda7b094ee"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'gateway_fp'",
+            "items": [
+                {
+                    "description": "Footprint J2",
+                    "pos": {
+                        "x": 6.9,
+                        "y": -34.5
+                    },
+                    "uuid": "375fffa0-8c07-4b78-b662-d27f1e5b4622"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C1",
+                    "pos": {
+                        "x": 10.6,
+                        "y": -21.5
+                    },
+                    "uuid": "3d95fda6-8302-4689-8838-187305ab3a92"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C10",
+                    "pos": {
+                        "x": 3.2,
                         "y": -27.2
                     },
-                    "uuid": "fc88a91a-8a07-432a-ad28-3ea11f94beb4"
+                    "uuid": "3f5cd224-1e15-4efd-8b99-6cdf65fc3776"
                 }
             ],
             "severity": "warning",
@@ -644,7 +314,187 @@
                         "x": 2.8,
                         "y": -3.0
                     },
-                    "uuid": "fd3451fb-cf25-4dea-922e-675e0504afc0"
+                    "uuid": "43cc877c-98b7-4e55-a42c-46b1133ccc99"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Package_TO_SOT_SMD'",
+            "items": [
+                {
+                    "description": "Footprint U1",
+                    "pos": {
+                        "x": 7.0,
+                        "y": -18.73
+                    },
+                    "uuid": "4e7abea7-d0fa-4b03-aa00-e48e33d435d4"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R5",
+                    "pos": {
+                        "x": 10.6,
+                        "y": -27.2
+                    },
+                    "uuid": "56fd04b8-9757-4284-856d-b7675b5bdf4c"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C6",
+                    "pos": {
+                        "x": 11.0,
+                        "y": -3.0
+                    },
+                    "uuid": "6bebfb7e-a7c0-427f-b150-a3fb032fda12"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C5",
+                    "pos": {
+                        "x": 6.9,
+                        "y": -3.0
+                    },
+                    "uuid": "6ca00a24-fc99-4f7d-98cd-05dd943eb27b"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R4",
+                    "pos": {
+                        "x": 3.13,
+                        "y": -18.83
+                    },
+                    "uuid": "74053a2c-3d73-4651-837a-333f6865af4d"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R6",
+                    "pos": {
+                        "x": 6.9,
+                        "y": -27.2
+                    },
+                    "uuid": "7ae05d79-bb03-458b-953e-9e0dc6a8e65a"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C2",
+                    "pos": {
+                        "x": 2.47,
+                        "y": -10.83
+                    },
+                    "uuid": "915fc9f6-a06e-44d0-be2c-cdd9bd155628"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C3",
+                    "pos": {
+                        "x": 10.9,
+                        "y": -10.83
+                    },
+                    "uuid": "9aee8770-e191-4c92-a5d8-254901283326"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R2",
+                    "pos": {
+                        "x": 3.2,
+                        "y": -21.5
+                    },
+                    "uuid": "9f97598d-e5d5-45e2-9c27-791ca8a9f224"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C11",
+                    "pos": {
+                        "x": 3.2,
+                        "y": -30.0
+                    },
+                    "uuid": "c445f7f1-f809-446c-8c16-0daa8ed1e77f"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Capacitor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint C7",
+                    "pos": {
+                        "x": 6.9,
+                        "y": -24.4
+                    },
+                    "uuid": "d5a95771-7f20-4c05-a8b6-485ffa5926c6"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Resistor_SMD'",
+            "items": [
+                {
+                    "description": "Footprint R3",
+                    "pos": {
+                        "x": 10.9,
+                        "y": -18.9
+                    },
+                    "uuid": "d8d7ad06-bcce-496a-84f2-b715e99b30a8"
                 }
             ],
             "severity": "warning",

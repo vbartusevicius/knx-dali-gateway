@@ -15,9 +15,9 @@ from builtins import NC
 from common import block, part, power_flag, src
 from skidl import Net
 
-R0603 = "Resistor_SMD:R_0603_1608Metric"
+R_SMD = "Resistor_SMD:R_0805_2012Metric"   # hand-solderable size (user, 2026-11-11)
 R2512 = "Resistor_SMD:R_2512_6332Metric"
-C0603 = "Capacitor_SMD:C_0603_1608Metric"
+C_SMD = "Capacitor_SMD:C_0805_2012Metric"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 C_ELEC = "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm"
 C_ELEC_BENT = "gateway_fp:CP_Radial_D10.0mm_P5.00mm_Horizontal_Bent"
@@ -26,7 +26,7 @@ D_SOD123 = "Diode_SMD:D_SOD-123"
 TSOT23_6 = "Package_TO_SOT_SMD:TSOT-23-6"
 QFN40 = "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm_ThermalVias"
 QFN40_NO_VIAS = "Package_DFN_QFN:QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm"
-XTAL3225 = "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm"
+XTAL5032 = "Crystal:Crystal_SMD_5032-2Pin_5.0x3.2mm"   # two large pads: hand-solderable
 L_INDUCTOR = "Inductor_SMD:L_Wuerth_7440604_8x8mm"
 L_0805 = "Inductor_SMD:L_0805_2012Metric"
 HDR_KNX = "gateway_fp:Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm"
@@ -41,11 +41,11 @@ def knx_pin_strip(value, ref):
                     source="Phoenix PST 1,0/2-5,75 R32; Mouser 651-1574200"), ref=ref)
 
 
-def res(value, fields=None, footprint=R0603):
+def res(value, fields=None, footprint=R_SMD):
     return part("Device", "R", value, footprint, fields)
 
 
-def cap(value, fields=None, footprint=C0603):
+def cap(value, fields=None, footprint=C_SMD):
     return part("Device", "C", value, footprint, fields)
 
 
@@ -66,7 +66,7 @@ def input_protection(gnd, knx_p, knx_p_prot):
 
 
 def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, input_stage=True, buck=True,
-          thermal_vias=True):
+          thermal_vias=True, compact_bus_caps=False):
     """Build the KNX block. Returns dict with knx_p, knx_p_prot, knx_txd, knx_rxd, saveb, v5.
     terminal=False leaves the KNX pin strip to another board; input_stage=False
     also leaves the bus protection there (KNX_P_PROT arrives on a header);
@@ -170,19 +170,22 @@ def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, in
     u1["TX0"] += tx0
 
     # --- C1: CCP AC coupling (Table 6, 47nF/50V, KNX_P_PROT to CCP) ---
-    c_ccp = cap("47n 50V", src(source="NCN5130 Table 6 C1 47nF 50V"))
+    # compact_bus_caps: 0603 for the three bus-coupling caps at the NCN5130's
+    # crowded left side on the 1-DIN board; every other passive stays 0805.
+    bus_cap = "Capacitor_SMD:C_0603_1608Metric" if compact_bus_caps else C_SMD
+    c_ccp = cap("47n 50V", src(source="NCN5130 Table 6 C1 47nF 50V"), footprint=bus_cap)
     c_ccp.fields["Place"] = "ncn_left"
     c_ccp[1] += knx_p_prot
     c_ccp[2] += ccp
 
     # --- C3: CAV bus DC averaging (Table 6, 100nF/50V) ---
-    c_cav = cap("100n 50V", src(source="NCN5130 Table 6 C3 100nF 50V"))
+    c_cav = cap("100n 50V", src(source="NCN5130 Table 6 C3 100nF 50V"), footprint=bus_cap)
     c_cav.fields["Place"] = "ncn_left"
     c_cav[1] += cav
     c_cav[2] += gnd
 
     # --- C2: Equalization (Table 6, 220nF/50V, CEQ1 to CEQ2) ---
-    c_ceq = cap("220n 50V", src(source="NCN5130 Table 6 C2 220nF 50V"))
+    c_ceq = cap("220n 50V", src(source="NCN5130 Table 6 C2 220nF 50V"), footprint=bus_cap)
     c_ceq.fields["Place"] = "ncn_left"
     c_ceq[1] += ceq1
     c_ceq[2] += ceq2
@@ -241,23 +244,22 @@ def build(gnd, *, horizontal_storage=False, smd_storage=False, terminal=True, in
     l1[2] += vdd1m
 
     # --- X1: 16 MHz crystal (Table 6, mandatory, ≤50 ppm) ---
-    x1 = part("Device", "Crystal_GND24", "16MHz", XTAL3225,
-              src(mpn="X322516MOB4SI", mfr="YXC", lcsc="C12668",
-                  source="NCN5130 Table 6 X1 16MHz ≤50ppm; YXC X322516MOB4SI"))
+    x1 = part("Device", "Crystal", "16MHz", XTAL5032,
+              src(mpn="TAXM16M2QLFCDT1T", mfr="TAITIEN", lcsc="C122519",
+                  source="NCN5130 Table 6 X1 16MHz ≤50ppm; TAITIEN TAXM16M2QLFCDT1T 5032-2P, CL 20pF, "
+                         "ESR 40 Ohm, ±20ppm (+±30ppm over temperature)"))
     x1.fields["Place"] = "ncn_top"
     x1[1] += xtal1
     xtal1 += u1["XTAL1"]
-    x1[3] += xtal2
+    x1[2] += xtal2
     xtal2 += u1["XTAL2"]
-    x1[2] += gnd
-    x1[4] += gnd
 
-    # --- C8, C9: Crystal load capacitors (C = 2*(CL - C_stray) = 2*(12-3) = 18pF) ---
-    c8 = cap("18p C0G 50V", src(source="Crystal CL=12pF, C_stray≈3pF → C=2*(12-3)=18pF"))
+    # --- C8, C9: Crystal load capacitors (C = 2*(CL - C_stray) = 2*(20-3) ≈ 33pF) ---
+    c8 = cap("33p C0G 50V", src(source="Crystal CL=20pF, C_stray≈3pF → C=2*(20-3)≈33pF"))
     c8.fields["Place"] = "ncn_top"
     c8[1] += xtal1
     c8[2] += gnd
-    c9 = cap("18p C0G 50V", src(source="Crystal CL=12pF, C_stray≈3pF → C=2*(12-3)=18pF"))
+    c9 = cap("33p C0G 50V", src(source="Crystal CL=20pF, C_stray≈3pF → C=2*(20-3)≈33pF"))
     c9.fields["Place"] = "ncn_top"
     c9[1] += xtal2
     c9[2] += gnd
@@ -342,7 +344,7 @@ def buck_5v(gnd, vfilt, v5_buck, sw):
     for val in ("22u 25V", "22u 25V", "100n 50V"):
         c = cap(val,
                 src(source="SCT2400 datasheet Cout"),
-                footprint=C0805 if "22u" in val else C0603)
+                footprint=C0805 if "22u" in val else C_SMD)
         c.fields["Place"] = "buck5v"
         c[1] += v5_buck
         c[2] += gnd

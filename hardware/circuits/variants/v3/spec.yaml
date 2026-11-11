@@ -45,9 +45,9 @@ boards:
     z_front: 41.9
     max_outline: { width: 39.8, height: 78.0 }
     isolation:
-      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
-      - { between: [SELV-AUX, DALI], creepage_min: 6.0, bridged_by: [isolated DC-DC] }
-      - { between: [SELV-KNX, SELV-AUX], creepage_min: 2.0, bridged_by: [supply-off optocoupler] }
+      - { between: [SELV-KNX, DALI], creepage_min: 5.5, bridged_by: [optocouplers] }
+      - { between: [SELV-AUX, DALI], creepage_min: 5.5, bridged_by: [isolated DC-DC] }
+      - { between: [SELV-KNX, SELV-AUX], creepage_min: 1.0, bridged_by: [supply-off optocoupler] }
   ui:
     plane: parallel-to-front
     thickness: 1.2
@@ -63,6 +63,7 @@ boards:
       pins: 8
 
 front_ui:
+  led_top: 1.57       # WS2812B-MINI-V3J on the front
   board_z: 54.19
   board_top_z: 55.39
   oled:
@@ -93,7 +94,7 @@ derived:
     led_data:
       pin: D0/GPIO0
       net: LED_DATA
-      note: RMT, SK6805 chain via 5 V buffer on UI
+      note: RMT, WS2812B-MINI-V3J chain via 5 V buffer on UI
     dali_supply_off:
       pin: D1/GPIO1
       net: DALI_SUPPLY_OFF

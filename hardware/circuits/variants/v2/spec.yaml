@@ -37,7 +37,7 @@ boards:
     carried_by: main      # plugged onto main J5/J6, no case retention of its own
     max_outline: { width: 31.5, height: 27.5 }
     isolation:
-      - { between: [SELV-KNX, DALI], creepage_min: 6.0, bridged_by: [optocouplers] }
+      - { between: [SELV-KNX, DALI], creepage_min: 5.5, bridged_by: [optocouplers] }
   interconnects:
     - from: main
       to: ui
@@ -63,6 +63,7 @@ boards:
       pins: 3
 
 front_ui:
+  led_top: 1.57       # WS2812B-MINI-V3J on the front
   display:
     geometry: hardware/circuits/variants/v2/layout_ui.yaml oled_module
     part: Winstar WEA012864DWPP3N00003 (WEA012864D-03 drawing)
@@ -81,7 +82,7 @@ derived:
     led_data:
       pin: D0/GPIO0
       net: LED_DATA
-      note: RMT, SK6805 chain via 5 V buffer on UI
+      note: RMT, WS2812B-MINI-V3J chain via 5 V buffer on UI
     dali_supply_off:
       pin: D1/GPIO1
       net: DALI_SUPPLY_OFF

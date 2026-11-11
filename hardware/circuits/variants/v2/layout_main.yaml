@@ -6,7 +6,7 @@ frame:
   min_drill: 0.2
   min_track: 0.12
   edge_clearance: 0.3
-  fine_pitch_power_pads: [U1, Q2, U10]
+  fine_pitch_power_pads: [U1, Q2]
   plane_layers: [In1.Cu]
   domains: [SELV-KNX, DALI, SELV-AUX]
   domain_regions:
@@ -91,19 +91,19 @@ parts:
   D1:  { x: 23.0,  y: 12.6,  rot: 0,   block: knx_in }
   D2:  { x: 23.0,  y: 16.4,  rot: 180, block: knx_in }
   C1:  { x: 15.8,  y: 10.6,  rot: 270, block: ncn5130 }
-  C2:  { x: 18.5,  y: 9.2,   rot: 0,   block: ncn5130 }
+  C2:  { x: 18.6, y: 9.37, rot: 0,   block: ncn5130 }
   C3:  { x: 15.1,  y: 12.0,  rot: 90,  side: back, block: ncn5130 }
   C4:  { x: 27.0,  y: 32.5,  rot: 180, side: back, block: storage, locked: true }
-  C5:  { x: 15.4,  y: 6.6,   rot: 0,   block: ncn5130 }
+  C5:  { x: 15.45, y: 6.3, rot: 0,   block: ncn5130 }
   C6:  { x: 6.2,   y: 7.9,   rot: 270, block: ncn5130 }
   C7:  { x: 4.9,   y: 16.8,  rot: 270, block: ncn5130 }
-  C8:  { x: 13.6,  y: 3.4,   rot: 270, block: ncn5130 }
-  C9:  { x: 6.9,   y: 3.4,   rot: 180, block: ncn5130 }
+  C8:  { x: 15.0, y: 3.4, rot: 270, block: ncn5130 }
+  C9:  { x: 6.3, y: 3.4, rot: 270, block: ncn5130 }
   C10: { x: 7.0,   y: 20.8,  rot: 0,   block: buck5v }
   C11: { x: 3.6,   y: 23.2,  rot: 270, block: buck5v }
-  C12: { x: 16.2,  y: 20.2,  rot: 0,   block: buck5v }
-  C13: { x: 16.2,  y: 18.2,  rot: 0,   block: buck5v }
-  C14: { x: 16.2,  y: 16.2,  rot: 0,   block: buck5v }
+  C12: { x: 16.32, y: 19.82, rot: 0,   block: buck5v }
+  C13: { x: 16.37, y: 17.73, rot: 0,   block: buck5v }
+  C14: { x: 16.42, y: 15.64, rot: 0,   block: buck5v }
   C15: { x: 12.2,  y: 16.2,  rot: 0,   block: ncn5130 }
   L1:  { x: 12.0,  y: 20.6,  rot: 90,  side: back, block: ncn5130 }
   L2:  { x: 11.8,  y: 22.8,  rot: 0,   block: buck5v }
@@ -111,20 +111,20 @@ parts:
   R2:  { x: 9.0,   y: 5.6,   rot: 0,   side: back, block: ncn5130 }
   R3:  { x: 18.8,  y: 3.4,   rot: 180, side: back, block: ncn5130 }
   R4:  { x: 7.2,   y: 16.6,  rot: 90,  block: ncn5130 }
-  R5:  { x: 2.2,   y: 27.6,  rot: 90,  block: buck5v }
-  R6:  { x: 16.6,  y: 28.6,  rot: 90,  block: buck5v }
-  R7:  { x: 15.6,  y: 22.4,  rot: 0,   block: buck5v }
-  R8:  { x: 15.6,  y: 24.0,  rot: 0,   block: buck5v }
+  R5:  { x: 2.2, y: 27.5, rot: 90,  block: buck5v }
+  R6:  { x: 16.65, y: 28.3, rot: 90,  block: buck5v }
+  R7:  { x: 12.85, y: 19.49, rot: 0,   block: buck5v }
+  R8:  { x: 19.42, y: 27.22, rot: 0,   block: buck5v }
   R9:  { x: 4.6,   y: 11.2,  rot: 0,   block: ncn5130 }
-  Y1:  { x: 10.6,  y: 3.9,   rot: 180, block: ncn5130 }
-  R10: { x: 19.6,  y: 29.0,  rot: 0,   block: dali_supply_off }
+  Y1:  { x: 10.55, y: 4.4, rot: 180, block: ncn5130 }
+  R10: { x: 22.36, y: 29.5, rot: 0,   block: dali_supply_off }
   R11: { x: 9.0,   y: 44.5,  rot: 0,   block: dali_supply_off }
-  D5:  { x: 9.0,   y: 47.0,  rot: 0,   block: dali_supply_off }
+  D5:  { x: 9.0, y: 46.8, rot: 0,   block: dali_supply_off }
   C16: { x: 14.0,  y: 46.0,  rot: 0,   block: dcdc_iso }
   F1:  { x: 4.5,   y: 67.0,  rot: 0,   block: aux_fuse }
-  D3:  { x: 7.5,   y: 58.0,  rot: 0,   block: aux_in }
-  D4:  { x: 7.5,   y: 62.5,  rot: 0,   block: aux_in }
-  Q1:  { x: 26.4,  y: 58.2,  rot: 0,   block: dali_limit }
+  D3:  { x: 6.95, y: 57.75, rot: 0,   block: aux_in }
+  D4:  { x: 6.95, y: 62.25, rot: 0,   block: aux_in }
+  Q1:  { x: 26.5, y: 58.2, rot: 0,   block: dali_limit }
   Q2:  { x: 24.2,  y: 56.5,  rot: 0,   side: back, block: dali_limit }
   R12: { x: 24.5,  y: 60.5,  rot: 0,   side: back, block: dali_limit }
   R13: { x: 29.0,  y: 56.5,  rot: 90,  side: back, block: dali_limit }
@@ -135,10 +135,11 @@ parts:
   # tracks leave upwards and the KNX tracks downwards; TPS2121 mux on the front
   U9:  { x: 2.6,   y: 33.6,  rot: 0,   side: back, block: aux_core, locked: true }
   C20: { x: 8.0,   y: 39.2,  rot: 0,   block: aux_core }
-  C21: { x: 9.4,   y: 31.2,  rot: 0,   block: aux_core }
-  U10: { x: 25.0,  y: 29.5,  rot: 0,   block: core_mux }
-  R24: { x: 29.5,  y: 32.5,  rot: 0,   block: core_mux }
-  R25: { x: 29.5,  y: 34.3,  rot: 0,   block: core_mux }
-  R26: { x: 28.4,  y: 29.0,  rot: 90,  block: core_mux }
-  C22: { x: 25.0,  y: 27.0,  rot: 0,   block: core_mux }
-  C23: { x: 15.0,  y: 32.5,  rot: 90,  block: core_mux }
+  C21: { x: 9.33, y: 31.27, rot: 0,   block: aux_core }
+  U10: { x: 26.1, y: 29.5, rot: 0,   block: core_mux }
+  R24: { x: 29.6, y: 32.0, rot: 90,   block: core_mux }
+  R25: { x: 24.79, y: 33.25, rot: 90,   block: core_mux }
+  Q10: { x: 29.57, y: 18.87, rot: 90,  block: core_mux }
+  Q9:  { x: 14.36, y: 32.2, rot: 90,   block: core_mux }
+  D11: { x: 15.41, y: 24.17, rot: 90,   block: core_mux }
+  C23: { x: 20.47, y: 19.59, rot: 180,  block: core_mux }

@@ -22,7 +22,7 @@ class NetworkServices;
 
 // ESP-IDF half of the KNX device: UART pins to the NCN5130, 3-LED SK6805-EC15
 // status chain (D1 STATUS, D2 KNX, D3 DALI), ADC button ladder sampling
-// (SW1 PRG/RST, SW2 FUNC) and the task loop. Everything that talks to the
+// (SW1 SCROLL left, SW2 RESET right) and the task loop. Everything that talks to the
 // thelsing stack lives in the portable knxstack::KnxApplication.
 class KnxDevice final {
 public:

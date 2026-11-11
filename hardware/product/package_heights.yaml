@@ -29,7 +29,7 @@ L_Sunlord_SWPA6045S: { body_max: 4.50, source: "Sunlord SWPA6045S outline (4.5 m
 CP_Elec_10x10: { body_max: 10.50, source: "Honor RYRVT 10x10.2 SMD electrolytic on its seat plate" }
 SW_SPST_B3U-1000P: { body_max: 1.60, source: "Omron B3U-1000P outline (1.5 +/- 0.1)" }
 SW_SPST_PTS645Sx43SMTR92: { body_max: 7.00, source: "C&K PTS645SL70 actuator height 7.0" }
-LED_SK6805-EC15_1.5x1.5mm: { body_max: 0.65, source: "OPSCO SK6805-EC15 outline (0.65)" }
+LED_WS2812B-MINI-V3J_3.5x3.5mm: { body_max: 1.57, source: "Worldsemi WS2812B-MINI-V3J: 3.5 x 3.5 x 1.57 mm (LCSC C22371519)" }
 Phoenix_PST_1,0-2-5,75_R32_1x02_P5.75mm: { body_max: 9.90, tail_max: 2.10, source: "Phoenix 1574200: installed height 9.9, solder pin P 2.1" }
 Converter_DCDC_RECOM_REM3_DIP24_CTRL: { body_max: 10.70, tail_max: 4.30, source: "RECOM REC3-RW DIP24: case 10.2 + 0.5 standoff, pins 3.8 +0.5/-0.25" }
 Converter_DCDC_TRACO_TMR1_SIP6: { body_max: 11.50, tail_max: 3.70, source: "TRACO TMR 1 outline: 11.0 +/-0.5 incl. 0.5 standoff, pins 3.2 +/-0.5" }

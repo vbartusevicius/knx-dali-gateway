@@ -41,9 +41,9 @@ heights:
   U2: 14.5      # 8.5 mm sockets + 2.5 mm header plastic + XIAO 3.5 mm (USB-C)
   SW1: 1.6
   SW2: 1.6
-  D1: 0.65
-  D2: 0.65
-  D3: 0.65
+  D1: 1.57
+  D2: 1.57
+  D3: 1.57
 
 parts:
   J1:  { x: 20.0, y: 3.3, rot: 0, side: back, block: int_main, locked: true }
@@ -54,19 +54,20 @@ parts:
   # Omron B3U-1000P, pressed through C-shaped spring tabs in the cover front (as on v3)
   SW1: { x: 7.75, y: 8.8, rot: 90, block: btn_ladder, locked: true }
   SW2: { x: 23.75, y: 8.8, rot: 90, block: btn_ladder, locked: true }
-  D1:  { x: 7.75, y: 3.5, rot: 0, block: status_leds, locked: true }
-  D2:  { x: 15.75, y: 3.5, rot: 0, block: status_leds, locked: true }
-  D3:  { x: 23.75, y: 3.5, rot: 0, block: status_leds, locked: true }
-  C1:  { x: 5.5, y: 17.8, rot: 0, block: mcu_power }
+  # WS2812B-MINI-V3J on the front (pads reach 0.45 mm past the body)
+  D1:  { x: 7.75, y: 3.5, rot: 90, block: status_leds, locked: true }
+  D2:  { x: 15.75, y: 3.5, rot: 90, block: status_leds, locked: true }
+  D3:  { x: 23.75, y: 3.5, rot: 90, block: status_leds, locked: true }
+  C1:  { x: 5.22, y: 17.7, rot: 0, block: mcu_power }
   C2:  { x: 17.0, y: 14.3, rot: 0, block: btn_ladder }
   C3:  { x: 20.5, y: 18.3, rot: 90, block: status_leds }
   C4:  { x: 16.0, y: 21.3, rot: 0, block: status_leds }
   C5:  { x: 7.75, y: 3.5, rot: 0, side: back, block: status_leds }
   C6:  { x: 15.75, y: 6.7, rot: 0, block: status_leds }
-  C7:  { x: 29.0, y: 3.5, rot: 0, side: back, block: status_leds }
+  C7:  { x: 29.4, y: 3.5, rot: 0, side: back, block: status_leds }
   R1:  { x: 12.0, y: 23.3, rot: 0, block: mcu }
-  R2:  { x: 16.0, y: 23.3, rot: 0, block: mcu }
+  R2:  { x: 15.93, y: 23.37, rot: 0, block: mcu }
   R3:  { x: 20.5, y: 14.3, rot: 0, block: btn_ladder }
-  R4:  { x: 14.0, y: 13.3, rot: 0, block: btn_ladder }
-  R5:  { x: 11.0, y: 13.3, rot: 0, block: btn_ladder }
+  R4:  { x: 13.52, y: 13.15, rot: 0, block: btn_ladder }
+  R5:  { x: 10.05, y: 13.0, rot: 0, block: btn_ladder }
   R6:  { x: 27.5, y: 14.3, rot: 90, block: status_leds }

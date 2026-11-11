@@ -29,6 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import assembly_drawing
 import fab_outputs
 import jlc_parts
 import panelize
@@ -192,6 +193,7 @@ def release_board(board, root):
     fab_outputs.odb(layout_path(board), out, board)
     fab_outputs.generic_assembly(layout_path(board), out, board, {p["ref"]: p for p in parts(board)})
     placement = assembly_files(board, out, checks)
+    assembly_drawing.write(board, out / f"{board}_assembly.pdf")
     step = REPO / "hardware/build" / VARIANT / board / f"{board}.step"
     run("kicad-cli", "pcb", "export", "step", "--grid-origin", "--subst-models", "--force",
         "--output", str(step), str(layout_path(board)))
@@ -229,7 +231,7 @@ def main(version, boards=BOARDS):
     enclosure = REPO / "mechanical/build" / VARIANT
     if enclosure.exists():
         shutil.copytree(enclosure, root / "enclosure", dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("fit_*.png", "front_legend.png"))
+                        ignore=shutil.ignore_patterns("fit_*.png", "front_legend.*"))
     return 1 if failed else 0
 
 

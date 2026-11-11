@@ -8,10 +8,10 @@ namespace gateway::device {
 
 enum class Gesture : std::uint8_t {
     None,
-    Reboot,          // PRG/RST tap: restart the ESP32 and the KNX stack, configuration kept
-    ToggleProgMode,  // PRG/RST held 5 s: KNX programming mode on/off
-    NextPage,        // FUNC tap: next display page, wakes the display
-    WifiSetup,       // FUNC held 5 s: WiFi setup mode
+    Reboot,          // RESET (right, X) tap: restart the ESP32 and the KNX stack, configuration kept
+    ToggleProgMode,  // RESET held 5 s: KNX programming mode on/off
+    NextPage,        // SCROLL (left, dot) tap: next display page, wakes the display
+    WifiSetup,       // SCROLL held 5 s: WiFi setup mode
     FactoryReset     // both held 10 s: erase KNX, lighting and WiFi configuration
 };
 

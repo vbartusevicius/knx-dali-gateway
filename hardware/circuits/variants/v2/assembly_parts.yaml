@@ -117,7 +117,7 @@
   kind: printed
   part: enclosure/cover.stl (or cover_embossed.stl)
   description: PETG or ASA, 0.2 mm layers, front face down (cover.stl plain smooth,
-    cover_embossed.stl 0.3 mm recessed text)
+    cover_embossed.stl 0.6 mm recessed text)
   mouser: '-'
   digikey: '-'
   tme: '-'

@@ -1,11 +1,11 @@
-"""UI block: button ladder (PRG/RST + FUNC), I2C RGB status LEDs, OLED header
+"""UI block: button ladder (SCROLL left + RESET right), I2C RGB status LEDs, OLED header
 and the 10-pin interconnect from the main board.
 
 Button ladder on BTN_LADDER (XIAO D2, ADC): 3V3 -> 10k pull-up, 100 nF filter.
-  idle 3.30 V; PRG/RST (20k) 2.20 V; FUNC (10k) 1.65 V; both (6.67k) 1.32 V.
+  idle 3.30 V; RESET (20k, right) 2.20 V; SCROLL (10k, left) 1.65 V; both (6.67k) 1.32 V.
   The closest pair is 0.33 V apart, so both-pressed is a reliable state.
 
-Status LEDs: three SK6805-EC15 addressable RGB LEDs (5 V, 3.5-5.5 V) in one
+Status LEDs: three WS2812B-MINI-V3J addressable RGB LEDs (5 V, legs past the body) in one
 chain, D1 STATUS -> D2 KNX -> D3 DALI. The data line LED_DATA is XIAO D0; an SN74AHCT1G125 powered from 5 V lifts its 3.3 V level
 (VIH 2.0 V) to 5 V, through 330R as the datasheet's series protection. 5 V
 comes from the main board's KNX buck on the former LED_KNX wire; LED_DALI
@@ -19,9 +19,14 @@ its pins solder straight into J2.
 from common import block, part, src
 from skidl import Net
 
-R0603 = "Resistor_SMD:R_0603_1608Metric"
-C0603 = "Capacitor_SMD:C_0603_1608Metric"
-LED_RGB = "gateway_fp:LED_SK6805-EC15_1.5x1.5mm"
+R_SMD = "Resistor_SMD:R_0805_2012Metric"   # hand-solderable size (user, 2026-11-11)
+C_SMD = "Capacitor_SMD:C_0805_2012Metric"
+# Addressable RGB LED with gull-wing legs (hand soldering, user 2026-11-11):
+# 1 VDD, 2 DOUT, 3 GND, 4 DIN.
+LED_RGB = {"mpn": "WS2812B-MINI-V3J", "mfr": "Worldsemi", "lcsc": "C22371519",
+           "footprint": "gateway_fp:LED_WS2812B-MINI-V3J_3.5x3.5mm",
+           "source": "WS2812B-MINI-V3J (EasyEDA C22371519): 1 VDD, 2 DOUT, 3 GND, 4 DIN; 3.5 x 3.5 x 1.57 mm, "
+                     "gull-wing legs, 6.2 mm span"}
 SOT23_5 = "Package_TO_SOT_SMD:SOT-23-5"
 C0805 = "Capacitor_SMD:C_0805_2012Metric"
 STATUS_LEDS = ("STATUS", "KNX", "DALI")
@@ -29,15 +34,15 @@ JST_SH10 = "Connector_JST:JST_SH_BM10B-SRSS-TB_1x10-1MP_P1.00mm_Vertical"
 HDR_4 = "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
 
 
-def res(value, fields=None, footprint=R0603):
+def res(value, fields=None, footprint=R_SMD):
     return part("Device", "R", value, footprint, fields)
 
 
-def cap(value, fields=None, footprint=C0603):
+def cap(value, fields=None, footprint=C_SMD):
     return part("Device", "C", value, footprint, fields)
 
 
-def status_leds(gnd, v5, led_data):
+def status_leds(gnd, v5, led_data, led=LED_RGB):
     block("status_leds")
     bulk = cap("1u 50V", src(source="5 V entry from the cable"), footprint=C0805)
     bulk[1] += v5
@@ -52,23 +57,21 @@ def status_leds(gnd, v5, led_data):
     c_buf = cap("100n 50V", src(source="74AHCT1G125 decoupling"))
     c_buf[1] += v5
     c_buf[2] += gnd
-    series = res("330R", src(source="SK6805-EC15 datasheet: series resistor at DIN"))
+    series = res("330R", src(source="WS2812B-MINI-V3J: series resistor at DIN"))
     buffer[4] += series[1]
     data = series[2]
     for i, name in enumerate(STATUS_LEDS):
-        led = part("gateway", "SK6805-EC15", f"RGB {name}", LED_RGB,
-                   src(mpn="SK6805-EC15", mfr="OPSCO", lcsc="C2890035",
-                       source="SK6805-EC15 datasheet p.4: 1 DIN, 2 VDD, 3 DOUT, 4 GND"),
-                   ref=f"D{i + 1}")
-        led["DIN"] += data
-        led["VDD"] += v5
-        led["GND"] += gnd
-        c = cap("100n 50V", src(source="SK6805-EC15 datasheet: decoupling per LED"))
+        d = part("gateway", "WS2812B-MINI", f"RGB {name}", led["footprint"],
+                 src(mpn=led["mpn"], mfr=led["mfr"], lcsc=led["lcsc"], source=led["source"]), ref=f"D{i + 1}")
+        d["DIN"] += data
+        d["VDD"] += v5
+        d["GND"] += gnd
+        c = cap("100n 50V", src(source="WS2812B-MINI-V3J: decoupling per LED"))
         c[1] += v5
         c[2] += gnd
         data = Net(f"LED_CHAIN{i + 1}") if i < len(STATUS_LEDS) - 1 else None
         if data is not None:
-            led["DOUT"] += data
+            d["DOUT"] += data
 
 
 def build_interconnect_side(signals):
@@ -96,7 +99,7 @@ BUTTON_B3U = {"footprint": "Button_Switch_SMD:SW_SPST_B3U-1000P", "mpn": "B3U-10
               "mfr": "Omron", "lcsc": "C231329"}
 
 
-def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED):
+def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTAR_OLED, led=LED_RGB):
     """Create button ladder, LEDs, and OLED header on the UI board."""
     block("btn_ladder")
     r_pull = res("10k", src(source="Ladder pull-up; no-button = 3V3"))
@@ -105,22 +108,24 @@ def build_ui_components(gnd, v3, v5, btn_ladder, led_data, sda, scl, oled=WINSTA
     c_ladder = cap("100n 50V", src(source="Ladder debounce/filter cap"))
     c_ladder[1] += btn_ladder
     c_ladder[2] += gnd
-    sw1 = part("Switch", "SW_Push", "PRG/RST", BUTTON_B3U["footprint"],
+    # SW1 is the left button (SCROLL, dot bump), SW2 the right one (RESET,
+    # cross bump); user 2026-11-11.
+    sw1 = part("Switch", "SW_Push", "SCROLL", BUTTON_B3U["footprint"],
                src(mpn=BUTTON_B3U["mpn"], mfr=BUTTON_B3U["mfr"], lcsc=BUTTON_B3U["lcsc"],
-                   source="tap: reboot; hold 5 s: KNX programming mode"))
-    r_prog = res("20k", src(source="PRG/RST ladder: 3V3*20k/30k=2.2V"))
+                   source="left, dot: tap: display page / wake; hold 5 s: WiFi setup"))
+    r_scroll = res("10k", src(source="SCROLL ladder: 3V3*10k/20k=1.65V; both 1.32V"))
     sw1[1] += btn_ladder
-    sw1[2] += r_prog[1]
-    r_prog[2] += gnd
-    sw2 = part("Switch", "SW_Push", "FUNC", BUTTON_B3U["footprint"],
+    sw1[2] += r_scroll[1]
+    r_scroll[2] += gnd
+    sw2 = part("Switch", "SW_Push", "RESET", BUTTON_B3U["footprint"],
                src(mpn=BUTTON_B3U["mpn"], mfr=BUTTON_B3U["mfr"], lcsc=BUTTON_B3U["lcsc"],
-                   source="tap: display page / wake; hold 5 s: WiFi setup"))
-    r_reset = res("10k", src(source="FUNC ladder: 3V3*10k/20k=1.65V; both 1.32V"))
+                   source="right, cross: tap: reboot; hold 5 s: KNX programming mode"))
+    r_reset = res("20k", src(source="RESET ladder: 3V3*20k/30k=2.2V"))
     sw2[1] += btn_ladder
     sw2[2] += r_reset[1]
     r_reset[2] += gnd
 
-    status_leds(gnd, v5, led_data)
+    status_leds(gnd, v5, led_data, led)
 
     block("oled")
     n_pins = len(oled["pins"])

@@ -467,7 +467,11 @@
       },
       {
         "netclass": "SELV-KNX",
-        "pattern": "CORE_PR1"
+        "pattern": "CORE_AUX_GOOD"
+      },
+      {
+        "netclass": "SELV-KNX",
+        "pattern": "CORE_PFET_G"
       },
       {
         "netclass": "DALI-Power",
@@ -580,14 +584,6 @@
       {
         "netclass": "DALI",
         "pattern": "N$13"
-      },
-      {
-        "netclass": "SELV-KNX",
-        "pattern": "N$14"
-      },
-      {
-        "netclass": "SELV-KNX",
-        "pattern": "N$15"
       },
       {
         "netclass": "SELV-KNX",

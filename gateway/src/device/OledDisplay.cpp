@@ -439,7 +439,7 @@ public:
         canvas.fill_rect(1, 1, 126, 11, true);
         if (state.hint == PanelHint::FactoryResetArming) {
             canvas.draw_text(6, 3, "!! FACTORY RESET !!", false);
-            canvas.draw_text(6, 18, "HOLD RST+FUNC 10S", true);
+            canvas.draw_text(6, 18, "HOLD BOTH 10S", true);
             canvas.draw_text_medium(6, 32, "ERASES KNX & NVS", true);
             canvas.draw_text_medium(6, 44, "RELEASE TO ABORT", true);
             return;
@@ -448,7 +448,7 @@ public:
             canvas.draw_text(6, 3, "DALI BUS SHORT!", false);
             canvas.draw_text(6, 18, "PSU LATCHED OFF", true);
             canvas.draw_text_medium(6, 32, "FIX DA+/DA- WIRING", true);
-            canvas.draw_text_medium(6, 44, "RESET IN WEBUI / RST", true);
+            canvas.draw_text_medium(6, 44, "WEBUI OR TAP RESET", true);
             return;
         }
         if (state.knx_prog_mode) {
@@ -459,7 +459,7 @@ public:
             std::snprintf(line, sizeof(line), "KNX: %s", ia);
             canvas.draw_text(6, 18, line, true);
             canvas.draw_text_medium(6, 32, "ETS DOWNLOAD READY", true);
-            canvas.draw_text_medium(6, 44, "HOLD RST 5S TO EXIT", true);
+            canvas.draw_text_medium(6, 44, "HOLD RESET 5S: EXIT", true);
             return;
         }
         if (state.wifi_state == WifiState::Setup) {
@@ -469,7 +469,7 @@ public:
             std::snprintf(ssid, sizeof(ssid), "KNX-DALI-SETUP-%.7s", state.chip_id.data());
             canvas.draw_text_medium(6, 26, ssid, true);
             canvas.draw_text(6, 37, "192.168.4.1", true);
-            canvas.draw_text_medium(6, 51, "HOLD FUNC 5S: EXIT", true);
+            canvas.draw_text_medium(6, 51, "HOLD SCROLL 5S: EXIT", true);
             return;
         }
         canvas.draw_text(8, 3, "DALI BUS SCAN", false);
@@ -487,11 +487,11 @@ public:
         case OledPage::Overview: {
             draw_normal_header(canvas, 128, "STATUS", 1, &state);
 
-            // Row 1: IPv4 address (5x7) when connected, or inline prompt to hold FUNC 5s
+            // Row 1: IPv4 address (5x7) when connected, or inline prompt to hold SCROLL 5s
             if (state.wifi_state == WifiState::Connected) {
                 canvas.draw_text(3, 13, state.ipv4.data(), true);
             } else {
-                canvas.draw_text_medium(3, 14, "NO WIFI: HOLD FUNC 5S", true);
+                canvas.draw_text_medium(3, 14, "NO WIFI: SCROLL 5S", true);
             }
 
             // Two-column compact checkbox grid
@@ -627,7 +627,7 @@ public:
             canvas.draw_text_medium(4, 36, "FIX DA+/DA-", true);
             canvas.draw_text_medium(4, 46, "WIRING", true);
             canvas.draw_text_medium(4, 64, "RESET IN UI", true);
-            canvas.draw_text_medium(4, 74, "OR TAP RST", true);
+            canvas.draw_text_medium(4, 74, "OR TAP RESET", true);
             return;
         }
         if (state.knx_prog_mode) {
@@ -638,8 +638,8 @@ public:
             std::snprintf(line, sizeof(line), "KNX:%s", ia);
             canvas.draw_text_medium(4, 18, line, true);
             canvas.draw_text(4, 34, "ETS READY", true);
-            canvas.draw_text_medium(4, 54, "HOLD RST 5S", true);
-            canvas.draw_text_medium(4, 64, "TO EXIT", true);
+            canvas.draw_text_medium(4, 54, "HOLD RESET", true);
+            canvas.draw_text_medium(4, 64, "5S TO EXIT", true);
             return;
         }
         if (state.wifi_state == WifiState::Setup) {
@@ -653,7 +653,7 @@ public:
             canvas.draw_text_medium(4, 62, "WEB URL:", true);
             canvas.draw_text(4, 72, "192.168.", true);
             canvas.draw_text(4, 82, "4.1", true);
-            canvas.draw_text_medium(4, 102, "HOLD FUNC", true);
+            canvas.draw_text_medium(4, 102, "HOLD SCROLL", true);
             canvas.draw_text_medium(4, 112, "5S: EXIT", true);
             return;
         }
@@ -678,7 +678,7 @@ public:
                 draw_ip_two_lines_v3(canvas, state.ipv4.data());
             } else {
                 canvas.draw_text_medium(2, 14, "NO WIFI", true);
-                canvas.draw_text_medium(2, 23, "HOLD FUNC 5S", true);
+                canvas.draw_text_medium(2, 23, "HOLD SCROLL", true);
             }
 
             canvas.fill_rect(0, 32, 64, 1, true);

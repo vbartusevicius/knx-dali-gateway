@@ -80,7 +80,7 @@ LEG_SIZE = 5.0
 PEG_DIAMETER = 3.0
 STANDOFF_DIAMETER = 3.0
 LED_WINDOW = 2.2 if VARIANT == "v3" else 3.0
-BAFFLE_WALL = 0.4 if VARIANT == "v3" else 0.8
+BAFFLE_WALL = 0.6 if VARIANT == "v3" else 0.8   # >= 0.6 mm for a powder print; v3 tubes 3.4 mm OD at 4.1 mm pitch
 BUTTON_HOLE = 2.6 if VARIANT == "v3" else 4.0
 SCREW_HOLE = 3.2 if VARIANT == "v3" else 4.0
 CASE_SCREW = {"pilot": 2.2, "clearance": 2.8, "depth": 8.5, "z": BASE_TOP_Z - 2.0}
@@ -92,6 +92,13 @@ SNAP = {"overlap": 0.5, "width": 6.0, "slot": 0.5, "hook_height": 1.8, "free_end
 
 BOARD_EDGE_CLEARANCE = 0.2
 RIB = {"half_y": 0.4, "half_z": 1.5, "gap": 0.1}
+# The finger bump on each button pad tells the two apart (user 2026-11-11):
+# SW1 (left, SCROLL) keeps a plain round bump, SW2 (right, RESET) gets an X
+# recessed into it, its bars running out through the rim. At ~2 mm a powder
+# print rounds corners by 0.2-0.3 mm, so plain versus grooved is the
+# contrast that survives, by eye and by touch.
+BUTTON_MARK = {"SW1": "dot", "SW2": "cross"}
+BUTTON_CROSS = {"bar": 0.5, "depth": 0.35}
 BUTTON_TAB = {"pad": 2.6, "arm": 2.0, "root_x": 0.9, "slot": 0.45, "thickness": 0.7, "nub": 1.4,
               "nub_gap": 0.1, "boss": 2.0, "boss_height": 0.6, "boss_round": 0.25}
 
@@ -512,6 +519,17 @@ def button_tab_outline(hole, grow=0.0):
             (*sorted((hole["x"], root)), hole["y"] - t["arm"] / 2 - grow, hole["y"] + t["arm"] / 2 + grow))
 
 
+def button_cross(x, y, top_z):
+    """X groove for a button bump whose top is top_z: two BUTTON_CROSS bars
+    at +/-45 degrees, longer than the bump so they run out through its rim."""
+    c = BUTTON_CROSS
+    length = BUTTON_TAB["boss"] + 1.0
+    z0 = top_z - c["depth"]
+    bar = cq.Workplane("XY").box(length, c["bar"], c["depth"] + 1, centered=(True, True, False))
+    return (bar.rotate((0, 0, 0), (0, 0, 1), 45).union(bar.rotate((0, 0, 0), (0, 0, 1), -45))
+            .translate((x, y, z0)))
+
+
 def button_tab(ref, hole):
     """Spring tab in the front wall over a button that does not reach the
     front face: the C-shaped slot frees a pad and arm, both thinned to
@@ -530,6 +548,8 @@ def button_tab(ref, hole):
     thin = solid(0.0, FRONT_INNER_Z - 1, tab_back)
     bump = cylinder(hole["x"], hole["y"], TOTAL_D - 0.01, TOTAL_D + t["boss_height"], t["boss"]) \
         .faces(">Z").edges().fillet(t["boss_round"])
+    if BUTTON_MARK[ref] == "cross":
+        bump = bump.cut(button_cross(hole["x"], hole["y"], TOTAL_D + t["boss_height"]))
     plunger = cylinder(hole["x"], hole["y"], button_top_z(ref) + t["nub_gap"], tab_back + 0.01, t["nub"])
     return [slot, thin], [plunger, bump]
 
