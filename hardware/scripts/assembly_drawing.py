@@ -8,7 +8,7 @@ reference and value and, only where orientation matters, its polarity mark:
 a black bar on a diode's cathode end (the band printed on the part), a "+" on
 the electrolytic capacitor's + pad (its can has a dark stripe on the - side),
 and a red pin-1 dot on ICs, transistors, LEDs, optocouplers and modules.
-Resistors, ceramic capacitors, inductors, fuses and crystals fit either way
+Resistors, ceramic capacitors, inductors, fuses, crystals and two-pin switches fit either way
 and carry no mark. A black corner flag marks parts fitted by hand rather than
 by the assembler. Parts with the same value share a
 colour. Big parts (modules, terminals, converters) are dashed and drawn under
@@ -32,7 +32,7 @@ from matplotlib.patches import Circle, Rectangle
 import layout
 
 BIG_MM2 = 60.0
-NON_POLAR = ("R_", "C_", "L_", "Fuse_", "Crystal_", "PinHeader_", "Phoenix_PST", "TerminalBlock_")
+NON_POLAR = ("R_", "C_", "L_", "Fuse_", "Crystal_", "PinHeader_", "Phoenix_PST", "TerminalBlock_", "SW_SPST")
 DIODE = ("D_SMA", "D_SOD", "D_SMB", "D_SMC")
 ELECTROLYTIC = ("CP_",)
 
@@ -129,7 +129,7 @@ def key_page(pdf, board_name):
         "    WS2812B-MINI-V3J: a notch / marked corner on the body is pin 1 (VDD); the legs differ, so the",
         "        footprint only fits one way.",
         "    The XIAO, DC-DC converters and the REC3 module: their silkscreen / pin-1 marking and the socket shape.",
-        "No mark = fits either way (resistors, ceramic capacitors, inductors, fuse, crystal, pin strips).",
+        "No mark = fits either way (resistors, ceramic capacitors, inductors, fuse, crystal, pin strips, buttons).",
         "Black corner = fitted by hand (not placed by the assembler); dashed outline = large part.",
         "Same colour = same value (see the values page).",
         "",

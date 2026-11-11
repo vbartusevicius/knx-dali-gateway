@@ -41,6 +41,7 @@ def test_only_polarised_parts_carry_a_mark():
     assert assembly_drawing.polarity("R_0805_2012Metric") == "none"
     assert assembly_drawing.polarity("C_0805_2012Metric") == "none"
     assert assembly_drawing.polarity("Crystal_SMD_5032-2Pin_5.0x3.2mm") == "none"
+    assert assembly_drawing.polarity("SW_SPST_B3U-1000P") == "none"   # two-pin tactile switch
     assert assembly_drawing.polarity("D_SMA") == "cathode"
     assert assembly_drawing.polarity("D_SOD-123") == "cathode"
     assert assembly_drawing.polarity("D_SMA", "SMAJ40CA") == "none"   # bidirectional TVS
