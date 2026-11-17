@@ -170,13 +170,14 @@ Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 
 | Task | Command |
 | --- | --- |
-| Build, route, render, release and test both hardware variants | `python3 hardware/scripts/build.py` |
+| Build, route (fastroute), render, release and test both hardware variants | `python3 hardware/scripts/build.py` |
 | One variant or step | `python3 hardware/scripts/build.py v3 --eda` (`--cad`, `--release`, `--test`) |
 | Refresh the README images (after a release) | `docker compose --profile hardware run --rm -T cad "python3 mechanical/scripts/readme_images.py"` |
 | Firmware tests and ESP32-C6 build (writes `firmware.bin` and `firmware-full-usb.bin`) | `pio test -d gateway -e native && pio run -d gateway -e dev_c6 -e release_c6` |
 | Refresh the clangd compilation database | `pio run -d gateway -e dev_c6 -t compiledb` |
 | Integration lab | `simulation/run-tests.sh` |
 | ETS package | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` |
-| Lint (Python, YAML, C++) | `docker compose --profile lint run --rm lint check .` |
+| Lint Python (ruff) | `docker compose --profile lint run --rm lint check .` |
+| Lint C++ (clang-format, clang-tidy) | `docker compose --profile lint run --rm cpp-lint gateway/scripts/check_cpp.sh` |
 
-Licences per folder: [`LICENSE.md`](LICENSE.md). Engineering rules and architecture notes: [`AGENTS.md`](AGENTS.md).
+Licences per folder: [`LICENSE.md`](LICENSE.md). Contributor and coding-agent instructions (rules, commands, requirements): [`AGENTS.md`](AGENTS.md). Design background and research history: [`docs/research-notes.md`](docs/research-notes.md).

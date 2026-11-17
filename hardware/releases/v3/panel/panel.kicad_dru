@@ -6,12 +6,12 @@
 (rule power_track_width
   (constraint track_width (min 0.22mm))
   (condition "A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')"))
-(rule power_neck_down_at_fine_pitch_pins
-  (constraint track_width (min 0.15mm))
-  (condition "(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && (A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3'))"))
 (rule neck_down_at_fine_pitch_pins
   (constraint track_width (min 0.1mm))
   (condition "A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3')"))
+(rule power_neck_down_at_fine_pitch_pins
+  (constraint track_width (min 0.15mm))
+  (condition "(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && (A.intersectsCourtyard('U1') || A.intersectsCourtyard('U2') || A.intersectsCourtyard('J4') || A.intersectsCourtyard('Q2') || A.intersectsCourtyard('Q3'))"))
 (rule parts_under_raised_modules
   (constraint courtyard_clearance (min -100mm))
   (condition "A.Reference == 'U8' || B.Reference == 'U8'"))

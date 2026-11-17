@@ -12,10 +12,12 @@ every stored footprint position, track and via by reference/net name, so
 circuit changes never discard layout work. The board frame (outline,
 isolation slot, keep-outs, pours, rules) is always rebuilt from
 layout_<board>.yaml. `place` applies the YAML coordinates for the named
-parts or blocks only. `route` exports a DSN, runs Freerouting until it
-reports no unrouted net (it is not repeatable run to run) and imports the
-result. hardware/tests/test_consistency.py proves a stored board still
-matches the netlist.
+parts or blocks only. `route` takes a DRC baseline of the unrouted board,
+exports a DSN, routes it with fastroute (FASTROUTE_MAX_TIME seconds, up to
+ROUTE_ATTEMPTS runs, as it is not repeatable), imports each session and keeps
+the board with the fewest KiCad DRC errors and open connections.
+hardware/tests/test_consistency.py proves a stored board still matches the
+netlist.
 
 YAML coordinates: footprint origin, mm, x right, y up, origin bottom-left.
 """
@@ -189,8 +191,8 @@ def carry_over(target, stored):
         if item.GetClass() == "PCB_VIA":
             new = pcbnew.PCB_VIA(target)
             new.SetPosition(item.GetPosition())
-            new.SetViaType(pcbnew.VIATYPE_THROUGH)
-            new.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+            new.SetViaType(item.GetViaType())
+            new.SetLayerPair(item.TopLayer(), item.BottomLayer())
             new.SetDrill(item.GetDrillValue())
             new.SetWidth(item.GetWidth(pcbnew.F_Cu))
         elif item.GetClass() == "PCB_ARC":
@@ -333,7 +335,7 @@ def fill_zones(board):
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 
 
-# Power classes route at 0.3 mm; Freerouting necks them to 0.225 mm between
+# Power classes route at 0.3 mm; the router necks them to 0.225 mm between
 # pads, still about 0.8 A on 1 oz outer copper against a 350 mA worst case.
 POWER_TRACK_MIN = 0.22
 DRU_4LAYER = f"""\
@@ -350,16 +352,18 @@ DRU_4LAYER = f"""\
 
 def neck_down_rule(refs):
     """Power tracks may neck to 0.15 mm, others to 0.1 mm (JLC 4-layer minimum
-    0.09 mm) where they enter fine-pitch pads."""
+    0.09 mm) where they enter fine-pitch pads. The power rule comes last: KiCad
+    applies the last matching rule, and the generic one let an 8 mm +5V track
+    from J4 pass at 0.12 mm."""
     if not refs:
         return ""
     courtyards = " || ".join(f"A.intersectsCourtyard('{r}')" for r in refs)
-    return ("(rule power_neck_down_at_fine_pitch_pins\n"
-            "  (constraint track_width (min 0.15mm))\n"
-            f"  (condition \"(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && ({courtyards})\"))\n"
-            "(rule neck_down_at_fine_pitch_pins\n"
+    return ("(rule neck_down_at_fine_pitch_pins\n"
             "  (constraint track_width (min 0.1mm))\n"
-            f"  (condition \"{courtyards}\"))\n")
+            f"  (condition \"{courtyards}\"))\n"
+            "(rule power_neck_down_at_fine_pitch_pins\n"
+            "  (constraint track_width (min 0.15mm))\n"
+            f"  (condition \"(A.hasNetclass('KNX-Power') || A.hasNetclass('DALI-Power') || A.hasNetclass('AUX-Power')) && ({courtyards})\"))\n")
 
 def raised_module_rule(refs):
     """Parts may sit under a module raised on sockets (the courtyard covers its
@@ -778,13 +782,14 @@ def tidy_silk(board_name):
 
 
 def export_dsn(board_name):
-    """Pours are left out: Freerouting 2.5.0 treats any via or THT pin inside a
-    plane polygon as connected through it, whatever its net, and then reports
-    unfinished signal nets as routed."""
+    """Pours are left out: a router treats any via or THT pin inside a plane
+    polygon as connected through it, whatever the fill really reaches. Rule areas
+    that forbid neither tracks nor vias (case contacts: no parts) are left out
+    too, as the DSN would make them full keep-outs."""
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
     for zone in zones(board):
-        if not zone.GetIsRuleArea():
+        if not zone.GetIsRuleArea() or not (zone.GetDoNotAllowTracks() or zone.GetDoNotAllowVias()):
             board.RemoveNative(zone)
     for track in list(board.GetTracks()):
         if not track.IsLocked():
@@ -797,14 +802,15 @@ def export_dsn(board_name):
         sys.exit("DSN export failed")
     nets = sorted(str(n) for n in board.GetNetsByName() if str(n))
     project = json.loads(routable.with_suffix(".kicad_pro").read_text())
+    frame = plan["frame"]
     text = with_net_classes(dsn.read_text(), nets, project["net_settings"])
-    text = with_inset_boundary(without_plane_layers(text, plan["frame"]), plan["frame"])
+    text = with_inset_cutouts(with_inset_boundary(with_power_layers(text, frame), frame), frame)
     dsn.write_text(text)
     print(f"{board_name}: exported {dsn.relative_to(REPO)}")
 
 
 def with_inset_boundary(dsn_text, frame):
-    """Freerouting keeps only the track clearance to the outline; shrink the
+    """The router keeps only the track clearance to the outline; shrink the
     outline so routed copper also meets the edge clearance."""
     inset = (frame["edge_clearance"] - 0.2) * 1000
 
@@ -817,18 +823,79 @@ def with_inset_boundary(dsn_text, frame):
     return re.sub(r"(\(boundary\s+\(path pcb 0\s+)([-\d.\s]+)\)", rewrite, dsn_text, count=1)
 
 
-def without_plane_layers(dsn_text, frame):
-    """Hide plane layers from Freerouting: it otherwise routes tracks on them,
-    and a keep-out there also blocks every through via."""
-    for layer in map(re.escape, frame.get("plane_layers", [])):
-        dsn_text = re.sub(rf"    \(layer {layer}\n.*?\n    \)\n", "", dsn_text,
-                          count=1, flags=re.DOTALL)
-        dsn_text = re.sub(rf"[ \t]*\(shape \(\w+ {layer} [^()]*\)\)\n", "", dsn_text)
-        dsn_text = re.sub(rf'[ \t]*\(keepout "" \(polygon {layer} [^()]*\)\)\n', "", dsn_text)
-    if any(layer in dsn_text for layer in frame.get("plane_layers", [])):
-        sys.exit("plane layer still referenced in DSN")
-    index = iter(range(100))
-    return re.sub(r"\(index \d+\)", lambda _: f"(index {next(index)})", dsn_text)
+def with_inset_cutouts(dsn_text, frame):
+    """KiCad exports board cutouts (isolation slots) as keep-outs exactly on the
+    edge; grow them like the outline so copper meets the edge clearance there too."""
+    grow = (frame["edge_clearance"] - 0.2) * 1000
+
+    def rewrite(match):
+        nums = [float(n) for n in match.group(2).split()]
+        grown = Polygon(list(zip(nums[::2], nums[1::2]))).buffer(grow, join_style="mitre")
+        return match.group(1) + "  ".join(f"{x:.0f} {y:.0f}" for x, y in grown.exterior.coords) + "))"
+
+    return re.sub(r'(\(keepout "" \(polygon signal 0\s+)([-\d.\s]+)\)\)', rewrite, dsn_text)
+
+
+def sexp_end(text, start):
+    depth = 0
+    for i in range(start, len(text)):
+        depth += {"(": 1, ")": -1}.get(text[i], 0)
+        if depth == 0:
+            return i + 1
+    sys.exit("unbalanced DSN expression")
+
+
+def without_shapes_on(block, layer):
+    shape = re.compile(rf"[ \t]*\(shape \(\w+ {re.escape(layer)} ")
+    pieces, cursor = [], 0
+    for s in shape.finditer(block):
+        stop = sexp_end(block, block.index("(shape", s.start()))
+        pieces.append(block[cursor:s.start()])
+        cursor = stop + (block[stop:stop + 1] == "\n")
+    return "".join(pieces) + block[cursor:]
+
+
+def with_power_layers(dsn_text, frame):
+    """Plane layers go to the router as power layers (no tracks; vias pass, so
+    the session imports through vias rather than buried ones). THT pins lose
+    their plane-layer shape: fastroute refuses any connection between pins on a
+    power layer that carries no plane of their net ("some of their layers are
+    disabled"). The router mirrors the layers of back-side parts, so their pins
+    get a padstack copy without the mirrored layer instead (dropping the plane
+    layer there removed their In2 copper and let In2 tracks short through them)."""
+    planes = frame.get("plane_layers", [])
+    if not planes:
+        return dsn_text
+    layers = re.findall(r"\n    \(layer (\S+)\n", dsn_text)
+    mirrored = {plane: layers[len(layers) - 1 - layers.index(plane)] for plane in planes}
+    for plane in planes:
+        dsn_text = re.sub(rf"(\(layer {re.escape(plane)}\n\s*\(type )signal\)", r"\1power)", dsn_text)
+    sides = {}
+    for comp in re.finditer(r'\(component ("[^"]+"|\S+)\n((?:\s+\(place [^\n]*\n)+)', dsn_text):
+        sides.setdefault(comp[1], set()).update(re.findall(r"\(place \S+ \S+ \S+ (front|back)", comp[2]))
+    out, pos, back_names = [], 0, {}
+    for m in re.finditer(r"\(padstack (\"[^\"]+\"|\S+)", dsn_text):
+        end = sexp_end(dsn_text, m.start())
+        block, name = dsn_text[m.start():end], m[1]
+        if not name.strip('"').startswith("Via") and any(f" {plane} " in block for plane in planes):
+            front, back = block, block
+            for plane in planes:
+                front, back = without_shapes_on(front, plane), without_shapes_on(back, mirrored[plane])
+            back_names[name] = f'"{name.strip(chr(34))}_back"'
+            block = front + "\n    " + back.replace(f"(padstack {name}", f"(padstack {back_names[name]}", 1)
+        out.append(dsn_text[pos:m.start()] + block)
+        pos = end
+    dsn_text = "".join(out) + dsn_text[pos:]
+
+    def back_pins(image):
+        name = image[1]
+        if sides.get(name) != {"back"}:
+            if "back" in sides.get(name, ()) and any(f"(pin {ps} " in image[0] for ps in back_names):
+                sys.exit(f"THT image {name} is placed on both sides")
+            return image[0]
+        return re.sub(r"\(pin (\"[^\"]+\"|\S+) ", lambda pin: f"(pin {back_names.get(pin[1], pin[1])} ", image[0])
+
+    return re.sub(r'\(image ("[^"]+"|\S+)\n(?:      [^\n]*\n)*?    \)', back_pins, dsn_text)
 
 
 def with_net_classes(dsn_text, nets, net_settings):
@@ -865,8 +932,12 @@ _DETACHED = []
 
 
 def prune_ground_tracks(board):
-    """Freerouting routes ground as an ordinary net; drop every ground track
-    whose connection the pours already make."""
+    """The router gets no pours (see export_dsn), so it routes ground as an
+    ordinary net; drop every ground track whose connection the pours already
+    make (55-97 tracks on v3 main, measured 2026-11-16). Kept because passing
+    the In1 pours as DSN planes broke routing: fastroute reported GND, GNDA and
+    GNDD connections of both main boards as blocked. Removing tracks leaves
+    grazing ends, which import_ses seats afterwards."""
     candidates = [t for t in board.GetTracks() if t.GetNetname() in GROUND_NETS and t.GetClass() != "PCB_VIA"]
     _DETACHED.extend(candidates)
     baseline = unconnected(board)
@@ -884,28 +955,16 @@ def prune_ground_tracks(board):
     return removed
 
 
-def widen_neckdown_stubs(board):
-    """Freerouting sometimes leaves a sub-0.1 mm neck-down segment between two
-    full-width tracks; restore it to its neighbours' width."""
-    traces = [t for t in board.GetTracks() if t.Type() == pcbnew.PCB_TRACE_T]
-    max_length = pcbnew.FromMM(0.1)
-    widened = 0
-    for track in [t for t in traces if t.GetLength() <= max_length]:
-        ends = {(p.x, p.y) for p in (track.GetStart(), track.GetEnd())}
-        width = min((t.GetWidth() for t in traces if t is not track and t.GetNetCode() == track.GetNetCode()
-                     and t.GetLayer() == track.GetLayer()
-                     and ends & {(p.x, p.y) for p in (t.GetStart(), t.GetEnd())}), default=0)
-        if track.GetWidth() < width:
-            track.SetWidth(width)
-            widened += 1
-    return widened
-
-
 def widen_thin_tracks(board, frame):
-    """Freerouting occasionally keeps a neck-down width away from the fine-pitch
-    parts; restore such tracks to their class minimum (power_track_width rule
-    for power nets, the JLC minimum otherwise)."""
-    signal_min = pcbnew.FromMM(frame["min_track"])
+    """fastroute necks power tracks below the 0.22 mm power_track_width rule away
+    from the fine-pitch parts (up to 8 on v3 main, 2 on v2 main, measured
+    2026-11-16); restore them to it. Kept because both router-side ways break
+    routing: --no-neckdown-classes for the power classes left 5-6 connections of
+    each main board unrouted and put In2 tracks through THT pads (shorts), and
+    --router.min_trace_width_um=220 routed fewer connections on v3 main.
+    A track is widened only as far as it keeps the clearance to other-net copper
+    on its layer (widening to 0.22 mm once pushed +5V into +3V3's clearance);
+    one that cannot reach 0.22 mm is left for DRC to report."""
     power_min = pcbnew.FromMM(POWER_TRACK_MIN)
     fine = [board.FindFootprintByReference(r) for r in frame.get("fine_pitch_power_pads", [])]
     for fp in fine:
@@ -913,65 +972,27 @@ def widen_thin_tracks(board, frame):
     courtyards = [fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd) for fp in fine]
     widened = 0
     for track in board.GetTracks():
-        minimum = power_min if track.GetNetname() in frame["power_nets"] else signal_min
-        if track.Type() != pcbnew.PCB_TRACE_T or track.GetWidth() >= minimum:
+        if (track.Type() != pcbnew.PCB_TRACE_T or track.GetNetname() not in frame["power_nets"]
+                or track.GetWidth() >= power_min):
             continue
         if any(c.OutlineCount() and (c.Contains(track.GetStart()) or c.Contains(track.GetEnd())) for c in courtyards):
             continue
-        track.SetWidth(minimum)
+        original = track.GetWidth()
+        track.SetWidth(power_min)
+        if collides(board, track):
+            track.SetWidth(original)
+            continue
         widened += 1
     return widened
 
 
-NEAR_MISS = 0.01
-
-
-def shift_near_miss_tracks(board_name):
-    """Freerouting rounds coordinates to its DSN grid, so a few tracks end up a
-    micrometre or two inside a clearance. Move each such segment away from the
-    item it is too close to by the shortfall (+1 um), dragging the ends of the
-    tracks joined to it along; DRC checks the result. Returns the number of
-    segments moved."""
-    import math
-    path = stored_board_path(board_name)
-    report = build_dir(board_name) / "near_miss_drc.json"
-    subprocess.run(["kicad-cli", "pcb", "drc", "--format", "json", "--output", str(report), str(path)],
-                   capture_output=True, check=False)
-    moves = {}
-    for v in json.loads(report.read_text())["violations"]:
-        m = re.search(r"clearance ([\d.]+) mm; actual ([\d.]+) mm", v["description"])
-        if v["type"] != "clearance" or not m or not 0 < float(m[1]) - float(m[2]) <= NEAR_MISS:
-            continue
-        tracks = [i for i in v["items"] if i["description"].startswith("Track")]
-        others = [i for i in v["items"] if not i["description"].startswith("Track")] or tracks[1:]
-        if tracks and others:
-            moves[tracks[0]["uuid"]] = (float(m[1]) - float(m[2]) + 0.001, others[0]["pos"])
-    if not moves:
-        return 0
-    plan = load_plan(board_name)
-    board = pcbnew.LoadBoard(str(path))
-    traces = [t for t in board.GetTracks() if t.Type() == pcbnew.PCB_TRACE_T]
-    for track in traces:
-        if track.m_Uuid.AsString() not in moves:
-            continue
-        shift, other = moves[track.m_Uuid.AsString()]
-        a, b = track.GetStart(), track.GetEnd()
-        dx, dy = b.x - a.x, b.y - a.y
-        length = math.hypot(dx, dy) or 1.0
-        nx, ny = -dy / length, dx / length
-        ox, oy = pcbnew.FromMM(other["x"]), pcbnew.FromMM(other["y"])
-        if (ox - (a.x + b.x) / 2) * nx + (oy - (a.y + b.y) / 2) * ny > 0:
-            nx, ny = -nx, -ny
-        step = pcbnew.VECTOR2I(round(nx * pcbnew.FromMM(shift)), round(ny * pcbnew.FromMM(shift)))
-        for end in (a, b):
-            for t in traces:
-                if t.GetNetCode() == track.GetNetCode() and t.GetLayer() == track.GetLayer():
-                    if t.GetStart() == end:
-                        t.SetStart(end + step)
-                    if t.GetEnd() == end:
-                        t.SetEnd(end + step)
-    save(board, plan, board_name)
-    return len(moves)
+def collides(board, track):
+    """True if the track comes closer than the clearance to copper of another net on its layer."""
+    layer, net = track.GetLayer(), track.GetNetCode()
+    shape = track.GetEffectiveShape(layer)
+    others = [t for t in board.GetTracks() if t is not track and t.GetNetCode() != net and t.IsOnLayer(layer)]
+    others += [p for p in board.GetPads() if p.GetNetCode() != net and p.IsOnLayer(layer)]
+    return any(shape.Collide(o.GetEffectiveShape(layer), CLEARANCE) for o in others)
 
 
 def import_ses(board_name):
@@ -980,47 +1001,104 @@ def import_ses(board_name):
     ses = build_dir(board_name) / f"{board_name}.ses"
     if not pcbnew.ImportSpecctraSES(board, str(ses)):
         sys.exit("SES import failed")
-    widened = widen_neckdown_stubs(board) + widen_thin_tracks(board, plan["frame"])
+    widened = widen_thin_tracks(board, plan["frame"])
     removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
     seated = seat_track_ends(board)
     dead = remove_dead_ends(board)
-    print(f"{board_name}: removed {removed} ground tracks the pours already cover, "
-          f"widened {widened} neck-down stubs, seated {seated} grazing track ends, "
-          f"removed {dead} dead-end stubs")
+    print(f"{board_name}: imported {ses.relative_to(REPO)}; widened {widened} power tracks, removed {removed} "
+          f"ground tracks the pours already cover, seated {seated} grazing track ends, removed {dead} dead-end stubs")
     save(board, plan, board_name)
-    print(f"{board_name}: imported {ses.relative_to(REPO)}; moved {shift_near_miss_tracks(board_name)} "
-          f"tracks that missed a clearance by <= {NEAR_MISS} mm")
 
 
-FREEROUTING = ["java", "-jar", os.environ.get("FREEROUTING_JAR", "/opt/freerouting.jar"),
-               "-mp", os.environ.get("FREEROUTING_PASSES", "100"), "-mt", "4", "--gui.enabled=false"]
+FASTROUTE = ["fastroute", f"--max-time={os.environ.get('FASTROUTE_MAX_TIME', '600')}"]
+LIBRARY_ONLY = {"lib_footprint_issues", "lib_footprint_mismatch"}
+
+
+def drc_violations(pcb_path, report):
+    """KiCad DRC is the only pass/fail; library-only warnings say nothing about
+    the copper."""
+    subprocess.run(["kicad-cli", "pcb", "drc", "--format", "json", "--severity-all",
+                    "--output", str(report), str(pcb_path)], capture_output=True, check=False)
+    return [v for v in json.loads(report.read_text())["violations"] if v["type"] not in LIBRARY_ONLY]
+
+
+def violation_key(v):
+    return v["type"], tuple(sorted(i["description"] for i in v["items"]))
+
+
+def unrouted_baseline(board_name):
+    """The board as routing starts from it (pours, locked ties and escapes, no
+    other copper): its DRC violations come from footprints or placement, and
+    its open connections are the ones there are to route."""
+    plan = load_plan(board_name)
+    board = current_board(board_name, plan)
+    for track in list(board.GetTracks()):
+        if not track.IsLocked():
+            board.RemoveNative(track)
+    path = build_dir(board_name) / f"{board_name}.unrouted.kicad_pcb"
+    total = unconnected(board)
+    board.Save(str(path))
+    write_rules(board, plan, board_name, path)
+    return total, drc_violations(path, build_dir(board_name) / "unrouted_drc.json")
 
 
 def route(board_name, attempts=None):
-    """Freerouting is not deterministic with several threads: run up to
-    `attempts` (ROUTE_ATTEMPTS, default 4) and import the attempt with the
-    fewest unrouted connections, stopping early at zero."""
+    """fastroute is not repeatable run to run: import up to `attempts`
+    (ROUTE_ATTEMPTS, default 4) sessions and keep the board with the fewest DRC
+    errors and open connections, stopping at the first clean one."""
     attempts = attempts or int(os.environ.get("ROUTE_ATTEMPTS", "4"))
+    total, baseline = unrouted_baseline(board_name)
+    print(f"{board_name}: unrouted baseline has {total} connections, {len(baseline)} DRC violations")
     export_dsn(board_name)
     bdir = build_dir(board_name)
     dsn, ses = bdir / f"{board_name}.dsn", bdir / f"{board_name}.ses"
     best = None
     for attempt in range(1, attempts + 1):
-        trial = bdir / f"{board_name}.attempt{attempt}.ses"
-        run = subprocess.run(FREEROUTING + ["-de", str(dsn), "-do", str(trial)], capture_output=True, text=True,
-                             check=True)
-        summary = next((line for line in (run.stdout + run.stderr).splitlines()
-                        if "Auto-routing stage completed" in line), "no summary")
-        found = re.search(r"\((\d+) unrouted", summary)
-        unrouted = int(found[1]) if found else 10 ** 6
-        print(f"{board_name}: route attempt {attempt}: {summary.split('completed')[-1].strip()[:120]}")
-        if best is None or unrouted < best[0]:
-            best = (unrouted, trial)
-        if unrouted == 0:
+        ses.unlink(missing_ok=True)
+        # The DSN carries no board minimum track width; without it fastroute necks down to
+        # 0.1 mm, below the 0.12 mm fab minimum. A connection that fails at its class width is
+        # retried whole at the neck width: at the power minimum, not 0.12 mm (an 8 mm +5V track).
+        minimum = round(load_plan(board_name)["frame"]["min_track"] * 1000)
+        run = subprocess.run(FASTROUTE + [f"--router.min_trace_width_um={minimum}",
+                                          f"--router.neck_width_um={round(POWER_TRACK_MIN * 1000)}",
+                                          "-de", str(dsn), "-do", str(ses)], capture_output=True, text=True, check=False)
+        if run.returncode or not ses.exists():
+            print(f"{board_name}: route attempt {attempt}: fastroute failed (exit {run.returncode})")
+            continue
+        import_ses(board_name)
+        result = report_routing(board_name, total, baseline)
+        print(f"{board_name}: route attempt {attempt}: {result[0]} DRC errors + open connections, "
+              f"{result[1]} DRC items not in the unrouted baseline")
+        if best is None or result < best[0]:
+            best = (result, bdir / f"{board_name}.attempt{attempt}.kicad_pcb")
+            shutil.copy(stored_board_path(board_name), best[1])
+        if result[:2] == (0, 0):
             break
-    shutil.copy(best[1], ses)
-    print(f"{board_name}: using the attempt with {best[0]} unrouted")
-    import_ses(board_name)
+    if best is None:
+        sys.exit(f"{board_name}: no route attempt produced a session")
+    shutil.copy(best[1], stored_board_path(board_name))
+    passed = best[0][0] == 0
+    print(f"{board_name}: kept {best[1].name}; DRC {'PASS' if passed else 'FAIL'}")
+    return passed
+
+
+def report_routing(board_name, total, baseline):
+    """Returns (DRC errors + open connections, DRC items new against the unrouted baseline, vias)."""
+    path = stored_board_path(board_name)
+    board = pcbnew.LoadBoard(str(path))
+    open_connections = unconnected(board)
+    tracks = [t for t in board.GetTracks() if t.Type() != pcbnew.PCB_VIA_T]
+    vias = len(board.GetTracks()) - len(tracks)
+    violations = drc_violations(path, build_dir(board_name) / "routed_drc.json")
+    errors = sum(v["severity"] == "error" for v in violations)
+    known = {violation_key(v) for v in baseline}
+    from_routing = [v for v in violations if violation_key(v) not in known]
+    print(f"{board_name}: routed {total - open_connections}/{total} connections, "
+          f"{len(tracks)} tracks, {vias} vias; DRC: {errors} errors, {len(violations) - errors} warnings, "
+          f"{len(from_routing)} not in the unrouted baseline")
+    for v in from_routing:
+        print(f"  {v['severity']} {v['type']}: {v['description']}")
+    return errors + open_connections, len(from_routing), vias
 
 
 def components(board_name):
@@ -1061,7 +1139,7 @@ if __name__ == "__main__":
     elif command == "unroute":
         unroute(name)
     elif command == "route":
-        route(name, *(int(a) for a in args))
+        sys.exit(0 if route(name, *(int(a) for a in args)) else 1)
     elif command == "export-dsn":
         export_dsn(name)
     elif command == "import-ses":
