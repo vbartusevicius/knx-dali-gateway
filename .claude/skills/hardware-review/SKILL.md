@@ -26,6 +26,8 @@ What the suites cover, so you know what not to redo by hand:
 - `test_power_logic.py`, `test_consistency.py`, `test_isolation.py`, `test_drc_*.py`, `test_boards_routed.py`: topology, pin maps, creepage, DRC = 0, unrouted = 0.
 - `test_u1_routing.py`: NCN5130 datasheet layout rules (strict xfail on v3 rev C, see the review file).
 - `test_jlc_assembly.py`: every footprint pin-for-pin against JLCPCB/EasyEDA or `hardware/product/pinouts.yaml`.
+- `test_independent_pinout.py`: zero-generator-import audit of `.kicad_pcb` + `<board>_bom.csv` (chirality on `F.Cu`/`B.Cu`, standalone MPN pin-role table, bus lines, diode/cap DC bias and silkscreen cathode/`+` marks).
+- `test_copper_spice.py`: pure physical copper Union-Find + 3D `(X, Y)` B2B pad stitching + `libngspice` (`.op`, `.dc`, `.ac`, `.noise`, `.tran`) end-to-end simulation.
 - `mechanical/tests/test_fit.py`: layout heights >= datasheet maxima in `hardware/product/package_heights.yaml`, part air, openings, cable reach.
 - `mechanical/tests/test_enclosure_solids.py`: exact boolean intersections of case vs boards, part bodies (Fab outlines), solder tails, vertical board backing, button plungers.
 - `mechanical/tests/test_enclosure_probe.py`, `test_ui_stackup.py`, `test_board_stack.py`, `test_front_legend.py`.

@@ -33,21 +33,21 @@ parts:
   J2: { x: 29.0, y: 25.4, rot: 180, side: back, block: int_bus, locked: true }
   U1: { x: 22.0, y: 11.5, rot: 90, block: dali_tx_led, locked: true }
   U2: { x: 8.0, y: 11.5, rot: -90, block: dali_rx, locked: true }
-  D1: { x: 7.0, y: 21.2, rot: 90, side: back, block: dali_bridge }
-  D2: { x: 17.0, y: 17.0, rot: 0, side: back, block: dali_bridge }
-  D3: { x: 23.5, y: 19.5, rot: 0, block: dali_tx }
-  D4: { x: 24.0, y: 23.5, rot: 0, block: dali_tx }
-  D5: { x: 14.0, y: 20.5, rot: 0, block: dali_rx }
-  Q1: { x: 18.0, y: 24.5, rot: 0, block: dali_tx }
-  Q2: { x: 13.8, y: 24.5, rot: 0, block: dali_tx }
-  Q3: { x: 4.0, y: 21.0, rot: 0, block: dali_rx }
-  Q4: { x: 8.2, y: 21.0, rot: 0, block: dali_rx }
-  C1: { x: 24.5, y: 19.0, rot: 0, side: back, block: dali_tx }
-  R1: { x: 27.5, y: 5.0, rot: 90, block: dali_tx_led }
-  R2: { x: 8.5, y: 4.6, rot: 0, block: dali_tx_led }
-  R3: { x: 18.0, y: 18.0, rot: 90, block: dali_tx }
-  R4: { x: 24.0, y: 23.5, rot: 0, side: back, block: dali_tx }
-  R5: { x: 17.5, y: 25.0, rot: 0, side: back, block: dali_tx }
-  R6: { x: 8.0, y: 25.0, rot: 0, block: dali_rx }
-  R7: { x: 12.8, y: 22.0, rot: 90, side: back, block: dali_rx }
-  R8: { x: 5.0, y: 4.6, rot: 0, block: dali_rx_selv }
+  D1: { x: 21.45, y: 23.0, rot: 0, side: back, block: dali_bridge }
+  D2: { x: 19.95, y: 15.5, rot: 0, side: back, block: dali_bridge }
+  D3: { x: 17.95, y: 18.25, rot: 90, block: dali_tx }
+  D4: { x: 13.2, y: 23.7, rot: 90, block: dali_tx }
+  D5: { x: 9.35, y: 19.8, rot: 270, block: dali_rx }
+  Q1: { x: 14.15, y: 19.35, rot: 0, block: dali_tx }
+  Q2: { x: 14.15, y: 15.85, rot: 0, block: dali_tx }
+  Q3: { x: 3.75, y: 16.25, rot: 0, block: dali_rx }
+  Q4: { x: 3.75, y: 19.75, rot: 0, block: dali_rx }
+  C1: { x: 15.25, y: 16.65, rot: 90, side: back, block: dali_tx }
+  R1: { x: 16.9, y: 4.25, rot: 0, block: dali_tx_led }
+  R2: { x: 12.15, y: 4.25, rot: 0, block: dali_tx_led }
+  R3: { x: 22.35, y: 18.4, rot: 180, block: dali_tx }
+  R4: { x: 12.3, y: 20.3, rot: 180, side: back, block: dali_tx }
+  R5: { x: 11.65, y: 16.8, rot: 180, side: back, block: dali_tx }
+  R6: { x: 6.95, y: 19.15, rot: 90, block: dali_rx }
+  R7: { x: 3.7, y: 15.3, rot: 0, side: back, block: dali_rx }
+  R8: { x: 8.35, y: 4.6, rot: 0, block: dali_rx_selv }

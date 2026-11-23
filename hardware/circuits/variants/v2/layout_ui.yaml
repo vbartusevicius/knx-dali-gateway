@@ -48,9 +48,9 @@ heights:
 parts:
   J1:  { x: 20.0, y: 3.3, rot: 0, side: back, block: int_main, locked: true }
   J2:  { x: 8.64, y: 38.45, rot: 90, block: oled, locked: true }
-  U1:  { x: 7.0, y: 15.3, rot: 0, block: mcu_power }
+  U1:  { x: 21.6, y: 15.6, rot: 90, block: mcu_power }
   U2:  { x: 15.75, y: 26.7, rot: 0, side: back, block: mcu, locked: true }
-  U3:  { x: 16.0, y: 18.3, rot: 0, block: status_leds }
+  U3:  { x: 8.15, y: 15.9, rot: 270, block: status_leds }
   # Omron B3U-1000P, pressed through C-shaped spring tabs in the cover front (as on v3)
   SW1: { x: 7.75, y: 8.8, rot: 90, block: btn_ladder, locked: true }
   SW2: { x: 23.75, y: 8.8, rot: 90, block: btn_ladder, locked: true }
@@ -58,16 +58,16 @@ parts:
   D1:  { x: 7.75, y: 3.5, rot: 90, block: status_leds, locked: true }
   D2:  { x: 15.75, y: 3.5, rot: 90, block: status_leds, locked: true }
   D3:  { x: 23.75, y: 3.5, rot: 90, block: status_leds, locked: true }
-  C1:  { x: 5.22, y: 17.7, rot: 0, block: mcu_power }
-  C2:  { x: 17.0, y: 14.3, rot: 0, block: btn_ladder }
-  C3:  { x: 20.5, y: 18.3, rot: 90, block: status_leds }
-  C4:  { x: 16.0, y: 21.3, rot: 0, block: status_leds }
-  C5:  { x: 7.75, y: 3.5, rot: 0, side: back, block: status_leds }
-  C6:  { x: 15.75, y: 6.7, rot: 0, block: status_leds }
-  C7:  { x: 29.4, y: 3.5, rot: 0, side: back, block: status_leds }
-  R1:  { x: 12.0, y: 23.3, rot: 0, block: mcu }
-  R2:  { x: 15.93, y: 23.37, rot: 0, block: mcu }
-  R3:  { x: 20.5, y: 14.3, rot: 0, block: btn_ladder }
-  R4:  { x: 13.52, y: 13.15, rot: 0, block: btn_ladder }
-  R5:  { x: 10.05, y: 13.0, rot: 0, block: btn_ladder }
-  R6:  { x: 27.5, y: 14.3, rot: 90, block: status_leds }
+  C1:  { x: 18.6, y: 16.45, rot: 180, block: mcu_power }
+  C2:  { x: 11.3, y: 7.1, rot: 0, block: btn_ladder }
+  C3:  { x: 4.9, y: 7.35, rot: 90, block: status_leds }
+  C4:  { x: 12.25, y: 13.0, rot: 0, block: status_leds }
+  C5:  { x: 5.9, y: 2.6, rot: 0, side: back, block: status_leds }
+  C6:  { x: 11.75, y: 15.3, rot: 0, block: status_leds }
+  C7:  { x: 10.05, y: 14.0, rot: 0, side: back, block: status_leds }
+  R1:  { x: 5.95, y: 30.15, rot: 270, block: mcu }
+  R2:  { x: 10.3, y: 30.9, rot: 90, block: mcu }
+  R3:  { x: 10.3, y: 25.05, rot: 270, block: btn_ladder }
+  R4:  { x: 8.65, y: 12.35, rot: 0, block: btn_ladder }
+  R5:  { x: 22.85, y: 12.35, rot: 180, block: btn_ladder }
+  R6:  { x: 11.5, y: 10.0, rot: 270, block: status_leds }

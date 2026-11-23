@@ -72,22 +72,22 @@ parts:
   # directly below the 9.8 mm top notch (y 39.2) so the 12.0 mm flex tail lands
   # squarely on the 2.5 mm solder pads; charge-pump passives below J2 at y 21.5..30.0
   J2:  { x: 6.9,   y: 34.5,  rot: 180, side: back, block: oled, locked: true }
-  C9:  { x: 10.6,  y: 30.0,  rot: 0,   side: back, block: oled }
-  C8:  { x: 6.9,   y: 30.0,  rot: 0,   side: back, block: oled }
-  C11: { x: 3.2,   y: 30.0,  rot: 0,   side: back, block: oled }
-  C10: { x: 3.2,   y: 27.2,  rot: 0,   side: back, block: oled }
-  R6:  { x: 6.9,   y: 27.2,  rot: 0,   side: back, block: oled }
-  R5:  { x: 10.6,  y: 27.2,  rot: 0,   side: back, block: oled }
-  C7:  { x: 6.9,   y: 24.4,  rot: 0,   side: back, block: oled }
-  R1:  { x: 6.9,   y: 21.5,  rot: 0,   side: back, block: btn_ladder }
-  C1:  { x: 10.6,  y: 21.5,  rot: 0,   side: back, block: btn_ladder }
-  R2:  { x: 3.2,   y: 21.5,  rot: 0,   side: back, block: btn_ladder }
+  C9:  { x: 10.95, y: 37.45, rot: 180,   side: back, block: oled }
+  C8:  { x: 10.0, y: 31.55, rot: 180,   side: back, block: oled }
+  C11: { x: 3.15, y: 37.45, rot: 0,   side: back, block: oled }
+  C10: { x: 4.0, y: 31.55, rot: 0,   side: back, block: oled }
+  R6:  { x: 4.1, y: 28.55, rot: 270,   side: back, block: oled }
+  R5:  { x: 6.85, y: 37.4, rot: 180,   side: back, block: oled }
+  C7:  { x: 7.0, y: 30.85, rot: 270,   side: back, block: oled }
+  R1:  { x: 7.65, y: 21.9, rot: 270,   side: back, block: btn_ladder }
+  C1:  { x: 2.0, y: 8.55, rot: 270,   side: back, block: btn_ladder }
+  R2:  { x: 5.4, y: 9.5, rot: 0,   side: back, block: btn_ladder }
   J1:  { x: 6.9,   y: 14.8,  rot: 180, side: back, block: int_main, locked: true }
-  U1:  { x: 7.0, y: 18.73, rot: 0,   side: back, block: leds }
-  C2:  { x: 2.47, y: 10.83, rot: 0,   side: back, block: leds }
-  C3:  { x: 10.9, y: 10.83, rot: 0,   side: back, block: leds }
-  R4:  { x: 3.13, y: 18.83, rot: 0,   side: back, block: leds }
-  R3:  { x: 10.9, y: 18.9, rot: 0,   side: back, block: btn_ladder }
-  C4:  { x: 2.8, y: 3.0, rot: 0,   side: back, block: leds }
-  C5:  { x: 6.9, y: 3.0, rot: 0,   side: back, block: leds }
-  C6:  { x: 11.0, y: 3.0, rot: 0,   side: back, block: leds }
+  U1:  { x: 8.3, y: 18.3, rot: 0,   side: back, block: leds }
+  C2:  { x: 2.85, y: 5.65, rot: 0,   side: back, block: leds }
+  C3:  { x: 6.95, y: 6.75, rot: 0,   side: back, block: leds }
+  R4:  { x: 5.65, y: 2.65, rot: 270,   side: back, block: leds }
+  R3:  { x: 11.1, y: 9.5, rot: 180,   side: back, block: btn_ladder }
+  C4:  { x: 4.35, y: 17.6, rot: 180,   side: back, block: leds }
+  C5:  { x: 11.55, y: 18.3, rot: 90,   side: back, block: leds }
+  C6:  { x: 11.05, y: 6.75, rot: 0,   side: back, block: leds }

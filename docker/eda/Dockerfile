@@ -8,7 +8,7 @@ USER root
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       python3-pip python3-venv curl ca-certificates \
+       python3-pip python3-venv curl ca-certificates libngspice0 \
     && rm -rf /var/lib/apt/lists/*
 
 # The venv shares the system site-packages so that `python3` sees both the
@@ -20,7 +20,8 @@ RUN python3 -m venv --system-site-packages /opt/eda \
        pyyaml==6.0.3 \
        pytest==8.4.2 \
        pillow==11.3.0 \
-       shapely==2.1.1
+       shapely==2.1.1 \
+       ortools==9.15.6755
 
 # SKiDL discovers KiCad's stock libraries through these variables.
 ENV KICAD10_SYMBOL_DIR=/usr/share/kicad/symbols \

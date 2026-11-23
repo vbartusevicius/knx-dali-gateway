@@ -25,3 +25,9 @@ def test_no_drc_errors(drc):
 
 def test_no_unrouted_connections(drc):
     assert not drc["unconnected_items"]
+
+
+def test_no_silk_over_copper(drc):
+    over_pads = [f"{v['type']}: {[i['description'] for i in v['items']]}"
+                 for v in drc["violations"] if v["type"] == "silk_over_copper"]
+    assert not over_pads

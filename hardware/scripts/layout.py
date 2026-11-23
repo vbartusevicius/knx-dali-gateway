@@ -34,12 +34,19 @@ from pathlib import Path
 import kinet2pcb
 import pcbnew
 import yaml
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
+from shapely.geometry import box as sbox
+from shapely.ops import unary_union
 
 REPO = Path("/work")
 sys.path.insert(0, str(REPO / "hardware/circuits"))
 from product_spec import load_spec
-from track_joints import remove_dead_ends, seat_track_ends
+from track_joints import (
+    clean_planar_tracks,
+    loose_ends,
+    remove_dead_ends,
+    seat_track_ends,
+)
 
 SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
@@ -517,6 +524,85 @@ def export_components(board, plan, out):
     out.write_text(json.dumps(comps, indent=1))
 
 
+def clip_silk_off_pads(board):
+    """Clip board-level silkscreen segments (e.g. OLED module outlines) around
+    all exposed pads, drills and footprint silkscreen, and hide any footprint
+    user/reference silkscreen text that overlaps a pad or neighbour silkscreen."""
+    for back in (False, True):
+        silk_layer = pcbnew.B_SilkS if back else pcbnew.F_SilkS
+        cu_layer = pcbnew.B_Cu if back else pcbnew.F_Cu
+        pad_polys = []
+        fp_silk_by_ref = {}
+        for fp in board.Footprints():
+            ref = fp.GetReference()
+            fp_polys = []
+            for pad in fp.Pads():
+                if pad.IsOnLayer(cu_layer) or pad.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH or pad.GetDrillSizeX() > 0:
+                    x0, y0, x1, y1 = mm_box(pad.GetBoundingBox(), 0.24)
+                    pad_polys.append(sbox(x0, y0, x1, y1))
+            for item in fp.GraphicalItems():
+                if item.GetLayer() == silk_layer and isinstance(item, pcbnew.PCB_SHAPE):
+                    for sx0, sy0, sx1, sy1 in silk_edges(item, grow=0.16):
+                        fp_polys.append(sbox(sx0, sy0, sx1, sy1))
+            fp_silk_by_ref[ref] = unary_union(fp_polys) if fp_polys else Polygon()
+
+        pad_union = unary_union(pad_polys) if pad_polys else Polygon()
+        all_fp_silk = unary_union(list(fp_silk_by_ref.values())) if fp_silk_by_ref else Polygon()
+        clip_obs = unary_union([pad_union, all_fp_silk])
+
+        for item in list(board.GetDrawings()):
+            if item.GetLayer() != silk_layer or not isinstance(item, pcbnew.PCB_SHAPE):
+                continue
+            if item.GetShape() != pcbnew.SHAPE_T_SEGMENT:
+                continue
+            a, b = item.GetStart(), item.GetEnd()
+            line = LineString([(pcbnew.ToMM(a.x), pcbnew.ToMM(a.y)), (pcbnew.ToMM(b.x), pcbnew.ToMM(b.y))])
+            if not line.intersects(clip_obs):
+                continue
+            width = item.GetWidth()
+            board.Remove(item)
+            rem = line.difference(clip_obs)
+            if rem.is_empty:
+                continue
+            segs = [rem] if rem.geom_type == "LineString" else [g for g in rem.geoms if g.geom_type == "LineString"]
+            for seg_geom in segs:
+                if seg_geom.length < 0.35:
+                    continue
+                (x0, y0), (x1, y1) = seg_geom.coords[0], seg_geom.coords[-1]
+                new_seg = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_SEGMENT)
+                new_seg.SetLayer(silk_layer)
+                new_seg.SetWidth(width)
+                new_seg.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(x0), pcbnew.FromMM(y0)))
+                new_seg.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(x1), pcbnew.FromMM(y1)))
+                board.Add(new_seg)
+
+        fab_layer = pcbnew.B_Fab if back else pcbnew.F_Fab
+        placed_text_boxes = []
+        for fp in board.Footprints():
+            ref = fp.GetReference()
+            other_silk = unary_union([g for r, g in fp_silk_by_ref.items() if r != ref and not g.is_empty]) \
+                if len(fp_silk_by_ref) > 1 else Polygon()
+            ref_field = fp.Reference()
+            user_texts = [it for it in list(fp.GraphicalItems())
+                          if hasattr(it, "TransformTextToPolySet") and it.GetLayer() == silk_layer]
+            for is_field, txt in [(True, ref_field)] + [(False, it) for it in user_texts]:
+                if txt.GetLayer() != silk_layer or (is_field and not txt.IsVisible()):
+                    continue
+                pset = pcbnew.SHAPE_POLY_SET()
+                txt.TransformTextToPolySet(pset, 0, pcbnew.FromMM(0.01), pcbnew.ERROR_INSIDE)
+                bb = pset.BBox() if pset.OutlineCount() else txt.GetBoundingBox()
+                tx0, ty0, tx1, ty1 = mm_box(bb, 0.14)
+                tpoly = sbox(tx0, ty0, tx1, ty1)
+                if tpoly.intersects(pad_union) or tpoly.intersects(other_silk) or \
+                        any(tpoly.intersects(prev) for prev in placed_text_boxes):
+                    if is_field:
+                        txt.SetVisible(False)
+                    else:
+                        txt.SetLayer(fab_layer)
+                else:
+                    placed_text_boxes.append(tpoly)
+
+
 def save(board, plan, board_name, hidden_refs=()):
     path = stored_board_path(board_name)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -528,6 +614,7 @@ def save(board, plan, board_name, hidden_refs=()):
             ref.SetVisible(False)
     if plan["frame"].get("silk_inside"):
         place_references_inside(board, plan["frame"])
+    clip_silk_off_pads(board)
     add_3d_models(board)
     fill_zones(board)
     board.Save(str(path))
@@ -666,7 +753,7 @@ def add_pad_ties(board, plan):
             end = pcbnew.VECTOR2I(min(max(start.x, box.GetLeft()), box.GetRight()),
                                   min(max(start.y, box.GetTop()), box.GetBottom()))
             width = min(pad.GetSize().x, pad.GetSize().y)
-            if ((start.x, start.y), (end.x, end.y)) in existing or \
+            if start == end or ((start.x, start.y), (end.x, end.y)) in existing or \
                     not tie_clears(fp, pad, anchor, start, end, width, CLEARANCE):
                 continue
             tie = pcbnew.PCB_TRACK(board)
@@ -781,7 +868,7 @@ def tidy_silk(board_name):
     print(f"{board_name}: hid {len(clashing)} clashing references: {', '.join(sorted(clashing))}")
 
 
-def export_dsn(board_name):
+def export_dsn(board_name, locked_ses=None):
     """Pours are left out: a router treats any via or THT pin inside a plane
     polygon as connected through it, whatever the fill really reaches. Rule areas
     that forbid neither tracks nor vias (case contacts: no parts) are left out
@@ -794,6 +881,11 @@ def export_dsn(board_name):
     for track in list(board.GetTracks()):
         if not track.IsLocked():
             board.RemoveNative(track)
+    if locked_ses is not None and locked_ses.exists():
+        pcbnew.ImportSpecctraSES(board, str(locked_ses))
+        for track in board.GetTracks():
+            if track.GetNetname() in U1_SEED_NETS:
+                track.SetLocked(True)
     routable = build_dir(board_name) / f"{board_name}.routable.kicad_pcb"
     board.Save(str(routable))
     write_rules(board, plan, board_name, routable)
@@ -898,22 +990,38 @@ def with_power_layers(dsn_text, frame):
     return re.sub(r'\(image ("[^"]+"|\S+)\n(?:      [^\n]*\n)*?    \)', back_pins, dsn_text)
 
 
-def with_net_classes(dsn_text, nets, net_settings):
+DSN_CLEARANCE_MARGIN_UM = 3
+U1_SEED_NETS = {"CCP", "CAV", "CEQ1", "CEQ2", "VSW1"}
+
+
+def with_net_classes(dsn_text, nets, net_settings, split_seed_nets=False):
     """KiCad 10's DSN exporter puts every net into the default class; rebuild
-    the class section from the project's net classes and assignments."""
+    the class section from the project's net classes and assignments. Add a
+    +3 um rounding margin above KiCad's DRC minimums, and for classes with extra
+    wire-to-wire spacing override wire_smd and smd_smd back to the base margin so
+    traces can still escape fine-pitch IC/connector pads."""
     start = dsn_text.index("    (class ")
     end = dsn_text.index("  (wiring")
     via = dsn_text[start:end].split("(use_via ")[1].split(")")[0]
     assigned = {p["pattern"]: p["netclass"] for p in net_settings["netclass_patterns"]}
     classes = {c["name"]: c for c in net_settings["classes"]}
+    base_clr = round(classes["Default"]["clearance"] * 1000) + DSN_CLEARANCE_MARGIN_UM
     groups = {}
+    seed_members = [n for n in nets if split_seed_nets and n in U1_SEED_NETS]
     for net in nets:
-        groups.setdefault(assigned.get(net, "Default"), []).append(net)
+        if not (split_seed_nets and net in U1_SEED_NETS):
+            groups.setdefault(assigned.get(net, "Default"), []).append(net)
     blocks = []
+    if seed_members:
+        blocks.append(f'    (class U1Seed {" ".join(seed_members)}\n      (circuit\n        (use_via {via})\n      )\n'
+                      f'      (rule\n        (width 200)\n        (clearance {base_clr})\n      )\n    )\n')
     for cls, members in sorted(groups.items()):
+        clr = round(classes[cls]["clearance"] * 1000) + DSN_CLEARANCE_MARGIN_UM
+        smd_override = (f"        (clearance {base_clr} (type wire_smd))\n"
+                        f"        (clearance {base_clr} (type smd_smd))\n") if clr > base_clr else ""
         blocks.append(f'    (class {cls} {" ".join(members)}\n      (circuit\n        (use_via {via})\n      )\n'
                       f'      (rule\n        (width {classes[cls]["track_width"] * 1000:.0f})\n'
-                      f'        (clearance {classes[cls]["clearance"] * 1000:.0f})\n      )\n    )\n')
+                      f'        (clearance {clr})\n{smd_override}      )\n    )\n')
     return dsn_text[:start] + "".join(blocks) + "  )\n" + dsn_text[end:]
 
 
@@ -966,6 +1074,7 @@ def widen_thin_tracks(board, frame):
     on its layer (widening to 0.22 mm once pushed +5V into +3V3's clearance);
     one that cannot reach 0.22 mm is left for DRC to report."""
     power_min = pcbnew.FromMM(POWER_TRACK_MIN)
+    fine_power_min = pcbnew.FromMM(0.15)
     fine = [board.FindFootprintByReference(r) for r in frame.get("fine_pitch_power_pads", [])]
     for fp in fine:
         fp.BuildCourtyardCaches()
@@ -975,10 +1084,13 @@ def widen_thin_tracks(board, frame):
         if (track.Type() != pcbnew.PCB_TRACE_T or track.GetNetname() not in frame["power_nets"]
                 or track.GetWidth() >= power_min):
             continue
-        if any(c.OutlineCount() and (c.Contains(track.GetStart()) or c.Contains(track.GetEnd())) for c in courtyards):
+        in_fine = any(c.OutlineCount() and (c.Contains(track.GetStart()) or c.Contains(track.GetEnd()))
+                      for c in courtyards)
+        target_w = fine_power_min if in_fine else power_min
+        if track.GetWidth() >= target_w:
             continue
         original = track.GetWidth()
-        track.SetWidth(power_min)
+        track.SetWidth(target_w)
         if collides(board, track):
             track.SetWidth(original)
             continue
@@ -995,22 +1107,74 @@ def collides(board, track):
     return any(shape.Collide(o.GetEffectiveShape(layer), CLEARANCE) for o in others)
 
 
-def import_ses(board_name):
+def prune_redundant_loose_tails(board):
+    """Drop short (<0.5 mm) loose-end leftovers from cycle pruning whose removal
+    does not open any connection, preventing seat/cycle ping-pong near EPADs."""
+    removed = 0
+    base = unconnected(board)
+    for t, _ in list(loose_ends(board)):
+        if t.IsLocked() or t.GetLength() > pcbnew.FromMM(0.5):
+            continue
+        _DETACHED.append(t)
+        board.Remove(t)
+        if unconnected(board) > base:
+            board.Add(t)
+        else:
+            removed += 1
+    return removed
+
+
+def polish_tracks(board):
+    """Split crossing/overlapping same-net segments, prune planar cycles, drop
+    dead-end stubs and seat grazing ends without leaving mid-segment T joints."""
+    z1, s1, d1, c1 = clean_planar_tracks(board)
+    dead = remove_dead_ends(board)
+    seated = seat_track_ends(board)
+    z2, s2, d2, c2 = clean_planar_tracks(board)
+    dead += remove_dead_ends(board) + prune_redundant_loose_tails(board)
+    return z1 + z2, s1 + s2, d1 + d2, c1 + c2, seated, dead
+
+
+def import_ses(board_name, seed_ses=None):
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
+    for track in list(board.GetTracks()):
+        if not track.IsLocked():
+            board.RemoveNative(track)
+    pre_locked = {t.m_Uuid.AsString() for t in board.GetTracks() if t.IsLocked()}
+    if seed_ses is not None and seed_ses.exists():
+        pcbnew.ImportSpecctraSES(board, str(seed_ses))
     ses = build_dir(board_name) / f"{board_name}.ses"
     if not pcbnew.ImportSpecctraSES(board, str(ses)):
         sys.exit("SES import failed")
+    for track in board.GetTracks():
+        if track.m_Uuid.AsString() not in pre_locked:
+            track.SetLocked(False)
     widened = widen_thin_tracks(board, plan["frame"])
     removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
-    seated = seat_track_ends(board)
-    dead = remove_dead_ends(board)
+    zero, splits, dedup, cycles, seated, dead = polish_tracks(board)
     print(f"{board_name}: imported {ses.relative_to(REPO)}; widened {widened} power tracks, removed {removed} "
-          f"ground tracks the pours already cover, seated {seated} grazing track ends, removed {dead} dead-end stubs")
+          f"ground tracks, split {splits}/deduped {dedup}/pruned {cycles} planar loops ({zero} zero-len), "
+          f"seated {seated} grazing track ends, removed {dead} dead-end stubs")
     save(board, plan, board_name)
 
 
-FASTROUTE = ["fastroute", f"--max-time={os.environ.get('FASTROUTE_MAX_TIME', '600')}"]
+def clean_stored_tracks(board_name):
+    """Clean planar track anomalies on the stored board in place, preserving all
+    footprint/pad UUIDs and placement."""
+    path = stored_board_path(board_name)
+    plan = load_plan(board_name)
+    board = pcbnew.LoadBoard(str(path))
+    zero, splits, dedup, cycles, seated, dead = polish_tracks(board)
+    fill_zones(board)
+    board.Save(str(path))
+    write_rules(board, plan, board_name, path)
+    print(f"{board_name}: cleaned in place (zero={zero}, splits={splits}, dedup={dedup}, "
+          f"cycles={cycles}, seated={seated}, dead={dead})")
+
+
+FASTROUTE = ["fastroute", f"--max-time={os.environ.get('FASTROUTE_MAX_TIME', '600')}",
+             "--router.fanout.enabled=false"]
 LIBRARY_ONLY = {"lib_footprint_issues", "lib_footprint_mismatch"}
 
 
@@ -1051,17 +1215,37 @@ def route(board_name, attempts=None):
     print(f"{board_name}: unrouted baseline has {total} connections, {len(baseline)} DRC violations")
     export_dsn(board_name)
     bdir = build_dir(board_name)
+    unrouted_pcb = bdir / f"{board_name}.unrouted.kicad_pcb"
     dsn, ses = bdir / f"{board_name}.dsn", bdir / f"{board_name}.ses"
     best = None
     for attempt in range(1, attempts + 1):
+        shutil.copy(unrouted_pcb, stored_board_path(board_name))
         ses.unlink(missing_ok=True)
         # The DSN carries no board minimum track width; without it fastroute necks down to
         # 0.1 mm, below the 0.12 mm fab minimum. A connection that fails at its class width is
         # retried whole at the neck width: at the power minimum, not 0.12 mm (an 8 mm +5V track).
         minimum = round(load_plan(board_name)["frame"]["min_track"] * 1000)
-        run = subprocess.run(FASTROUTE + [f"--router.min_trace_width_um={minimum}",
-                                          f"--router.neck_width_um={round(POWER_TRACK_MIN * 1000)}",
-                                          "-de", str(dsn), "-do", str(ses)], capture_output=True, text=True, check=False)
+        base_args = [f"--router.min_trace_width_um={minimum}",
+                     f"--router.neck_width_um={round(POWER_TRACK_MIN * 1000)}"]
+        init_args = []
+        if board_name == "main":
+            ns = json.loads(stored_board_path(board_name).with_suffix(".kicad_pro").read_text())["net_settings"]
+            dsn_text = dsn.read_text()
+            nets_m = [n.strip('"') for line in dsn_text.splitlines()
+                      if line.startswith("    (net ") for n in [line.split()[1]]]
+            seed_dsn = bdir / f"{board_name}.seed.dsn"
+            seed_ses = bdir / f"{board_name}.seed.ses"
+            seed_ses.unlink(missing_ok=True)
+            seed_dsn.write_text(with_net_classes(dsn_text, nets_m, ns, split_seed_nets=True))
+            other_cls = ",".join(c["name"] for c in ns["classes"])
+            subprocess.run(["fastroute", "--max-time=15", "--router.fanout.enabled=false",
+                            f"--router.autorouter.ignore_net_classes={other_cls}",
+                            *base_args, "-de", str(seed_dsn), "-do", str(seed_ses)],
+                           capture_output=True, text=True, check=False)
+            if seed_ses.exists():
+                init_args = [f"--initial-session={seed_ses}"]
+        run = subprocess.run(FASTROUTE + base_args + init_args + ["-de", str(dsn), "-do", str(ses)],
+                             capture_output=True, text=True, check=False)
         if run.returncode or not ses.exists():
             print(f"{board_name}: route attempt {attempt}: fastroute failed (exit {run.returncode})")
             continue
@@ -1072,7 +1256,7 @@ def route(board_name, attempts=None):
         if best is None or result < best[0]:
             best = (result, bdir / f"{board_name}.attempt{attempt}.kicad_pcb")
             shutil.copy(stored_board_path(board_name), best[1])
-        if result[:2] == (0, 0):
+        if result[0] == 0:
             break
     if best is None:
         sys.exit(f"{board_name}: no route attempt produced a session")
@@ -1144,5 +1328,10 @@ if __name__ == "__main__":
         export_dsn(name)
     elif command == "import-ses":
         import_ses(name)
+    elif command == "clean-tracks":
+        clean_stored_tracks(name)
+    elif command == "autoplace":
+        import resolve_overlaps
+        sys.exit(resolve_overlaps.main([name, *args]))
     else:
         sys.exit(f"unknown command {command}")

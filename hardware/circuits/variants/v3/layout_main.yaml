@@ -121,12 +121,12 @@ parts:
   # --- FRONT (+x): tall components and connectors ---
   # Bottom shoulder: KNX (red/black, front) and AUX (yellow/white, rear), flush with y=0
   J1: { x: 4.5, y: 8.0, rot: 0,   block: knx_in, locked: true }
-  D1: { x: 7.1, y: 12.2, rot: 0,   block: knx_in }
-  D2: { x: 7.1, y: 15.8, rot: 0,   block: knx_in }
+  D1: { x: 29.5, y: 13.0, rot: 0,   block: knx_in }
+  D2: { x: 9.15, y: 10.85, rot: 0,   block: knx_in }
   J2: { x: 17.5, y: 8.0, rot: 0,   block: aux_in, locked: true }
-  F1: { x: 29.0, y: 3.5, rot: 90,  block: aux_fuse }
-  D3: { x: 33.0, y: 4.6, rot: 90,   block: aux_in }
-  D4: { x: 36.6, y: 4.6, rot: 90,   block: aux_in }
+  F1: { x: 28.45, y: 7.7, rot: 0,  block: aux_fuse }
+  D3: { x: 29.0, y: 3.9, rot: 0,   block: aux_in }
+  D4: { x: 28.75, y: 40.45, rot: 0,   block: aux_in }
   # 2 W AUX-to-core converter standing on the tongue in the front protrusion,
   # pin 1 at the top: input pins 1/2 (SELV-AUX, fed by the corridor along the
   # bottom, front and tongue edges), output pins 6/7 (SELV-KNX) at the bottom.
@@ -142,27 +142,27 @@ parts:
 
   # Middle-right front (under U3): XIAO U8 on 5 mm sockets, with 5 V buck underneath (y +0.6 for U9)
   U8: { x: 27.6, y: 26.8, rot: 270, block: mcu, locked: true }   # USB-C at the board's rail-side edge (x 38.1): free once main is out of the base; antenna towards the case middle
-  U2: { x: 22.4, y: 25.4, rot: 0,   block: buck5v }
-  L2: { x: 22.4, y: 30.2, rot: 0,   block: buck5v }
-  C10: { x: 26.3, y: 22.8, rot: 0,   block: buck5v }
-  C11: { x: 19.2, y: 22.2, rot: 0,   block: buck5v }
-  C12: { x: 26.0, y: 30.4, rot: 90,  block: buck5v }
-  C13: { x: 28.4, y: 30.4, rot: 90,  block: buck5v }
-  C14: { x: 30.2, y: 26.8, rot: 0,   block: buck5v }
-  R5: { x: 19.03, y: 27.3, rot: 90,  block: buck5v }
-  R6: { x: 19.0, y: 30.8, rot: 90,  block: buck5v }
-  R7: { x: 29.8, y: 23.0, rot: 0,   block: buck5v }
-  R8: { x: 26.71, y: 25.0, rot: 0,   block: buck5v }
-  U7: { x: 33.4, y: 23.0, rot: 0,   block: mcu_power }
-  C19: { x: 33.7, y: 27.6, rot: 0,   block: mcu_power }
-  R22: { x: 33.4, y: 30.8, rot: 0,   block: mcu }
-  R23: { x: 33.69, y: 25.17, rot: 0,   block: mcu }
+  U2: { x: 7.7, y: 14.7, rot: 0,   block: buck5v }
+  L2: { x: 12.45, y: 15.35, rot: 0,   block: buck5v }
+  C10: { x: 14.4, y: 19.1, rot: 0,   block: buck5v }
+  C11: { x: 14.4, y: 24.7, rot: 0,   block: buck5v }
+  C12: { x: 23.25, y: 15.35, rot: 0,  block: buck5v }
+  C13: { x: 17.6, y: 19.4, rot: 90,  block: buck5v }
+  C14: { x: 16.95, y: 16.2, rot: 0,   block: buck5v }
+  R5: { x: 14.4, y: 21.55, rot: 0,  block: buck5v }
+  R6: { x: 20.1, y: 14.65, rot: 90,  block: buck5v }
+  R7: { x: 16.95, y: 13.75, rot: 0,   block: buck5v }
+  R8: { x: 14.85, y: 11.35, rot: 0,   block: buck5v }
+  U7: { x: 34.35, y: 21.7, rot: 0,   block: mcu_power }
+  C19: { x: 31.4, y: 22.2, rot: 90,   block: mcu_power }
+  R22: { x: 11.25, y: 32.4, rot: 270,   block: mcu }
+  R23: { x: 19.05, y: 30.65, rot: 270,   block: mcu }
 
   # Supply-off opto and DC-DC input passives (y 38..43, below U3 courtyard at y 44.5)
   U4: { x: 19.5, y: 39.8, rot: 0,   block: dali_supply_off, locked: true }
-  R11: { x: 28.4, y: 40.2, rot: 0,   block: dali_supply_off }
-  D5: { x: 34.4, y: 40.2, rot: 0,   block: dali_supply_off }
-  C16: { x: 28.4, y: 42.6, rot: 0,   block: dcdc_iso }
+  R11: { x: 37.25, y: 38.65, rot: 180,   block: dali_supply_off }
+  D5: { x: 33.9, y: 41.25, rot: 90,   block: dali_supply_off }
+  C16: { x: 33.6, y: 8.65, rot: 0,   block: dcdc_iso }
 
   # Top front (DALI): REC3 DC-DC on rear half, DALI optos across y 42..48, WAGO 2086-1202
   # SMD push-in terminal J3 at top-front (wire entry + push-buttons flush with y=81), JP1 and current limiter
@@ -171,61 +171,61 @@ parts:
   U6: { x: 11.2, y: 45.0, rot: -90, block: dali_rx, locked: true }
   J3:  { x: 6.4,   y: 70.35, rot: 180, block: dali_terminal, locked: true }
   JP1: { x: 14.2, y: 72.5, rot: 0,   block: dali_switch, locked: true }
-  Q1: { x: 8.9, y: 56.4, rot: 0,   block: dali_limit }
-  Q2: { x: 15.68, y: 61.29, rot: 0,   block: dali_limit }
-  R13: { x: 15.45, y: 64.06, rot: 0,   block: dali_limit }
-  R12: { x: 15.53, y: 66.27, rot: 0,   block: dali_limit }
+  Q1: { x: 10.4, y: 56.05, rot: 0,   block: dali_limit }
+  Q2: { x: 10.35, y: 61.65, rot: 0,   block: dali_limit }
+  R13: { x: 16.75, y: 60.55, rot: 90,   block: dali_limit }
+  R12: { x: 14.15, y: 62.35, rot: 270,   block: dali_limit }
 
   # --- BACK (-x): low SMD components (<= 1.5 mm, inside THT solder-tail shadow) ---
   # Back SELV-KNX (x 1..18, y 12..41, zero THT pins in this region!): NCN5130 + crystal + passives;
   # C1/C2/C3 under the VBUS1-CCP-CAV-CEQ pins, C5 at pin 40, C15 at pin 16 (datasheet layout rules)
-  R14: { x: 4.4, y: 36.9, rot: 0,   side: back, block: dali_tx_led }
-  R15: { x: 5.15, y: 38.9, rot: 0,   side: back, block: dali_tx_led }
-  R21: { x: 9.2, y: 38.6, rot: 0,   side: back, block: dali_rx_selv }
-  R10: { x: 12.7, y: 38.6, rot: 0,   side: back, block: dali_supply_off }
-  U1: { x: 8.4, y: 26.0, rot: 90,  side: back, block: ncn5130 }
-  Y1: { x: 15.6, y: 26.0, rot: 90,  side: back, block: ncn_top }
-  C8: { x: 15.83, y: 21.81, rot: 0,   side: back, block: ncn_top }
-  C9: { x: 15.42, y: 30.17, rot: 0,   side: back, block: ncn_top }
-  C5: { x: 12.28, y: 21.26, rot: 0,   side: back, block: ncn_right }
-  C6: { x: 11.12, y: 31.5, rot: 0,   side: back, block: ncn_right }
-  C3: { x: 4.8, y: 20.3, rot: 90,  side: back, block: ncn_left }
-  C1: { x: 8.6, y: 21.0, rot: 0,   side: back, block: ncn_left }
-  C2: { x: 8.65, y: 18.6, rot: 270, side: back, block: ncn_left }
-  C7: { x: 2.8, y: 29.6, rot: 90,  side: back, block: ncn_bottom }
-  R4: { x: 5.55, y: 31.59, rot: 0,   side: back, block: ncn_bottom }
-  R9: { x: 7.95, y: 33.59, rot: 0,   side: back, block: ncn_right }
-  R2: { x: 4.38, y: 33.61, rot: 180,   side: back, block: ncn_right }
-  R1: { x: 9.33, y: 35.58, rot: 0,   side: back, block: ncn_right }
-  C15: { x: 3.4, y: 25.5, rot: 90,  side: back, block: ncn_bottom }
-  R3: { x: 8.0, y: 11.3, rot: 0,   side: back, block: ncn_left }
+  R14: { x: 22.95, y: 28.65, rot: 180,   side: back, block: dali_tx_led }
+  R15: { x: 27.6, y: 22.2, rot: 90,   side: back, block: dali_tx_led }
+  R21: { x: 13.35, y: 40.25, rot: 180,   side: back, block: dali_rx_selv }
+  R10: { x: 16.95, y: 37.4, rot: 180,   side: back, block: dali_supply_off }
+  U1: { x: 7.8, y: 24.95, rot: 90,  side: back, block: ncn5130 }
+  Y1: { x: 15.55, y: 23.35, rot: 180,  side: back, block: ncn_top }
+  C8: { x: 20.85, y: 22.95, rot: 0,   side: back, block: ncn_top }
+  C9: { x: 20.85, y: 25.45, rot: 0,   side: back, block: ncn_top }
+  C5: { x: 10.85, y: 19.0, rot: 270,   side: back, block: ncn_right }
+  C6: { x: 10.35, y: 30.2, rot: 0,   side: back, block: ncn_right }
+  C3: { x: 4.3, y: 19.2, rot: 270,  side: back, block: ncn_left }
+  C1: { x: 7.95, y: 20.05, rot: 0,   side: back, block: ncn_left }
+  C2: { x: 6.3, y: 17.4, rot: 270, side: back, block: ncn_left }
+  C7: { x: 4.85, y: 11.6, rot: 270,  side: back, block: ncn_bottom }
+  R4: { x: 4.1, y: 15.5, rot: 270,   side: back, block: ncn_bottom }
+  R9: { x: 22.75, y: 31.95, rot: 0,   side: back, block: ncn_right }
+  R2: { x: 13.45, y: 15.05, rot: 180,   side: back, block: ncn_right }
+  R1: { x: 24.0, y: 24.6, rot: 90,   side: back, block: ncn_right }
+  C15: { x: 2.55, y: 26.15, rot: 90,  side: back, block: ncn_bottom }
+  R3: { x: 9.3, y: 13.15, rot: 90,   side: back, block: ncn_left }
 
   # Back core rail: TPS2121 priority mux between the XIAO socket rows, U9 decoupling
-  U10:  { x: 20.6, y: 12.6, rot: 0, side: back, block: core_mux }
-  R24:  { x: 20.6, y: 16.0, rot: 0, side: back, block: core_mux }
-  R25:  { x: 32.2, y: 16.0, rot: 0, side: back, block: core_mux }
-  Q9:  { x: 34.6, y: 12.6, rot: 0, side: back, block: core_mux }
-  Q10:  { x: 16.0, y: 12.6, rot: 90, side: back, block: core_mux }
-  D11:  { x: 25.6, y: 12.6, rot: 0, side: back, block: core_mux }
-  C23:  { x: 28.11, y: 15.02, rot: 0, side: back, block: core_mux }
-  C20: { x: -7.6, y: 56.3, rot: 90,  side: back, block: aux_core }
-  C21: { x: 8.7, y: 40.9, rot: 0,   side: back, block: aux_core }
+  U10:  { x: 10.0, y: 35.1, rot: 0, side: back, block: core_mux }
+  R24:  { x: 6.7, y: 39.0, rot: 270, side: back, block: core_mux }
+  R25:  { x: 3.55, y: 38.25, rot: 0, side: back, block: core_mux }
+  Q9:  { x: 5.4, y: 31.0, rot: 0, side: back, block: core_mux }
+  Q10:  { x: 5.4, y: 35.1, rot: 180, side: back, block: core_mux }
+  D11:  { x: 16.25, y: 17.65, rot: 180, side: back, block: core_mux }
+  C23:  { x: 19.4, y: 29.25, rot: 270, side: back, block: core_mux }
+  C20: { x: -6.8, y: 54.1, rot: 270,  side: back, block: aux_core }
+  C21: { x: 3.25, y: 41.15, rot: 0,   side: back, block: aux_core }
 
   # Back DALI: bridge D6 and RX between U3 pin columns (x 24..34, y 61..75), TX in x 1..12, y 52..64
-  D6: { x: 29.2, y: 71.0, rot: 90,  side: back, block: dali_bridge }
-  C17: { x: 24.6, y: 63.0, rot: 90,  side: back, block: dali_tx }
-  Q5: { x: 28.5, y: 61.5, rot: 0,   side: back, block: dali_rx }
-  Q6: { x: 32.8, y: 61.5, rot: 0,   side: back, block: dali_rx }
-  R19: { x: 28.5, y: 64.3, rot: 0,   side: back, block: dali_rx }
-  R20: { x: 32.8, y: 64.3, rot: 0,   side: back, block: dali_rx }
+  D6: { x: 7.2, y: 69.55, rot: 270,  side: back, block: dali_bridge }
+  C17: { x: 1.25, y: 65.05, rot: 90,  side: back, block: dali_tx }
+  Q5: { x: 9.0, y: 49.75, rot: 0,   side: back, block: dali_rx }
+  Q6: { x: 9.0, y: 53.85, rot: 0,   side: back, block: dali_rx }
+  R19: { x: 13.15, y: 48.85, rot: 0,   side: back, block: dali_rx }
+  R20: { x: 6.7, y: 57.75, rot: 90,   side: back, block: dali_rx }
   # DALI TX: every DALI pad at x >= 2.4, 6 mm from the tongue copper
-  D8: { x: 6.0, y: 52.8, rot: 0,   side: back, block: dali_tx }
-  C18: { x: 11.3, y: 52.8, rot: 0,   side: back, block: dali_tx }
-  R16: { x: 4.2, y: 56.0, rot: 0,   side: back, block: dali_tx }
-  R17: { x: 7.7, y: 56.0, rot: 0,   side: back, block: dali_tx }
-  D9: { x: 11.9, y: 56.0, rot: 0,   side: back, block: dali_tx }
-  Q3: { x: 4.4, y: 59.8, rot: 0,   side: back, block: dali_tx }
-  R18: { x: 7.6, y: 60.2, rot: 90,  side: back, block: dali_tx }
-  Q4: { x: 11.2, y: 59.8, rot: 0,   side: back, block: dali_tx }
-  D7: { x: 4.77, y: 65.3, rot: 0,   side: back, block: dali_bridge }
-  D10: { x: 11.2, y: 64.6, rot: 0,   side: back, block: dali_rx }
+  D8: { x: 3.4, y: 51.75, rot: 90,   side: back, block: dali_tx }
+  C18: { x: 3.25, y: 57.45, rot: 90,   side: back, block: dali_tx }
+  R16: { x: 5.75, y: 60.9, rot: 0,   side: back, block: dali_tx }
+  R17: { x: 9.65, y: 62.05, rot: 180,   side: back, block: dali_tx }
+  D9: { x: 19.0, y: 61.65, rot: 0,   side: back, block: dali_tx }
+  Q3: { x: 14.0, y: 62.7, rot: 0,   side: back, block: dali_tx }
+  R18: { x: 18.95, y: 64.45, rot: 0,  side: back, block: dali_tx }
+  Q4: { x: 14.0, y: 66.8, rot: 0,   side: back, block: dali_tx }
+  D7: { x: 11.65, y: 58.85, rot: 0,   side: back, block: dali_bridge }
+  D10: { x: 12.6, y: 52.65, rot: 270,   side: back, block: dali_rx }

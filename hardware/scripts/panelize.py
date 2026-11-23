@@ -23,6 +23,8 @@ import fab_outputs
 import pcbnew
 import yaml
 
+import layout
+
 REPO = Path("/work")
 SLOT_W = 2.0       # mm routing slot between adjacent sub-boards
 TAB_H = 3.2        # mm vertical width of each mouse-bite breakaway tab
@@ -261,6 +263,7 @@ def build_panel(
                 mb_coords.append((rx0 - hole_off_x, tc + dy_h))
 
     add_mouse_bite_holes(panel, mb_coords)
+    layout.clip_silk_off_pads(panel)
 
     panel_pcb_path = panel_dir / "panel.kicad_pcb"
     pcbnew.SaveBoard(str(panel_pcb_path), panel)
