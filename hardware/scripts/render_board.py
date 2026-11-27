@@ -249,6 +249,33 @@ def bounds(board):
     return to_mm(box.GetLeft()), to_mm(box.GetTop()), to_mm(box.GetRight()), to_mm(box.GetBottom())
 
 
+def render_3d_views(pcb_path, out_dir, box):
+    """Render photorealistic KiCad 10 raytraced 3D top and bottom board PNGs
+    with transparent backgrounds for release packages and README documentation."""
+    bw = max(10.0, box[2] - box[0])
+    bh = max(10.0, box[3] - box[1])
+    px_per_mm = 20.0
+    width = round(bw * px_per_mm) + 160
+    height = round(bh * px_per_mm) + 160
+    for side in ("top", "bottom"):
+        out = out_dir / f"{side}_3d.png"
+        subprocess.run(
+            [
+                "kicad-cli", "pcb", "render",
+                "--side", side,
+                "--quality", "high",
+                "--background", "transparent",
+                "--width", str(width),
+                "--height", str(height),
+                "--zoom", "0.90",
+                "-o", str(out),
+                str(pcb_path),
+            ],
+            capture_output=True,
+            check=True,
+        )
+
+
 def save_zooms(canvases, zooms, out_dir):
     for name, z in zooms.items():
         for view, canvas in canvases.items():
@@ -321,6 +348,8 @@ def render(name, label, placement):
     canvas.save(out_dir / "overlay")
     canvases["overlay"] = canvas
     save_zooms(canvases, plan.get("zooms", {}), out_dir)
+    if not placement:
+        render_3d_views(pcb_path, out_dir, box)
 
     errors = sum(1 for v in drc.get("violations", []) if v["severity"] == "error")
     print(f"{name}/{label}: DRC errors {errors}, unrouted {len(drc.get('unconnected_items', []))} "

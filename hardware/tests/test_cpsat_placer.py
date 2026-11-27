@@ -98,3 +98,43 @@ def test_stage2_passive_downweights_gnd_to_hug_ic_pin():
     p1x, p1y = gx + rg.pads["1"][0], gy + rg.pads["1"][1]
     dist_mm = math.hypot(p1x - 120, p1y - 100) * cpsat.GRID_MM
     assert dist_mm <= 1.5, f"decoupling cap drifted {dist_mm:.2f} mm from IC VDDA pin"
+
+
+def test_stage2_shared_parent_decoupling_cap_orients_right_side_up():
+    """A 2-pin cap bridging adjacent pins of a shared parent IC must align its
+    pads directly with the parent pins rather than flipping upside-down toward
+    a distant global ground centroid."""
+    cap_rots = [
+        cpsat.RotGeom(rot=90.0, dx0=-12, dy0=-24, w=24, h=48,
+                      pads={"1": (0, -16), "2": (0, 16)},
+                      pad_boxes={"1": (-10, -20, 10, -12), "2": (-10, 12, 10, 20)}),
+        cpsat.RotGeom(rot=270.0, dx0=-12, dy0=-24, w=24, h=48,
+                      pads={"1": (0, 16), "2": (0, -16)},
+                      pad_boxes={"1": (-10, 12, 10, 20), "2": (-10, -20, 10, -12)}),
+    ]
+    ps = cpsat.PartSpec(
+        ref="C20", side="back", domain="SELV-AUX", block="aux_core",
+        stage=2, is_fine_pitch=False, height=1.2,
+        orig_x=200, orig_y=200, orig_rot=270.0, rots=cap_rots,
+        pad_nets={"1": "AUX_P", "2": "GNDA"},
+    )
+    # Parent U9 has GNDA at y=300 (top) and AUX_P at y=250 (below); distant GNDA pin at y=20!
+    fixed_obs = {"front": [], "back": [(100, 230, 30, 90)], "tall_front": []}
+    fixed_pads = {"AUX_P": [(115, 250)], "GNDA": [(115, 300), (115, 20), (200, 20)]}
+    fixed_ref_pads = {("U9", "1"): (115, 300), ("U9", "2"): (115, 250)}
+    domain_boxes = {"SELV-AUX": [(0, 0, 400, 400)], None: [(0, 0, 400, 400)]}
+    sol = cpsat.solve_batch(
+        [ps], fixed_obs, fixed_pads, fixed_ref_pads, [(0, 0, 400, 400)], domain_boxes,
+        net_fanout={"AUX_P": 3, "GNDA": 10},
+        board_bounds=(0, 0, 400, 400),
+        max_time_s=5.0,
+        anchor_nudge_weight=0,
+        enforce_u1_rules=False,
+    )
+    assert sol is not None
+    _gx, gy, rot = sol["C20"]
+    rg = next(r for r in cap_rots if abs(r.rot - rot) < 1e-3)
+    p1y = gy + rg.pads["1"][1]  # AUX_P
+    p2y = gy + rg.pads["2"][1]  # GNDA
+    assert p2y > p1y, f"C20 flipped upside-down (GNDA y={p2y} <= AUX_P y={p1y}, rot={rot})"
+

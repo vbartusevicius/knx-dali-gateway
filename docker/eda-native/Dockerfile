@@ -13,6 +13,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        kicad=${KICAD_VERSION} kicad-footprints=${KICAD_VERSION} \
        kicad-symbols=${KICAD_VERSION} kicad-templates=${KICAD_VERSION} \
+       kicad-packages3d=${KICAD_VERSION} \
        python3-pip python3-venv libngspice0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -32,8 +33,10 @@ RUN python3 -m venv --system-site-packages /opt/eda \
 ENV KICAD10_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD10_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+    KICAD10_3DMODEL_DIR=/usr/share/kicad/3dmodels \
     KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+    KICAD9_3DMODEL_DIR=/usr/share/kicad/3dmodels \
     PATH=/opt/eda/bin:$PATH
 RUN mkdir -p /root/.config/kicad/10.0 \
     && cp /usr/share/kicad/template/fp-lib-table /root/.config/kicad/10.0/fp-lib-table \

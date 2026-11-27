@@ -46,18 +46,19 @@ def _read_step_solids(step_path):
 
 
 def _find_solid_for_model(solids, model_size, expected_center, tol=5.0):
-    """Find a solid matching the model size and near the expected center."""
+    """Find the closest solid matching the model size near the expected center."""
     mw, md, _mh = model_size
+    ex, ey = expected_center
+    matches = []
     for cx, cy, cz, sx, sy, sz in solids:
         size_match = (
             (abs(sx - mw) < 1.5 and abs(sy - md) < 1.5) or
             (abs(sx - md) < 1.5 and abs(sy - mw) < 1.5))
         if not size_match:
             continue
-        ex, ey = expected_center
         if abs(cx - ex) < tol and abs(cy - ey) < tol:
-            return (cx, cy, cz, sx, sy, sz)
-    return None
+            matches.append((cx, cy, cz, sx, sy, sz))
+    return min(matches, key=lambda s: (s[0] - ex) ** 2 + (s[1] - ey) ** 2) if matches else None
 
 
 @pytest.mark.parametrize("board", BOARDS)

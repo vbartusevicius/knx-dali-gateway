@@ -47,6 +47,7 @@ from track_joints import (
     remove_dead_ends,
     seat_track_ends,
 )
+from track_smoother import smooth_tracks
 
 SPEC = load_spec()
 VARIANT = SPEC["active_variant"]
@@ -57,6 +58,9 @@ LAYERS = {"F.Cu": pcbnew.F_Cu, "In1.Cu": pcbnew.In1_Cu,
 MODELS_3D = {
     "XIAO_ESP32C6_Header": ("XIAO_ESP32C6.step", 11.0),  # 8.5 mm socket + 2.5 mm header plastic
     "Converter_DCDC_RECOM_REM3_DIP24_CTRL": ("REM3_DIP24.step", 0),
+    "Converter_DCDC_TRACO_TMR2_SIP8": ("TMR2_SIP8.step", 0),
+    "Converter_DCDC_TRACO_TRN3_SIP5": ("TRN3_SIP5.step", 0),
+    "Converter_DCDC_TRACO_TMR1_SIP6": ("TMR1_SIP6.step", 0),
     "TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm": ("TerminalBlock_MaiXu_MX126-5.0-02P.step", 0),
     "TerminalBlock_Kefa_KF142R-5.08-2P": ("TerminalBlock_Kefa_KF142R-5.08-2P.step", 0),
     "TerminalBlock_WAGO_2086-1202_SMD": ("TerminalBlock_WAGO_2086-1202_SMD.step", 0),
@@ -132,19 +136,54 @@ def model_offset(fp):
     return (lx, ly) if fp.IsFlipped() else (lx, -ly)
 
 
+def _stock_model_exists(filename: str) -> bool:
+    base = Path("/usr/share/kicad/3dmodels")
+    rel = filename
+    for var in ("${KICAD10_3DMODEL_DIR}/", "${KICAD9_3DMODEL_DIR}/", "${KICAD8_3DMODEL_DIR}/"):
+        if rel.startswith(var):
+            rel = rel[len(var):]
+            break
+    else:
+        return Path(rel).exists()
+    p = base / rel
+    return p.exists() or p.with_suffix(".step").exists() or p.with_suffix(".wrl").exists()
+
+
 def add_3d_models(board):
+    """Restore/keep stock KiCad 3D models (`${KICAD*_3DMODEL_DIR}`) that exist on
+    disk and attach project custom STEP models (`hardware/circuits/lib/gateway_3d/`)
+    where KiCad ships none."""
+    fp_root = Path(os.environ.get("KICAD10_FOOTPRINT_DIR", "/usr/share/kicad/footprints"))
     for fp in board.Footprints():
+        lib_name = str(fp.GetFPID().GetLibNickname())
+        fpid = str(fp.GetFPID().GetLibItemName())
+        model = MODELS_3D.get(fpid)
         models = fp.Models()
         for i in reversed(range(len(models))):
-            if str(models[i].m_Filename).startswith("${"):
+            fname = str(models[i].m_Filename)
+            if "gateway_3d/" in fname or (
+                fname.startswith("${") and (model is not None or not _stock_model_exists(fname))
+            ):
                 del models[i]
-        model = MODELS_3D.get(str(fp.GetFPID().GetLibItemName()))
         if model:
             ox, oy = model_offset(fp)
             m = pcbnew.FP_3DMODEL()
             m.m_Filename = f"hardware/circuits/lib/gateway_3d/{model[0]}"
             m.m_Offset = pcbnew.VECTOR3D(ox, oy, model[1])
             fp.Add3DModel(m)
+        elif len(fp.Models()) == 0:
+            lib_dir = fp_root / f"{lib_name}.pretty"
+            if lib_dir.is_dir():
+                stock = pcbnew.FootprintLoad(str(lib_dir), fpid)
+                if stock is not None:
+                    for sm in stock.Models():
+                        if _stock_model_exists(str(sm.m_Filename)):
+                            copy = pcbnew.FP_3DMODEL()
+                            copy.m_Filename = sm.m_Filename
+                            copy.m_Offset = sm.m_Offset
+                            copy.m_Scale = sm.m_Scale
+                            copy.m_Rotation = sm.m_Rotation
+                            fp.Add3DModel(copy)
 
 
 def layout_dir(board):
@@ -1135,6 +1174,11 @@ def polish_tracks(board):
     return z1 + z2, s1 + s2, d1 + d2, c1 + c2, seated, dead
 
 
+def _board_net_settings(board_name):
+    pro = stored_board_path(board_name).with_suffix(".kicad_pro")
+    return json.loads(pro.read_text()).get("net_settings") if pro.exists() else None
+
+
 def import_ses(board_name, seed_ses=None):
     plan = load_plan(board_name)
     board = current_board(board_name, plan)
@@ -1153,9 +1197,21 @@ def import_ses(board_name, seed_ses=None):
     widened = widen_thin_tracks(board, plan["frame"])
     removed = prune_ground_tracks(board) if plan["frame"].get("prune_ground_tracks", True) else 0
     zero, splits, dedup, cycles, seated, dead = polish_tracks(board)
+    s_chains, s_before, s_after, s_saved = smooth_tracks(
+        board,
+        frame=plan["frame"],
+        isolation=SPEC["boards"].get(board_name, {}).get("isolation"),
+        net_settings=_board_net_settings(board_name),
+    )
+    if s_chains:
+        z2, sp2, dd2, cy2, st2, de2 = polish_tracks(board)
+        zero, splits, dedup, cycles, seated, dead = (
+            zero + z2, splits + sp2, dedup + dd2, cycles + cy2, seated + st2, dead + de2
+        )
     print(f"{board_name}: imported {ses.relative_to(REPO)}; widened {widened} power tracks, removed {removed} "
           f"ground tracks, split {splits}/deduped {dedup}/pruned {cycles} planar loops ({zero} zero-len), "
-          f"seated {seated} grazing track ends, removed {dead} dead-end stubs")
+          f"seated {seated} grazing track ends, removed {dead} dead-end stubs, "
+          f"smoothed {s_chains} chains ({s_before}->{s_after} segs, -{s_saved:.2f} mm)")
     save(board, plan, board_name)
 
 
@@ -1171,6 +1227,36 @@ def clean_stored_tracks(board_name):
     write_rules(board, plan, board_name, path)
     print(f"{board_name}: cleaned in place (zero={zero}, splits={splits}, dedup={dedup}, "
           f"cycles={cycles}, seated={seated}, dead={dead})")
+
+
+def smooth_stored_tracks(board_name):
+    """Run DRC-safe octilinear track smoothing on the stored board in place,
+    preserving footprint/pad UUIDs and verifying 0 DRC errors and 0 unrouted."""
+    path = stored_board_path(board_name)
+    plan = load_plan(board_name)
+    board = pcbnew.LoadBoard(str(path))
+    chains, before, after, saved = smooth_tracks(
+        board,
+        frame=plan["frame"],
+        isolation=SPEC["boards"].get(board_name, {}).get("isolation"),
+        net_settings=_board_net_settings(board_name),
+    )
+    if chains:
+        polish_tracks(board)
+    fill_zones(board)
+    board.Save(str(path))
+    write_rules(board, plan, board_name, path)
+    report = build_dir(board_name) / "smooth_drc.json"
+    violations = drc_violations(path, report)
+    errors = [v for v in violations if v["severity"] == "error"]
+    open_cnt = unconnected(pcbnew.LoadBoard(str(path)))
+    print(f"{board_name}: smoothed {chains} chains ({before}->{after} segs, -{saved:.2f} mm); "
+          f"DRC errors={len(errors)}, unrouted={open_cnt}")
+    if errors or open_cnt:
+        for e in errors[:10]:
+            print(f"  ERROR {e['type']}: {e['description']}")
+        return False
+    return True
 
 
 FASTROUTE = ["fastroute", f"--max-time={os.environ.get('FASTROUTE_MAX_TIME', '600')}",
@@ -1330,6 +1416,8 @@ if __name__ == "__main__":
         import_ses(name)
     elif command == "clean-tracks":
         clean_stored_tracks(name)
+    elif command == "smooth":
+        sys.exit(0 if smooth_stored_tracks(name) else 1)
     elif command == "autoplace":
         import resolve_overlaps
         sys.exit(resolve_overlaps.main([name, *args]))

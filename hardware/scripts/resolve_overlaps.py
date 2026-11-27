@@ -797,8 +797,48 @@ def solve_batch(
     span_y = (by1 - by0) + 200
     stage_num = batch[0].stage
 
+    # Shared-parent bypass/decoupling pin pull: when a 2-pin passive bridges two nets
+    # that both exist on the same already-placed footprint (e.g. VCC + GND on an IC/converter),
+    # pull each pad to its exact pin on that parent instead of the global ground centroid!
+    parent_pin_pulled: set[tuple[str, str]] = set()
+    if stage_num == 2 and fixed_ref_pads:
+        by_fref: dict[str, list[tuple[int, int]]] = {}
+        for (fref, _pnum), xy in fixed_ref_pads.items():
+            by_fref.setdefault(fref, []).append(xy)
+        for ps in batch:
+            if len(ps.pad_nets) != 2 or not ps.ref.startswith(("C", "R", "L")):
+                continue
+            nums = list(ps.pad_nets.keys())
+            n1, n2 = ps.pad_nets[nums[0]], ps.pad_nets[nums[1]]
+            if not n1 or not n2 or n1 == n2:
+                continue
+            fp1 = set(fixed_pads.get(n1, ()))
+            fp2 = set(fixed_pads.get(n2, ()))
+            shared_parents = []
+            for fref, xys in by_fref.items():
+                p1s = [xy for xy in xys if xy in fp1]
+                p2s = [xy for xy in xys if xy in fp2]
+                if p1s and p2s:
+                    best_pair = min(
+                        ((abs(a[0] - b[0]) + abs(a[1] - b[1]), a, b) for a in p1s for b in p2s),
+                        key=lambda item: item[0],
+                    )
+                    shared_parents.append((best_pair[0], fref, best_pair[1], best_pair[2]))
+            if len(shared_parents) == 1:
+                _, _fref, t1, t2 = shared_parents[0]
+                for pnum, net, (tx, ty) in ((nums[0], n1, t1), (nums[1], n2, t2)):
+                    px, py = pad_vars_by_ref[(ps.ref, pnum)]
+                    adx = model.NewIntVar(0, span_x, f"ppdx_{ps.ref}_{pnum}")
+                    ady = model.NewIntVar(0, span_y, f"ppdy_{ps.ref}_{pnum}")
+                    model.AddAbsEquality(adx, px - tx)
+                    model.AddAbsEquality(ady, py - ty)
+                    obj_terms.append(8 * (adx + ady))
+                    parent_pin_pulled.add((ps.ref, net))
+
     for net in sorted(pad_vars_by_net):
-        var_items = pad_vars_by_net[net]
+        var_items = [item for item in pad_vars_by_net[net] if (item[0], net) not in parent_pin_pulled]
+        if not var_items:
+            continue
         w = net_weight(net, net_fanout.get(net, 2), stage_num)
         if w <= 0:
             continue
@@ -1172,7 +1212,116 @@ def solve_board(
                         dfp.SetOrientationDegrees(orot)
                         dfp.SetPosition(layout.pos(ox, oy))
 
+    if wanted and not stuck:
+        orient_two_pin_passives(board, plan, moved, set(wanted), frozen)
+
     return plan, moved, stuck
+
+
+def _segs_cross(a0: tuple[float, float], a1: tuple[float, float],
+                b0: tuple[float, float], b1: tuple[float, float]) -> bool:
+    def ccw(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+    d1, d2 = ccw(a0, a1, b0), ccw(a0, a1, b1)
+    d3, d4 = ccw(b0, b1, a0), ccw(b0, b1, a1)
+    return ((d1 > 1e-6 and d2 < -1e-6) or (d1 < -1e-6 and d2 > 1e-6)) and (
+        (d3 > 1e-6 and d4 < -1e-6) or (d3 < -1e-6 and d4 > 1e-6)
+    )
+
+
+def orient_two_pin_passives(
+    board: pcbnew.BOARD,
+    plan: dict,
+    moved: dict[str, tuple[float, float, float]],
+    unlocked_refs: set[str],
+    frozen: set[str],
+) -> int:
+    """Zero-courtyard post-placement orientation pass for symmetric 2-pin passives
+    (R, non-polarized C, L): flips by 180° whenever pad-to-nearest-target-pin
+    distance drops or a ratline crossing disappears, and centers shared-parent
+    decoupling caps cleanly opposite their adjacent parent pin pair when clash-free."""
+    net_pads: dict[str, list[tuple[str, float, float]]] = {}
+    fp_net_pads: dict[str, dict[str, list[tuple[float, float]]]] = {}
+    for fp in board.Footprints():
+        ref = fp.GetReference()
+        for p in fp.Pads():
+            net = p.GetNetname()
+            if not net:
+                continue
+            xy = (pcbnew.ToMM(p.GetPosition().x), -pcbnew.ToMM(p.GetPosition().y))
+            net_pads.setdefault(net, []).append((ref, xy[0], xy[1]))
+            fp_net_pads.setdefault(ref, {}).setdefault(net, []).append(xy)
+
+    flipped = 0
+    for ref in sorted(unlocked_refs):
+        fp = board.FindFootprintByReference(ref)
+        if fp is None or not ref.startswith(("R", "C", "L")):
+            continue
+        fpid = str(fp.GetFPID().GetLibItemName())
+        if "CP_" in fpid or "Polarized" in fpid:
+            continue
+        pads = list(fp.Pads())
+        if len(pads) != 2:
+            continue
+        p1, p2 = pads
+        n1, n2 = p1.GetNetname(), p2.GetNetname()
+        if not n1 or not n2 or n1 == n2:
+            continue
+
+        a1 = (pcbnew.ToMM(p1.GetPosition().x), -pcbnew.ToMM(p1.GetPosition().y))
+        a2 = (pcbnew.ToMM(p2.GetPosition().x), -pcbnew.ToMM(p2.GetPosition().y))
+        cx, cy = (a1[0] + a2[0]) / 2.0, (a1[1] + a2[1]) / 2.0
+
+        # Prefer a shared parent footprint carrying both nets (e.g. bypass cap across IC VCC/GND pins)
+        shared = [
+            (r, d[n1], d[n2]) for r, d in fp_net_pads.items()
+            if r != ref and n1 in d and n2 in d
+        ]
+        if shared:
+            _, p1_opts, p2_opts = min(
+                shared,
+                key=lambda item: min(math.hypot(cx - x, cy - y) for x, y in item[1] + item[2]),
+            )
+            t1 = min(p1_opts, key=lambda q: math.hypot(cx - q[0], cy - q[1]))
+            t2 = min(p2_opts, key=lambda q: math.hypot(cx - q[0], cy - q[1]))
+        else:
+            o1 = [(x, y) for r, x, y in net_pads.get(n1, ()) if r != ref]
+            o2 = [(x, y) for r, x, y in net_pads.get(n2, ()) if r != ref]
+            if not o1 or not o2:
+                continue
+            t1 = min(o1, key=lambda q: math.hypot(cx - q[0], cy - q[1]))
+            t2 = min(o2, key=lambda q: math.hypot(cx - q[0], cy - q[1]))
+
+        cur_cost = math.hypot(a1[0] - t1[0], a1[1] - t1[1]) + math.hypot(a2[0] - t2[0], a2[1] - t2[1])
+        cur_cost += 4.0 if _segs_cross(a1, t1, a2, t2) else 0.0
+        flp_cost = math.hypot(a2[0] - t1[0], a2[1] - t1[1]) + math.hypot(a1[0] - t2[0], a1[1] - t2[1])
+        flp_cost += 4.0 if _segs_cross(a2, t1, a1, t2) else 0.0
+
+        rot = round(fp.GetOrientationDegrees() % 360, 1)
+        x_mm, y_mm = pcbnew.ToMM(fp.GetPosition().x), -pcbnew.ToMM(fp.GetPosition().y)
+        changed = False
+        if flp_cost < cur_cost - 0.15:
+            rot = round((rot + 180.0) % 360, 1)
+            fp.SetOrientationDegrees(rot)
+            changed = True
+            flipped += 1
+
+        # If paired with adjacent pins on a shared parent, center along the pin-pair axis if clash-free
+        if shared and 0.5 <= math.hypot(t1[0] - t2[0], t1[1] - t2[1]) <= 4.0:
+            mid_x, mid_y = (t1[0] + t2[0]) / 2.0, (t1[1] + t2[1]) / 2.0
+            nx, ny = (x_mm, round(mid_y, 2)) if abs(t1[0] - t2[0]) < 0.2 else (
+                (round(mid_x, 2), y_mm) if abs(t1[1] - t2[1]) < 0.2 else (x_mm, y_mm)
+            )
+            if math.hypot(nx - x_mm, ny - y_mm) >= 0.2:
+                fp.SetPosition(layout.pos(nx, ny))
+                if not current_clashes(board, plan, ref, frozen):
+                    x_mm, y_mm = nx, ny
+                    changed = True
+                else:
+                    fp.SetPosition(layout.pos(x_mm, y_mm))
+        if changed:
+            moved[ref] = (round(x_mm, 2), round(y_mm, 2), rot)
+    return flipped
 
 
 def resolve(name: str, targets: list[str] | None = None):

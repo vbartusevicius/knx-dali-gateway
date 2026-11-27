@@ -1,14 +1,21 @@
-# EDA toolchain: KiCad 10.0.6 (kicad-cli + pcbnew Python bindings) via the
-# official kicad/kicad:10.0 image (Debian trixie, amd64 emulation on arm64),
-# SKiDL for circuit authoring, kinet2pcb for netlist-to-board conversion and
-# fastroute 0.1.14 (Rust port of Freerouting, GPL-3.0) for `layout.py route`.
-FROM --platform=linux/amd64 kicad/kicad:10.0
+# Multi-arch native EDA image (amd64 & arm64): Ubuntu 24.04 + KiCad 10 PPA
+# (including kicad-packages3d for photorealistic 3D board renders), SKiDL,
+# kinet2pcb, OR-Tools CP-SAT, libngspice0, and fastroute 0.1.14 (GPL-3.0).
+FROM ubuntu:24.04
 
-USER root
+ARG TARGETARCH
+ARG KICAD_VERSION=10.0.8~ubuntu24.04.1
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
+    && apt-get install -y --no-install-recommends software-properties-common gpg-agent \
+    && add-apt-repository -y ppa:kicad/kicad-10.0-releases \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-       python3-pip python3-venv curl ca-certificates libngspice0 \
+       kicad=${KICAD_VERSION} kicad-footprints=${KICAD_VERSION} \
+       kicad-symbols=${KICAD_VERSION} kicad-templates=${KICAD_VERSION} \
+       kicad-packages3d=${KICAD_VERSION} \
+       libngspice0 python3-pip python3-venv curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # The venv shares the system site-packages so that `python3` sees both the
@@ -23,13 +30,16 @@ RUN python3 -m venv --system-site-packages /opt/eda \
        shapely==2.1.1 \
        ortools==9.15.6755
 
-# SKiDL discovers KiCad's stock libraries through these variables.
+# SKiDL and KiCad 3D renderer discover stock libraries through these variables.
 ENV KICAD10_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD10_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+    KICAD10_3DMODEL_DIR=/usr/share/kicad/3dmodels \
     KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
     KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+    KICAD9_3DMODEL_DIR=/usr/share/kicad/3dmodels \
     PATH=/opt/eda/bin:$PATH
+
 RUN mkdir -p /root/.config/kicad/10.0 \
     && cp /usr/share/kicad/template/fp-lib-table /root/.config/kicad/10.0/fp-lib-table \
     && cp /usr/share/kicad/template/fp-lib-table /root/.config/kicad/fp-lib-table \
@@ -44,14 +54,18 @@ COPY docker/eda/fix_fp_lib_table.py /tmp/fix_fp_lib_table.py
 RUN python3 /tmp/fix_fp_lib_table.py && rm /tmp/fix_fp_lib_table.py
 
 ARG FASTROUTE_VERSION=0.1.14
-ARG FASTROUTE_SHA256=079a109f76d84836e7d7a54519e75759dcab9baacc9c58b4224b027b852e49c6
-RUN curl -fsSL -o /tmp/fastroute.tar.gz \
-       https://github.com/parisxmas/fastroute/releases/download/v${FASTROUTE_VERSION}/fastroute-${FASTROUTE_VERSION}-linux-x64.tar.gz \
-    && echo "${FASTROUTE_SHA256}  /tmp/fastroute.tar.gz" | sha256sum -c - \
+RUN case "$TARGETARCH" in \
+       amd64) arch=x64; sum=079a109f76d84836e7d7a54519e75759dcab9baacc9c58b4224b027b852e49c6 ;; \
+       arm64) arch=arm64; sum=ce4e488a4de2c1782e40f577a29025c79bc59da8f28bb11974425b3d1dddc01f ;; \
+       *) echo "unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL -o /tmp/fastroute.tar.gz \
+       https://github.com/parisxmas/fastroute/releases/download/v${FASTROUTE_VERSION}/fastroute-${FASTROUTE_VERSION}-linux-${arch}.tar.gz \
+    && echo "${sum}  /tmp/fastroute.tar.gz" | sha256sum -c - \
     && tar -xzf /tmp/fastroute.tar.gz -C /tmp \
-    && install -m 755 /tmp/fastroute-${FASTROUTE_VERSION}-linux-x64/fastroute /usr/local/bin/fastroute \
+    && install -m 755 /tmp/fastroute-${FASTROUTE_VERSION}-linux-${arch}/fastroute /usr/local/bin/fastroute \
     && install -d /usr/share/doc/fastroute \
-    && install -m 644 /tmp/fastroute-${FASTROUTE_VERSION}-linux-x64/LICENSE /tmp/fastroute-${FASTROUTE_VERSION}-linux-x64/NOTICE /usr/share/doc/fastroute/ \
+    && install -m 644 /tmp/fastroute-${FASTROUTE_VERSION}-linux-${arch}/LICENSE /tmp/fastroute-${FASTROUTE_VERSION}-linux-${arch}/NOTICE /usr/share/doc/fastroute/ \
     && rm -rf /tmp/fastroute*
 
 WORKDIR /work

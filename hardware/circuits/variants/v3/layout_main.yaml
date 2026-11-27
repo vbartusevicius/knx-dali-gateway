@@ -208,7 +208,7 @@ parts:
   Q10:  { x: 5.4, y: 35.1, rot: 180, side: back, block: core_mux }
   D11:  { x: 16.25, y: 17.65, rot: 180, side: back, block: core_mux }
   C23:  { x: 19.4, y: 29.25, rot: 270, side: back, block: core_mux }
-  C20: { x: -6.8, y: 54.1, rot: 270,  side: back, block: aux_core }
+  C20: { x: -6.8, y: 56.33, rot: 90,  side: back, block: aux_core }
   C21: { x: 3.25, y: 41.15, rot: 0,   side: back, block: aux_core }
 
   # Back DALI: bridge D6 and RX between U3 pin columns (x 24..34, y 61..75), TX in x 1..12, y 52..64

@@ -122,7 +122,8 @@ def test_negative_offset_board():
     """Create a deliberately-offset board for the CAD-side negative test."""
     pcb = _board_path("main")
     b = pcbnew.LoadBoard(str(pcb))
-    fp = next((f for f in sorted(b.Footprints(), key=lambda f: f.GetReference()) if len(f.Models()) > 0), None)
+    fp = next((f for f in sorted(b.Footprints(), key=lambda f: f.GetReference())
+               if str(f.GetFPID().GetLibItemName()) in CUSTOM_MODELS and len(f.Models()) > 0), None)
     assert fp is not None, "no footprint on main has a 3D model"
     models = fp.Models()
     orig = models[0].m_Offset
