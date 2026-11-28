@@ -1,0 +1,171 @@
+# Unified GitHub Release workflow: builds ESP32-C6 release firmware and signed
+# ETS .knxprod, packages all release assets via scripts/package_release.py
+# (per-variant hardware bundles, SHA256SUMS.txt and release file table), and
+# publishes them atomically to the GitHub Release.
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Optional release tag to publish (e.g. v26.10.15.2100)"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  firmware:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python and PlatformIO
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.1.16
+
+      - name: Build ESP32-C6 release firmware
+        run: |
+          COMMIT_TS="$(git show -s --format=%ct HEAD)"
+          export FW_VERSION="$(date -u -d "@$COMMIT_TS" +%y.%m.%d.%H%M)"
+          pio run -d gateway -e release_c6
+          mkdir -p gateway/build/artifacts
+          cp gateway/.pio/build/release_c6/firmware.bin gateway/build/artifacts/firmware.bin
+          cp gateway/.pio/build/release_c6/firmware-full-usb.bin gateway/build/artifacts/firmware-full-usb.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-firmware
+          path: |
+            gateway/build/artifacts/firmware.bin
+            gateway/build/artifacts/firmware-full-usb.bin
+          if-no-files-found: error
+
+  knxprod:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the knxprod image
+        run: docker compose --profile knxprod build producer
+
+      - name: Committed firmware header matches the ETS XML
+        run: knxprod/scripts/check.sh
+
+      - name: Verifier tests
+        run: docker compose --profile knxprod run --rm -T --entrypoint python3 producer -m pytest -q tests
+
+      - name: Provide signing libraries or key
+        env:
+          ETS_SIGNING_KEY: ${{ secrets.ETS_SIGNING_KEY }}
+          ETS_CV_PASSPHRASE: ${{ secrets.ETS_CV_PASSPHRASE }}
+        run: |
+          umask 077
+          if [ -n "$ETS_CV_PASSPHRASE" ]; then
+            test -f knxprod/ets-cv.zip.gpg
+            printf '%s' "$ETS_CV_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+              --output "$RUNNER_TEMP/ets-cv.zip" --decrypt knxprod/ets-cv.zip.gpg
+            mkdir -p "$RUNNER_TEMP/ets-cv"
+            unzip -j "$RUNNER_TEMP/ets-cv.zip" '*.dll' -d "$RUNNER_TEMP/ets-cv"
+            echo "ETS_CV_DIR=$RUNNER_TEMP/ets-cv" >> "$GITHUB_ENV"
+            docker compose --profile knxprod build producer-wine
+          elif [ -n "$ETS_SIGNING_KEY" ]; then
+            umask 077
+            printf '%s' "$ETS_SIGNING_KEY" > "$RUNNER_TEMP/ets-signing-key"
+            echo "ETS_SIGNING_KEY_FILE=$RUNNER_TEMP/ets-signing-key" >> "$GITHUB_ENV"
+          elif [ "${GITHUB_REF_TYPE}" = tag ]; then
+            echo "::error::a tagged release needs ETS_CV_PASSPHRASE and its encrypted DLL bundle, or ETS_SIGNING_KEY"; exit 1
+          else
+            echo "::warning::No signing credentials configured; building an unsigned .knxprod"
+          fi
+
+      - name: Build and verify the .knxprod
+        run: knxprod/scripts/package.sh
+
+      - name: Remove private signing inputs
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/ets-signing-key" "$RUNNER_TEMP/ets-cv.zip"
+          if [ -d "$RUNNER_TEMP/ets-cv" ]; then
+            find "$RUNNER_TEMP/ets-cv" -type f -name '*.dll' -delete
+            rmdir "$RUNNER_TEMP/ets-cv"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-knxprod
+          path: knxprod/build/KnxDaliGateway.knxprod
+          if-no-files-found: error
+
+  publish:
+    needs: [firmware, knxprod]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download release inputs
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/inputs
+
+      - name: Test release packager
+        run: python3 -m unittest discover -s scripts -p "test_*.py" -v
+
+      - name: Determine release tag
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            REL_TAG="$INPUT_TAG"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            REL_TAG="$GITHUB_REF_NAME"
+          else
+            COMMIT_TS="$(git show -s --format=%ct HEAD)"
+            REL_TAG="v$(date -u -d "@$COMMIT_TS" +%y.%m.%d.%H%M)"
+          fi
+          echo "REL_TAG=$REL_TAG" >> "$GITHUB_ENV"
+
+      - name: Package release assets and checksums
+        run: |
+          python3 scripts/package_release.py \
+            --firmware-dir dist/inputs/release-firmware \
+            --knxprod dist/inputs/release-knxprod/KnxDaliGateway.knxprod \
+            --output-dir dist/release \
+            --notes-out dist/release-notes.md \
+            --clean
+
+      - name: Verify SHA256SUMS.txt
+        run: (cd dist/release && sha256sum -c SHA256SUMS.txt)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: dist/release/
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$REL_TAG" >/dev/null 2>&1; then
+            gh release edit "$REL_TAG" --notes-file dist/release-notes.md
+          else
+            gh release create "$REL_TAG" --target "$GITHUB_SHA" --title "$REL_TAG" --notes-file dist/release-notes.md --generate-notes
+          fi
+          gh release upload "$REL_TAG" dist/release/* --clobber

@@ -27,7 +27,8 @@ Open-source DIN-rail gateway between a wired **KNX TP** line and one **DALI / DA
 | **First install (USB)** | [`firmware-full-usb.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Bootloader, partition table and firmware in one image for an empty ESP32-C6. Connect the XIAO over USB-C and write it at `0x0`: `esptool.py --chip esp32c6 write_flash 0x0 firmware-full-usb.bin`. Clears all settings. |
 | **Update** | [`firmware.bin`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Drop it onto the **Firmware** tab of the web interface. Updates firmware and web UI together; settings are kept. |
 | **ETS product database** | [`KnxDaliGateway.knxprod`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Import into ETS 5.7 / 6: 64 lamp channels (DT6/DT7/DT8), 16 groups, broadcast, 8 DALI-2 input devices with up to 4 instances each (1,321 group objects). |
-| **Hardware bundles** | [`knx-dali-gateway-hardware-v2.zip` / `v3.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Gerbers, JLCPCB BOM/CPL, STEP assemblies, printable STL/3MF case, `assembly_parts.csv`. |
+| **Hardware bundles** | [`knx-dali-gateway-v2-hardware.zip` / `v3-hardware.zip`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | Per-variant manufacturing & assembly package (`boards/` with Gerbers, ODB++, BOM/CPL, STEP, KiCad files and renders; `enclosure/` with STLs, STEPs, fit drawings and renders; `assembly_parts.csv` and order CSVs). |
+| **Checksums** | [`SHA256SUMS.txt`](https://github.com/vbartusevicius/knx-dali-gateway/releases/latest) | SHA-256 checksums covering every release file above. |
 
 ---
 
@@ -177,6 +178,7 @@ Each `hardware/releases/<variant>/` folder is a complete manufacturing package.
 | Refresh the clangd compilation database | `pio run -d gateway -e dev_c6 -t compiledb` |
 | Integration lab | `simulation/run-tests.sh` |
 | ETS package | `ETS_CV_DIR=knxprod/ETS knxprod/scripts/package.sh` |
+| Stage GitHub release assets + `SHA256SUMS.txt` | `python3 scripts/package_release.py --clean` |
 | Lint Python (ruff) | `docker compose --profile lint run --rm lint check .` |
 | Lint C++ (clang-format, clang-tidy) | `docker compose --profile lint run --rm cpp-lint gateway/scripts/check_cpp.sh` |
 

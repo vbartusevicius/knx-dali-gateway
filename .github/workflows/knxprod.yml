@@ -1,19 +1,9 @@
-# ETS product database: the committed firmware header must match the XML, and
-# every build produces KnxDaliGateway.knxprod (schema project/20, ETS 5.7 and
-# ETS 6). Pushes can sign with encrypted ETS libraries through Wine, or an
-# explicitly supplied ETS_SIGNING_KEY; pull requests build unsigned. Tags require a
-# signed file and attach it to the GitHub release.
+# ETS product database verification: the committed firmware header must match
+# the XML, and every push/PR verifies KnxDaliGateway.knxprod (schema
+# project/20, ETS 5.7 and ETS 6). Signed release publishing runs in release.yml.
 name: knxprod
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Optional release tag to attach KnxDaliGateway.knxprod to"
-        required: false
-        type: string
+on: [push, pull_request]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -22,8 +12,6 @@ concurrency:
 jobs:
   knxprod:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -36,61 +24,10 @@ jobs:
       - name: Verifier tests
         run: docker compose --profile knxprod run --rm -T --entrypoint python3 producer -m pytest -q tests
 
-      - name: Provide signing libraries or key
-        if: github.event_name == 'push'
-        env:
-          ETS_SIGNING_KEY: ${{ secrets.ETS_SIGNING_KEY }}
-          ETS_CV_PASSPHRASE: ${{ secrets.ETS_CV_PASSPHRASE }}
-        run: |
-          umask 077
-          if [ -n "$ETS_CV_PASSPHRASE" ]; then
-            test -f knxprod/ets-cv.zip.gpg
-            printf '%s' "$ETS_CV_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
-              --output "$RUNNER_TEMP/ets-cv.zip" --decrypt knxprod/ets-cv.zip.gpg
-            mkdir -p "$RUNNER_TEMP/ets-cv"
-            unzip -j "$RUNNER_TEMP/ets-cv.zip" '*.dll' -d "$RUNNER_TEMP/ets-cv"
-            echo "ETS_CV_DIR=$RUNNER_TEMP/ets-cv" >> "$GITHUB_ENV"
-            docker compose --profile knxprod build producer-wine
-          elif [ -n "$ETS_SIGNING_KEY" ]; then
-            umask 077
-            printf '%s' "$ETS_SIGNING_KEY" > "$RUNNER_TEMP/ets-signing-key"
-            echo "ETS_SIGNING_KEY_FILE=$RUNNER_TEMP/ets-signing-key" >> "$GITHUB_ENV"
-          elif [ "${GITHUB_REF_TYPE}" = tag ]; then
-            echo "::error::a tagged release needs ETS_CV_PASSPHRASE and its encrypted DLL bundle, or ETS_SIGNING_KEY"; exit 1
-          else
-            echo "::warning::No signing credentials configured; building an unsigned .knxprod"
-          fi
-
-      - name: Build and verify the .knxprod
+      - name: Build and verify the .knxprod (unsigned)
         run: knxprod/scripts/package.sh
-
-      - name: Remove private signing inputs
-        if: always()
-        run: |
-          rm -f "$RUNNER_TEMP/ets-signing-key" "$RUNNER_TEMP/ets-cv.zip"
-          if [ -d "$RUNNER_TEMP/ets-cv" ]; then
-            find "$RUNNER_TEMP/ets-cv" -type f -name '*.dll' -delete
-            rmdir "$RUNNER_TEMP/ets-cv"
-          fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: knxprod
           path: knxprod/build/KnxDaliGateway.knxprod
-
-      - name: Attach to the release on push/merge to main, tag, or manual dispatch
-        if: github.ref == 'refs/heads/main' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          INPUT_TAG: ${{ inputs.release_tag }}
-        run: |
-          if [ -n "$INPUT_TAG" ]; then
-            REL_TAG="$INPUT_TAG"
-          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
-            REL_TAG="$GITHUB_REF_NAME"
-          else
-            COMMIT_TS="$(git show -s --format=%ct HEAD)"
-            REL_TAG="v$(date -u -d "@$COMMIT_TS" +%y.%m.%d.%H%M)"
-          fi
-          gh release view "$REL_TAG" >/dev/null 2>&1 || gh release create "$REL_TAG" --target "$GITHUB_SHA" --title "$REL_TAG" --generate-notes
-          gh release upload "$REL_TAG" knxprod/build/KnxDaliGateway.knxprod --clobber

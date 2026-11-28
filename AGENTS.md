@@ -14,9 +14,10 @@ Nothing has run on physical hardware yet. Never claim bench, ETS-import, electri
 | `hardware/` | SKiDL circuits (`circuits/blocks`, `circuits/variants/<v>`), committed routed boards (`layout/<v>/<board>`), scripts, tests, frozen `releases/<v>/`, docs (`docs/variants.md`, reviews, rework guides) |
 | `mechanical/` | CadQuery enclosure, fit drawings, legend, 3D renders, tests |
 | `docker/` | One folder per image; all built by the root `compose.yaml` |
+| `scripts/` | Shared GitHub Release packager (`package_release.py`) and unit tests |
 | `.claude/skills/hardware-review/` | Project skill: re-check the hardware before any order |
 
-Component rules: each component owns its source, tests and build config; no root-level `src/`/`test/`, no shared `common`/`utils` dumping ground. `hardware/build/`, `mechanical/build/`, `knxprod/build/` are generated and ignored.
+Component rules: each component owns its source, tests and build config; no root-level `src/`/`test/`, no shared `common`/`utils` dumping ground. `hardware/build/`, `mechanical/build/`, `knxprod/build/`, `dist/` are generated and ignored.
 
 ## Commands
 
@@ -33,6 +34,7 @@ All non-PlatformIO tools run in Docker through `compose.yaml` profiles; never in
 | Python lint (ruff) | `docker compose --profile lint run --rm lint check .` |
 | C++ format + clang-tidy | `docker compose --profile lint run --rm cpp-lint gateway/scripts/check_cpp.sh [--fix]` |
 | Whole hardware + mechanical pipeline | `python3 hardware/scripts/build.py [v2\|v3] [--eda\|--cad\|--release\|--test] [--boards main ui] [--fresh]` |
+| GitHub release assets + `SHA256SUMS.txt` | `python3 scripts/package_release.py --clean --notes-out dist/release-notes.md` |
 | Viewers (KiCanvas :8082, STL :8081) | `docker compose --profile viewers up` |
 
 PlatformIO lives in the IDE-managed `~/.platformio/penv`; it may not be on the shell `PATH`.
@@ -50,7 +52,16 @@ Tests: `eda` → `python3 -m pytest hardware/tests mechanical/tests/test_fit.py 
 
 ### CI (`.github/workflows`)
 
-`lint` (ruff, C++), `hardware` (regenerates circuits and fails on `git diff`, `layout.py components`, hardware + fit tests including `test_boards_routed`: DRC 0 errors / 0 unrouted on committed boards, enclosure build, renders as artifact; routing itself is a developer step), `lab`, `knxprod`. Keep every change green there.
+`lint` (ruff, C++), `hardware` (regenerates circuits and fails on `git diff`, `layout.py components`, hardware + fit tests including `test_boards_routed`: DRC 0 errors / 0 unrouted on committed boards, enclosure build, renders as artifact; routing itself is a developer step), `lab`, `knxprod`, `release` (builds firmware + signed `.knxprod`, stages all release files through `scripts/package_release.py`, verifies `SHA256SUMS.txt` and publishes atomically with a `| File | Use |` table). Keep every change green there.
+
+### Release assets
+
+GitHub Releases are packaged solely by `scripts/package_release.py` (used by `.github/workflows/release.yml` and manual runs):
+- `knx-dali-gateway-<variant>-hardware.zip` (`v2`, `v3`): per-variant archive with `boards/<board>/`, `enclosure/`, root BOM/order CSVs and `README.md` (plus `rework/` on `v3`), strictly scoped to that variant's boards and excluding `.DS_Store`/scripts/clutter.
+- `firmware-full-usb.bin` and `firmware.bin`: the two direct-flash ESP32-C6 images shared by V2 and V3 (no loose `.elf`/`.map`/`.json`/`.svg` files).
+- `KnxDaliGateway.knxprod`: ETS 5.7 / 6 product database.
+- `SHA256SUMS.txt`: SHA-256 checksums covering every release file above.
+- Release body starts with the generated `| File | Use |` Markdown table; never attach helper scripts, simulator binaries or ungrouped discipline archives.
 
 ## Engineering rules
 

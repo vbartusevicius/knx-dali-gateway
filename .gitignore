@@ -35,6 +35,9 @@ mechanical/build/
 gateway/build/
 gateway/src/firmware/WebAssets.hpp
 
+# Staged GitHub Release assets (scripts/package_release.py)
+dist/
+
 # Devin local MCP config (machine-specific)
 .devin/mcp_config.local.json
 .claude/mcp_config.local.json
